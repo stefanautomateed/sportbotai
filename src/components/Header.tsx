@@ -1,8 +1,8 @@
 /**
- * Header komponenta za BetSense AI
+ * Header component for BetSense AI
  * 
- * Sadrži navigaciju sa linkovima na glavne stranice.
- * Koristi se u layout.tsx i prikazuje se na svim stranicama.
+ * Contains navigation with links to main pages.
+ * Used in layout.tsx and displayed on all pages.
  */
 
 'use client';
@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 export default function Header() {
-  // State za mobilni meni (hamburger)
+  // State for mobile menu (hamburger)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -24,7 +24,7 @@ export default function Header() {
             <span className="text-2xl font-light text-gray-600">AI</span>
           </Link>
 
-          {/* Desktop navigacija */}
+          {/* Desktop navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               href="/" 
@@ -46,7 +46,7 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Mobilni hamburger dugme */}
+          {/* Mobile hamburger button */}
           <button
             type="button"
             className="md:hidden p-2 rounded-md text-gray-600 hover:text-primary-600 hover:bg-gray-100"
@@ -78,7 +78,7 @@ export default function Header() {
           </button>
         </div>
 
-        {/* Mobilni meni */}
+        {/* Mobile menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100">
             <div className="flex flex-col space-y-4">

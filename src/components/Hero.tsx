@@ -1,8 +1,8 @@
 /**
- * Hero sekcija za landing stranicu
+ * Hero section for landing page
  * 
- * Glavna vizuelna komponenta koja privlači pažnju korisnika
- * i objašnjava šta je BetSense AI.
+ * Main visual component that attracts user attention
+ * and explains what BetSense AI is.
  */
 
 import Link from 'next/link';
@@ -10,7 +10,7 @@ import Link from 'next/link';
 export default function Hero() {
   return (
     <section className="relative bg-gradient-to-br from-primary-900 via-primary-800 to-primary-900 text-white overflow-hidden">
-      {/* Dekorativni elementi u pozadini */}
+      {/* Decorative elements in background */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-gold rounded-full blur-3xl"></div>
@@ -24,56 +24,56 @@ export default function Hero() {
             AI-Powered Analytics
           </div>
 
-          {/* Glavni naslov */}
+          {/* Main title */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-            Analiziraj Pametnije,
+            Analyze Smarter,
             <br />
-            <span className="text-accent-gold">Ne Više</span>
+            <span className="text-accent-gold">Not More</span>
           </h1>
 
-          {/* Podnaslov */}
+          {/* Subtitle */}
           <p className="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed">
-            BetSense AI koristi naprednu analitiku da ti pruži dubinski uvid 
-            u sportske događaje. Edukativni alat za informisane odluke.
+            BetSense AI uses advanced analytics to provide you with deep insights 
+            into sports events. An educational tool for informed decisions.
           </p>
 
-          {/* CTA dugmad */}
+          {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link 
               href="/analyzer" 
               className="btn-primary text-lg px-8 py-4 w-full sm:w-auto"
             >
-              Započni Analizu →
+              Start Analysis →
             </Link>
             <Link 
               href="/pricing" 
               className="btn-secondary bg-transparent border-white text-white hover:bg-white/10 text-lg px-8 py-4 w-full sm:w-auto"
             >
-              Pogledaj Cene
+              View Pricing
             </Link>
           </div>
 
           {/* Trust indicators */}
           <div className="mt-12 pt-8 border-t border-white/20">
-            <p className="text-gray-400 text-sm mb-4">Zašto korisnici biraju BetSense AI</p>
+            <p className="text-gray-400 text-sm mb-4">Why users choose BetSense AI</p>
             <div className="flex flex-wrap justify-center gap-8 text-sm">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-accent-green" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>AI Analiza</span>
+                <span>AI Analysis</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-accent-green" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>Transparentnost</span>
+                <span>Transparency</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-accent-green" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>Odgovorno Klađenje</span>
+                <span>Responsible Gambling</span>
               </div>
             </div>
           </div>

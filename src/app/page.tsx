@@ -1,8 +1,8 @@
 /**
  * Landing Page - Home (/)
  * 
- * Glavna stranica BetSense AI aplikacije.
- * Sadrži sve sekcije za predstavljanje platforme.
+ * Main page of the BetSense AI application.
+ * Contains all sections for presenting the platform.
  */
 
 import Hero from '@/components/Hero';
@@ -15,22 +15,22 @@ import ResponsibleGamblingBlock from '@/components/ResponsibleGamblingBlock';
 export default function HomePage() {
   return (
     <>
-      {/* Hero sekcija - glavna vizuelna komponenta */}
+      {/* Hero section - main visual component */}
       <Hero />
 
-      {/* Kako funkcioniše - 3 koraka */}
+      {/* How it works - 3 steps */}
       <HowItWorks />
 
-      {/* Zašto nismo tipster - VAŽNA sekcija za pozicioniranje */}
+      {/* Why we're not a tipster - IMPORTANT positioning section */}
       <WhyNotTipster />
 
-      {/* Glavne funkcije */}
+      {/* Main features */}
       <Features />
 
       {/* Pricing teaser */}
       <PricingTeaser />
 
-      {/* Odgovorno klađenje - OBAVEZNO */}
+      {/* Responsible gambling - MANDATORY */}
       <ResponsibleGamblingBlock />
     </>
   );

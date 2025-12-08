@@ -1,7 +1,7 @@
 /**
- * Result Card komponenta
+ * Result Card component
  * 
- * Prikazuje rezultate AI analize meča.
+ * Displays AI match analysis results.
  */
 
 import { AnalyzeResponse, RiskLevel } from '@/types';
@@ -10,7 +10,7 @@ interface ResultCardProps {
   result: AnalyzeResponse;
 }
 
-// Boje za različite nivoe rizika
+// Colors for different risk levels
 const riskColors: Record<RiskLevel, { bg: string; text: string; border: string }> = {
   LOW: {
     bg: 'bg-green-50',
@@ -29,11 +29,11 @@ const riskColors: Record<RiskLevel, { bg: string; text: string; border: string }
   },
 };
 
-// Labele za nivoe rizika
+// Labels for risk levels
 const riskLabels: Record<RiskLevel, string> = {
-  LOW: 'Nizak Rizik',
-  MEDIUM: 'Srednji Rizik',
-  HIGH: 'Visok Rizik',
+  LOW: 'Low Risk',
+  MEDIUM: 'Medium Risk',
+  HIGH: 'High Risk',
 };
 
 export default function ResultCard({ result }: ResultCardProps) {
@@ -41,9 +41,9 @@ export default function ResultCard({ result }: ResultCardProps) {
 
   return (
     <div className="card space-y-6">
-      {/* Header sa rizikom */}
+      {/* Header with risk */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-gray-900">Rezultat Analize</h3>
+        <h3 className="text-xl font-bold text-gray-900">Analysis Result</h3>
         <span
           className={`px-4 py-2 rounded-full text-sm font-semibold ${risk.bg} ${risk.text} ${risk.border} border`}
         >
@@ -51,13 +51,13 @@ export default function ResultCard({ result }: ResultCardProps) {
         </span>
       </div>
 
-      {/* Verovatnoće */}
+      {/* Probabilities */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">Procenjene Verovatnoće</h4>
+        <h4 className="text-sm font-semibold text-gray-700 mb-3">Estimated Probabilities</h4>
         <div className="grid grid-cols-3 gap-4">
-          {/* Domaćin */}
+          {/* Home */}
           <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-1">Domaćin (1)</p>
+            <p className="text-xs text-gray-500 mb-1">Home (1)</p>
             <p className="text-2xl font-bold text-primary-600">
               {result.probabilities.homeWin !== null
                 ? `${result.probabilities.homeWin}%`
@@ -65,9 +65,9 @@ export default function ResultCard({ result }: ResultCardProps) {
             </p>
           </div>
 
-          {/* Nerešeno */}
+          {/* Draw */}
           <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-1">Nerešeno (X)</p>
+            <p className="text-xs text-gray-500 mb-1">Draw (X)</p>
             <p className="text-2xl font-bold text-gray-600">
               {result.probabilities.draw !== null
                 ? `${result.probabilities.draw}%`
@@ -75,9 +75,9 @@ export default function ResultCard({ result }: ResultCardProps) {
             </p>
           </div>
 
-          {/* Gost */}
+          {/* Away */}
           <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-1">Gost (2)</p>
+            <p className="text-xs text-gray-500 mb-1">Away (2)</p>
             <p className="text-2xl font-bold text-primary-600">
               {result.probabilities.awayWin !== null
                 ? `${result.probabilities.awayWin}%`
@@ -86,7 +86,7 @@ export default function ResultCard({ result }: ResultCardProps) {
           </div>
         </div>
 
-        {/* Over/Under ako postoje */}
+        {/* Over/Under if available */}
         {(result.probabilities.over !== null || result.probabilities.under !== null) && (
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div className="text-center p-3 bg-gray-50 rounded-lg">
@@ -105,15 +105,15 @@ export default function ResultCard({ result }: ResultCardProps) {
         )}
       </div>
 
-      {/* Value komentar */}
+      {/* Value comment */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-2">Value Analiza</h4>
+        <h4 className="text-sm font-semibold text-gray-700 mb-2">Value Analysis</h4>
         <p className="text-gray-600 leading-relaxed">{result.valueComment}</p>
       </div>
 
-      {/* Analiza */}
+      {/* Analysis */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-2">Rezime Analize</h4>
+        <h4 className="text-sm font-semibold text-gray-700 mb-2">Analysis Summary</h4>
         <p className="text-gray-600 leading-relaxed">{result.analysisSummary}</p>
       </div>
 
@@ -132,7 +132,7 @@ export default function ResultCard({ result }: ResultCardProps) {
             />
           </svg>
           <div>
-            <h4 className="text-sm font-semibold text-amber-800 mb-1">Upozorenje</h4>
+            <h4 className="text-sm font-semibold text-amber-800 mb-1">Warning</h4>
             <p className="text-sm text-amber-700">{result.responsibleGamblingNote}</p>
           </div>
         </div>
@@ -140,8 +140,8 @@ export default function ResultCard({ result }: ResultCardProps) {
 
       {/* Disclaimer */}
       <p className="text-xs text-gray-400 text-center">
-        Ova analiza je generisana AI algoritmom i ima isključivo informativni karakter.
-        Ne snosimo odgovornost za odluke bazirane na ovoj analizi.
+        This analysis was generated by an AI algorithm and is for informational purposes only.
+        We are not responsible for decisions based on this analysis.
       </p>
     </div>
   );

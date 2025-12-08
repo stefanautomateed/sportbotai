@@ -1,77 +1,77 @@
 /**
- * Pricing Cards komponenta
+ * Pricing Cards component
  * 
- * Prikazuje tri pricing plana: FREE, PRO, PREMIUM
- * Sa Stripe checkout integracijom (skeleton).
+ * Displays three pricing plans: FREE, PRO, PREMIUM
+ * With Stripe checkout integration (skeleton).
  */
 
 'use client';
 
 import { useState } from 'react';
 
-// Tipovi za pricing planove
+// Types for pricing plans
 interface PricingPlan {
   id: string;
   name: string;
   price: string;
-  priceId: string; // Stripe Price ID - PROMENI OVO nakon kreiranja proizvoda u Stripe-u
+  priceId: string; // Stripe Price ID - CHANGE THIS after creating products in Stripe
   description: string;
   features: string[];
   highlighted?: boolean;
   buttonText: string;
 }
 
-// Definicija planova
-// TODO: Zameni priceId sa pravim Stripe Price ID-jevima iz tvog Stripe dashboarda
+// Plans definition
+// TODO: Replace priceId with real Stripe Price IDs from your Stripe dashboard
 const plans: PricingPlan[] = [
   {
     id: 'free',
     name: 'Free',
     price: '€0',
-    priceId: '', // Free plan nema Stripe checkout
-    description: 'Probaj osnovne funkcije besplatno',
+    priceId: '', // Free plan has no Stripe checkout
+    description: 'Try basic features for free',
     features: [
-      '3 analize dnevno',
-      'Osnovni sportovi (fudbal)',
-      'Standardna AI analiza',
-      'Email podrška',
+      '3 analyses per day',
+      'Basic sports (soccer)',
+      'Standard AI analysis',
+      'Email support',
     ],
-    buttonText: 'Započni Besplatno',
+    buttonText: 'Start Free',
   },
   {
     id: 'pro',
     name: 'Pro',
     price: '€9.99',
-    priceId: 'price_PRO_PLACEHOLDER', // TODO: Zameni sa pravim Stripe Price ID-jem
-    description: 'Za ozbiljne analitičare',
+    priceId: 'price_PRO_PLACEHOLDER', // TODO: Replace with real Stripe Price ID
+    description: 'For serious analysts',
     features: [
-      '30 analiza dnevno',
-      'Svi sportovi',
-      'Napredna AI analiza',
-      'Value betting indikatori',
-      'Prioritetna podrška',
-      'Istorija analiza (30 dana)',
+      '30 analyses per day',
+      'All sports',
+      'Advanced AI analysis',
+      'Value betting indicators',
+      'Priority support',
+      'Analysis history (30 days)',
     ],
     highlighted: true,
-    buttonText: 'Aktiviraj Pro',
+    buttonText: 'Activate Pro',
   },
   {
     id: 'premium',
     name: 'Premium',
     price: '€19.99',
-    priceId: 'price_PREMIUM_PLACEHOLDER', // TODO: Zameni sa pravim Stripe Price ID-jem
-    description: 'Maksimalne mogućnosti',
+    priceId: 'price_PREMIUM_PLACEHOLDER', // TODO: Replace with real Stripe Price ID
+    description: 'Maximum capabilities',
     features: [
-      'Neograničene analize',
-      'Svi sportovi + eSports',
+      'Unlimited analyses',
+      'All sports + eSports',
       'Premium AI model',
-      'Napredna value detekcija',
-      'API pristup',
-      'Prioritetna podrška 24/7',
-      'Istorija analiza (neograničeno)',
-      'Custom alerta',
+      'Advanced value detection',
+      'API access',
+      'Priority support 24/7',
+      'Analysis history (unlimited)',
+      'Custom alerts',
     ],
-    buttonText: 'Aktiviraj Premium',
+    buttonText: 'Activate Premium',
   },
 ];
 
@@ -79,12 +79,12 @@ export default function PricingCards() {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Funkcija za Stripe checkout
+  // Function for Stripe checkout
   const handleCheckout = async (plan: PricingPlan) => {
-    // Free plan ne ide kroz Stripe
+    // Free plan does not go through Stripe
     if (plan.id === 'free') {
-      // TODO: Implementiraj registraciju za free plan
-      alert('Registracija za Free plan - implementiraj ovu funkcionalnost');
+      // TODO: Implement registration for free plan
+      alert('Free plan registration - implement this functionality');
       return;
     }
 
@@ -106,15 +106,15 @@ export default function PricingCards() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Greška pri kreiranju checkout sesije');
+        throw new Error(data.error || 'Error creating checkout session');
       }
 
-      // Redirect na Stripe Checkout
+      // Redirect to Stripe Checkout
       if (data.url) {
         window.location.href = data.url;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Neočekivana greška');
+      setError(err instanceof Error ? err.message : 'Unexpected error');
     } finally {
       setLoading(null);
     }
@@ -134,7 +134,7 @@ export default function PricingCards() {
           {/* Popular badge */}
           {plan.highlighted && (
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-sm font-bold px-4 py-1 rounded-full">
-              NAJPOPULARNIJI
+              MOST POPULAR
             </div>
           )}
 
@@ -145,12 +145,12 @@ export default function PricingCards() {
               <span className={`text-4xl font-bold ${plan.highlighted ? 'text-primary-600' : 'text-gray-900'}`}>
                 {plan.price}
               </span>
-              <span className="text-gray-500">/mesečno</span>
+              <span className="text-gray-500">/monthly</span>
             </div>
             <p className="text-gray-600 text-sm">{plan.description}</p>
           </div>
 
-          {/* Features lista */}
+          {/* Features list */}
           <ul className="space-y-3 mb-8">
             {plan.features.map((feature, index) => (
               <li key={index} className="flex items-start gap-3">
@@ -198,7 +198,7 @@ export default function PricingCards() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                Učitavanje...
+                Loading...
               </span>
             ) : (
               plan.buttonText
@@ -207,7 +207,7 @@ export default function PricingCards() {
         </div>
       ))}
 
-      {/* Error poruka */}
+      {/* Error message */}
       {error && (
         <div className="col-span-full bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center">
           {error}

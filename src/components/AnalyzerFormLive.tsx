@@ -1,8 +1,8 @@
 /**
- * Enhanced Analyzer Form komponenta
+ * Enhanced Analyzer Form Component
  * 
- * Forma za analizu mečeva sa live podacima iz The Odds API.
- * Dinamički učitava sportove, mečeve i kvote.
+ * Form for analyzing matches with live data from The Odds API.
+ * Dynamically loads sports, matches, and odds.
  */
 
 'use client';
@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AnalyzeRequest, AnalyzeResponse } from '@/types';
 
-// Tipovi za API response
+// Types for API response
 interface Sport {
   key: string;
   group: string;
@@ -62,7 +62,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
   const [manualMode, setManualMode] = useState(false);
   const [apiConfigured, setApiConfigured] = useState(true);
 
-  // Učitaj sportove na mount
+  // Load sports on mount
   useEffect(() => {
     async function fetchSports() {
       try {
@@ -79,7 +79,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
         setSportGroups(data.grouped || []);
       } catch (err) {
         console.error('Error fetching sports:', err);
-        // Ako API nije konfigurisan, prebaci na manual mode
+        // If API is not configured, switch to manual mode
         setManualMode(true);
       } finally {
         setLoadingSports(false);
@@ -89,7 +89,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
     fetchSports();
   }, []);
 
-  // Učitaj događaje kad se promeni sport
+  // Load events when sport changes
   const fetchEvents = useCallback(async (sportKey: string) => {
     if (!sportKey || manualMode) return;
 
@@ -105,13 +105,13 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
       setEvents(data.events || []);
     } catch (err) {
       console.error('Error fetching events:', err);
-      setError('Greška pri učitavanju mečeva. Probaj ponovo.');
+      setError('Error loading matches. Please try again.');
     } finally {
       setLoadingEvents(false);
     }
   }, [manualMode]);
 
-  // Učitaj kvote za izabrani događaj
+  // Load odds for selected event
   const fetchOdds = useCallback(async (sportKey: string, eventId: string) => {
     if (!sportKey || !eventId || manualMode) return;
 
@@ -134,7 +134,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
     }
   }, [manualMode]);
 
-  // Handler za promenu sporta
+  // Handler for sport change
   const handleSportChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const sportKey = e.target.value;
     setSelectedSport(sportKey);
@@ -144,7 +144,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
     }
   };
 
-  // Handler za promenu događaja
+  // Handler for event change
   const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const eventId = e.target.value;
     const event = events.find(ev => ev.id === eventId);
@@ -155,7 +155,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
     }
   };
 
-  // Handler za submit
+  // Handler for form submit
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -163,7 +163,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
 
     const formData = new FormData(e.currentTarget);
 
-    // Validacija i parsiranje podataka
+    // Validate and parse data
     const data: AnalyzeRequest = {
       sport: formData.get('sport') as string || selectedEvent?.sport_title || '',
       league: formData.get('league') as string || selectedEvent?.sport_title || '',
@@ -178,15 +178,15 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
       stake: parseFloat(formData.get('stake') as string) || 0,
     };
 
-    // Osnovna validacija
+    // Basic validation
     if (!data.teamA || !data.teamB) {
-      setError('Molimo popuni timove ili izaberi meč.');
+      setError('Please fill in the teams or select a match.');
       onLoading(false);
       return;
     }
 
     if (data.odds.home <= 0 || data.odds.away <= 0) {
-      setError('Kvote moraju biti veće od 0.');
+      setError('Odds must be greater than 0.');
       onLoading(false);
       return;
     }
@@ -203,21 +203,21 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Greška pri analizi');
+        throw new Error(result.error || 'Error during analysis');
       }
 
       onResult(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Neočekivana greška');
+      setError(err instanceof Error ? err.message : 'Unexpected error');
     } finally {
       onLoading(false);
     }
   };
 
-  // Format datuma
+  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('sr-Latn', {
+    return date.toLocaleDateString('en-US', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
@@ -226,15 +226,15 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
     });
   };
 
-  // Manual mode fallback (statička lista sportova)
+  // Manual mode fallback (static sports list)
   const manualSports = [
-    'Fudbal',
-    'Košarka',
-    'Tenis',
-    'Hokej',
-    'Američki fudbal',
-    'Bejzbol',
-    'Drugi',
+    'Soccer',
+    'Basketball',
+    'Tennis',
+    'Hockey',
+    'American Football',
+    'Baseball',
+    'Other',
   ];
 
   return (
@@ -242,14 +242,14 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
       {/* API Status / Mode Toggle */}
       {!apiConfigured && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-sm">
-          <strong>Napomena:</strong> The Odds API nije konfigurisan. 
-          Koristi se ručni unos podataka. Dodaj <code>ODDS_API_KEY</code> u .env.local za live podatke.
+          <strong>Note:</strong> The Odds API is not configured. 
+          Using manual data entry. Add <code>ODDS_API_KEY</code> to .env.local for live data.
         </div>
       )}
 
       {apiConfigured && (
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-gray-500">Izvor podataka:</span>
+          <span className="text-sm text-gray-500">Data source:</span>
           <div className="flex gap-2">
             <button
               type="button"
@@ -260,7 +260,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
                   : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
               }`}
             >
-              📡 Live Mečevi
+              📡 Live Matches
             </button>
             <button
               type="button"
@@ -271,22 +271,22 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
                   : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
               }`}
             >
-              ✏️ Ručni Unos
+              ✏️ Manual Entry
             </button>
           </div>
         </div>
       )}
 
-      {/* LIVE MODE - Izbor sporta i meča */}
+      {/* LIVE MODE - Sport and match selection */}
       {!manualMode && (
         <>
           {/* Sport Selector */}
           <div>
             <label htmlFor="sportSelect" className="input-label">
-              Izaberi Sport *
+              Select Sport *
             </label>
             {loadingSports ? (
-              <div className="input-field bg-slate-700 animate-pulse">Učitavanje...</div>
+              <div className="input-field bg-slate-700 animate-pulse">Loading...</div>
             ) : (
               <select
                 id="sportSelect"
@@ -294,7 +294,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
                 onChange={handleSportChange}
                 className="input-field"
               >
-                <option value="">-- Izaberi sport --</option>
+                <option value="">-- Select sport --</option>
                 {sportGroups.map((group) => (
                   <optgroup key={group.group} label={group.group}>
                     {group.sports.map((sport) => (
@@ -312,13 +312,13 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
           {selectedSport && (
             <div>
               <label htmlFor="eventSelect" className="input-label">
-                Izaberi Meč *
+                Select Match *
               </label>
               {loadingEvents ? (
-                <div className="input-field bg-slate-700 animate-pulse">Učitavanje mečeva...</div>
+                <div className="input-field bg-slate-700 animate-pulse">Loading matches...</div>
               ) : events.length === 0 ? (
                 <div className="text-yellow-500 text-sm">
-                  Nema dostupnih mečeva za ovaj sport trenutno.
+                  No matches available for this sport at the moment.
                 </div>
               ) : (
                 <select
@@ -326,7 +326,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
                   onChange={handleEventChange}
                   className="input-field"
                 >
-                  <option value="">-- Izaberi meč --</option>
+                  <option value="">-- Select match --</option>
                   {events.map((event) => (
                     <option key={event.id} value={event.id}>
                       {event.home_team} vs {event.away_team} ({formatDate(event.commence_time)})
@@ -340,7 +340,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
           {/* Selected Match Preview */}
           {selectedEvent && (
             <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-              <h4 className="font-semibold text-emerald-400 mb-2">Izabrani Meč</h4>
+              <h4 className="font-semibold text-emerald-400 mb-2">Selected Match</h4>
               <div className="text-center mb-4">
                 <span className="text-lg">
                   {selectedEvent.home_team} <span className="text-gray-500">vs</span> {selectedEvent.away_team}
@@ -350,11 +350,11 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
 
               {/* Odds Display */}
               {loadingOdds ? (
-                <div className="text-center text-gray-400 animate-pulse">Učitavanje kvota...</div>
+                <div className="text-center text-gray-400 animate-pulse">Loading odds...</div>
               ) : selectedEvent.analysis ? (
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="bg-slate-800 rounded p-2">
-                    <div className="text-xs text-gray-500">1 (Domaćin)</div>
+                    <div className="text-xs text-gray-500">1 (Home)</div>
                     <div className="text-xl font-bold text-white">
                       {selectedEvent.analysis.averageOdds.home.toFixed(2)}
                     </div>
@@ -364,7 +364,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
                   </div>
                   {selectedEvent.analysis.averageOdds.draw && (
                     <div className="bg-slate-800 rounded p-2">
-                      <div className="text-xs text-gray-500">X (Nerešeno)</div>
+                      <div className="text-xs text-gray-500">X (Draw)</div>
                       <div className="text-xl font-bold text-white">
                         {selectedEvent.analysis.averageOdds.draw.toFixed(2)}
                       </div>
@@ -374,7 +374,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
                     </div>
                   )}
                   <div className="bg-slate-800 rounded p-2">
-                    <div className="text-xs text-gray-500">2 (Gost)</div>
+                    <div className="text-xs text-gray-500">2 (Away)</div>
                     <div className="text-xl font-bold text-white">
                       {selectedEvent.analysis.averageOdds.away.toFixed(2)}
                     </div>
@@ -385,7 +385,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
                 </div>
               ) : (
                 <div className="text-center text-gray-500 text-sm">
-                  Kvote će biti učitane automatski
+                  Odds will be loaded automatically
                 </div>
               )}
             </div>
@@ -393,17 +393,17 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
         </>
       )}
 
-      {/* MANUAL MODE - Ručni unos */}
+      {/* MANUAL MODE - Manual entry */}
       {manualMode && (
         <>
-          {/* Sport i Liga */}
+          {/* Sport and League */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="sport" className="input-label">
                 Sport *
               </label>
               <select id="sport" name="sport" required className="input-field">
-                <option value="">Izaberi sport</option>
+                <option value="">Select sport</option>
                 {manualSports.map((sport) => (
                   <option key={sport} value={sport}>
                     {sport}
@@ -414,57 +414,57 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
 
             <div>
               <label htmlFor="league" className="input-label">
-                Liga *
+                League *
               </label>
               <input
                 type="text"
                 id="league"
                 name="league"
                 required
-                placeholder="npr. Premier League, NBA..."
+                placeholder="e.g. Premier League, NBA..."
                 className="input-field"
               />
             </div>
           </div>
 
-          {/* Tim A vs Tim B */}
+          {/* Team A vs Team B */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="teamA" className="input-label">
-                Tim A (Domaćin) *
+                Team A (Home) *
               </label>
               <input
                 type="text"
                 id="teamA"
                 name="teamA"
                 required
-                placeholder="npr. Manchester United"
+                placeholder="e.g. Manchester United"
                 className="input-field"
               />
             </div>
 
             <div>
               <label htmlFor="teamB" className="input-label">
-                Tim B (Gost) *
+                Team B (Away) *
               </label>
               <input
                 type="text"
                 id="teamB"
                 name="teamB"
                 required
-                placeholder="npr. Liverpool"
+                placeholder="e.g. Liverpool"
                 className="input-field"
               />
             </div>
           </div>
 
-          {/* Kvote */}
+          {/* Odds */}
           <div>
-            <label className="input-label">Kvote *</label>
+            <label className="input-label">Odds *</label>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label htmlFor="oddsHome" className="text-xs text-gray-500 mb-1 block">
-                  1 (Domaćin)
+                  1 (Home)
                 </label>
                 <input
                   type="number"
@@ -480,7 +480,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
 
               <div>
                 <label htmlFor="oddsDraw" className="text-xs text-gray-500 mb-1 block">
-                  X (Nerešeno)
+                  X (Draw)
                 </label>
                 <input
                   type="number"
@@ -495,7 +495,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
 
               <div>
                 <label htmlFor="oddsAway" className="text-xs text-gray-500 mb-1 block">
-                  2 (Gost)
+                  2 (Away)
                 </label>
                 <input
                   type="number"
@@ -513,7 +513,7 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
         </>
       )}
 
-      {/* Hidden fields za live mode - šalju se podaci iz selectedEvent */}
+      {/* Hidden fields for live mode - data from selectedEvent */}
       {!manualMode && selectedEvent && (
         <>
           <input type="hidden" name="sport" value={selectedEvent.sport_title} />
@@ -526,24 +526,24 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
         </>
       )}
 
-      {/* Tvoj tip i ulog - zajednički za oba moda */}
+      {/* Your prediction and stake - common for both modes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="userPrediction" className="input-label">
-            Tvoj Tip
+            Your Prediction
           </label>
           <input
             type="text"
             id="userPrediction"
             name="userPrediction"
-            placeholder="npr. 1, X, 2, GG, over 2.5..."
+            placeholder="e.g. 1, X, 2, BTTS, over 2.5..."
             className="input-field"
           />
         </div>
 
         <div>
           <label htmlFor="stake" className="input-label">
-            Ulog (€)
+            Stake (€)
           </label>
           <input
             type="number"
@@ -557,26 +557,26 @@ export default function AnalyzerFormLive({ onResult, onLoading }: AnalyzerFormPr
         </div>
       </div>
 
-      {/* Error poruka */}
+      {/* Error message */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
-      {/* Submit dugme */}
+      {/* Submit button */}
       <button
         type="submit"
         disabled={!manualMode && !selectedEvent}
         className="btn-primary w-full text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {!manualMode && !selectedEvent ? 'Izaberi meč za analizu' : 'Analiziraj Meč'}
+        {!manualMode && !selectedEvent ? 'Select a match to analyze' : 'Analyze Match'}
       </button>
 
       {/* Disclaimer */}
       <p className="text-xs text-gray-500 text-center">
-        * Obavezna polja. Analiza je informativne prirode i ne garantuje nikakav ishod.
-        {!manualMode && ' Kvote su prosečne vrednosti sa više bookmakera.'}
+        * Required fields. Analysis is for informational purposes only and does not guarantee any outcome.
+        {!manualMode && ' Odds are average values from multiple bookmakers.'}
       </p>
     </form>
   );

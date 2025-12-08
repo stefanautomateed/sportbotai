@@ -1,93 +1,104 @@
 /**
  * API Route: /api/analyze
  * 
- * Endpoint za AI analizu sportskog meča koristeći OpenAI GPT-4.
+ * Endpoint for AI sports match analysis using OpenAI GPT-4.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { AnalyzeRequest, AnalyzeResponse, RiskLevel } from '@/types';
 
-// Inicijalizuj OpenAI klijent
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy-initialized OpenAI client (to avoid build-time errors)
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI | null {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 /**
  * POST /api/analyze
  * 
- * Prima podatke o meču i vraća AI analizu.
+ * Receives match data and returns AI analysis.
  */
 export async function POST(request: NextRequest) {
   try {
-    // Parsiraj request body
+    // Parse request body
     const body: AnalyzeRequest = await request.json();
 
-    // Proveri da li je API ključ konfigurisan
-    if (!process.env.OPENAI_API_KEY) {
+    // Check if API key is configured
+    const openai = getOpenAIClient();
+    if (!openai) {
       console.warn('OPENAI_API_KEY not configured, using mock response');
       return NextResponse.json(generateMockAnalysis(body));
     }
 
-    // Validacija obaveznih polja
+    // Validate required fields
     if (!body.sport || !body.league || !body.teamA || !body.teamB) {
       return NextResponse.json(
-        { error: 'Nedostaju obavezna polja: sport, league, teamA, teamB' },
+        { error: 'Missing required fields: sport, league, teamA, teamB' },
         { status: 400 }
       );
     }
 
     if (!body.odds || body.odds.home <= 0 || body.odds.away <= 0) {
       return NextResponse.json(
-        { error: 'Kvote moraju biti veće od 0' },
+        { error: 'Odds must be greater than 0' },
         { status: 400 }
       );
     }
 
-    // Kreiraj prompt za OpenAI
-    const prompt = `Ti si stručnjak za analizu sportskih događaja. Analiziraj sledeći meč i daj objektivnu procenu.
+    // Create prompt for OpenAI
+    const prompt = `You are an expert sports analyst. Analyze the following match and provide an objective assessment.
 
-MEČA:
+MATCH:
 - Sport: ${body.sport}
-- Liga: ${body.league}
-- Domaćin: ${body.teamA}
-- Gost: ${body.teamB}
-- Kvote: 1 (domaćin) = ${body.odds.home}, X (nerešeno) = ${body.odds.draw || 'N/A'}, 2 (gost) = ${body.odds.away}
-${body.userPrediction ? `- Korisnikov tip: ${body.userPrediction}` : ''}
-${body.stake ? `- Planirani ulog: €${body.stake}` : ''}
+- League: ${body.league}
+- Home Team: ${body.teamA}
+- Away Team: ${body.teamB}
+- Odds: 1 (home) = ${body.odds.home}, X (draw) = ${body.odds.draw || 'N/A'}, 2 (away) = ${body.odds.away}
+${body.userPrediction ? `- User's prediction: ${body.userPrediction}` : ''}
+${body.stake ? `- Planned stake: €${body.stake}` : ''}
 
-ZADATAK:
-1. Proceni verovatnoće ishoda (homeWin, draw, awayWin) kao procenat (0-100)
-2. Uporedi svoje procene sa implied probability iz kvota
-3. Identifikuj da li postoji value (dobra vrednost) u nekoj kvoti
-4. Odredi nivo rizika (LOW, MEDIUM, HIGH)
-5. Napiši kratak summary analize na srpskom jeziku
+TASK:
+1. Estimate outcome probabilities (homeWin, draw, awayWin) as percentages (0-100)
+2. Compare your estimates with implied probability from odds
+3. Identify if there is value in any odds
+4. Determine risk level (LOW, MEDIUM, HIGH)
+5. Write a brief analysis summary
 
-VAŽNO:
-- Budi objektivan i realan
-- Ne garantuj ishode
-- Uključi disclaimer o odgovornom klađenju
-- Ako ne znaš dovoljno o timovima, koristi kvote kao glavnu indikaciju
+IMPORTANT:
+- Be objective and realistic
+- Do not guarantee outcomes
+- Include responsible gambling disclaimer
+- If you don't know enough about the teams, use odds as the main indicator
 
-Odgovori ISKLJUČIVO u JSON formatu:
+Respond ONLY in JSON format:
 {
   "probabilities": {
-    "homeWin": <broj 0-100>,
-    "draw": <broj 0-100 ili null ako nema nerešenog>,
-    "awayWin": <broj 0-100>
+    "homeWin": <number 0-100>,
+    "draw": <number 0-100 or null if no draw option>,
+    "awayWin": <number 0-100>
   },
-  "valueComment": "<komentar o value betovima, na srpskom>",
+  "valueComment": "<comment about value bets>",
   "riskLevel": "<LOW|MEDIUM|HIGH>",
-  "analysisSummary": "<detaljna analiza na srpskom, 2-3 rečenice>"
+  "analysisSummary": "<detailed analysis, 2-3 sentences>"
 }`;
 
-    // Pozovi OpenAI API
+    // Call OpenAI API
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Koristi gpt-4o-mini za brzinu i cenu
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: 'Ti si AI asistent za analizu sportskih događaja. Uvek odgovaraš na srpskom jeziku i vraćaš validan JSON.',
+          content: 'You are an AI assistant for sports analysis. Always respond in English and return valid JSON.',
         },
         {
           role: 'user',
@@ -98,10 +109,10 @@ Odgovori ISKLJUČIVO u JSON formatu:
       max_tokens: 1000,
     });
 
-    // Parsiraj AI odgovor
+    // Parse AI response
     const aiContent = completion.choices[0]?.message?.content || '';
     
-    // Izvuci JSON iz odgovora
+    // Extract JSON from response
     const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.error('Failed to parse AI response:', aiContent);
@@ -110,7 +121,7 @@ Odgovori ISKLJUČIVO u JSON formatu:
 
     const aiResponse = JSON.parse(jsonMatch[0]);
 
-    // Validiraj i formatiraj odgovor
+    // Validate and format response
     const response: AnalyzeResponse = {
       probabilities: {
         homeWin: Math.min(100, Math.max(0, aiResponse.probabilities?.homeWin || 33)),
@@ -119,31 +130,31 @@ Odgovori ISKLJUČIVO u JSON formatu:
         over: null,
         under: null,
       },
-      valueComment: aiResponse.valueComment || 'Analiza kvota nije dostupna.',
+      valueComment: aiResponse.valueComment || 'Odds analysis not available.',
       riskLevel: validateRiskLevel(aiResponse.riskLevel),
-      analysisSummary: aiResponse.analysisSummary || 'Analiza nije dostupna.',
+      analysisSummary: aiResponse.analysisSummary || 'Analysis not available.',
       responsibleGamblingNote:
-        'Ova analiza je samo informativna i ne predstavlja finansijski savet. Klađenje nosi rizik gubitka novca. Nikada se ne kladite novcem koji ne možete priuštiti da izgubite. Ako osećate da imate problem sa klađenjem, potražite pomoć na kockfranja.hr ili pozovite 0800 200 233.',
+        'This analysis is for informational purposes only and does not constitute financial advice. Betting carries the risk of losing money. Never bet with money you cannot afford to lose. If you feel you have a gambling problem, seek help at begambleaware.org or call 1-800-522-4700.',
     };
 
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error in /api/analyze:', error);
     
-    // Ako je OpenAI greška, vrati mock
+    // If OpenAI error, return mock
     if (error instanceof OpenAI.APIError) {
       console.error('OpenAI API Error:', error.message);
     }
     
     return NextResponse.json(
-      { error: 'Interna greška servera' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
 /**
- * Validira risk level string
+ * Validates risk level string
  */
 function validateRiskLevel(level: string): RiskLevel {
   const normalized = level?.toUpperCase?.();
@@ -154,7 +165,7 @@ function validateRiskLevel(level: string): RiskLevel {
 }
 
 /**
- * Fallback: Generiše mock analizu ako OpenAI nije dostupan
+ * Fallback: Generates mock analysis if OpenAI is not available
  */
 function generateMockAnalysis(data: AnalyzeRequest): AnalyzeResponse {
   const impliedHomeWin = data.odds?.home > 0 ? (1 / data.odds.home) * 100 : 33;
@@ -175,10 +186,10 @@ function generateMockAnalysis(data: AnalyzeRequest): AnalyzeResponse {
 
   return {
     probabilities: { homeWin, draw, awayWin, over: null, under: null },
-    valueComment: `Analiza bazirana na kvotama. Margin kladionice: ${(total - 100).toFixed(1)}%.`,
+    valueComment: `Analysis based on odds. Bookmaker margin: ${(total - 100).toFixed(1)}%.`,
     riskLevel,
-    analysisSummary: `Meč ${data.teamA || 'Tim A'} vs ${data.teamB || 'Tim B'}: Domaćin ${homeWin}%, ${draw !== null ? `nerešeno ${draw}%, ` : ''}gost ${awayWin}%.`,
+    analysisSummary: `Match ${data.teamA || 'Team A'} vs ${data.teamB || 'Team B'}: Home ${homeWin}%, ${draw !== null ? `draw ${draw}%, ` : ''}away ${awayWin}%.`,
     responsibleGamblingNote:
-      'Ova analiza je samo informativna. Klađenje nosi rizik gubitka novca.',
+      'This analysis is for informational purposes only. Betting carries the risk of losing money.',
   };
 }

@@ -1,8 +1,8 @@
 /**
- * Footer komponenta za BetSense AI
+ * Footer component for BetSense AI
  * 
- * Sadrži linkove ka legalnim stranicama i globalni disclaimer.
- * VAŽNO: Disclaimer je obavezan element i mora biti vidljiv na svim stranicama.
+ * Contains links to legal pages and global disclaimer.
+ * IMPORTANT: Disclaimer is a mandatory element and must be visible on all pages.
  */
 
 import Link from 'next/link';
@@ -12,36 +12,36 @@ export default function Footer() {
 
   return (
     <footer className="bg-gray-900 text-gray-300">
-      {/* Glavni disclaimer - OBAVEZNO prikazati */}
+      {/* Main disclaimer - MUST display */}
       <div className="bg-amber-900/30 border-t border-amber-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <p className="text-amber-200 text-sm text-center leading-relaxed">
-            <strong>⚠️ Važno upozorenje:</strong> BetSense AI je analitički i edukativni alat. 
-            Ne pružamo garantovane tipove, dojave niti finansijski savet. 
-            Sportsko klađenje nosi rizik gubitka novca. Kladite se odgovorno. 
-            <strong> Samo 18+ korisnici.</strong>
+            <strong>⚠️ Important Warning:</strong> BetSense AI is an analytical and educational tool. 
+            We do not provide guaranteed tips, insider information, or financial advice. 
+            Sports betting carries a risk of losing money. Bet responsibly. 
+            <strong> 18+ users only.</strong>
           </p>
         </div>
       </div>
 
-      {/* Footer sadržaj */}
+      {/* Footer content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Brand kolona */}
+          {/* Brand column */}
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <span className="text-xl font-bold text-white">BetSense</span>
               <span className="text-xl font-light text-gray-400">AI</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              AI-powered analiza sportskih događaja. Edukativni alat za informisano 
-              donošenje odluka u svetu sportskog klađenja.
+              AI-powered analysis of sports events. An educational tool for informed 
+              decision-making in the world of sports betting.
             </p>
           </div>
 
-          {/* Brzi linkovi */}
+          {/* Quick links */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Navigacija</h3>
+            <h3 className="text-white font-semibold mb-4">Navigation</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/" className="text-gray-400 hover:text-white transition-colors text-sm">
@@ -61,7 +61,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Legalni linkovi */}
+          {/* Legal links */}
           <div>
             <h3 className="text-white font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
@@ -87,7 +87,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
           <p className="text-gray-500 text-sm">
-            © {currentYear} BetSense AI. Sva prava zadržana.
+            © {currentYear} BetSense AI. All rights reserved.
           </p>
         </div>
       </div>

@@ -1,7 +1,7 @@
 /**
- * Pricing Teaser sekcija za landing stranicu
+ * Pricing Teaser section for landing page
  * 
- * Kratak pregled pricing planova sa CTA ka /pricing stranici.
+ * Brief overview of pricing plans with CTA to /pricing page.
  */
 
 import Link from 'next/link';
@@ -11,10 +11,10 @@ export default function PricingTeaser() {
     <section className="section-container">
       <div className="text-center mb-12">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          Odaberi Svoj Plan
+          Choose Your Plan
         </h2>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Počni besplatno ili otključaj napredne funkcije sa Pro i Premium planovima.
+          Start for free or unlock advanced features with Pro and Premium plans.
         </p>
       </div>
 
@@ -23,26 +23,26 @@ export default function PricingTeaser() {
         <div className="card text-center">
           <h3 className="text-xl font-bold text-gray-900 mb-2">Free</h3>
           <div className="text-4xl font-bold text-gray-900 mb-4">
-            €0<span className="text-lg text-gray-500 font-normal">/mes</span>
+            €0<span className="text-lg text-gray-500 font-normal">/mo</span>
           </div>
-          <p className="text-gray-600 mb-6">Probaj osnovne funkcije</p>
+          <p className="text-gray-600 mb-6">Try basic features</p>
           <Link href="/pricing" className="btn-secondary w-full block text-center">
-            Saznaj Više
+            Learn More
           </Link>
         </div>
 
-        {/* PRO - istaknuto */}
+        {/* PRO - highlighted */}
         <div className="card text-center border-2 border-primary-600 relative">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-sm font-bold px-4 py-1 rounded-full">
-            POPULARNO
+            POPULAR
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
           <div className="text-4xl font-bold text-primary-600 mb-4">
-            €9.99<span className="text-lg text-gray-500 font-normal">/mes</span>
+            €9.99<span className="text-lg text-gray-500 font-normal">/mo</span>
           </div>
-          <p className="text-gray-600 mb-6">Za ozbiljne analitičare</p>
+          <p className="text-gray-600 mb-6">For serious analysts</p>
           <Link href="/pricing" className="btn-primary w-full block text-center">
-            Aktiviraj Pro
+            Activate Pro
           </Link>
         </div>
 
@@ -50,18 +50,18 @@ export default function PricingTeaser() {
         <div className="card text-center">
           <h3 className="text-xl font-bold text-gray-900 mb-2">Premium</h3>
           <div className="text-4xl font-bold text-gray-900 mb-4">
-            €19.99<span className="text-lg text-gray-500 font-normal">/mes</span>
+            €19.99<span className="text-lg text-gray-500 font-normal">/mo</span>
           </div>
-          <p className="text-gray-600 mb-6">Maksimalne mogućnosti</p>
+          <p className="text-gray-600 mb-6">Maximum capabilities</p>
           <Link href="/pricing" className="btn-secondary w-full block text-center">
-            Saznaj Više
+            Learn More
           </Link>
         </div>
       </div>
 
       <div className="text-center mt-8">
         <Link href="/pricing" className="text-primary-600 font-medium hover:underline">
-          Pogledaj detaljno poređenje planova →
+          View detailed plan comparison →
         </Link>
       </div>
     </section>

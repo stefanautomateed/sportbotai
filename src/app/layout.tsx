@@ -17,13 +17,13 @@ import Footer from '@/components/Footer';
 // Učitavanje Inter fonta sa Google Fonts
 const inter = Inter({ subsets: ['latin'] });
 
-// SEO metadata za celu aplikaciju
+// SEO metadata for the entire application
 export const metadata: Metadata = {
   title: {
     default: 'BetSense AI - AI-Powered Sports Betting Analysis',
     template: '%s | BetSense AI',
   },
-  description: 'AI-powered analitički alat za sportsko klađenje. Edukativni alat za informisano donošenje odluka. Nije tipster servis.',
+  description: 'AI-powered analytical tool for sports betting. Educational tool for informed decision-making. Not a tipster service.',
   keywords: ['sports betting', 'AI analysis', 'betting analytics', 'sports prediction', 'educational tool'],
   authors: [{ name: 'BetSense AI' }],
   robots: {

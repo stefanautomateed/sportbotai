@@ -1,14 +1,14 @@
 /**
  * Terms & Conditions Page (/terms)
  * 
- * Pravni uslovi korišćenja BetSense AI platforme.
+ * Legal terms of use for the BetSense AI platform.
  */
 
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Terms & Conditions',
-  description: 'Uslovi korišćenja BetSense AI platforme.',
+  description: 'Terms of use for the BetSense AI platform.',
 };
 
 export default function TermsPage() {
@@ -18,117 +18,117 @@ export default function TermsPage() {
       <section className="bg-gray-900 text-white py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-bold">Terms & Conditions</h1>
-          <p className="text-gray-400 mt-2">Poslednje ažuriranje: Decembar 2024</p>
+          <p className="text-gray-400 mt-2">Last updated: December 2024</p>
         </div>
       </section>
 
-      {/* Sadržaj */}
+      {/* Content */}
       <section className="section-container">
         <div className="max-w-4xl mx-auto prose prose-gray">
           <div className="card mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">1. Prihvatanje Uslova</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">1. Acceptance of Terms</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Korišćenjem BetSense AI platforme ("Usluga"), prihvataš ove Uslove korišćenja u celosti. 
-              Ako se ne slažeš sa bilo kojim delom ovih uslova, ne smeš koristiti našu Uslugu.
+              By using the BetSense AI platform ("Service"), you accept these Terms of Use in full. 
+              If you do not agree with any part of these terms, you may not use our Service.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Zadržavamo pravo da izmenimo ove uslove u bilo kom trenutku. Nastavak korišćenja Usluge 
-              nakon izmena predstavlja prihvatanje novih uslova.
+              We reserve the right to modify these terms at any time. Continued use of the Service 
+              after modifications constitutes acceptance of the new terms.
             </p>
           </div>
 
           <div className="card mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">2. Opis Usluge</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">2. Service Description</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              BetSense AI je <strong>analitički i edukativni alat</strong> koji koristi algoritme 
-              veštačke inteligencije za analizu sportskih događaja. Usluga pruža:
+              BetSense AI is an <strong>analytical and educational tool</strong> that uses artificial 
+              intelligence algorithms to analyze sports events. The Service provides:
             </p>
             <ul className="list-disc list-inside text-gray-600 space-y-2 mb-4">
-              <li>Procenjene verovatnoće ishoda sportskih događaja</li>
-              <li>Analitičke komentare i procenu rizika</li>
-              <li>Edukativne informacije o odgovornom klađenju</li>
+              <li>Estimated probabilities for sports event outcomes</li>
+              <li>Analytical comments and risk assessment</li>
+              <li>Educational information about responsible gambling</li>
             </ul>
             <div className="bg-amber-50 border-l-4 border-amber-500 p-4">
               <p className="text-amber-800 font-semibold">
-                VAŽNO: BetSense AI NIJE tipster servis, NE pruža garantovane tipove, 
-                dojave niti finansijski savet. Sve analize su isključivo informativne prirode.
+                IMPORTANT: BetSense AI is NOT a tipster service, does NOT provide guaranteed tips, 
+                insider information or financial advice. All analyses are for informational purposes only.
               </p>
             </div>
           </div>
 
           <div className="card mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">3. Odricanje od Odgovornosti</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">3. Disclaimer</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Korisnik izričito razume i prihvata sledeće:
+              The user expressly understands and accepts the following:
             </p>
             <ul className="list-disc list-inside text-gray-600 space-y-2">
-              <li>Sportsko klađenje nosi inherentni rizik gubitka novca</li>
-              <li>Nijedna analiza ne može garantovati dobitak</li>
-              <li>Procene su bazirane na dostupnim podacima i imaju marginu greške</li>
-              <li>Korisnik je jedini odgovoran za svoje odluke o klađenju</li>
-              <li>BetSense AI ne snosi odgovornost za bilo kakve finansijske gubitke</li>
+              <li>Sports betting carries an inherent risk of losing money</li>
+              <li>No analysis can guarantee winnings</li>
+              <li>Estimates are based on available data and have a margin of error</li>
+              <li>The user is solely responsible for their betting decisions</li>
+              <li>BetSense AI is not liable for any financial losses</li>
             </ul>
           </div>
 
           <div className="card mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">4. Uslovi Korišćenja</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">4. Terms of Use</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Da bi koristio Uslugu, moraš:
+              To use the Service, you must:
             </p>
             <ul className="list-disc list-inside text-gray-600 space-y-2">
-              <li>Imati najmanje 18 godina starosti</li>
-              <li>Nalaziti se u jurisdikciji gde je online klađenje legalno</li>
-              <li>Ne koristiti Uslugu za ilegalne aktivnosti</li>
-              <li>Ne pokušavati da manipulišeš ili zloupotrbiš sistem</li>
+              <li>Be at least 18 years of age</li>
+              <li>Be located in a jurisdiction where online betting is legal</li>
+              <li>Not use the Service for illegal activities</li>
+              <li>Not attempt to manipulate or abuse the system</li>
             </ul>
           </div>
 
           <div className="card mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">5. Pretplate i Plaćanje</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">5. Subscriptions and Payment</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Za plaćene planove (Pro, Premium):
+              For paid plans (Pro, Premium):
             </p>
             <ul className="list-disc list-inside text-gray-600 space-y-2">
-              <li>Plaćanje se vrši putem Stripe payment sistema</li>
-              <li>Pretplate se automatski obnavljaju mesečno</li>
-              <li>Možeš otkazati pretplatu u bilo kom trenutku</li>
-              <li>Povraćaj novca nije moguć za delimično iskorišćen period</li>
-              <li>Cene su izražene u EUR i mogu se promeniti uz prethodno obaveštenje</li>
+              <li>Payment is processed through the Stripe payment system</li>
+              <li>Subscriptions automatically renew monthly</li>
+              <li>You can cancel your subscription at any time</li>
+              <li>Refunds are not available for partially used periods</li>
+              <li>Prices are in EUR and may change with prior notice</li>
             </ul>
           </div>
 
           <div className="card mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">6. Intelektualna Svojina</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">6. Intellectual Property</h2>
             <p className="text-gray-600 leading-relaxed">
-              Sav sadržaj na BetSense AI platformi, uključujući tekstove, grafiku, logotipe, 
-              algoritme i softver, je vlasništvo BetSense AI ili naših licencora. 
-              Nije dozvoljeno kopiranje, distribucija ili modifikacija bez pisane dozvole.
+              All content on the BetSense AI platform, including texts, graphics, logos, 
+              algorithms and software, is the property of BetSense AI or our licensors. 
+              Copying, distribution or modification without written permission is not allowed.
             </p>
           </div>
 
           <div className="card mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">7. Ograničenje Odgovornosti</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">7. Limitation of Liability</h2>
             <p className="text-gray-600 leading-relaxed">
-              U maksimalnoj meri dozvoljenoj zakonom, BetSense AI i njegovi vlasnici, zaposleni 
-              i partneri neće biti odgovorni za bilo kakvu direktnu, indirektnu, slučajnu, 
-              posebnu ili posledičnu štetu koja proizilazi iz korišćenja ili nemogućnosti 
-              korišćenja Usluge.
+              To the maximum extent permitted by law, BetSense AI and its owners, employees 
+              and partners shall not be liable for any direct, indirect, incidental, 
+              special or consequential damages arising from the use or inability to use 
+              the Service.
             </p>
           </div>
 
           <div className="card mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">8. Primenjivo Pravo</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">8. Governing Law</h2>
             <p className="text-gray-600 leading-relaxed">
-              Ovi Uslovi korišćenja su regulisani i tumače se u skladu sa zakonima jurisdikcije 
-              u kojoj je BetSense AI registrovan. Bilo kakvi sporovi će se rešavati pred 
-              nadležnim sudovima te jurisdikcije.
+              These Terms of Use are governed by and construed in accordance with the laws of the jurisdiction 
+              in which BetSense AI is registered. Any disputes will be resolved before 
+              the competent courts of that jurisdiction.
             </p>
           </div>
 
           <div className="card">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">9. Kontakt</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">9. Contact</h2>
             <p className="text-gray-600 leading-relaxed">
-              Za sva pitanja u vezi sa ovim Uslovima korišćenja, kontaktiraj nas na:
+              For any questions regarding these Terms of Use, contact us at:
               <br />
               <strong>Email:</strong> legal@betsenseai.com
             </p>

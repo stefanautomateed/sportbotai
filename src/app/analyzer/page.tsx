@@ -1,10 +1,10 @@
 /**
  * Analyzer Page (/analyzer)
  * 
- * Glavna stranica za AI analizu sportskih događaja.
- * Sadrži formu za unos i prikaz rezultata.
+ * Main page for AI analysis of sports events.
+ * Contains form for input and results display.
  * 
- * Koristi AnalyzerFormLive za live podatke iz The Odds API.
+ * Uses AnalyzerFormLive for live data from The Odds API.
  */
 
 'use client';
@@ -25,7 +25,7 @@ export default function AnalyzerPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">Match Analyzer</h1>
           <p className="text-xl text-gray-300">
-            Izaberi meč iz live ponude ili unesi podatke ručno za AI analizu.
+            Select a match from live events or enter data manually for AI analysis.
           </p>
         </div>
       </section>
@@ -34,15 +34,15 @@ export default function AnalyzerPage() {
       <section className="section-container">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Leva strana - forma */}
+            {/* Left side - form */}
             <div>
               <div className="card">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Izaberi ili Unesi Meč</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Select or Enter Match</h2>
                 <AnalyzerFormLive onResult={setResult} onLoading={setLoading} />
               </div>
             </div>
 
-            {/* Desna strana - rezultat */}
+            {/* Right side - result */}
             <div>
               {loading ? (
                 <div className="card">
@@ -66,8 +66,8 @@ export default function AnalyzerPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    <p className="text-gray-600 font-medium">AI analizira meč...</p>
-                    <p className="text-gray-400 text-sm mt-2">Ovo može potrajati nekoliko sekundi</p>
+                    <p className="text-gray-600 font-medium">AI is analyzing the match...</p>
+                    <p className="text-gray-400 text-sm mt-2">This may take a few seconds</p>
                   </div>
                 </div>
               ) : result ? (
@@ -89,10 +89,10 @@ export default function AnalyzerPage() {
                       />
                     </svg>
                     <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                      Rezultat Analize
+                      Analysis Result
                     </h3>
                     <p className="text-gray-500 text-sm max-w-xs">
-                      Izaberi meč iz live ponude ili unesi podatke ručno, pa klikni "Analiziraj Meč" za AI analizu.
+                      Select a match from live events or enter data manually, then click "Analyze Match" for AI analysis.
                     </p>
                   </div>
                 </div>
@@ -103,9 +103,9 @@ export default function AnalyzerPage() {
           {/* Disclaimer */}
           <div className="mt-8 disclaimer-box">
             <p>
-              <strong>⚠️ Napomena:</strong> AI analiza je informativne prirode i bazira se na 
-              statističkim modelima. Ne garantujemo tačnost predviđanja. Svako klađenje 
-              nosiš na sopstvenu odgovornost. Kladi se samo novcem koji možeš priuštiti da izgubiš.
+              <strong>⚠️ Disclaimer:</strong> AI analysis is for informational purposes only and is based on 
+              statistical models. We do not guarantee the accuracy of predictions. All betting 
+              is at your own risk. Only bet with money you can afford to lose.
             </p>
           </div>
         </div>
