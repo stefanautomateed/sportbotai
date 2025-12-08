@@ -19,5 +19,10 @@ export { default as MatchList } from './MatchList';
 export { default as MatchSearchBar } from './MatchSearchBar';
 export { default as MatchPreview } from './MatchPreview';
 
+// Trending components
+export { TrendingMatches } from './TrendingMatches';
+export { TrendingMatchCard } from './TrendingMatchCard';
+
 // Utilities
 export * from './utils';
+export * from './trending';

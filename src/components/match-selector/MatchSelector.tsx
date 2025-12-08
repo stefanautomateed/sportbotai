@@ -18,7 +18,9 @@ import SportTabs from './SportTabs';
 import MatchSearchBar from './MatchSearchBar';
 import LeagueAccordion from './LeagueAccordion';
 import MatchPreview from './MatchPreview';
+import { TrendingMatches } from './TrendingMatches';
 import { groupMatchesByLeague, filterLeagueGroupsBySearch, LeagueGroup } from './utils';
+import { getTrendingMatches, TrendingMatch } from './trending';
 
 interface MatchSelectorProps {
   onResult: (result: AnalyzeResponse) => void;
@@ -78,6 +80,15 @@ export default function MatchSelector({ onResult, onLoading }: MatchSelectorProp
   const filteredLeagueGroups = useMemo(() => {
     return filterLeagueGroupsBySearch(leagueGroups, searchQuery);
   }, [leagueGroups, searchQuery]);
+
+  // Trending matches for current category
+  const trendingMatches = useMemo(() => {
+    if (events.length === 0) return [];
+    return getTrendingMatches(events, 8);
+  }, [events]);
+
+  // Check if search is active (to hide trending section)
+  const isSearching = searchQuery.trim().length > 0;
 
   // Total match counts for search UI
   const totalMatches = useMemo(() => events.length, [events]);
@@ -204,6 +215,16 @@ export default function MatchSelector({ onResult, onLoading }: MatchSelectorProp
   };
 
   const handleMatchSelect = (match: MatchData) => {
+    setSelectedEvent(match);
+
+    // If event doesn't have odds, fetch them
+    if (!match.odds || match.odds.home === 0) {
+      fetchEventOdds(selectedSportKey, match.matchId);
+    }
+  };
+
+  const handleTrendingMatchSelect = (match: TrendingMatch) => {
+    // Trending matches already have full data, just select
     setSelectedEvent(match);
 
     // If event doesn't have odds, fetch them
@@ -340,6 +361,16 @@ export default function MatchSelector({ onResult, onLoading }: MatchSelectorProp
               totalMatches={totalMatches}
               filteredMatches={filteredMatches}
             />
+
+            {/* Trending Matches (hide when searching) */}
+            {!isSearching && (
+              <TrendingMatches
+                matches={trendingMatches}
+                selectedMatchId={selectedEvent?.matchId || null}
+                onSelectMatch={handleTrendingMatchSelect}
+                isLoading={loadingEvents}
+              />
+            )}
 
             {/* Error Message */}
             {error && !loadingEvents && (
