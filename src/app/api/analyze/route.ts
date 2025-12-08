@@ -1,8 +1,10 @@
 /**
  * API Route: /api/analyze
  * 
- * AI-powered sports match analysis endpoint.
+ * AI-powered multi-sport match analysis endpoint.
  * Returns analysis strictly following the FINAL JSON schema.
+ * 
+ * Supports: Soccer, NBA, NFL, Tennis, NHL, MMA, MLB, and more.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -18,6 +20,7 @@ import {
   MarketType,
   MarketConfidence,
 } from '@/types';
+import { getSportConfig, getSportTerminology } from '@/lib/config/sportsConfig';
 
 // ============================================
 // OPENAI CLIENT (LAZY INIT)
@@ -38,10 +41,153 @@ function getOpenAIClient(): OpenAI | null {
 }
 
 // ============================================
-// FINAL SYSTEM PROMPT
+// SPORT-AWARE SYSTEM PROMPT BUILDER
 // ============================================
 
-const SYSTEM_PROMPT = `You are an assistant that analyzes football matches strictly for educational and informational purposes.
+/**
+ * Build system prompt tailored to the specific sport
+ */
+function buildSystemPrompt(sport: string, sportKey?: string): string {
+  const config = getSportConfig(sportKey || sport);
+  const terminology = getSportTerminology(sportKey || sport);
+  
+  const sportName = config?.displayName || sport || 'Sports';
+  const matchTerm = terminology.matchTerm;
+  const participantTerm = terminology.participantTerm;
+  const scoringUnit = terminology.scoringUnit;
+  const hasDraw = terminology.hasDraw;
+
+  return `You are an assistant that analyzes ${sportName} ${matchTerm}es strictly for educational and informational purposes.
+
+You MUST follow these rules:
+- NEVER give betting tips.
+- NEVER tell the user what to bet.
+- NEVER imply certainty or guaranteed outcomes.
+- ALWAYS include responsible gambling messaging.
+- ALWAYS return a SINGLE valid JSON object EXACTLY following the schema provided below.
+
+SPORT-SPECIFIC CONTEXT:
+- Sport: ${sportName}
+- Match term: ${matchTerm}
+- Participant term: ${participantTerm}
+- Scoring unit: ${scoringUnit}
+- Has draw outcome: ${hasDraw ? 'Yes (analyze 1X2 market)' : 'No (analyze moneyline/h2h only)'}
+
+Your tasks include:
+- Estimating probabilities${hasDraw ? ' (home win, draw, away win)' : ' (home/participant A win, away/participant B win)'}
+- Comparing implied odds
+- Identifying potential value levels cautiously
+- Explaining risk
+- Analyzing psychological biases
+- Evaluating momentum and form trends
+- Scoring market stability
+- Describing tactical/strategic dynamics appropriate for ${sportName}
+- Generating an expert-style one-liner
+- Incorporating user context
+
+You must return ONLY valid JSON, no commentary, no markdown, no prose.
+
+=== REQUIRED JSON SCHEMA ===
+
+{
+  "success": true,
+  "matchInfo": {
+    "sport": "<string>",
+    "leagueName": "<string>",
+    "matchDate": "<string ISO 8601>",
+    "homeTeam": "<string>",
+    "awayTeam": "<string>",
+    "sourceType": "MANUAL" | "API",
+    "dataQuality": "LOW" | "MEDIUM" | "HIGH"
+  },
+  "probabilities": {
+    "homeWin": <number 0-100 | null>,
+    "draw": <number 0-100 | null>,
+    "awayWin": <number 0-100 | null>,
+    "over": <number 0-100 | null>,
+    "under": <number 0-100 | null>
+  },
+  "valueAnalysis": {
+    "impliedProbabilities": {
+      "homeWin": <number 0-100 | null>,
+      "draw": <number 0-100 | null>,
+      "awayWin": <number 0-100 | null>
+    },
+    "valueFlags": {
+      "homeWin": "NONE" | "LOW" | "MEDIUM" | "HIGH",
+      "draw": "NONE" | "LOW" | "MEDIUM" | "HIGH",
+      "awayWin": "NONE" | "LOW" | "MEDIUM" | "HIGH"
+    },
+    "bestValueSide": "HOME" | "DRAW" | "AWAY" | "NONE",
+    "valueCommentShort": "<string>",
+    "valueCommentDetailed": "<string>"
+  },
+  "riskAnalysis": {
+    "overallRiskLevel": "LOW" | "MEDIUM" | "HIGH",
+    "riskExplanation": "<string>",
+    "bankrollImpact": "<string>",
+    "psychologyBias": {
+      "name": "<string>",
+      "description": "<string>"
+    }
+  },
+  "momentumAndForm": {
+    "homeMomentumScore": <number 1-10 | null>,
+    "awayMomentumScore": <number 1-10 | null>,
+    "homeTrend": "RISING" | "FALLING" | "STABLE" | "UNKNOWN",
+    "awayTrend": "RISING" | "FALLING" | "STABLE" | "UNKNOWN",
+    "keyFormFactors": ["<string>", ...]
+  },
+  "marketStability": {
+    "markets": {
+      "main_1x2": {
+        "stability": "LOW" | "MEDIUM" | "HIGH",
+        "confidence": <1-5>,
+        "comment": "<string>"
+      },
+      "over_under": {
+        "stability": "LOW" | "MEDIUM" | "HIGH",
+        "confidence": <1-5>,
+        "comment": "<string>"
+      },
+      "btts": {
+        "stability": "LOW" | "MEDIUM" | "HIGH",
+        "confidence": <1-5>,
+        "comment": "<string>"
+      }
+    },
+    "safestMarketType": "1X2" | "OVER_UNDER" | "BTTS" | "NONE",
+    "safestMarketExplanation": "<string>"
+  },
+  "upsetPotential": {
+    "upsetProbability": <number 0-100>,
+    "upsetComment": "<string>"
+  },
+  "tacticalAnalysis": {
+    "stylesSummary": "<string>",
+    "matchNarrative": "<string>",
+    "keyMatchFactors": ["<string>", ...],
+    "expertConclusionOneLiner": "<string>"
+  },
+  "userContext": {
+    "userPick": "<string>",
+    "userStake": <number>,
+    "pickComment": "<string>"
+  },
+  "responsibleGambling": {
+    "coreNote": "<string>",
+    "tailoredNote": "<string>"
+  },
+  "meta": {
+    "modelVersion": "1.0.0",
+    "analysisGeneratedAt": "<string ISO 8601>",
+    "warnings": ["<string>", ...]
+  }
+}`;
+}
+
+// Legacy SYSTEM_PROMPT for backward compatibility
+const SYSTEM_PROMPT = `You are an assistant that analyzes sports matches strictly for educational and informational purposes.
 
 You MUST follow these rules:
 - NEVER give betting tips.
@@ -163,7 +309,7 @@ You must return ONLY valid JSON, no commentary, no markdown, no prose.
 }`;
 
 // ============================================
-// USER PROMPT BUILDER
+// USER PROMPT BUILDER (MULTI-SPORT AWARE)
 // ============================================
 
 function buildUserPrompt(
@@ -173,7 +319,13 @@ function buildUserPrompt(
 ): string {
   const matchDataJson = JSON.stringify(matchData, null, 2);
   
-  return `Analyze the following football match and return a complete JSON analysis.
+  // Get sport-specific terminology
+  const terminology = getSportTerminology(matchData.sport);
+  const matchTerm = terminology.matchTerm;
+  const scoringUnit = terminology.scoringUnit;
+  const hasDraw = terminology.hasDraw;
+  
+  return `Analyze the following ${matchData.sport} ${matchTerm} and return a complete JSON analysis.
 
 === MATCH DATA ===
 ${matchDataJson}
@@ -182,15 +334,21 @@ ${matchDataJson}
 User's Pick: ${userPick || 'None provided'}
 User's Stake: ${userStake !== undefined ? userStake : 0}
 
+=== SPORT-SPECIFIC NOTES ===
+- Sport: ${matchData.sport}
+- Scoring unit: ${scoringUnit}
+- Draw outcome possible: ${hasDraw ? 'Yes' : 'No (set draw probability to null)'}
+
 === INSTRUCTIONS ===
 1. Fill every field of the JSON schema.
 2. If data is missing, mark quality as LOW, add warnings, and still produce a full analysis.
 3. If something is critically missing (e.g. no teams), set success=false and fill the "error" field.
-4. Use realistic football logic and statistical reasoning.
+4. Use realistic ${matchData.sport} logic and statistical reasoning appropriate for this sport.
 5. NEVER exceed the JSON schema boundaries.
 6. NEVER recommend a bet.
 7. Calculate implied probabilities from odds using: impliedProb = (1 / decimalOdds) * 100
 8. Use "modelVersion": "1.0.0" and set "analysisGeneratedAt" to current ISO timestamp.
+${!hasDraw ? '9. Since this sport typically has no draws, set draw probability to null and draw valueFlag to "NONE".' : ''}
 
 Return ONLY the JSON object defined in the schema. No other text.`;
 }
@@ -222,7 +380,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(generateFallbackAnalysis(normalizedRequest));
     }
 
-    // Call OpenAI API
+    // Call OpenAI API with sport-aware prompt
     const analysis = await callOpenAI(openai, normalizedRequest);
     return NextResponse.json(analysis);
 
@@ -307,7 +465,7 @@ function validateRequest(req: AnalyzeRequest): { valid: boolean; error?: string 
 }
 
 // ============================================
-// OPENAI API CALL
+// OPENAI API CALL (MULTI-SPORT AWARE)
 // ============================================
 
 async function callOpenAI(
@@ -320,10 +478,16 @@ async function callOpenAI(
     request.userStake
   );
 
+  // Build sport-aware system prompt
+  const sportAwareSystemPrompt = buildSystemPrompt(
+    request.matchData.sport,
+    (request.matchData as any).sportKey // Optional sportKey for more precise config lookup
+  );
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: sportAwareSystemPrompt },
       { role: 'user', content: userPrompt },
     ],
     temperature: 0.7,

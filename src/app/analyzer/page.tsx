@@ -1,20 +1,21 @@
 /**
  * Analyzer Page (/analyzer)
  * 
- * Main page for AI-powered sports match analysis.
- * Supports both live API data and manual entry modes.
+ * Main page for AI-powered multi-sport match analysis.
+ * Supports Soccer, NBA, NFL, Tennis, NHL, MMA, and more.
  * 
  * Flow:
- * 1. User selects a match (live) or enters data manually
- * 2. User optionally provides their pick and stake
- * 3. System fetches match data and calls /api/analyze
- * 4. Results are displayed in structured sections
+ * 1. User selects sport category and league
+ * 2. User selects a specific match or enters data manually
+ * 3. User optionally provides their pick and stake
+ * 4. System fetches match data and calls /api/analyze
+ * 5. Results are displayed in structured sections
  */
 
 'use client';
 
 import { useState, useCallback } from 'react';
-import AnalyzerFormLive from '@/components/AnalyzerFormLive';
+import MultiSportAnalyzerForm from '@/components/MultiSportAnalyzerForm';
 import { AnalysisResults } from '@/components/analyzer';
 import { AnalyzeResponse } from '@/types';
 
@@ -57,37 +58,37 @@ export default function AnalyzerPage() {
       {/* Header */}
       <section className="bg-gradient-to-br from-primary-900 via-primary-800 to-primary-900 text-white py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">Match Analyzer</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">Multi-Sport Analyzer</h1>
           <p className="text-xl text-primary-200 max-w-2xl mx-auto">
-            Get AI-powered analysis with probability estimates, value detection, 
-            risk assessment, and tactical insights.
+            AI-powered analysis for Soccer, NBA, NFL, Tennis, NHL, and more.
+            Get probability estimates, value detection, and risk assessment.
           </p>
           
-          {/* Quick Stats */}
-          <div className="flex flex-wrap justify-center gap-6 mt-8">
-            <div className="flex items-center gap-2 text-primary-200">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              <span className="text-sm">Probability Estimates</span>
+          {/* Sport Icons */}
+          <div className="flex flex-wrap justify-center gap-4 mt-8">
+            <div className="flex items-center gap-2 text-primary-200 bg-primary-800/50 px-3 py-2 rounded-lg">
+              <span className="text-xl">⚽</span>
+              <span className="text-sm">Soccer</span>
             </div>
-            <div className="flex items-center gap-2 text-primary-200">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-sm">Value Detection</span>
+            <div className="flex items-center gap-2 text-primary-200 bg-primary-800/50 px-3 py-2 rounded-lg">
+              <span className="text-xl">🏀</span>
+              <span className="text-sm">NBA</span>
             </div>
-            <div className="flex items-center gap-2 text-primary-200">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span className="text-sm">Risk Assessment</span>
+            <div className="flex items-center gap-2 text-primary-200 bg-primary-800/50 px-3 py-2 rounded-lg">
+              <span className="text-xl">🏈</span>
+              <span className="text-sm">NFL</span>
             </div>
-            <div className="flex items-center gap-2 text-primary-200">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span className="text-sm">Tactical Analysis</span>
+            <div className="flex items-center gap-2 text-primary-200 bg-primary-800/50 px-3 py-2 rounded-lg">
+              <span className="text-xl">🎾</span>
+              <span className="text-sm">Tennis</span>
+            </div>
+            <div className="flex items-center gap-2 text-primary-200 bg-primary-800/50 px-3 py-2 rounded-lg">
+              <span className="text-xl">🏒</span>
+              <span className="text-sm">NHL</span>
+            </div>
+            <div className="flex items-center gap-2 text-primary-200 bg-primary-800/50 px-3 py-2 rounded-lg">
+              <span className="text-xl">🥊</span>
+              <span className="text-sm">UFC</span>
             </div>
           </div>
         </div>
@@ -107,9 +108,9 @@ export default function AnalyzerPage() {
                     <svg className="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    Select or Enter Match Data
+                    Select Sport &amp; Match
                   </h2>
-                  <AnalyzerFormLive onResult={handleResult} onLoading={handleLoading} />
+                  <MultiSportAnalyzerForm onResult={handleResult} onLoading={handleLoading} />
                 </div>
               </div>
 
@@ -139,14 +140,14 @@ export default function AnalyzerPage() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-2xl">⚽</span>
+                          <span className="text-2xl">🏆</span>
                         </div>
                       </div>
                       <h3 className="text-lg font-semibold text-gray-700 mt-6 mb-2">
                         AI Analysis in Progress
                       </h3>
                       <p className="text-gray-500 text-center max-w-xs">
-                        Our AI is analyzing match data, calculating probabilities, 
+                        Our AI is analyzing the match data, calculating probabilities, 
                         and generating insights...
                       </p>
                       <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">

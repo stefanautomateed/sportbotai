@@ -1,74 +1,106 @@
 /**
  * API Route: /api/match-data
  * 
- * Fetches and processes match data from The Odds API.
- * Returns structured match data ready for analysis.
+ * Multi-sport match data endpoint.
+ * Fetches and processes match data from The Odds API for various sports.
  * 
  * Endpoints:
- * - GET /api/match-data?sportKey=soccer_epl - Get all events for a sport
- * - GET /api/match-data?sportKey=soccer_epl&eventId=abc123 - Get specific event with odds
+ * - GET /api/match-data?sport=nba - Get events list for a sport
+ * - GET /api/match-data?sportKey=basketball_nba - Get events by Odds API sport key
+ * - GET /api/match-data?sportKey=basketball_nba&eventId=abc123 - Get specific event with odds
+ * - GET /api/match-data?sportKey=basketball_nba&includeOdds=true - Get events with odds (uses quota)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getEvents,
-  getOdds,
-  getEventOdds,
-  calculateAverageOdds,
-  oddsToImpliedProbability,
-  OddsEvent,
-} from '@/lib/odds-api';
 import { MatchData, MatchDataResponse } from '@/types';
+import { 
+  getSportConfig, 
+  SportConfig 
+} from '@/lib/config/sportsConfig';
+import {
+  theOddsClient,
+  OddsApiEvent,
+  calculateAverageOdds,
+  extractTotals,
+  extractBookmakerOdds,
+  oddsToImpliedProbability,
+} from '@/lib/theOdds/theOddsClient';
+import {
+  buildMatchDataFromOddsApiEvent,
+  eventToSimplifiedSummary,
+  SimplifiedEventSummary,
+} from '@/lib/matchData/multiSportMatchData';
+
+// ============================================
+// MAIN GET HANDLER
+// ============================================
 
 /**
  * GET /api/match-data
  * 
  * Query params:
- * - sportKey: Required. The sport key (e.g., "soccer_epl")
+ * - sport: Internal sport ID (e.g., "nba", "nfl")
+ * - sportKey: Odds API sport key (e.g., "basketball_nba")
  * - eventId: Optional. If provided, fetches odds for specific event
  * - includeOdds: Optional. If "true", includes odds with events list (uses quota)
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const sportKey = searchParams.get('sportKey');
+    
+    // Extract parameters
+    const sport = searchParams.get('sport'); // Internal sport ID (e.g., "nba")
+    const sportKey = searchParams.get('sportKey'); // Odds API key (e.g., "basketball_nba")
     const eventId = searchParams.get('eventId');
     const includeOdds = searchParams.get('includeOdds') === 'true';
 
     // Validate API key
-    const apiKey = process.env.ODDS_API_KEY;
-    if (!apiKey) {
+    if (!theOddsClient.isConfigured()) {
       return NextResponse.json<MatchDataResponse>(
         {
           success: false,
-          error: 'ODDS_API_KEY not configured',
+          error: 'ODDS_API_KEY is not configured. Please add it to your environment variables.',
         },
         { status: 500 }
       );
     }
 
-    // Validate sport key
-    if (!sportKey) {
+    // Resolve sport configuration
+    const resolvedSportKey = sportKey || sport;
+    if (!resolvedSportKey) {
       return NextResponse.json<MatchDataResponse>(
         {
           success: false,
-          error: 'sportKey query parameter is required',
+          error: 'Either "sport" or "sportKey" query parameter is required',
         },
         { status: 400 }
       );
     }
 
-    // If eventId is provided, fetch specific event with full odds
-    if (eventId) {
-      return await handleSingleEvent(apiKey, sportKey, eventId);
+    // Get sport configuration
+    const sportConfig = getSportConfig(resolvedSportKey);
+    if (!sportConfig) {
+      return NextResponse.json<MatchDataResponse>(
+        {
+          success: false,
+          error: `Unknown sport: ${resolvedSportKey}. Please check the sport key.`,
+        },
+        { status: 400 }
+      );
     }
 
-    // Otherwise, fetch all events for the sport
-    if (includeOdds) {
-      return await handleEventsWithOdds(apiKey, sportKey);
+    // Route to appropriate handler
+    if (eventId) {
+      // Fetch specific event with full odds
+      return await handleSingleEvent(sportConfig, eventId);
+    } else if (includeOdds) {
+      // Fetch all events with odds (uses quota)
+      return await handleEventsWithOdds(sportConfig);
     } else {
-      return await handleEventsWithoutOdds(apiKey, sportKey);
+      // Fetch events list without odds (free)
+      return await handleEventsWithoutOdds(sportConfig);
     }
+
   } catch (error) {
     console.error('Error in /api/match-data:', error);
     return NextResponse.json<MatchDataResponse>(
@@ -81,23 +113,27 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * Handle request for a single event with full odds
- */
+// ============================================
+// HANDLER: Single Event with Full Odds
+// ============================================
+
 async function handleSingleEvent(
-  apiKey: string,
-  sportKey: string,
+  sportConfig: SportConfig,
   eventId: string
 ): Promise<NextResponse<MatchDataResponse>> {
   try {
-    const result = await getEventOdds(apiKey, sportKey, eventId, {
-      regions: ['eu', 'uk'],
-      markets: ['h2h', 'totals'],
-      oddsFormat: 'decimal',
-    });
+    const result = await theOddsClient.getEventOdds(
+      sportConfig.oddsApiSportKey,
+      eventId,
+      {
+        regions: ['eu', 'uk', 'us'],
+        markets: ['h2h', 'totals'],
+        oddsFormat: 'decimal',
+      }
+    );
 
     const event = result.data;
-    const matchData = transformEventToMatchData(event, sportKey);
+    const matchData = buildMatchDataFromOddsApiEvent(sportConfig, event);
 
     return NextResponse.json<MatchDataResponse>({
       success: true,
@@ -119,21 +155,24 @@ async function handleSingleEvent(
   }
 }
 
-/**
- * Handle request for all events with odds (uses API quota)
- */
+// ============================================
+// HANDLER: Events List with Odds (Uses Quota)
+// ============================================
+
 async function handleEventsWithOdds(
-  apiKey: string,
-  sportKey: string
+  sportConfig: SportConfig
 ): Promise<NextResponse<MatchDataResponse>> {
-  const result = await getOdds(apiKey, sportKey, {
-    regions: ['eu'],
-    markets: ['h2h'],
-    oddsFormat: 'decimal',
-  });
+  const result = await theOddsClient.getOddsForSport(
+    sportConfig.oddsApiSportKey,
+    {
+      regions: ['eu'],
+      markets: ['h2h', 'totals'],
+      oddsFormat: 'decimal',
+    }
+  );
 
-  const events = result.data.map((event) =>
-    transformEventToMatchData(event, sportKey)
+  const events = result.data.map(event => 
+    buildMatchDataFromOddsApiEvent(sportConfig, event)
   );
 
   return NextResponse.json<MatchDataResponse>({
@@ -143,123 +182,108 @@ async function handleEventsWithOdds(
   });
 }
 
-/**
- * Handle request for all events without odds (free, no quota)
- */
+// ============================================
+// HANDLER: Events List without Odds (Free)
+// ============================================
+
 async function handleEventsWithoutOdds(
-  apiKey: string,
-  sportKey: string
+  sportConfig: SportConfig
 ): Promise<NextResponse<MatchDataResponse>> {
-  const result = await getEvents(apiKey, sportKey);
+  const result = await theOddsClient.getEvents(sportConfig.oddsApiSportKey);
 
-  const events = result.data.map((event) =>
-    transformEventToMatchData(event, sportKey)
-  );
-
-  return NextResponse.json<MatchDataResponse>({
-    success: true,
-    events,
-    requestsRemaining: result.requestsRemaining,
-  });
-}
-
-/**
- * Transform raw API event to structured MatchData
- */
-function transformEventToMatchData(event: OddsEvent, sportKey: string): MatchData {
-  const averageOdds = calculateAverageOdds(event);
-  const hasOdds = event.bookmakers && event.bookmakers.length > 0;
-
-  // Extract bookmaker odds
-  const bookmakers: MatchData['bookmakers'] = [];
-  if (event.bookmakers) {
-    for (const bm of event.bookmakers) {
-      const h2h = bm.markets.find((m) => m.key === 'h2h');
-      if (!h2h) continue;
-
-      const homeOutcome = h2h.outcomes.find((o) => o.name === event.home_team);
-      const awayOutcome = h2h.outcomes.find((o) => o.name === event.away_team);
-      const drawOutcome = h2h.outcomes.find((o) => o.name === 'Draw');
-
-      if (homeOutcome && awayOutcome) {
-        bookmakers.push({
-          name: bm.title,
-          home: homeOutcome.price,
-          draw: drawOutcome?.price ?? null,
-          away: awayOutcome.price,
-        });
-      }
-    }
-  }
-
-  // Extract over/under odds if available
-  let overUnderLine: number | undefined;
-  let over: number | undefined;
-  let under: number | undefined;
-
-  if (event.bookmakers) {
-    for (const bm of event.bookmakers) {
-      const totals = bm.markets.find((m) => m.key === 'totals');
-      if (totals && totals.outcomes.length >= 2) {
-        const overOutcome = totals.outcomes.find((o) => o.name === 'Over');
-        const underOutcome = totals.outcomes.find((o) => o.name === 'Under');
-        if (overOutcome && underOutcome) {
-          overUnderLine = overOutcome.point;
-          over = overOutcome.price;
-          under = underOutcome.price;
-          break; // Use first bookmaker's totals
-        }
-      }
-    }
-  }
-
-  // Calculate implied probabilities
-  const impliedProbabilities = {
-    home: averageOdds.home > 0 ? oddsToImpliedProbability(averageOdds.home) : 0,
-    draw: averageOdds.draw ? oddsToImpliedProbability(averageOdds.draw) : null,
-    away: averageOdds.away > 0 ? oddsToImpliedProbability(averageOdds.away) : 0,
-  };
-
-  // Determine sport name from sport_key
-  const sportName = getSportName(sportKey);
-  const leagueName = event.sport_title || sportKey;
-
-  return {
+  // Build basic match data for each event (won't have odds)
+  const events: MatchData[] = result.data.map((event: OddsApiEvent) => ({
     matchId: event.id,
-    sport: sportName,
-    sportKey: sportKey,
-    league: leagueName,
+    sport: sportConfig.displayName,
+    sportKey: sportConfig.oddsApiSportKey,
+    league: event.sport_title || sportConfig.displayName,
     homeTeam: event.home_team,
     awayTeam: event.away_team,
     commenceTime: event.commence_time,
-    sourceType: 'API',
+    sourceType: 'API' as const,
     odds: {
-      home: averageOdds.home,
-      draw: averageOdds.draw,
-      away: averageOdds.away,
-      overUnderLine,
-      over,
-      under,
+      home: 0,
+      draw: sportConfig.hasDraw ? null : null,
+      away: 0,
     },
-    bookmakers,
-    averageOdds,
-    impliedProbabilities,
-  };
+    bookmakers: [],
+    averageOdds: { home: 0, draw: null, away: 0 },
+    impliedProbabilities: { home: 0, draw: null, away: 0 },
+  }));
+
+  return NextResponse.json<MatchDataResponse>({
+    success: true,
+    events,
+    requestsRemaining: result.requestsRemaining,
+  });
 }
 
-/**
- * Get human-readable sport name from sport key
- */
-function getSportName(sportKey: string): string {
-  if (sportKey.startsWith('soccer')) return 'Soccer';
-  if (sportKey.startsWith('basketball')) return 'Basketball';
-  if (sportKey.startsWith('tennis')) return 'Tennis';
-  if (sportKey.startsWith('icehockey')) return 'Ice Hockey';
-  if (sportKey.startsWith('americanfootball')) return 'American Football';
-  if (sportKey.startsWith('baseball')) return 'Baseball';
-  if (sportKey.startsWith('mma')) return 'MMA';
-  if (sportKey.startsWith('boxing')) return 'Boxing';
-  if (sportKey.startsWith('cricket')) return 'Cricket';
-  if (sportKey.startsWith('rugby')) return 'Rugby';
-  return 'Sports';
+// ============================================
+// POST HANDLER (for manual data submission)
+// ============================================
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    // Validate required fields
+    if (!body.homeTeam || !body.awayTeam) {
+      return NextResponse.json<MatchDataResponse>(
+        {
+          success: false,
+          error: 'homeTeam and awayTeam are required',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Get sport config if sport is provided
+    const sportConfig = body.sport ? getSportConfig(body.sport) : null;
+
+    // Build manual match data
+    const matchData: MatchData = {
+      matchId: `manual_${Date.now()}`,
+      sport: sportConfig?.displayName || body.sport || 'Soccer',
+      sportKey: sportConfig?.oddsApiSportKey || body.sportKey || 'soccer',
+      league: body.league || 'Unknown League',
+      homeTeam: body.homeTeam,
+      awayTeam: body.awayTeam,
+      commenceTime: body.matchDate || new Date().toISOString(),
+      sourceType: 'MANUAL',
+      odds: {
+        home: body.odds?.home || body.oddsHome || 0,
+        draw: body.odds?.draw ?? body.oddsDraw ?? null,
+        away: body.odds?.away || body.oddsAway || 0,
+        overUnderLine: body.odds?.overUnderLine,
+        over: body.odds?.over,
+        under: body.odds?.under,
+      },
+      bookmakers: [],
+      averageOdds: {
+        home: body.odds?.home || body.oddsHome || 0,
+        draw: body.odds?.draw ?? body.oddsDraw ?? null,
+        away: body.odds?.away || body.oddsAway || 0,
+      },
+      impliedProbabilities: {
+        home: body.odds?.home > 0 ? oddsToImpliedProbability(body.odds.home) : 0,
+        draw: body.odds?.draw > 0 ? oddsToImpliedProbability(body.odds.draw) : null,
+        away: body.odds?.away > 0 ? oddsToImpliedProbability(body.odds.away) : 0,
+      },
+    };
+
+    return NextResponse.json<MatchDataResponse>({
+      success: true,
+      data: matchData,
+    });
+
+  } catch (error) {
+    console.error('Error in POST /api/match-data:', error);
+    return NextResponse.json<MatchDataResponse>(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error',
+      },
+      { status: 500 }
+    );
+  }
 }
