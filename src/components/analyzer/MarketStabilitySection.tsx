@@ -14,9 +14,9 @@ interface MarketStabilitySectionProps {
 }
 
 const stabilityConfig: Record<RiskLevel, { label: string; color: string; bgColor: string; borderColor: string }> = {
-  LOW: { label: 'Low', color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
-  MEDIUM: { label: 'Medium', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
-  HIGH: { label: 'High', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
+  LOW: { label: 'Low', color: 'text-accent-red', bgColor: 'bg-accent-red/5', borderColor: 'border-accent-red/20' },
+  MEDIUM: { label: 'Medium', color: 'text-accent-gold', bgColor: 'bg-accent-gold/5', borderColor: 'border-accent-gold/20' },
+  HIGH: { label: 'High', color: 'text-accent-green', bgColor: 'bg-accent-green/5', borderColor: 'border-accent-green/20' },
 };
 
 const marketTypeLabels: Record<string, { name: string; icon: string }> = {
@@ -86,51 +86,40 @@ function MarketCard({ marketKey, market }: MarketCardProps) {
 
 export default function MarketStabilitySection({ marketStability }: MarketStabilitySectionProps) {
   return (
-    <div className="card">
-      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <svg className="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h3 className="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
+        <span className="text-xl">🛡️</span>
         Market Stability
       </h3>
 
       {/* Market Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
         <MarketCard marketKey="main_1x2" market={marketStability.markets.main_1x2} />
         <MarketCard marketKey="over_under" market={marketStability.markets.over_under} />
         <MarketCard marketKey="btts" market={marketStability.markets.btts} />
       </div>
 
       {/* Safest Market Recommendation */}
-      <div className="border-t border-gray-200 pt-4">
+      <div className="border-t border-gray-100 pt-4">
         <div className={`p-4 rounded-lg ${
           marketStability.safestMarketType !== 'NONE' 
-            ? 'bg-emerald-50 border border-emerald-200' 
-            : 'bg-gray-50 border border-gray-200'
+            ? 'bg-accent-green/5 border border-accent-green/20' 
+            : 'bg-gray-50 border border-gray-100'
         }`}>
           <div className="flex items-start gap-3">
             <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
               marketStability.safestMarketType !== 'NONE' 
-                ? 'bg-emerald-100' 
+                ? 'bg-accent-green/10' 
                 : 'bg-gray-200'
             }`}>
-              <svg 
-                className={`w-5 h-5 ${
-                  marketStability.safestMarketType !== 'NONE' 
-                    ? 'text-emerald-600' 
-                    : 'text-gray-500'
-                }`} 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <span className="text-xl">
+                {marketStability.safestMarketType !== 'NONE' ? '✅' : '❓'}
+              </span>
             </div>
             <div>
               <h4 className={`font-semibold ${
                 marketStability.safestMarketType !== 'NONE' 
-                  ? 'text-emerald-800' 
+                  ? 'text-accent-green' 
                   : 'text-gray-600'
               }`}>
                 Safest Market: {safestMarketLabels[marketStability.safestMarketType]}

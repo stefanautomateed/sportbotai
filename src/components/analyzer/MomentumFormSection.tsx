@@ -16,8 +16,8 @@ interface MomentumFormSectionProps {
 }
 
 const trendConfig: Record<Trend, { label: string; icon: string; color: string; bgColor: string }> = {
-  RISING: { label: 'Rising', icon: '↗', color: 'text-green-600', bgColor: 'bg-green-100' },
-  FALLING: { label: 'Falling', icon: '↘', color: 'text-red-600', bgColor: 'bg-red-100' },
+  RISING: { label: 'Rising', icon: '↗', color: 'text-accent-green', bgColor: 'bg-accent-green/10' },
+  FALLING: { label: 'Falling', icon: '↘', color: 'text-accent-red', bgColor: 'bg-accent-red/10' },
   STABLE: { label: 'Stable', icon: '→', color: 'text-gray-600', bgColor: 'bg-gray-100' },
   UNKNOWN: { label: 'Unknown', icon: '?', color: 'text-gray-400', bgColor: 'bg-gray-50' },
 };
@@ -37,20 +37,20 @@ function MomentumMeter({ score, trend, teamName, isHome }: MomentumMeterProps) {
   // Color gradient based on score
   const getScoreColor = (s: number | null) => {
     if (s === null) return 'text-gray-400';
-    if (s >= 7) return 'text-green-600';
-    if (s >= 5) return 'text-amber-600';
-    return 'text-red-600';
+    if (s >= 7) return 'text-accent-green';
+    if (s >= 5) return 'text-accent-gold';
+    return 'text-accent-red';
   };
 
   const getBarColor = (s: number | null) => {
     if (s === null) return 'bg-gray-300';
-    if (s >= 7) return 'bg-green-500';
-    if (s >= 5) return 'bg-amber-500';
-    return 'bg-red-500';
+    if (s >= 7) return 'bg-accent-green';
+    if (s >= 5) return 'bg-accent-gold';
+    return 'bg-accent-red';
   };
 
   return (
-    <div className={`p-4 rounded-lg ${isHome ? 'bg-emerald-50 border border-emerald-200' : 'bg-blue-50 border border-blue-200'}`}>
+    <div className={`p-4 rounded-lg ${isHome ? 'bg-accent-green/5 border border-accent-green/20' : 'bg-accent-cyan/5 border border-accent-cyan/20'}`}>
       <div className="flex items-center justify-between mb-2">
         <div>
           <p className="text-xs text-gray-500">{isHome ? 'Home' : 'Away'}</p>
@@ -84,16 +84,14 @@ function MomentumMeter({ score, trend, teamName, isHome }: MomentumMeterProps) {
 
 export default function MomentumFormSection({ momentumAndForm, homeTeam, awayTeam }: MomentumFormSectionProps) {
   return (
-    <div className="card">
-      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <svg className="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h3 className="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
+        <span className="text-xl">📈</span>
         Momentum & Form
       </h3>
 
       {/* Two-column momentum display */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <MomentumMeter
           score={momentumAndForm.homeMomentumScore}
           trend={momentumAndForm.homeTrend}
@@ -110,17 +108,15 @@ export default function MomentumFormSection({ momentumAndForm, homeTeam, awayTea
 
       {/* Key Form Factors */}
       {momentumAndForm.keyFormFactors && momentumAndForm.keyFormFactors.length > 0 && (
-        <div className="border-t border-gray-200 pt-4">
+        <div className="border-t border-gray-100 pt-4">
           <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
+            <span>📋</span>
             Key Form Factors
           </h4>
           <ul className="space-y-2">
             {momentumAndForm.keyFormFactors.map((factor, index) => (
               <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                <span className="flex-shrink-0 w-5 h-5 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-xs font-bold">
+                <span className="flex-shrink-0 w-5 h-5 bg-accent-cyan/10 text-accent-cyan rounded-full flex items-center justify-center text-xs font-bold">
                   {index + 1}
                 </span>
                 {factor}

@@ -244,27 +244,27 @@ export default function ListenToAnalysisButton({ result }: ListenToAnalysisButto
         <button
           onClick={handlePlay}
           disabled={audioState === 'loading'}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
             audioState === 'playing'
-              ? 'bg-primary-100 text-primary-700 hover:bg-primary-200'
+              ? 'bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/30'
               : audioState === 'error'
               ? 'bg-red-100 text-red-700 hover:bg-red-200'
               : audioState === 'loading'
-              ? 'bg-gray-100 text-gray-500 cursor-wait'
-              : 'bg-primary-600 text-white hover:bg-primary-700'
+              ? 'bg-gray-100 text-gray-400 cursor-wait'
+              : 'bg-accent-cyan text-white hover:bg-accent-cyan/90 shadow-sm'
           }`}
         >
           {getButtonContent()}
         </button>
 
-        {/* Stop button - only show when playing or paused */}
+        {/* Stop button */}
         {(audioState === 'playing' || audioState === 'paused') && (
           <button
             onClick={handleStop}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all duration-200"
             title="Stop"
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 6h12v12H6z" />
             </svg>
           </button>
@@ -273,20 +273,20 @@ export default function ListenToAnalysisButton({ result }: ListenToAnalysisButto
 
       {/* Error message */}
       {audioState === 'error' && errorMessage && (
-        <p className="text-sm text-red-600">{errorMessage}</p>
+        <p className="text-xs text-red-600">{errorMessage}</p>
       )}
 
       {/* Status indicator when playing */}
       {audioState === 'playing' && (
-        <div className="flex items-center gap-2 text-sm text-primary-600">
+        <div className="flex items-center gap-2 text-xs text-accent-cyan">
           <span className="flex gap-0.5">
-            <span className="w-1 h-3 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
-            <span className="w-1 h-4 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
-            <span className="w-1 h-2 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
-            <span className="w-1 h-5 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '450ms' }} />
-            <span className="w-1 h-3 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '600ms' }} />
+            <span className="w-1 h-2 bg-accent-cyan rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
+            <span className="w-1 h-3 bg-accent-cyan rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+            <span className="w-1 h-2 bg-accent-cyan rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
+            <span className="w-1 h-4 bg-accent-cyan rounded-full animate-pulse" style={{ animationDelay: '450ms' }} />
+            <span className="w-1 h-2 bg-accent-cyan rounded-full animate-pulse" style={{ animationDelay: '600ms' }} />
           </span>
-          <span>Now playing analysis...</span>
+          <span>Playing...</span>
         </div>
       )}
     </div>

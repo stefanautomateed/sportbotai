@@ -2,9 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Globalni stilovi za BetSense AI */
+/* BetSense AI - Modern Sports Analytics Theme */
 
-/* Reset i baza */
+/* Reset & Base */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -18,64 +18,158 @@ body {
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply bg-white text-gray-900 antialiased;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* Tipografija */
+/* Typography */
 h1, h2, h3, h4, h5, h6 {
   @apply font-bold tracking-tight;
 }
 
-/* Link stilovi */
+/* Link Styles */
 a {
-  @apply text-primary-600 hover:text-primary-800 transition-colors;
+  @apply text-accent-cyan hover:text-accent-lime transition-colors;
 }
 
-/* Fokus stilovi za pristupačnost */
+/* Focus Styles for Accessibility */
 :focus-visible {
-  @apply outline-2 outline-offset-2 outline-primary-500;
+  @apply outline-2 outline-offset-2 outline-accent-cyan;
 }
 
-/* Utility klase specifične za projekat */
+/* Utility Classes */
 @layer components {
-  /* Primarno dugme */
+  /* Primary Button - Lime accent */
   .btn-primary {
-    @apply bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold 
-           hover:bg-primary-700 transition-colors duration-200
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply bg-accent-lime text-primary-900 px-6 py-3 rounded-lg font-semibold 
+           hover:bg-accent-green transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-accent-lime focus:ring-offset-2
+           shadow-md hover:shadow-glow-lime;
   }
 
-  /* Sekundarno dugme */
+  /* Secondary Button */
   .btn-secondary {
-    @apply bg-white text-primary-600 border-2 border-primary-600 px-6 py-3 rounded-lg font-semibold 
-           hover:bg-primary-50 transition-colors duration-200
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply bg-transparent text-white border-2 border-white/30 px-6 py-3 rounded-lg font-semibold 
+           hover:bg-white/10 hover:border-white/50 transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2;
   }
 
-  /* Kartica */
+  /* Ghost Button */
+  .btn-ghost {
+    @apply bg-transparent text-gray-600 px-4 py-2 rounded-lg font-medium
+           hover:bg-gray-100 transition-all duration-200;
+  }
+
+  /* Card - Light mode */
   .card {
     @apply bg-white rounded-xl shadow-lg p-6 border border-gray-100;
   }
 
-  /* Sekcija kontejner */
+  /* Card - Dark mode */
+  .card-dark {
+    @apply bg-surface-card rounded-xl p-6 border border-surface-border;
+  }
+
+  /* Section Container */
   .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20;
+  }
+
+  /* Section Container - Compact */
+  .section-container-sm {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12;
   }
 
-  /* Input polja */
+  /* Input Fields */
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg 
-           focus:ring-2 focus:ring-primary-500 focus:border-primary-500 
-           transition-colors duration-200;
+    @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-lg 
+           focus:ring-2 focus:ring-accent-cyan focus:border-accent-cyan 
+           transition-all duration-200 text-gray-900 placeholder-gray-400;
   }
 
-  /* Label za forme */
+  /* Input Fields - Dark */
+  .input-field-dark {
+    @apply w-full px-4 py-3 bg-surface-card border border-surface-border rounded-lg 
+           focus:ring-2 focus:ring-accent-cyan focus:border-accent-cyan 
+           transition-all duration-200 text-white placeholder-gray-500;
+  }
+
+  /* Label for Forms */
   .input-label {
     @apply block text-sm font-medium text-gray-700 mb-2;
   }
 
-  /* Disclaimer box */
-  .disclaimer-box {
-    @apply bg-amber-50 border-l-4 border-amber-500 p-4 text-sm text-amber-800;
+  /* Disclaimer - Subtle info style */
+  .disclaimer-subtle {
+    @apply flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600;
+  }
+
+  /* Badge Styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-accent-green/10 text-accent-green;
+  }
+
+  .badge-warning {
+    @apply bg-accent-gold/10 text-accent-gold;
+  }
+
+  .badge-danger {
+    @apply bg-accent-red/10 text-accent-red;
+  }
+
+  .badge-info {
+    @apply bg-accent-cyan/10 text-accent-cyan;
+  }
+
+  /* Stats Card */
+  .stat-card {
+    @apply bg-white rounded-xl p-5 border border-gray-100 shadow-sm;
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-accent-cyan to-accent-lime bg-clip-text text-transparent;
   }
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+

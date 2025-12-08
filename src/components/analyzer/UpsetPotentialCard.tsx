@@ -21,45 +21,43 @@ export default function UpsetPotentialCard({ upsetPotential }: UpsetPotentialCar
   const getColorClasses = () => {
     if (upsetProbability >= 50) {
       return {
-        bg: 'bg-red-50',
-        border: 'border-red-200',
-        text: 'text-red-600',
-        progressBg: 'bg-red-100',
-        progressFill: 'bg-red-500',
+        bg: 'bg-accent-red/5',
+        border: 'border-accent-red/20',
+        text: 'text-accent-red',
+        progressBg: 'bg-accent-red/10',
+        progressFill: 'bg-accent-red',
       };
     }
     if (upsetProbability >= 30) {
       return {
-        bg: 'bg-orange-50',
-        border: 'border-orange-200',
-        text: 'text-orange-600',
-        progressBg: 'bg-orange-100',
-        progressFill: 'bg-orange-500',
+        bg: 'bg-accent-gold/5',
+        border: 'border-accent-gold/20',
+        text: 'text-accent-gold',
+        progressBg: 'bg-accent-gold/10',
+        progressFill: 'bg-accent-gold',
       };
     }
     return {
-      bg: 'bg-purple-50',
-      border: 'border-purple-200',
-      text: 'text-purple-600',
-      progressBg: 'bg-purple-100',
-      progressFill: 'bg-purple-500',
+      bg: 'bg-accent-cyan/5',
+      border: 'border-accent-cyan/20',
+      text: 'text-accent-cyan',
+      progressBg: 'bg-accent-cyan/10',
+      progressFill: 'bg-accent-cyan',
     };
   };
 
   const colors = getColorClasses();
 
   return (
-    <div className={`card border-2 ${colors.border} ${colors.bg}`}>
+    <div className={`rounded-xl border-2 p-6 ${colors.border} ${colors.bg}`}>
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+          <span className="text-xl">⚡</span>
           Upset Potential
         </h3>
         
         {isHighRisk && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-accent-red/10 text-accent-red border border-accent-red/30">
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
