@@ -13,6 +13,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { AuthProvider } from '@/components/auth';
 
 // Učitavanje Inter fonta sa Google Fonts
 const inter = Inter({ subsets: ['latin'] });
@@ -40,17 +41,19 @@ export default function RootLayout({
   return (
     <html lang="sr">
       <body className={inter.className}>
-        {/* Flex container za sticky footer */}
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          
-          {/* Main content - raste da popuni prostor */}
-          <main className="flex-grow">
-            {children}
-          </main>
-          
-          <Footer />
-        </div>
+        <AuthProvider>
+          {/* Flex container za sticky footer */}
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            
+            {/* Main content - raste da popuni prostor */}
+            <main className="flex-grow">
+              {children}
+            </main>
+            
+            <Footer />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -8,6 +8,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { UserMenu } from './auth';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -48,12 +49,7 @@ export default function Header() {
             >
               Responsible Gaming
             </Link>
-            <Link 
-              href="/analyzer" 
-              className="bg-accent text-bg px-5 py-2 rounded-btn font-semibold text-sm hover:bg-accent-dark transition-all duration-200 shadow-md hover:shadow-glow-accent"
-            >
-              Start Analyzing
-            </Link>
+            <UserMenu />
           </div>
 
           {/* Mobile Menu Button */}
