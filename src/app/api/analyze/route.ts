@@ -21,6 +21,15 @@ import {
   MarketConfidence,
 } from '@/types';
 import { getSportConfig, getSportTerminology } from '@/lib/config/sportsConfig';
+import {
+  buildCoreSystemPrompt,
+  buildSportContext,
+  SPORT_PROBABILITY_BOUNDS,
+  SPORT_KEY_FACTORS,
+  VALIDATION_RULES,
+  RESPONSIBLE_GAMBLING_MESSAGES,
+  SportPromptConfig,
+} from '@/lib/config/systemPrompt';
 
 // ============================================
 // OPENAI CLIENT (LAZY INIT)
@@ -45,45 +54,47 @@ function getOpenAIClient(): OpenAI | null {
 // ============================================
 
 /**
- * Build system prompt tailored to the specific sport
+ * Build enhanced system prompt tailored to the specific sport
+ * Uses the centralized BetSense AI identity and sport-specific configuration
  */
 function buildSystemPrompt(sport: string, sportKey?: string): string {
   const config = getSportConfig(sportKey || sport);
   const terminology = getSportTerminology(sportKey || sport);
   
   const sportName = config?.displayName || sport || 'Sports';
-  const matchTerm = terminology.matchTerm;
-  const participantTerm = terminology.participantTerm;
-  const scoringUnit = terminology.scoringUnit;
-  const hasDraw = terminology.hasDraw;
+  const sportLower = sportName.toLowerCase();
+  
+  // Get sport-specific probability bounds and key factors
+  const probabilityBounds = SPORT_PROBABILITY_BOUNDS[sportLower] || SPORT_PROBABILITY_BOUNDS.soccer;
+  const keyFactors = SPORT_KEY_FACTORS[sportLower] || SPORT_KEY_FACTORS.soccer;
+  
+  // Build the sport context configuration
+  const sportPromptConfig: SportPromptConfig = {
+    sportName,
+    matchTerm: terminology.matchTerm,
+    participantTerm: terminology.participantTerm,
+    scoringUnit: terminology.scoringUnit,
+    hasDraw: terminology.hasDraw,
+    typicalProbabilityRanges: probabilityBounds,
+    keyAnalysisFactors: keyFactors,
+  };
 
-  return `You are an assistant that analyzes ${sportName} ${matchTerm}es strictly for educational and informational purposes.
+  // Combine core BetSense AI identity with sport-specific context
+  const corePrompt = buildCoreSystemPrompt();
+  const sportContext = buildSportContext(sportPromptConfig);
 
-You MUST follow these rules:
-- NEVER give betting tips.
-- NEVER tell the user what to bet.
-- NEVER imply certainty or guaranteed outcomes.
-- ALWAYS include responsible gambling messaging.
-- ALWAYS return a SINGLE valid JSON object EXACTLY following the schema provided below.
+  return `${corePrompt}
 
-SPORT-SPECIFIC CONTEXT:
-- Sport: ${sportName}
-- Match term: ${matchTerm}
-- Participant term: ${participantTerm}
-- Scoring unit: ${scoringUnit}
-- Has draw outcome: ${hasDraw ? 'Yes (analyze 1X2 market)' : 'No (analyze moneyline/h2h only)'}
+${sportContext}
 
-Your tasks include:
-- Estimating probabilities${hasDraw ? ' (home win, draw, away win)' : ' (home/participant A win, away/participant B win)'}
-- Comparing implied odds
-- Identifying potential value levels cautiously
-- Explaining risk
-- Analyzing psychological biases
-- Evaluating momentum and form trends
-- Scoring market stability
-- Describing tactical/strategic dynamics appropriate for ${sportName}
-- Generating an expert-style one-liner
-- Incorporating user context
+VALIDATION RULES:
+- Probabilities for all outcomes must sum to approximately 100% (±${VALIDATION_RULES.probabilitySumTolerance}%)
+- Value flags: LOW (>${VALIDATION_RULES.valueFlagThresholds.LOW}% diff), MEDIUM (>${VALIDATION_RULES.valueFlagThresholds.MEDIUM}% diff), HIGH (>${VALIDATION_RULES.valueFlagThresholds.HIGH}% diff)
+- Upset probability for heavy favorites should not exceed ${VALIDATION_RULES.maxUpsetForHeavyFavorite}%
+- Close matches should have minimum ${VALIDATION_RULES.minUpsetForCloseMatch}% upset probability
+
+RESPONSIBLE GAMBLING:
+Core message to include: "${RESPONSIBLE_GAMBLING_MESSAGES.core}"
 
 You must return ONLY valid JSON, no commentary, no markdown, no prose.
 
@@ -185,128 +196,6 @@ You must return ONLY valid JSON, no commentary, no markdown, no prose.
   }
 }`;
 }
-
-// Legacy SYSTEM_PROMPT for backward compatibility
-const SYSTEM_PROMPT = `You are an assistant that analyzes sports matches strictly for educational and informational purposes.
-
-You MUST follow these rules:
-- NEVER give betting tips.
-- NEVER tell the user what to bet.
-- NEVER imply certainty or guaranteed outcomes.
-- ALWAYS include responsible gambling messaging.
-- ALWAYS return a SINGLE valid JSON object EXACTLY following the schema provided below.
-
-Your tasks include:
-- Estimating probabilities
-- Comparing implied odds
-- Identifying potential value levels cautiously
-- Explaining risk
-- Analyzing psychological biases
-- Evaluating momentum and form trends
-- Scoring market stability
-- Describing tactical dynamics
-- Generating an expert-style one-liner
-- Incorporating user context
-
-You must return ONLY valid JSON, no commentary, no markdown, no prose.
-
-=== REQUIRED JSON SCHEMA ===
-
-{
-  "success": true,
-  "matchInfo": {
-    "sport": "<string>",
-    "leagueName": "<string>",
-    "matchDate": "<string ISO 8601>",
-    "homeTeam": "<string>",
-    "awayTeam": "<string>",
-    "sourceType": "MANUAL" | "API",
-    "dataQuality": "LOW" | "MEDIUM" | "HIGH"
-  },
-  "probabilities": {
-    "homeWin": <number 0-100 | null>,
-    "draw": <number 0-100 | null>,
-    "awayWin": <number 0-100 | null>,
-    "over": <number 0-100 | null>,
-    "under": <number 0-100 | null>
-  },
-  "valueAnalysis": {
-    "impliedProbabilities": {
-      "homeWin": <number 0-100 | null>,
-      "draw": <number 0-100 | null>,
-      "awayWin": <number 0-100 | null>
-    },
-    "valueFlags": {
-      "homeWin": "NONE" | "LOW" | "MEDIUM" | "HIGH",
-      "draw": "NONE" | "LOW" | "MEDIUM" | "HIGH",
-      "awayWin": "NONE" | "LOW" | "MEDIUM" | "HIGH"
-    },
-    "bestValueSide": "HOME" | "DRAW" | "AWAY" | "NONE",
-    "valueCommentShort": "<string>",
-    "valueCommentDetailed": "<string>"
-  },
-  "riskAnalysis": {
-    "overallRiskLevel": "LOW" | "MEDIUM" | "HIGH",
-    "riskExplanation": "<string>",
-    "bankrollImpact": "<string>",
-    "psychologyBias": {
-      "name": "<string>",
-      "description": "<string>"
-    }
-  },
-  "momentumAndForm": {
-    "homeMomentumScore": <number 1-10 | null>,
-    "awayMomentumScore": <number 1-10 | null>,
-    "homeTrend": "RISING" | "FALLING" | "STABLE" | "UNKNOWN",
-    "awayTrend": "RISING" | "FALLING" | "STABLE" | "UNKNOWN",
-    "keyFormFactors": ["<string>", ...]
-  },
-  "marketStability": {
-    "markets": {
-      "main_1x2": {
-        "stability": "LOW" | "MEDIUM" | "HIGH",
-        "confidence": <1-5>,
-        "comment": "<string>"
-      },
-      "over_under": {
-        "stability": "LOW" | "MEDIUM" | "HIGH",
-        "confidence": <1-5>,
-        "comment": "<string>"
-      },
-      "btts": {
-        "stability": "LOW" | "MEDIUM" | "HIGH",
-        "confidence": <1-5>,
-        "comment": "<string>"
-      }
-    },
-    "safestMarketType": "1X2" | "OVER_UNDER" | "BTTS" | "NONE",
-    "safestMarketExplanation": "<string>"
-  },
-  "upsetPotential": {
-    "upsetProbability": <number 0-100>,
-    "upsetComment": "<string>"
-  },
-  "tacticalAnalysis": {
-    "stylesSummary": "<string>",
-    "matchNarrative": "<string>",
-    "keyMatchFactors": ["<string>", ...],
-    "expertConclusionOneLiner": "<string>"
-  },
-  "userContext": {
-    "userPick": "<string>",
-    "userStake": <number>,
-    "pickComment": "<string>"
-  },
-  "responsibleGambling": {
-    "coreNote": "<string>",
-    "tailoredNote": "<string>"
-  },
-  "meta": {
-    "modelVersion": "1.0.0",
-    "analysisGeneratedAt": "<string ISO 8601>",
-    "warnings": ["<string>", ...]
-  }
-}`;
 
 // ============================================
 // USER PROMPT BUILDER (MULTI-SPORT AWARE)
