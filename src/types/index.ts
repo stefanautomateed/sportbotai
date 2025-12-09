@@ -197,6 +197,15 @@ export interface AnalysisMeta {
 }
 
 /**
+ * Usage information returned with analysis
+ */
+export interface UsageInfo {
+  plan: string;
+  remaining: number;
+  limit: number;
+}
+
+/**
  * Complete analysis response (FINAL SCHEMA)
  */
 export interface AnalyzeResponse {
@@ -213,6 +222,7 @@ export interface AnalyzeResponse {
   responsibleGambling: ResponsibleGambling;
   meta: AnalysisMeta;
   error?: string;
+  usageInfo?: UsageInfo;
 }
 
 // ============================================

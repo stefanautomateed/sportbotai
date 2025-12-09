@@ -9,7 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import { MatchSelector } from '@/components/match-selector';
-import { AnalysisResults } from '@/components/analyzer';
+import { AnalysisResults, UsageCounter } from '@/components/analyzer';
 import { AnalyzeResponse } from '@/types';
 
 type ViewState = 'form' | 'loading' | 'results' | 'error';
@@ -59,6 +59,7 @@ export default function AnalyzerPage() {
             {/* Quick Stats */}
             {viewState === 'form' && (
               <div className="flex items-center gap-4 text-sm">
+                <UsageCounter />
                 <div className="flex items-center gap-2 text-text-secondary">
                   <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
                   <span>Live data</span>

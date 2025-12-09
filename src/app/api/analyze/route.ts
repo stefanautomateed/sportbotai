@@ -5,9 +5,14 @@
  * Returns analysis strictly following the FINAL JSON schema.
  * 
  * Supports: Soccer, NBA, NFL, Tennis, NHL, MMA, MLB, and more.
+ * 
+ * AUTHENTICATION & LIMITS:
+ * - Requires authenticated user session
+ * - Enforces plan-based usage limits (FREE: 3/day, PRO: 30/day, PREMIUM: unlimited)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 import OpenAI from 'openai';
 import {
   AnalyzeRequest,
@@ -30,6 +35,7 @@ import {
   RESPONSIBLE_GAMBLING_MESSAGES,
   SportPromptConfig,
 } from '@/lib/config/systemPrompt';
+import { canUserAnalyze, incrementAnalysisCount } from '@/lib/auth';
 
 // ============================================
 // OPENAI CLIENT (LAZY INIT)
@@ -265,6 +271,51 @@ Return ONLY the JSON object defined in the schema. No other text.`;
 
 export async function POST(request: NextRequest) {
   try {
+    // ========================================
+    // AUTHENTICATION CHECK
+    // ========================================
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token || !token.id) {
+      return NextResponse.json(
+        createErrorResponse('Authentication required. Please sign in to use the analyzer.'),
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id as string;
+
+    // ========================================
+    // USAGE LIMIT CHECK
+    // ========================================
+    const usageCheck = await canUserAnalyze(userId);
+    
+    if (!usageCheck.allowed) {
+      const limitMessage = usageCheck.limit === -1 
+        ? 'Unable to check usage limits. Please try again.'
+        : `Daily limit reached (${usageCheck.limit} analyses). Upgrade your plan for more analyses.`;
+      
+      return NextResponse.json(
+        {
+          success: false,
+          error: limitMessage,
+          usageInfo: {
+            plan: usageCheck.plan,
+            used: usageCheck.limit - usageCheck.remaining,
+            limit: usageCheck.limit,
+            remaining: 0,
+          }
+        },
+        { status: 429 }
+      );
+    }
+
+    // ========================================
+    // PARSE AND VALIDATE REQUEST
+    // ========================================
     const body = await request.json();
     
     // Normalize request to standard format
@@ -283,12 +334,36 @@ export async function POST(request: NextRequest) {
     const openai = getOpenAIClient();
     if (!openai) {
       console.warn('OPENAI_API_KEY not configured, using fallback analysis');
-      return NextResponse.json(generateFallbackAnalysis(normalizedRequest));
+      // Still count this as an analysis
+      await incrementAnalysisCount(userId);
+      const response = generateFallbackAnalysis(normalizedRequest);
+      return NextResponse.json({
+        ...response,
+        usageInfo: {
+          plan: usageCheck.plan,
+          remaining: usageCheck.remaining - 1,
+          limit: usageCheck.limit,
+        }
+      });
     }
 
     // Call OpenAI API with sport-aware prompt
     const analysis = await callOpenAI(openai, normalizedRequest);
-    return NextResponse.json(analysis);
+    
+    // ========================================
+    // INCREMENT USAGE COUNT (only on success)
+    // ========================================
+    await incrementAnalysisCount(userId);
+
+    // Add usage info to response
+    return NextResponse.json({
+      ...analysis,
+      usageInfo: {
+        plan: usageCheck.plan,
+        remaining: usageCheck.remaining - 1,
+        limit: usageCheck.limit,
+      }
+    });
 
   } catch (error) {
     console.error('Error in /api/analyze:', error);
