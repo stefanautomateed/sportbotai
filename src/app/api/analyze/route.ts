@@ -533,6 +533,17 @@ export async function POST(request: NextRequest) {
       console.error('[History] Failed to save analysis:', historyError);
     }
 
+    // Log final response data
+    console.log('[Response] Final momentum/form data:', {
+      hasHomeForm: !!analysis.momentumAndForm.homeForm,
+      homeFormLength: analysis.momentumAndForm.homeForm?.length || 0,
+      hasAwayForm: !!analysis.momentumAndForm.awayForm,
+      awayFormLength: analysis.momentumAndForm.awayForm?.length || 0,
+      hasH2H: !!analysis.momentumAndForm.headToHead,
+      h2hLength: analysis.momentumAndForm.headToHead?.length || 0,
+      formDataSource: analysis.momentumAndForm.formDataSource,
+    });
+
     // Add usage info to response
     return NextResponse.json({
       ...analysis,
