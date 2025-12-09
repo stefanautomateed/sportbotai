@@ -216,9 +216,8 @@ async function getSoccerTeamFixtures(teamId: number, baseUrl: string): Promise<G
   const cached = getCached<GameResult[]>(cacheKey);
   if (cached) return cached;
 
-  // Use season 2023 (2023-2024 season) as free tier doesn't have current season
-  // Also need to specify league for Premier League (39)
-  const response = await apiRequest<any>(baseUrl, `/fixtures?team=${teamId}&season=2023&last=10`);
+  // Use last=5 to get most recent fixtures (Pro tier has current season data)
+  const response = await apiRequest<any>(baseUrl, `/fixtures?team=${teamId}&last=5`);
   
   if (!response?.response || response.response.length === 0) {
     console.log(`[Soccer] No fixtures found for team ${teamId}`);
