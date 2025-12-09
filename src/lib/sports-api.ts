@@ -216,16 +216,102 @@ function getApiBase(sportKey: string): string | null {
 // SOCCER FUNCTIONS
 // ============================================
 
+// Common team name mappings (full name -> API-Football name)
+const TEAM_NAME_MAPPINGS: Record<string, string> = {
+  // English Premier League
+  'brighton and hove albion': 'Brighton',
+  'brighton & hove albion': 'Brighton',
+  'wolverhampton wanderers': 'Wolves',
+  'west ham united': 'West Ham',
+  'tottenham hotspur': 'Tottenham',
+  'manchester united': 'Manchester United',
+  'manchester city': 'Manchester City',
+  'newcastle united': 'Newcastle',
+  'nottingham forest': 'Nottingham Forest',
+  'afc bournemouth': 'Bournemouth',
+  'leicester city': 'Leicester',
+  'crystal palace': 'Crystal Palace',
+  'ipswich town': 'Ipswich',
+  // Spanish La Liga
+  'atletico madrid': 'Atletico Madrid',
+  'athletic bilbao': 'Athletic Club',
+  'real sociedad': 'Real Sociedad',
+  'real betis': 'Real Betis',
+  'celta vigo': 'Celta Vigo',
+  'rayo vallecano': 'Rayo Vallecano',
+  // German Bundesliga  
+  'bayern munich': 'Bayern Munich',
+  'borussia dortmund': 'Borussia Dortmund',
+  'bayer leverkusen': 'Bayer 04 Leverkusen',
+  'rb leipzig': 'RB Leipzig',
+  'eintracht frankfurt': 'Eintracht Frankfurt',
+  // Italian Serie A
+  'inter milan': 'Inter',
+  'ac milan': 'AC Milan',
+  'as roma': 'AS Roma',
+  'ss lazio': 'Lazio',
+  'juventus fc': 'Juventus',
+  // French Ligue 1
+  'paris saint-germain': 'Paris Saint Germain',
+  'paris saint germain': 'Paris Saint Germain',
+  'olympique marseille': 'Marseille',
+  'olympique lyon': 'Lyon',
+  'as monaco': 'Monaco',
+};
+
+function normalizeTeamName(name: string): string {
+  const lower = name.toLowerCase().trim();
+  
+  // Check direct mapping
+  if (TEAM_NAME_MAPPINGS[lower]) {
+    return TEAM_NAME_MAPPINGS[lower];
+  }
+  
+  // Try partial matches for common patterns
+  for (const [pattern, mapped] of Object.entries(TEAM_NAME_MAPPINGS)) {
+    if (lower.includes(pattern) || pattern.includes(lower)) {
+      return mapped;
+    }
+  }
+  
+  // Return first word for very long names (often works for "X and Y" patterns)
+  if (name.includes(' and ') || name.includes(' & ')) {
+    return name.split(/\s+and\s+|\s+&\s+/i)[0].trim();
+  }
+  
+  return name;
+}
+
 async function findSoccerTeam(teamName: string, baseUrl: string): Promise<number | null> {
-  const cacheKey = `soccer:team:${teamName}`;
+  const cacheKey = `soccer:team:${teamName.toLowerCase()}`;
   const cached = getCached<number>(cacheKey);
   if (cached) {
     console.log(`[Soccer] Cache hit for team: ${teamName} -> ${cached}`);
     return cached;
   }
 
-  console.log(`[Soccer] Searching for team: "${teamName}"`);
-  const response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(teamName)}`);
+  // Try normalized name first
+  const normalizedName = normalizeTeamName(teamName);
+  const searchName = normalizedName !== teamName ? normalizedName : teamName;
+  
+  console.log(`[Soccer] Searching for team: "${teamName}"${normalizedName !== teamName ? ` (normalized: "${normalizedName}")` : ''}`);
+  
+  let response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(searchName)}`);
+  
+  // If normalized search fails, try original name
+  if ((!response?.response?.length) && normalizedName !== teamName) {
+    console.log(`[Soccer] Normalized search failed, trying original: "${teamName}"`);
+    response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(teamName)}`);
+  }
+  
+  // If still no results, try first word only
+  if (!response?.response?.length) {
+    const firstWord = teamName.split(/\s+/)[0];
+    if (firstWord.length > 3 && firstWord.toLowerCase() !== searchName.toLowerCase()) {
+      console.log(`[Soccer] Trying first word only: "${firstWord}"`);
+      response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(firstWord)}`);
+    }
+  }
   
   if (response?.response?.length > 0) {
     const teamId = response.response[0].team.id;

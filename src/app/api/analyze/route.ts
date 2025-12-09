@@ -469,8 +469,27 @@ export async function POST(request: NextRequest) {
     let analysis: AnalyzeResponse;
     const cachedAnalysis = await cacheGet<AnalyzeResponse>(cacheKey);
     
-    if (cachedAnalysis) {
+    // Check if we have fresh form data that should override cache
+    const hasNewFormData = enrichedData && (
+      (enrichedData.homeForm && enrichedData.homeForm.length > 0) ||
+      (enrichedData.awayForm && enrichedData.awayForm.length > 0) ||
+      (enrichedData.headToHead && enrichedData.headToHead.length > 0)
+    );
+    
+    // Check if cached analysis is missing form data
+    const cachedMissingFormData = cachedAnalysis && (
+      !cachedAnalysis.momentumAndForm?.homeForm?.length &&
+      !cachedAnalysis.momentumAndForm?.awayForm?.length
+    );
+    
+    if (cachedAnalysis && (!cachedMissingFormData || !hasNewFormData)) {
       console.log('[Cache] Using cached analysis');
+      console.log('[Cache] Cached form data status:', {
+        hasHomeForm: !!cachedAnalysis.momentumAndForm?.homeForm?.length,
+        hasAwayForm: !!cachedAnalysis.momentumAndForm?.awayForm?.length,
+        hasH2H: !!cachedAnalysis.momentumAndForm?.headToHead?.length,
+      });
+      
       analysis = cachedAnalysis;
       // Update with fresh enriched data if available
       if (enrichedData) {
@@ -478,17 +497,22 @@ export async function POST(request: NextRequest) {
           ...analysis,
           momentumAndForm: {
             ...analysis.momentumAndForm,
-            homeForm: enrichedData.homeForm ?? analysis.momentumAndForm.homeForm,
-            awayForm: enrichedData.awayForm ?? analysis.momentumAndForm.awayForm,
-            headToHead: enrichedData.headToHead ?? analysis.momentumAndForm.headToHead,
-            h2hSummary: enrichedData.h2hSummary ?? analysis.momentumAndForm.h2hSummary,
-            homeStats: enrichedData.homeStats ?? analysis.momentumAndForm.homeStats,
-            awayStats: enrichedData.awayStats ?? analysis.momentumAndForm.awayStats,
-            formDataSource: enrichedData.homeForm || enrichedData.awayForm ? 'API_FOOTBALL' : analysis.momentumAndForm.formDataSource,
+            homeForm: enrichedData.homeForm || analysis.momentumAndForm.homeForm,
+            awayForm: enrichedData.awayForm || analysis.momentumAndForm.awayForm,
+            headToHead: enrichedData.headToHead || analysis.momentumAndForm.headToHead,
+            h2hSummary: enrichedData.h2hSummary || analysis.momentumAndForm.h2hSummary,
+            homeStats: enrichedData.homeStats || analysis.momentumAndForm.homeStats,
+            awayStats: enrichedData.awayStats || analysis.momentumAndForm.awayStats,
+            formDataSource: enrichedData.homeForm?.length || enrichedData.awayForm?.length ? 'API_FOOTBALL' : analysis.momentumAndForm.formDataSource,
           },
         };
       }
     } else {
+      // Either no cache or cache is missing form data that we now have
+      if (cachedMissingFormData && hasNewFormData) {
+        console.log('[Cache] Cache exists but missing form data - regenerating with new data');
+      }
+      
       // Call OpenAI API with sport-aware prompt, enriched data, and match context
       console.log('[OpenAI] Generating fresh analysis...');
       analysis = await callOpenAI(openai, normalizedRequest, enrichedData, matchContext);

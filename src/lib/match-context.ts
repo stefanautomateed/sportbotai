@@ -333,6 +333,31 @@ interface TeamInfo {
   venueName: string | null;
 }
 
+// Team name mappings for API-Football
+const TEAM_NAME_MAPPINGS: Record<string, string> = {
+  'brighton and hove albion': 'Brighton',
+  'brighton & hove albion': 'Brighton',
+  'wolverhampton wanderers': 'Wolves',
+  'west ham united': 'West Ham',
+  'tottenham hotspur': 'Tottenham',
+  'newcastle united': 'Newcastle',
+  'nottingham forest': 'Nottingham Forest',
+  'afc bournemouth': 'Bournemouth',
+  'leicester city': 'Leicester',
+  'ipswich town': 'Ipswich',
+  'inter milan': 'Inter',
+  'paris saint-germain': 'Paris Saint Germain',
+};
+
+function normalizeTeamNameForSearch(name: string): string {
+  const lower = name.toLowerCase().trim();
+  if (TEAM_NAME_MAPPINGS[lower]) return TEAM_NAME_MAPPINGS[lower];
+  if (name.includes(' and ') || name.includes(' & ')) {
+    return name.split(/\s+and\s+|\s+&\s+/i)[0].trim();
+  }
+  return name;
+}
+
 async function findTeamInfo(teamName: string): Promise<TeamInfo | null> {
   const apiKey = process.env.API_FOOTBALL_KEY;
   if (!apiKey) return null;
@@ -342,9 +367,12 @@ async function findTeamInfo(teamName: string): Promise<TeamInfo | null> {
   const cached = await cacheGet<TeamInfo>(cacheKey);
   if (cached) return cached;
   
+  // Normalize name for search
+  const searchName = normalizeTeamNameForSearch(teamName);
+  
   try {
-    const response = await fetch(
-      `https://v3.football.api-sports.io/teams?search=${encodeURIComponent(teamName)}`,
+    let response = await fetch(
+      `https://v3.football.api-sports.io/teams?search=${encodeURIComponent(searchName)}`,
       {
         headers: { 'x-apisports-key': apiKey },
       }
@@ -352,7 +380,23 @@ async function findTeamInfo(teamName: string): Promise<TeamInfo | null> {
     
     if (!response.ok) return null;
     
-    const data = await response.json();
+    let data = await response.json();
+    
+    // If normalized search fails, try first word
+    if (!data.response?.length && searchName !== teamName) {
+      const firstWord = teamName.split(/\s+/)[0];
+      if (firstWord.length > 3) {
+        response = await fetch(
+          `https://v3.football.api-sports.io/teams?search=${encodeURIComponent(firstWord)}`,
+          {
+            headers: { 'x-apisports-key': apiKey },
+          }
+        );
+        if (response.ok) {
+          data = await response.json();
+        }
+      }
+    }
     
     if (data.response && data.response.length > 0) {
       const team = data.response[0].team;
