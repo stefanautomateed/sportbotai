@@ -216,11 +216,18 @@ async function getSoccerTeamFixtures(teamId: number, baseUrl: string): Promise<G
   const cached = getCached<GameResult[]>(cacheKey);
   if (cached) return cached;
 
-  const response = await apiRequest<any>(baseUrl, `/fixtures?team=${teamId}&last=5`);
+  // Use season 2023 (2023-2024 season) as free tier doesn't have current season
+  // Also need to specify league for Premier League (39)
+  const response = await apiRequest<any>(baseUrl, `/fixtures?team=${teamId}&season=2023&last=10`);
   
-  if (!response?.response) return [];
+  if (!response?.response || response.response.length === 0) {
+    console.log(`[Soccer] No fixtures found for team ${teamId}`);
+    return [];
+  }
 
-  const matches: GameResult[] = response.response.map((fixture: any) => {
+  console.log(`[Soccer] Found ${response.response.length} fixtures for team ${teamId}`);
+  
+  const matches: GameResult[] = response.response.slice(0, 5).map((fixture: any) => {
     const isHome = fixture.teams.home.id === teamId;
     const teamScore = isHome ? fixture.goals.home : fixture.goals.away;
     const oppScore = isHome ? fixture.goals.away : fixture.goals.home;
@@ -247,10 +254,20 @@ async function getSoccerTeamStats(teamId: number, baseUrl: string): Promise<Team
   const cached = getCached<TeamSeasonStats>(cacheKey);
   if (cached) return cached;
 
-  const response = await apiRequest<any>(baseUrl, `/teams/statistics?team=${teamId}&season=2024`);
+  // Get current season year (Premier League season spans Aug-May, so use year of August)
+  const now = new Date();
+  const currentSeason = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
   
-  if (!response?.response) return null;
+  // Need to specify league (39 = Premier League) for statistics
+  const response = await apiRequest<any>(baseUrl, `/teams/statistics?team=${teamId}&season=${currentSeason}&league=39`);
+  
+  if (!response?.response) {
+    console.log(`[Soccer] No stats found for team ${teamId} in season ${currentSeason}`);
+    return null;
+  }
 
+  console.log(`[Soccer] Found stats for team ${teamId} in season ${currentSeason}`);
+  
   const stats = response.response;
   const result: TeamSeasonStats = {
     gamesPlayed: stats.fixtures?.played?.total || 0,
@@ -270,10 +287,16 @@ async function getSoccerH2H(homeTeamId: number, awayTeamId: number, baseUrl: str
   const cached = getCached<{ matches: H2HMatch[], summary: any }>(cacheKey);
   if (cached) return cached;
 
-  const response = await apiRequest<any>(baseUrl, `/fixtures/headtohead?h2h=${homeTeamId}-${awayTeamId}&last=10`);
+  // Don't use 'last' parameter as it doesn't work reliably on free tier
+  const response = await apiRequest<any>(baseUrl, `/fixtures/headtohead?h2h=${homeTeamId}-${awayTeamId}`);
   
-  if (!response?.response) return null;
+  if (!response?.response || response.response.length === 0) {
+    console.log(`[Soccer] No H2H data for teams ${homeTeamId} vs ${awayTeamId}`);
+    return null;
+  }
 
+  console.log(`[Soccer] Found ${response.response.length} H2H matches`);
+  
   const fixtures = response.response;
   let homeWins = 0, awayWins = 0, draws = 0;
 
