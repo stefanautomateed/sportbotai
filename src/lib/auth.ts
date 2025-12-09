@@ -93,30 +93,16 @@ export const authOptions: NextAuthOptions = {
   },
   
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // Allow all sign-ins
+      return true;
+    },
     async redirect({ url, baseUrl }) {
-      // Always redirect to analyzer after successful OAuth sign in
-      // unless specifically going to another page
+      // Debug logging
+      console.log('Redirect callback - url:', url, 'baseUrl:', baseUrl);
       
-      // If no URL or just the base URL (home), go to analyzer
-      if (!url || url === baseUrl || url === `${baseUrl}/` || url === '/') {
-        return `${baseUrl}/analyzer`;
-      }
-      
-      // If the url is relative, prefix it with the base url
-      if (url.startsWith('/')) {
-        return `${baseUrl}${url}`;
-      }
-      
-      // If the url is on the same origin, allow it
-      if (url.startsWith(baseUrl)) {
-        // But if it's just the home page, redirect to analyzer
-        if (url === baseUrl || url === `${baseUrl}/`) {
-          return `${baseUrl}/analyzer`;
-        }
-        return url;
-      }
-      
-      // Default redirect to analyzer
+      // ALWAYS redirect to /analyzer after authentication
+      // This is the simplest, most reliable approach
       return `${baseUrl}/analyzer`;
     },
     async session({ session, user }) {
