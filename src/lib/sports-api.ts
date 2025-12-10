@@ -22,7 +22,8 @@ import { FormMatch, HeadToHeadMatch, TeamStats } from '@/types';
 
 const API_BASES: Record<string, string> = {
   soccer: 'https://v3.football.api-sports.io',
-  basketball: 'https://v1.basketball.api-sports.io',
+  nba: 'https://v2.nba.api-sports.io',  // Dedicated NBA API
+  basketball: 'https://v1.basketball.api-sports.io',  // EuroLeague, NCAAB, etc.
   american_football: 'https://v1.american-football.api-sports.io',
   hockey: 'https://v1.hockey.api-sports.io',
   baseball: 'https://v1.baseball.api-sports.io',
@@ -112,12 +113,12 @@ const SPORT_MAPPING: Record<string, string> = {
   'english_premier_league': 'soccer',
   'epl': 'soccer',
   
-  // Basketball variants
+  // Basketball variants - NBA uses dedicated API
   'basketball': 'basketball',
-  'basketball_nba': 'basketball',
+  'basketball_nba': 'nba',  // Dedicated NBA API
   'basketball_euroleague': 'basketball',
   'basketball_ncaab': 'basketball',
-  'nba': 'basketball',
+  'nba': 'nba',  // Dedicated NBA API
   
   // American Football
   'americanfootball': 'american_football',
@@ -1236,6 +1237,9 @@ export async function getMultiSportEnrichedData(
       case 'soccer':
         return await fetchSoccerData(homeTeam, awayTeam, baseUrl);
       
+      case 'nba':
+        return await fetchNBAData(homeTeam, awayTeam, baseUrl);
+      
       case 'basketball':
         return await fetchBasketballData(homeTeam, awayTeam, baseUrl);
       
@@ -1332,6 +1336,241 @@ async function fetchSoccerData(homeTeam: string, awayTeam: string, baseUrl: stri
 
   return {
     sport: 'soccer',
+    homeForm,
+    awayForm,
+    headToHead: h2hData?.matches || null,
+    h2hSummary: h2hData?.summary || null,
+    homeStats,
+    awayStats,
+    dataSource: (homeForm || awayForm) ? 'API_SPORTS' : 'UNAVAILABLE',
+  };
+}
+
+// ============================================
+// NBA-SPECIFIC FUNCTIONS (v2.nba.api-sports.io)
+// ============================================
+
+/**
+ * Get current NBA season (format: 2024 for 2024-25 season)
+ */
+function getCurrentNBASeason(): number {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  // NBA season starts in October
+  if (month >= 10) {
+    return year;
+  }
+  return year - 1;
+}
+
+async function findNBATeam(teamName: string, baseUrl: string): Promise<number | null> {
+  const normalizedName = normalizeBasketballTeamName(teamName);
+  const cacheKey = `nba:team:${normalizedName}`;
+  const cached = getCached<number>(cacheKey);
+  if (cached) return cached;
+
+  // NBA API uses different search - try both normalized and original
+  let response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(normalizedName)}`);
+  
+  if (!response?.response?.length && normalizedName !== teamName) {
+    response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(teamName)}`);
+  }
+  
+  if (response?.response?.length > 0) {
+    // Filter for NBA franchise teams only
+    const nbaTeam = response.response.find((t: any) => t.nbaFranchise === true) || response.response[0];
+    const teamId = nbaTeam.id;
+    console.log(`[NBA] Found team "${teamName}" -> ID ${teamId} (${nbaTeam.name})`);
+    setCache(cacheKey, teamId);
+    return teamId;
+  }
+  
+  console.warn(`[NBA] Team not found: "${teamName}" (normalized: "${normalizedName}")`);
+  return null;
+}
+
+async function getNBATeamGames(teamId: number, baseUrl: string): Promise<GameResult[]> {
+  const cacheKey = `nba:games:${teamId}`;
+  const cached = getCached<GameResult[]>(cacheKey);
+  if (cached) return cached;
+
+  const season = getCurrentNBASeason();
+  const response = await apiRequest<any>(baseUrl, `/games?team=${teamId}&season=${season}`);
+  
+  if (!response?.response) return [];
+
+  // Filter for finished games and get last 5
+  const finishedGames = response.response
+    .filter((game: any) => game.status?.short === 3 || game.status?.long === 'Finished')
+    .sort((a: any, b: any) => new Date(b.date.start).getTime() - new Date(a.date.start).getTime())
+    .slice(0, 5);
+
+  const games: GameResult[] = finishedGames.map((game: any) => {
+    const isHome = game.teams.home.id === teamId;
+    const teamScore = isHome ? game.scores.home.points : game.scores.visitors.points;
+    const oppScore = isHome ? game.scores.visitors.points : game.scores.home.points;
+    
+    const result: 'W' | 'L' = teamScore > oppScore ? 'W' : 'L';
+
+    return {
+      result,
+      score: `${game.scores.home.points}-${game.scores.visitors.points}`,
+      opponent: isHome ? game.teams.visitors.name : game.teams.home.name,
+      date: game.date.start,
+      home: isHome,
+    };
+  });
+
+  setCache(cacheKey, games);
+  return games;
+}
+
+async function getNBATeamStats(teamId: number, baseUrl: string): Promise<TeamSeasonStats | null> {
+  const cacheKey = `nba:stats:${teamId}`;
+  const cached = getCached<TeamSeasonStats>(cacheKey);
+  if (cached) return cached;
+
+  const season = getCurrentNBASeason();
+  const response = await apiRequest<any>(baseUrl, `/standings?team=${teamId}&season=${season}&league=standard`);
+  
+  if (!response?.response?.length) return null;
+  
+  const standing = response.response[0];
+  const stats: TeamSeasonStats = {
+    gamesPlayed: (standing.win?.total || 0) + (standing.loss?.total || 0),
+    wins: standing.win?.total || 0,
+    losses: standing.loss?.total || 0,
+    pointsFor: 0, // Not directly available in standings
+    pointsAgainst: 0,
+    winPercentage: standing.win?.percentage ? parseFloat(standing.win.percentage) : 0,
+  };
+
+  setCache(cacheKey, stats);
+  return stats;
+}
+
+async function getNBAH2H(homeTeamId: number, awayTeamId: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: { totalMatches: number, homeWins: number, awayWins: number, draws: number } } | null> {
+  const cacheKey = `nba:h2h:${homeTeamId}:${awayTeamId}`;
+  const cached = getCached<any>(cacheKey);
+  if (cached) return cached;
+
+  const season = getCurrentNBASeason();
+  // Get games where both teams played each other
+  const response = await apiRequest<any>(baseUrl, `/games?h2h=${homeTeamId}-${awayTeamId}&season=${season}`);
+  
+  if (!response?.response?.length) return null;
+
+  let homeWins = 0;
+  let awayWins = 0;
+
+  const matches: H2HMatch[] = response.response
+    .filter((game: any) => game.status?.short === 3 || game.status?.long === 'Finished')
+    .slice(0, 5)
+    .map((game: any) => {
+      const homeScore = game.scores.home.points;
+      const awayScore = game.scores.visitors.points;
+      
+      // Determine winner relative to our home/away teams
+      const gameHomeTeamId = game.teams.home.id;
+      if (gameHomeTeamId === homeTeamId) {
+        if (homeScore > awayScore) homeWins++;
+        else awayWins++;
+      } else {
+        if (awayScore > homeScore) homeWins++;
+        else awayWins++;
+      }
+
+      return {
+        date: game.date.start,
+        homeTeam: game.teams.home.name,
+        awayTeam: game.teams.visitors.name,
+        homeScore,
+        awayScore,
+      };
+    });
+
+  const result = {
+    matches,
+    summary: {
+      totalMatches: matches.length,
+      homeWins,
+      awayWins,
+      draws: 0, // NBA has no draws
+    }
+  };
+
+  setCache(cacheKey, result);
+  return result;
+}
+
+async function fetchNBAData(homeTeam: string, awayTeam: string, baseUrl: string): Promise<MultiSportEnrichedData> {
+  const [homeTeamId, awayTeamId] = await Promise.all([
+    findNBATeam(homeTeam, baseUrl),
+    findNBATeam(awayTeam, baseUrl),
+  ]);
+
+  if (!homeTeamId || !awayTeamId) {
+    console.warn(`[NBA] Could not find teams: ${homeTeam} (${homeTeamId}) or ${awayTeam} (${awayTeamId})`);
+    return {
+      sport: 'nba',
+      homeForm: null,
+      awayForm: null,
+      headToHead: null,
+      h2hSummary: null,
+      homeStats: null,
+      awayStats: null,
+      dataSource: 'UNAVAILABLE',
+    };
+  }
+
+  console.log(`[NBA] Found both teams - Home: ${homeTeamId}, Away: ${awayTeamId}`);
+
+  const [homeGames, awayGames, homeSeasonStats, awaySeasonStats, h2hData] = await Promise.all([
+    getNBATeamGames(homeTeamId, baseUrl),
+    getNBATeamGames(awayTeamId, baseUrl),
+    getNBATeamStats(homeTeamId, baseUrl),
+    getNBATeamStats(awayTeamId, baseUrl),
+    getNBAH2H(homeTeamId, awayTeamId, baseUrl),
+  ]);
+
+  const homeForm = homeGames.length > 0 ? homeGames.map(g => ({
+    result: g.result as 'W' | 'D' | 'L',
+    score: g.score,
+    opponent: g.opponent,
+    date: g.date,
+    home: g.home,
+  })) : null;
+
+  const awayForm = awayGames.length > 0 ? awayGames.map(g => ({
+    result: g.result as 'W' | 'D' | 'L',
+    score: g.score,
+    opponent: g.opponent,
+    date: g.date,
+    home: g.home,
+  })) : null;
+
+  // For NBA, use win percentage as a stat indicator
+  const homeStats: TeamStats | null = homeSeasonStats ? {
+    goalsScored: homeSeasonStats.wins,
+    goalsConceded: homeSeasonStats.losses,
+    cleanSheets: 0,
+    avgGoalsScored: homeSeasonStats.winPercentage || 0,
+    avgGoalsConceded: 1 - (homeSeasonStats.winPercentage || 0),
+  } : null;
+
+  const awayStats: TeamStats | null = awaySeasonStats ? {
+    goalsScored: awaySeasonStats.wins,
+    goalsConceded: awaySeasonStats.losses,
+    cleanSheets: 0,
+    avgGoalsScored: awaySeasonStats.winPercentage || 0,
+    avgGoalsConceded: 1 - (awaySeasonStats.winPercentage || 0),
+  } : null;
+
+  console.log(`[NBA] Data fetched - Home form: ${homeForm?.length || 0} games, Away form: ${awayForm?.length || 0} games, H2H: ${h2hData?.matches?.length || 0} games`);
+
+  return {
+    sport: 'nba',
     homeForm,
     awayForm,
     headToHead: h2hData?.matches || null,
@@ -1680,6 +1919,7 @@ export function getDataSourceLabel(sport: string): string {
   const sportKey = getSportKey(sport);
   switch (sportKey) {
     case 'soccer': return 'API-Football';
+    case 'nba': return 'API-NBA';
     case 'basketball': return 'API-Basketball';
     case 'hockey': return 'API-Hockey';
     case 'american_football': return 'API-NFL';
