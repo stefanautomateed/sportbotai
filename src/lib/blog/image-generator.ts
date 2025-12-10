@@ -18,6 +18,9 @@ export async function generateFeaturedImage(
   // Create an image prompt based on the blog content
   const prompt = createImagePrompt(title, keyword, category);
 
+  console.log('[Image Generator] Starting image generation for:', keyword);
+  console.log('[Image Generator] Prompt:', prompt);
+
   try {
     // Use Flux Schnell for fast, quality images
     const output = await replicate.run(
@@ -33,15 +36,43 @@ export async function generateFeaturedImage(
       }
     );
 
-    // Output is an array of URLs
-    const imageUrl = Array.isArray(output) ? output[0] : output;
+    console.log('[Image Generator] Replicate output type:', typeof output);
+    console.log('[Image Generator] Replicate output:', JSON.stringify(output).substring(0, 200));
+
+    // Handle different output formats from Replicate
+    let imageUrl: string | null = null;
     
-    if (!imageUrl || typeof imageUrl !== 'string') {
+    if (Array.isArray(output) && output.length > 0) {
+      const firstItem = output[0];
+      // Could be a string URL or a FileOutput object
+      if (typeof firstItem === 'string') {
+        imageUrl = firstItem;
+      } else if (firstItem && typeof firstItem === 'object') {
+        // FileOutput object has url() method or direct url property
+        if ('url' in firstItem && typeof firstItem.url === 'function') {
+          imageUrl = await firstItem.url();
+        } else if ('url' in firstItem && typeof firstItem.url === 'string') {
+          imageUrl = firstItem.url;
+        } else if (firstItem.toString && firstItem.toString() !== '[object Object]') {
+          imageUrl = firstItem.toString();
+        }
+      }
+    } else if (typeof output === 'string') {
+      imageUrl = output;
+    } else if (output && typeof output === 'object' && 'url' in output) {
+      imageUrl = typeof output.url === 'function' ? await output.url() : output.url as string;
+    }
+    
+    if (!imageUrl) {
+      console.error('[Image Generator] Could not extract URL from output:', output);
       throw new Error('No image URL returned from Replicate');
     }
 
+    console.log('[Image Generator] Image URL:', imageUrl);
+
     // Download and upload to Vercel Blob for permanent storage
     const blobUrl = await uploadToBlob(imageUrl, keyword);
+    console.log('[Image Generator] Blob URL:', blobUrl);
 
     return {
       url: blobUrl,
@@ -50,7 +81,7 @@ export async function generateFeaturedImage(
     };
 
   } catch (error) {
-    console.error('Image generation error:', error);
+    console.error('[Image Generator] Error:', error);
     throw error;
   }
 }
