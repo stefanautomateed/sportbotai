@@ -17,11 +17,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get posts with Replicate URLs (these expire)
+    // Get posts with Replicate URLs (these expire), placeholders, or missing images
     const postsWithExpiredImages = await prisma.blogPost.findMany({
       where: {
         OR: [
           { featuredImage: { contains: 'replicate.delivery' } },
+          { featuredImage: { contains: 'placehold.co' } },
           { featuredImage: null },
           { featuredImage: '' },
         ],
