@@ -1,11 +1,12 @@
 /**
  * Analysis Results Component
  * 
- * Premium 3-layer layout for analysis results:
+ * Premium 4-layer layout for analysis results:
  * - Layer 1: Quick Glance Card (summary with key metrics)
  * - Layer 1.5: Quick Stats + Key Factors (side by side on desktop)
- * - Layer 2: Analysis Accordion (detailed sections, collapsed by default)
- * - Layer 3: Extras Section (audio, notes, disclaimer)
+ * - Layer 2: Confidence Meter + Sport Insights (side by side)
+ * - Layer 3: Analysis Accordion (detailed sections, collapsed by default)
+ * - Layer 4: Extras Section (audio, notes, disclaimer)
  * 
  * Mobile-first, clean, scannable design with clear visual hierarchy.
  */
@@ -16,6 +17,8 @@ import { AnalyzeResponse } from '@/types';
 import QuickGlanceCard from './QuickGlanceCard';
 import QuickStatsCard from './QuickStatsCard';
 import KeyFactorsCard from './KeyFactorsCard';
+import ConfidenceMeter from './ConfidenceMeter';
+import SportInsightsCard from './SportInsightsCard';
 import AnalysisAccordion from './AnalysisAccordion';
 import ExtrasSection from './ExtrasSection';
 
@@ -58,7 +61,15 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
         </div>
       </section>
 
-      {/* Layer 2: Detailed Analysis Accordion */}
+      {/* Layer 2: Confidence Meter + Sport Insights */}
+      <section>
+        <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+          <ConfidenceMeter result={result} />
+          <SportInsightsCard result={result} />
+        </div>
+      </section>
+
+      {/* Layer 3: Detailed Analysis Accordion */}
       <section>
         <div className="flex items-center justify-between mb-3 sm:mb-4 px-1">
           <h2 className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-wider">
@@ -71,7 +82,7 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
         <AnalysisAccordion result={result} />
       </section>
 
-      {/* Layer 3: Extras - Audio, Notes, Disclaimer */}
+      {/* Layer 4: Extras - Audio, Notes, Disclaimer */}
       <section>
         <div className="mb-3 sm:mb-4 px-1">
           <h2 className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-wider">

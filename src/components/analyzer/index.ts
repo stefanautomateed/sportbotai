@@ -14,7 +14,11 @@ export { default as QuickGlanceCard } from './QuickGlanceCard';
 export { default as QuickStatsCard } from './QuickStatsCard';
 export { default as KeyFactorsCard } from './KeyFactorsCard';
 
-// Layer 2: Accordion
+// Layer 2: Confidence & Sport Insights
+export { default as ConfidenceMeter } from './ConfidenceMeter';
+export { default as SportInsightsCard } from './SportInsightsCard';
+
+// Layer 3: Accordion
 export { default as AnalysisAccordion } from './AnalysisAccordion';
 
 // Layer 3: Extras
