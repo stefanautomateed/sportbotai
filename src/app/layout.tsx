@@ -11,6 +11,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { AuthProvider } from '@/components/auth';
 import { SITE_CONFIG, META, OG_DEFAULTS, getOrganizationSchema, getWebsiteSchema } from '@/lib/seo';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
+import CookieConsent from '@/components/CookieConsent';
 
 // Inter font with display swap for better performance
 const inter = Inter({ 
@@ -107,6 +109,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Google Analytics */}
+        <GoogleAnalytics />
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
@@ -130,6 +134,9 @@ export default function RootLayout({
             
             <Footer />
           </div>
+          
+          {/* Cookie Consent Banner */}
+          <CookieConsent />
         </AuthProvider>
       </body>
     </html>
