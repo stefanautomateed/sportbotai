@@ -27,6 +27,7 @@ const API_BASES: Record<string, string> = {
   american_football: 'https://v1.american-football.api-sports.io',
   hockey: 'https://v1.hockey.api-sports.io',
   baseball: 'https://v1.baseball.api-sports.io',
+  mma: 'https://v1.mma.api-sports.io',  // UFC, Bellator, etc.
 };
 
 // ============================================
@@ -137,6 +138,12 @@ const SPORT_MAPPING: Record<string, string> = {
   'baseball': 'baseball',
   'baseball_mlb': 'baseball',
   'mlb': 'baseball',
+  
+  // MMA / UFC
+  'mma': 'mma',
+  'mma_mixed_martial_arts': 'mma',
+  'ufc': 'mma',
+  'bellator': 'mma',
 };
 
 // ============================================
@@ -1252,6 +1259,9 @@ export async function getMultiSportEnrichedData(
       case 'baseball':
         return await fetchMLBData(homeTeam, awayTeam, baseUrl);
       
+      case 'mma':
+        return await fetchMMAData(homeTeam, awayTeam, baseUrl);
+      
       default:
         console.log(`[API-Sports] Sport handler not implemented: ${sportKey}`);
         return emptyResult;
@@ -1905,6 +1915,234 @@ async function fetchMLBData(homeTeam: string, awayTeam: string, baseUrl: string)
   };
 }
 
+// ============================================
+// MMA-SPECIFIC FUNCTIONS (v1.mma.api-sports.io)
+// ============================================
+
+interface MMAFighterRecord {
+  total: { win: number; loss: number; draw: number };
+  ko: { win: number; loss: number };
+  sub: { win: number; loss: number };
+}
+
+interface MMAFight {
+  id: number;
+  date: string;
+  slug: string;
+  category: string;
+  status: { long: string; short: string };
+  fighters: {
+    first: { id: number; name: string; winner: boolean };
+    second: { id: number; name: string; winner: boolean };
+  };
+}
+
+async function findMMAFighter(fighterName: string, baseUrl: string): Promise<number | null> {
+  // Normalize fighter name - remove common prefixes/suffixes
+  const normalizedName = fighterName
+    .replace(/\s*\(.*?\)\s*/g, '') // Remove anything in parentheses
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  const cacheKey = `mma:fighter:${normalizedName.toLowerCase()}`;
+  const cached = getCached<number>(cacheKey);
+  if (cached) return cached;
+
+  // Try exact name search first
+  let response = await apiRequest<any>(baseUrl, `/fighters?search=${encodeURIComponent(normalizedName)}`);
+  
+  // If not found, try with just the last name
+  if (!response?.response?.length) {
+    const lastName = normalizedName.split(' ').pop() || normalizedName;
+    response = await apiRequest<any>(baseUrl, `/fighters?search=${encodeURIComponent(lastName)}`);
+  }
+  
+  if (response?.response?.length > 0) {
+    // Try to find exact match first
+    const exactMatch = response.response.find((f: any) => 
+      f.name.toLowerCase() === normalizedName.toLowerCase()
+    );
+    const fighter = exactMatch || response.response[0];
+    const fighterId = fighter.id;
+    console.log(`[MMA] Found fighter "${fighterName}" -> ID ${fighterId} (${fighter.name})`);
+    setCache(cacheKey, fighterId);
+    return fighterId;
+  }
+  
+  console.warn(`[MMA] Fighter not found: "${fighterName}" (normalized: "${normalizedName}")`);
+  return null;
+}
+
+async function getMMAFighterRecord(fighterId: number, baseUrl: string): Promise<MMAFighterRecord | null> {
+  const cacheKey = `mma:record:${fighterId}`;
+  const cached = getCached<MMAFighterRecord>(cacheKey);
+  if (cached) return cached;
+
+  const response = await apiRequest<any>(baseUrl, `/fighters/records?id=${fighterId}`);
+  
+  if (!response?.response?.length) return null;
+  
+  const record = response.response[0];
+  const fighterRecord: MMAFighterRecord = {
+    total: record.total || { win: 0, loss: 0, draw: 0 },
+    ko: record.ko || { win: 0, loss: 0 },
+    sub: record.sub || { win: 0, loss: 0 },
+  };
+
+  setCache(cacheKey, fighterRecord);
+  return fighterRecord;
+}
+
+async function getMMAFighterFights(fighterId: number, baseUrl: string): Promise<MMAFight[]> {
+  const cacheKey = `mma:fights:${fighterId}`;
+  const cached = getCached<MMAFight[]>(cacheKey);
+  if (cached) return cached;
+
+  // Get fights from recent seasons
+  const currentYear = new Date().getFullYear();
+  const seasons = [currentYear, currentYear - 1];
+  
+  const allFights: MMAFight[] = [];
+  
+  for (const season of seasons) {
+    const response = await apiRequest<any>(baseUrl, `/fights?fighter=${fighterId}&season=${season}`);
+    if (response?.response?.length) {
+      allFights.push(...response.response);
+    }
+    if (allFights.length >= 5) break;
+  }
+
+  // Filter finished fights and sort by date
+  const finishedFights = allFights
+    .filter((f: MMAFight) => f.status.short === 'FT' || f.status.long === 'Finished')
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
+
+  setCache(cacheKey, finishedFights);
+  return finishedFights;
+}
+
+async function getMMAH2H(fighter1Id: number, fighter2Id: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: { totalMatches: number, homeWins: number, awayWins: number, draws: number } } | null> {
+  // For MMA, we need to search through both fighters' fight histories to find common opponents
+  // The API doesn't have a direct H2H endpoint, so this is limited
+  // For now, return null as direct H2H in MMA is rare
+  return null;
+}
+
+function convertMMAFightsToForm(fights: MMAFight[], fighterId: number): GameResult[] {
+  return fights.map(fight => {
+    const isFirstFighter = fight.fighters.first.id === fighterId;
+    const fighterData = isFirstFighter ? fight.fighters.first : fight.fighters.second;
+    const opponentData = isFirstFighter ? fight.fighters.second : fight.fighters.first;
+    
+    let result: 'W' | 'L' | 'D';
+    if (fighterData.winner) {
+      result = 'W';
+    } else if (opponentData.winner) {
+      result = 'L';
+    } else {
+      result = 'D'; // Draw or NC
+    }
+
+    return {
+      result,
+      score: fight.status.long || fight.status.short,
+      opponent: opponentData.name,
+      date: fight.date,
+      home: true, // MMA doesn't have home/away
+    };
+  });
+}
+
+async function fetchMMAData(fighter1: string, fighter2: string, baseUrl: string): Promise<MultiSportEnrichedData> {
+  const [fighter1Id, fighter2Id] = await Promise.all([
+    findMMAFighter(fighter1, baseUrl),
+    findMMAFighter(fighter2, baseUrl),
+  ]);
+
+  if (!fighter1Id || !fighter2Id) {
+    console.warn(`[MMA] Could not find fighters: ${fighter1} (${fighter1Id}) or ${fighter2} (${fighter2Id})`);
+    return {
+      sport: 'mma',
+      homeForm: null,
+      awayForm: null,
+      headToHead: null,
+      h2hSummary: null,
+      homeStats: null,
+      awayStats: null,
+      dataSource: 'UNAVAILABLE',
+    };
+  }
+
+  console.log(`[MMA] Found both fighters - Fighter 1: ${fighter1Id}, Fighter 2: ${fighter2Id}`);
+
+  const [fighter1Fights, fighter2Fights, fighter1Record, fighter2Record, h2hData] = await Promise.all([
+    getMMAFighterFights(fighter1Id, baseUrl),
+    getMMAFighterFights(fighter2Id, baseUrl),
+    getMMAFighterRecord(fighter1Id, baseUrl),
+    getMMAFighterRecord(fighter2Id, baseUrl),
+    getMMAH2H(fighter1Id, fighter2Id, baseUrl),
+  ]);
+
+  const homeForm = fighter1Fights.length > 0 
+    ? convertMMAFightsToForm(fighter1Fights, fighter1Id).map(f => ({
+        result: f.result as 'W' | 'D' | 'L',
+        score: f.score,
+        opponent: f.opponent,
+        date: f.date,
+        home: f.home,
+      }))
+    : null;
+
+  const awayForm = fighter2Fights.length > 0 
+    ? convertMMAFightsToForm(fighter2Fights, fighter2Id).map(f => ({
+        result: f.result as 'W' | 'D' | 'L',
+        score: f.score,
+        opponent: f.opponent,
+        date: f.date,
+        home: f.home,
+      }))
+    : null;
+
+  // For MMA, use wins/losses as stats
+  const homeStats: TeamStats | null = fighter1Record ? {
+    goalsScored: fighter1Record.total.win,
+    goalsConceded: fighter1Record.total.loss,
+    cleanSheets: fighter1Record.ko.win + fighter1Record.sub.win, // Finishes
+    avgGoalsScored: fighter1Record.total.win + fighter1Record.total.loss > 0
+      ? Math.round((fighter1Record.total.win / (fighter1Record.total.win + fighter1Record.total.loss)) * 100) / 100
+      : 0,
+    avgGoalsConceded: fighter1Record.total.win + fighter1Record.total.loss > 0
+      ? Math.round((fighter1Record.total.loss / (fighter1Record.total.win + fighter1Record.total.loss)) * 100) / 100
+      : 0,
+  } : null;
+
+  const awayStats: TeamStats | null = fighter2Record ? {
+    goalsScored: fighter2Record.total.win,
+    goalsConceded: fighter2Record.total.loss,
+    cleanSheets: fighter2Record.ko.win + fighter2Record.sub.win, // Finishes
+    avgGoalsScored: fighter2Record.total.win + fighter2Record.total.loss > 0
+      ? Math.round((fighter2Record.total.win / (fighter2Record.total.win + fighter2Record.total.loss)) * 100) / 100
+      : 0,
+    avgGoalsConceded: fighter2Record.total.win + fighter2Record.total.loss > 0
+      ? Math.round((fighter2Record.total.loss / (fighter2Record.total.win + fighter2Record.total.loss)) * 100) / 100
+      : 0,
+  } : null;
+
+  console.log(`[MMA] Data fetched - Fighter 1 fights: ${homeForm?.length || 0}, Fighter 2 fights: ${awayForm?.length || 0}`);
+
+  return {
+    sport: 'mma',
+    homeForm,
+    awayForm,
+    headToHead: h2hData?.matches || null,
+    h2hSummary: h2hData?.summary || null,
+    homeStats,
+    awayStats,
+    dataSource: (homeForm || awayForm) ? 'API_SPORTS' : 'UNAVAILABLE',
+  };
+}
+
 /**
  * Check if a sport is supported by API-Sports
  */
@@ -1924,6 +2162,7 @@ export function getDataSourceLabel(sport: string): string {
     case 'hockey': return 'API-Hockey';
     case 'american_football': return 'API-NFL';
     case 'baseball': return 'API-Baseball';
+    case 'mma': return 'API-MMA';
     default: return 'API-Sports';
   }
 }
