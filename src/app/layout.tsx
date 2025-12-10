@@ -9,6 +9,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import MobileBottomNav from '@/components/MobileBottomNav';
 import { AuthProvider } from '@/components/auth';
 import { SITE_CONFIG, META, OG_DEFAULTS, getOrganizationSchema, getWebsiteSchema } from '@/lib/seo';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
@@ -124,7 +125,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           {/* Flex container for sticky footer */}
-          <div className="min-h-screen flex flex-col">
+          <div className="min-h-screen flex flex-col pb-16 md:pb-0">
             <Header />
             
             {/* Main content */}
@@ -134,6 +135,9 @@ export default function RootLayout({
             
             <Footer />
           </div>
+          
+          {/* Mobile Bottom Navigation */}
+          <MobileBottomNav />
           
           {/* Cookie Consent Banner */}
           <CookieConsent />

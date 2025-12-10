@@ -88,56 +88,56 @@ export default function QuickGlanceCard({ result }: QuickGlanceCardProps) {
   return (
     <div className="bg-bg-card rounded-card shadow-card border border-divider overflow-hidden">
       {/* Match Header - Premium Dark Banner */}
-      <div className="bg-gradient-to-r from-bg to-bg-card px-5 py-4 sm:px-6 sm:py-5">
+      <div className="bg-gradient-to-r from-bg to-bg-card px-4 py-3.5 sm:px-6 sm:py-5">
         {/* League & Date Row */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center px-2.5 py-1 bg-primary/20 text-primary text-xs font-semibold rounded-chip">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <span className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 bg-primary/20 text-primary text-[10px] sm:text-xs font-semibold rounded-chip flex-shrink-0">
               {matchInfo.sport}
             </span>
-            <span className="text-text-secondary text-sm font-medium truncate max-w-[150px] sm:max-w-none">{matchInfo.leagueName}</span>
+            <span className="text-text-secondary text-xs sm:text-sm font-medium truncate">{matchInfo.leagueName}</span>
           </div>
-          <span className="text-text-muted text-xs sm:text-sm">{formatDate(matchInfo.matchDate)}</span>
+          <span className="text-text-muted text-[10px] sm:text-sm flex-shrink-0">{formatDate(matchInfo.matchDate)}</span>
         </div>
 
-        {/* Teams Display */}
-        <div className="flex items-center justify-between gap-3 sm:gap-4">
+        {/* Teams Display - Optimized for mobile */}
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex-1 text-center min-w-0">
-            <p className="text-lg sm:text-xl md:text-2xl font-bold text-text-primary leading-tight truncate">{matchInfo.homeTeam}</p>
-            <p className="text-xs text-text-muted mt-1 uppercase tracking-wide">Home</p>
+            <p className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold text-text-primary leading-tight truncate">{matchInfo.homeTeam}</p>
+            <p className="text-[10px] sm:text-xs text-text-muted mt-0.5 sm:mt-1 uppercase tracking-wide">Home</p>
           </div>
           
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-divider flex items-center justify-center">
-              <span className="text-text-muted text-xs sm:text-sm font-bold">VS</span>
+            <div className="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-full bg-divider flex items-center justify-center">
+              <span className="text-text-muted text-[10px] xs:text-xs sm:text-sm font-bold">VS</span>
             </div>
           </div>
           
           <div className="flex-1 text-center min-w-0">
-            <p className="text-lg sm:text-xl md:text-2xl font-bold text-text-primary leading-tight truncate">{matchInfo.awayTeam}</p>
-            <p className="text-xs text-text-muted mt-1 uppercase tracking-wide">Away</p>
+            <p className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold text-text-primary leading-tight truncate">{matchInfo.awayTeam}</p>
+            <p className="text-[10px] sm:text-xs text-text-muted mt-0.5 sm:mt-1 uppercase tracking-wide">Away</p>
           </div>
         </div>
       </div>
 
-      {/* Key Metrics Grid - 4 Cards */}
-      <div className="p-4 sm:p-5">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Key Metrics Grid - 2x2 on mobile, 4 on desktop */}
+      <div className="p-3 sm:p-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           
           {/* Metric 1: AI Verdict */}
-          <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-card p-3 sm:p-4 border border-primary/20">
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
-              <span className="text-base sm:text-lg">{verdict.icon}</span>
-              <span className="text-[10px] sm:text-xs font-medium text-text-muted uppercase tracking-wide">AI Verdict</span>
+          <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-card p-2.5 sm:p-4 border border-primary/20">
+            <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+              <span className="text-sm sm:text-lg">{verdict.icon}</span>
+              <span className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide">Verdict</span>
             </div>
-            <p className="text-sm sm:text-lg font-bold leading-tight truncate text-text-primary">{verdict.team}</p>
-            <p className="text-[10px] sm:text-xs text-accent mt-0.5 sm:mt-1">{verdict.confidence} favorite</p>
+            <p className="text-xs sm:text-lg font-bold leading-tight truncate text-text-primary">{verdict.team}</p>
+            <p className="text-[9px] sm:text-xs text-accent mt-0.5">{verdict.confidence}</p>
           </div>
 
           {/* Metric 2: Win Probabilities */}
-          <div className="bg-bg-hover rounded-card p-3 sm:p-4 border border-divider">
-            <p className="text-[10px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-2 sm:mb-3">Probabilities</p>
-            <div className="space-y-1 sm:space-y-1.5">
+          <div className="bg-bg-hover rounded-card p-2.5 sm:p-4 border border-divider">
+            <p className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1.5 sm:mb-3">Probabilities</p>
+            <div className="space-y-0.5 sm:space-y-1.5">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] sm:text-xs text-text-muted">Home</span>
                 <span className="text-xs sm:text-sm font-bold text-success">
@@ -162,10 +162,10 @@ export default function QuickGlanceCard({ result }: QuickGlanceCardProps) {
           </div>
 
           {/* Metric 3: Value Indicator */}
-          <div className={`rounded-card p-3 sm:p-4 border ${value.bgClass}`}>
-            <p className="text-[10px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1.5 sm:mb-2">Value</p>
-            <p className={`text-sm sm:text-lg font-bold ${value.color}`}>{value.label}</p>
-            <p className="text-[10px] sm:text-xs text-text-muted mt-0.5 sm:mt-1 truncate">
+          <div className={`rounded-card p-2.5 sm:p-4 border ${value.bgClass}`}>
+            <p className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1 sm:mb-2">Value</p>
+            <p className={`text-xs sm:text-lg font-bold ${value.color}`}>{value.label}</p>
+            <p className="text-[9px] sm:text-xs text-text-muted mt-0.5 truncate hidden xs:block">
               {valueAnalysis.bestValueSide !== 'NONE' 
                 ? `Best: ${valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam : 
                           valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw'}`
@@ -174,15 +174,15 @@ export default function QuickGlanceCard({ result }: QuickGlanceCardProps) {
           </div>
 
           {/* Metric 4: Risk Level */}
-          <div className={`rounded-card p-3 sm:p-4 border ${risk.bgClass}`}>
-            <p className="text-[10px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1.5 sm:mb-2">Risk</p>
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-base sm:text-lg">{risk.icon}</span>
-              <span className={`text-sm sm:text-lg font-bold ${risk.color}`}>{risk.label}</span>
+          <div className={`rounded-card p-2.5 sm:p-4 border ${risk.bgClass}`}>
+            <p className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1 sm:mb-2">Risk</p>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="text-sm sm:text-lg">{risk.icon}</span>
+              <span className={`text-xs sm:text-lg font-bold ${risk.color}`}>{risk.label}</span>
             </div>
             {upsetPotential.upsetProbability >= 25 && (
-              <p className="text-[10px] sm:text-xs text-warning mt-0.5 sm:mt-1 font-medium">
-                ⚡ {upsetPotential.upsetProbability}% upset chance
+              <p className="text-[9px] sm:text-xs text-warning mt-0.5 font-medium hidden xs:block">
+                ⚡ {upsetPotential.upsetProbability}% upset
               </p>
             )}
           </div>
@@ -190,14 +190,14 @@ export default function QuickGlanceCard({ result }: QuickGlanceCardProps) {
 
         {/* Expert One-Liner - Highlighted Quote */}
         {tacticalAnalysis.expertConclusionOneLiner && (
-          <div className="mt-4 p-3 sm:p-4 bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/20 rounded-card">
-            <div className="flex items-start gap-2.5 sm:gap-3">
-              <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-accent/10 rounded-btn flex items-center justify-center">
-                <span className="text-accent text-xs sm:text-sm">💡</span>
+          <div className="mt-3 sm:mt-4 p-2.5 sm:p-4 bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/20 rounded-card">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 bg-accent/10 rounded-btn flex items-center justify-center">
+                <span className="text-accent text-[10px] sm:text-sm">💡</span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wide mb-0.5 sm:mb-1">Expert Take</p>
-                <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+                <p className="text-[9px] sm:text-xs font-semibold text-text-muted uppercase tracking-wide mb-0.5">Expert Take</p>
+                <p className="text-[11px] sm:text-sm text-text-secondary leading-relaxed">
                   {tacticalAnalysis.expertConclusionOneLiner}
                 </p>
               </div>

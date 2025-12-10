@@ -40,37 +40,39 @@ function AccordionSection({ title, subtitle, icon, badge, isOpen, onToggle, chil
     <div className={`bg-bg-card rounded-card border transition-all duration-200 ${isOpen ? 'border-divider shadow-card' : 'border-divider/50'}`}>
       <button
         onClick={onToggle}
-        className="w-full px-4 py-4 sm:px-5 flex items-center justify-between hover:bg-bg-hover transition-colors rounded-card"
+        className="w-full px-3.5 py-3.5 sm:px-5 sm:py-4 flex items-center justify-between hover:bg-bg-hover transition-colors rounded-card touch-manipulation active:bg-bg-hover min-h-[56px]"
       >
-        <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-btn flex items-center justify-center transition-colors ${isOpen ? 'bg-primary text-white' : 'bg-bg-hover text-text-secondary'}`}>
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-btn flex items-center justify-center transition-colors flex-shrink-0 ${isOpen ? 'bg-primary text-white' : 'bg-bg-hover text-text-secondary'}`}>
             {icon}
           </div>
-          <div className="text-left">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-text-primary text-sm sm:text-base">{title}</span>
+          <div className="text-left min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span className="font-semibold text-text-primary text-sm sm:text-base truncate">{title}</span>
               {badge && (
-                <span className={`px-2 py-0.5 rounded-chip text-[10px] sm:text-xs font-medium ${badge.color}`}>
+                <span className={`px-1.5 sm:px-2 py-0.5 rounded-chip text-[9px] sm:text-xs font-medium flex-shrink-0 ${badge.color}`}>
                   {badge.text}
                 </span>
               )}
             </div>
-            {subtitle && <p className="text-xs text-text-muted mt-0.5">{subtitle}</p>}
+            {subtitle && <p className="text-[10px] sm:text-xs text-text-muted mt-0.5 truncate">{subtitle}</p>}
           </div>
         </div>
-        <svg
-          className={`w-5 h-5 text-text-muted transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        <div className={`w-8 h-8 rounded-btn flex items-center justify-center flex-shrink-0 ml-2 transition-all ${isOpen ? 'bg-primary/10' : 'bg-transparent'}`}>
+          <svg
+            className={`w-4 h-4 sm:w-5 sm:h-5 text-text-muted transition-transform duration-200 ${isOpen ? 'rotate-180 text-primary' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </button>
       
       <div className={`overflow-hidden transition-all duration-200 ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="px-4 pb-5 sm:px-5 border-t border-divider">
+        <div className="px-3.5 pb-4 sm:px-5 sm:pb-5 border-t border-divider">
           {children}
         </div>
       </div>

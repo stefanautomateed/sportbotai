@@ -133,65 +133,67 @@ export default function PricingCards() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-      {plans.map((plan) => (
-        <div
-          key={plan.id}
-          className={`bg-bg-card rounded-card p-6 relative ${
-            plan.highlighted
-              ? 'border-2 border-primary shadow-glow-primary scale-105'
-              : 'border border-divider'
-          }`}
-        >
-          {/* Popular badge */}
-          {plan.highlighted && (
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-sm font-bold px-4 py-1 rounded-full">
-              MOST POPULAR
-            </div>
-          )}
-
-          {/* Plan header */}
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-            <div className="mb-2">
-              <span className={`text-4xl font-bold ${plan.highlighted ? 'text-primary' : 'text-white'}`}>
-                {plan.price}
-              </span>
-              <span className="text-gray-400">/monthly</span>
-            </div>
-            <p className="text-gray-400 text-sm">{plan.description}</p>
-          </div>
-
-          {/* Features list */}
-          <ul className="space-y-3 mb-8">
-            {plan.features.map((feature, index) => (
-              <li key={index} className="flex items-start gap-3">
-                <svg
-                  className={`w-5 h-5 flex-shrink-0 ${plan.highlighted ? 'text-primary' : 'text-accent'}`}
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-gray-300 text-sm">{feature}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/* CTA Button */}
-          <button
-            onClick={() => handleCheckout(plan)}
-            disabled={loading === plan.id}
-            className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
+    <div className="relative">
+      {/* Horizontal scroll container on mobile */}
+      <div className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto overflow-x-auto pb-4 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+        {plans.map((plan) => (
+          <div
+            key={plan.id}
+            className={`flex-shrink-0 w-[85vw] xs:w-[75vw] sm:w-[320px] md:w-auto snap-center bg-bg-card rounded-card p-5 sm:p-6 relative ${
               plan.highlighted
-                ? 'bg-primary text-white hover:bg-primary/80'
-                : 'bg-bg-elevated text-white hover:bg-bg-elevated/80 border border-divider'
-            } ${loading === plan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                ? 'border-2 border-primary shadow-glow-primary md:scale-105'
+                : 'border border-divider'
+            }`}
           >
+            {/* Popular badge */}
+            {plan.highlighted && (
+              <div className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1 rounded-full whitespace-nowrap">
+                MOST POPULAR
+              </div>
+            )}
+
+            {/* Plan header */}
+            <div className="text-center mb-5 sm:mb-6 pt-2 sm:pt-0">
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">{plan.name}</h3>
+              <div className="mb-2">
+                <span className={`text-3xl sm:text-4xl font-bold ${plan.highlighted ? 'text-primary' : 'text-white'}`}>
+                  {plan.price}
+                </span>
+                <span className="text-gray-400 text-sm">/monthly</span>
+              </div>
+              <p className="text-gray-400 text-xs sm:text-sm">{plan.description}</p>
+            </div>
+
+            {/* Features list */}
+            <ul className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
+              {plan.features.map((feature, index) => (
+                <li key={index} className="flex items-start gap-2.5 sm:gap-3">
+                  <svg
+                    className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5 ${plan.highlighted ? 'text-primary' : 'text-accent'}`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="text-gray-300 text-xs sm:text-sm">{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* CTA Button - Larger touch target */}
+            <button
+              onClick={() => handleCheckout(plan)}
+              disabled={loading === plan.id}
+              className={`w-full py-3.5 sm:py-3 px-6 rounded-btn font-semibold transition-all duration-200 touch-manipulation active:scale-[0.98] min-h-[48px] ${
+                plan.highlighted
+                  ? 'bg-primary text-white hover:bg-primary/80'
+                  : 'bg-bg-elevated text-white hover:bg-bg-elevated/80 border border-divider'
+              } ${loading === plan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
             {loading === plan.id ? (
               <span className="flex items-center justify-center gap-2">
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -218,10 +220,11 @@ export default function PricingCards() {
           </button>
         </div>
       ))}
+      </div>
 
       {/* Error message */}
       {error && (
-        <div className="col-span-full bg-danger/10 border border-danger/30 text-danger px-4 py-3 rounded-lg text-center">
+        <div className="col-span-full bg-danger/10 border border-danger/30 text-danger px-4 py-3 rounded-lg text-center mt-4">
           {error}
         </div>
       )}

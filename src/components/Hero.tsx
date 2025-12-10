@@ -12,69 +12,69 @@ export default function Hero() {
       {/* Background Pattern */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#2A3036_1px,transparent_1px),linear-gradient(to_bottom,#2A3036_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[100px]" />
+        <div className="absolute top-0 right-0 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-primary/10 rounded-full blur-[80px] sm:blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[200px] sm:w-[400px] h-[200px] sm:h-[400px] bg-accent/10 rounded-full blur-[60px] sm:blur-[100px]" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-28">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
           {/* Left Side - Content */}
-          <div>
+          <div className="text-center lg:text-left">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full text-sm font-medium text-gray-300 mb-6 backdrop-blur-sm border border-white/10">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full text-xs sm:text-sm font-medium text-gray-300 mb-4 sm:mb-6 backdrop-blur-sm border border-white/10">
               <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
               AI-Powered Sports Analytics
             </div>
 
             {/* Headline - H1 for SEO */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+            <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 sm:mb-6">
               AI-Powered Sports Analytics
-              <br />
+              <br className="hidden xs:block" />
               <span className="text-accent">& Match Intelligence</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="text-lg text-gray-400 leading-relaxed mb-8 max-w-xl">
+            <p className="text-base sm:text-lg text-gray-400 leading-relaxed mb-6 sm:mb-8 max-w-xl mx-auto lg:mx-0">
               Real-time probability models, value detection, and risk insights for Soccer, NBA, NFL, Tennis & more. 
               <strong className="text-gray-300"> Not betting tips—pure sports intelligence.</strong>
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            {/* CTA Buttons - Stack on mobile */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
               <Link 
                 href="/analyzer" 
-                className="btn-primary text-center text-lg px-8 py-4"
+                className="btn-primary text-center text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 w-full sm:w-auto"
               >
                 Start analyzing matches
               </Link>
               <Link 
                 href="/pricing" 
-                className="btn-secondary text-center text-lg px-8 py-4"
+                className="btn-secondary text-center text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 w-full sm:w-auto"
               >
                 View pricing
               </Link>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="mt-10 pt-8 border-t border-white/10">
-              <div className="flex flex-wrap gap-6 text-sm text-gray-400">
+            {/* Trust Indicators - Horizontal scroll on mobile */}
+            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/10">
+              <div className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 text-xs sm:text-sm text-gray-400">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-accent" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span>Multi-Sport Coverage</span>
+                  <span>Multi-Sport</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-accent" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span>Transparent Risk Analysis</span>
+                  <span>Risk Analysis</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-accent" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span>Responsible Approach</span>
+                  <span>Responsible</span>
                 </div>
               </div>
             </div>
