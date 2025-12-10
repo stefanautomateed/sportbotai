@@ -87,48 +87,80 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-divider">
-            <div className="flex flex-col gap-2">
+          <div className="md:hidden py-4 border-t border-divider animate-fade-in">
+            <div className="flex flex-col gap-1">
               <Link
                 href="/"
-                className="text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-3 py-2 rounded-btn transition-colors"
+                className="flex items-center gap-3 text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-4 py-3.5 rounded-btn transition-colors active:scale-[0.98]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
                 Home
               </Link>
               <Link
                 href="/history"
-                className="text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-3 py-2 rounded-btn transition-colors"
+                className="flex items-center gap-3 text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-4 py-3.5 rounded-btn transition-colors active:scale-[0.98]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 History
               </Link>
               <Link
                 href="/pricing"
-                className="text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-3 py-2 rounded-btn transition-colors"
+                className="flex items-center gap-3 text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-4 py-3.5 rounded-btn transition-colors active:scale-[0.98]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 Pricing
               </Link>
               <Link
                 href="/blog"
-                className="text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-3 py-2 rounded-btn transition-colors"
+                className="flex items-center gap-3 text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-4 py-3.5 rounded-btn transition-colors active:scale-[0.98]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
                 Blog
               </Link>
               <Link
-                href="/responsible-gambling"
-                className="text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-3 py-2 rounded-btn transition-colors"
+                href="/account"
+                className="flex items-center gap-3 text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-4 py-3.5 rounded-btn transition-colors active:scale-[0.98]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Responsible Gaming
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Account
               </Link>
               <Link
-                href="/analyzer"
-                className="bg-accent text-bg px-5 py-2.5 rounded-btn font-semibold text-center mt-2 transition-all duration-200"
+                href="/responsible-gambling"
+                className="flex items-center gap-3 text-text-secondary hover:text-text-primary hover:bg-bg-hover font-medium px-4 py-3.5 rounded-btn transition-colors active:scale-[0.98]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Responsible Gaming
+              </Link>
+              
+              {/* Divider */}
+              <div className="my-2 border-t border-divider" />
+              
+              <Link
+                href="/analyzer"
+                className="flex items-center justify-center gap-2 bg-accent text-bg px-5 py-3.5 rounded-btn font-semibold text-center transition-all duration-200 active:scale-[0.98] shadow-glow-accent"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
                 Start Analyzing
               </Link>
             </div>

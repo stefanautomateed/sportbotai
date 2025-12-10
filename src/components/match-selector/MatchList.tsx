@@ -54,7 +54,8 @@ export default function MatchList({
             key={match.matchId}
             onClick={() => onMatchSelect(match)}
             className={`
-              w-full text-left p-3 sm:p-4 rounded-card transition-all duration-200 active:scale-[0.99]
+              w-full text-left p-3.5 sm:p-4 rounded-card transition-all duration-200 
+              active:scale-[0.98] touch-manipulation min-h-[64px]
               ${isSelected
                 ? 'bg-primary text-white shadow-lg shadow-primary/20'
                 : 'bg-bg-card border border-divider hover:border-primary/20 hover:shadow-sm'

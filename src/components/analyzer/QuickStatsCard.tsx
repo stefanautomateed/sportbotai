@@ -20,6 +20,12 @@ interface QuickStatsCardProps {
 }
 
 // Sport-specific stat configurations
+// Note: Keys map to TeamStats interface fields:
+// - goalsScored: Points/Goals/Wins depending on sport
+// - goalsConceded: Points allowed/Goals against/Losses
+// - cleanSheets: Shutouts/Finishes
+// - avgGoalsScored: PPG/Avg goals/Win rate
+// - wins, losses, winPercentage: Optional sport-specific fields
 const SPORT_STATS_CONFIG: Record<string, {
   primaryStats: { key: string; label: string; icon: string }[];
   formLabel: string;
@@ -36,43 +42,61 @@ const SPORT_STATS_CONFIG: Record<string, {
   },
   basketball: {
     primaryStats: [
-      { key: 'pointsFor', label: 'PPG', icon: '🏀' },
-      { key: 'pointsAgainst', label: 'Opp PPG', icon: '📊' },
-      { key: 'winPercentage', label: 'Win %', icon: '📈' },
+      { key: 'avgGoalsScored', label: 'Win %', icon: '🏀' },
+      { key: 'goalsScored', label: 'Wins', icon: '✓' },
+      { key: 'goalsConceded', label: 'Losses', icon: '✗' },
     ],
     formLabel: 'Last 5 Games',
     scoringUnit: 'points',
   },
   nba: {
     primaryStats: [
-      { key: 'pointsFor', label: 'PPG', icon: '🏀' },
-      { key: 'pointsAgainst', label: 'Opp PPG', icon: '📊' },
-      { key: 'winPercentage', label: 'Win %', icon: '📈' },
+      { key: 'avgGoalsScored', label: 'Win %', icon: '🏀' },
+      { key: 'goalsScored', label: 'Wins', icon: '✓' },
+      { key: 'goalsConceded', label: 'Losses', icon: '✗' },
     ],
     formLabel: 'Last 5 Games',
     scoringUnit: 'points',
   },
   nfl: {
     primaryStats: [
-      { key: 'pointsFor', label: 'PPG', icon: '🏈' },
-      { key: 'pointsAgainst', label: 'Opp PPG', icon: '📊' },
-      { key: 'winPercentage', label: 'Win %', icon: '📈' },
+      { key: 'goalsScored', label: 'Points', icon: '🏈' },
+      { key: 'goalsConceded', label: 'Allowed', icon: '🛡️' },
+      { key: 'avgGoalsScored', label: 'Avg PPG', icon: '📊' },
     ],
     formLabel: 'Last 5 Games',
     scoringUnit: 'points',
   },
+  hockey: {
+    primaryStats: [
+      { key: 'goalsScored', label: 'Goals', icon: '🏒' },
+      { key: 'goalsConceded', label: 'Allowed', icon: '🥅' },
+      { key: 'cleanSheets', label: 'Shutouts', icon: '🧤' },
+    ],
+    formLabel: 'Last 5 Games',
+    scoringUnit: 'goals',
+  },
+  mma: {
+    primaryStats: [
+      { key: 'goalsScored', label: 'Wins', icon: '🏆' },
+      { key: 'goalsConceded', label: 'Losses', icon: '❌' },
+      { key: 'cleanSheets', label: 'Finishes', icon: '💥' },
+    ],
+    formLabel: 'Fight History',
+    scoringUnit: 'fights',
+  },
   tennis: {
     primaryStats: [
-      { key: 'wins', label: 'Wins', icon: '🎾' },
-      { key: 'winPercentage', label: 'Win %', icon: '📈' },
+      { key: 'goalsScored', label: 'Wins', icon: '🎾' },
+      { key: 'avgGoalsScored', label: 'Win %', icon: '📈' },
     ],
     formLabel: 'Recent Matches',
     scoringUnit: 'sets',
   },
   default: {
     primaryStats: [
-      { key: 'wins', label: 'Wins', icon: '✓' },
-      { key: 'losses', label: 'Losses', icon: '✗' },
+      { key: 'goalsScored', label: 'Scored', icon: '✓' },
+      { key: 'goalsConceded', label: 'Conceded', icon: '✗' },
     ],
     formLabel: 'Recent Form',
     scoringUnit: 'points',
@@ -83,14 +107,23 @@ const SPORT_STATS_CONFIG: Record<string, {
 function getSportStatsConfig(sport: string) {
   const normalized = sport.toLowerCase().replace(/[^a-z]/g, '');
   
-  if (normalized.includes('soccer') || normalized.includes('football') && !normalized.includes('american')) {
+  if (normalized.includes('soccer') || (normalized.includes('football') && !normalized.includes('american'))) {
     return SPORT_STATS_CONFIG.soccer;
   }
-  if (normalized.includes('basketball') || normalized.includes('nba')) {
+  if (normalized.includes('nba')) {
+    return SPORT_STATS_CONFIG.nba;
+  }
+  if (normalized.includes('basketball')) {
     return SPORT_STATS_CONFIG.basketball;
   }
   if (normalized.includes('nfl') || normalized.includes('american')) {
     return SPORT_STATS_CONFIG.nfl;
+  }
+  if (normalized.includes('hockey') || normalized.includes('nhl')) {
+    return SPORT_STATS_CONFIG.hockey;
+  }
+  if (normalized.includes('mma') || normalized.includes('ufc')) {
+    return SPORT_STATS_CONFIG.mma;
   }
   if (normalized.includes('tennis')) {
     return SPORT_STATS_CONFIG.tennis;
@@ -155,14 +188,22 @@ function getStatValue(stats: TeamStats | undefined, key: string): string {
   const value = (stats as any)[key];
   if (value === undefined || value === null) return '-';
   
-  // Format percentages
-  if (key === 'winPercentage') {
-    return `${Math.round(value * 100)}%`;
+  // Format percentages (values typically 0-1 for win rates)
+  if (key === 'winPercentage' || key === 'avgGoalsScored' && value <= 1) {
+    // If it looks like a decimal percentage (0-1), convert to %
+    if (value <= 1) {
+      return `${Math.round(value * 100)}%`;
+    }
   }
   
-  // Format averages
-  if (key.includes('avg') || key === 'pointsFor' || key === 'pointsAgainst') {
+  // Format averages/decimals
+  if (key.includes('avg') && value > 1) {
     return typeof value === 'number' ? value.toFixed(1) : value;
+  }
+  
+  // Integer values
+  if (typeof value === 'number') {
+    return Number.isInteger(value) ? String(value) : value.toFixed(1);
   }
   
   return String(value);

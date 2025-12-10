@@ -25,8 +25,8 @@ export default function SportTabs({
 }: SportTabsProps) {
   return (
     <div className="relative">
-      {/* Scrollable container with snap */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1 snap-x snap-mandatory">
+      {/* Scrollable container with snap - improved touch targets */}
+      <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1 snap-x snap-mandatory">
         {categories.map((category) => {
           const display = getCategoryDisplayInfo(category);
           const isSelected = category === selectedCategory;
@@ -37,21 +37,24 @@ export default function SportTabs({
               onClick={() => onCategoryChange(category)}
               disabled={loading}
               className={`
-                snap-start flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-btn font-medium text-sm
+                snap-start flex-shrink-0 flex items-center gap-2 sm:gap-2.5
+                px-3.5 py-3 sm:px-4 sm:py-3 min-h-[48px]
+                rounded-btn font-medium text-sm
                 transition-all duration-200 whitespace-nowrap border
+                touch-manipulation
                 ${isSelected
                   ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
                   : 'bg-bg-card text-text-secondary border-divider hover:border-primary/30 hover:bg-bg-hover'
                 }
-                ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}
+                ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-[0.97]'}
               `}
             >
-              <span className={`text-lg transition-transform duration-200 ${isSelected ? 'scale-110' : ''}`}>
+              <span className={`text-xl sm:text-lg transition-transform duration-200 ${isSelected ? 'scale-110' : ''}`}>
                 {display.icon}
               </span>
-              <span className="font-semibold">{display.shortName}</span>
+              <span className="font-semibold hidden xs:inline">{display.shortName}</span>
               {isSelected && (
-                <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
+                <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse hidden sm:block" />
               )}
             </button>
           );
@@ -59,7 +62,7 @@ export default function SportTabs({
       </div>
 
       {/* Fade indicator on right */}
-      <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-bg to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-2 w-8 sm:w-12 bg-gradient-to-l from-bg to-transparent pointer-events-none" />
     </div>
   );
 }

@@ -118,8 +118,9 @@ export default function LeagueAccordion({
             <button
               onClick={() => toggleLeague(league.leagueKey)}
               className={`
-                w-full flex items-center justify-between p-4 text-left
-                transition-colors duration-200 group
+                w-full flex items-center justify-between p-4 sm:p-4 text-left
+                transition-colors duration-200 group touch-manipulation min-h-[64px]
+                active:bg-bg-elevated/70
                 ${isExpanded ? 'bg-bg-elevated/50' : 'hover:bg-bg-elevated/50'}
               `}
             >

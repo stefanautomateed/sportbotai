@@ -51,24 +51,24 @@ export default function Footer() {
           {/* Navigation */}
           <div>
             <h3 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider">Product</h3>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               <li>
-                <Link href="/" className="text-text-muted hover:text-accent transition-colors text-sm">
+                <Link href="/" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/analyzer" className="text-text-muted hover:text-accent transition-colors text-sm">
+                <Link href="/analyzer" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
                   Analyzer
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-text-muted hover:text-accent transition-colors text-sm">
+                <Link href="/pricing" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
                   Pricing
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-text-muted hover:text-accent transition-colors text-sm">
+                <Link href="/contact" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
                   Contact
                 </Link>
               </li>
@@ -78,19 +78,19 @@ export default function Footer() {
           {/* Legal */}
           <div>
             <h3 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider">Legal</h3>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               <li>
-                <Link href="/terms" className="text-text-muted hover:text-accent transition-colors text-sm">
+                <Link href="/terms" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="text-text-muted hover:text-accent transition-colors text-sm">
+                <Link href="/privacy" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/responsible-gambling" className="text-text-muted hover:text-accent transition-colors text-sm">
+                <Link href="/responsible-gambling" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
                   Responsible Gambling
                 </Link>
               </li>

@@ -505,6 +505,12 @@ export async function POST(request: NextRequest) {
       analysis = cachedAnalysis;
       // Update with fresh enriched data if available
       if (enrichedData) {
+        // Determine appropriate data source based on sport
+        const sportLower = normalizedRequest.matchData.sport?.toLowerCase() || 'soccer';
+        const dataSource = (enrichedData.homeForm?.length || enrichedData.awayForm?.length) 
+          ? (sportLower === 'soccer' || sportLower === 'football' ? 'API_FOOTBALL' : 'API_SPORTS')
+          : analysis.momentumAndForm.formDataSource;
+        
         analysis = {
           ...analysis,
           momentumAndForm: {
@@ -515,7 +521,7 @@ export async function POST(request: NextRequest) {
             h2hSummary: enrichedData.h2hSummary || analysis.momentumAndForm.h2hSummary,
             homeStats: enrichedData.homeStats || analysis.momentumAndForm.homeStats,
             awayStats: enrichedData.awayStats || analysis.momentumAndForm.awayStats,
-            formDataSource: enrichedData.homeForm?.length || enrichedData.awayForm?.length ? 'API_FOOTBALL' : analysis.momentumAndForm.formDataSource,
+            formDataSource: dataSource,
           },
         };
       }
@@ -849,11 +855,37 @@ function validateAndSanitizeResponse(
   enrichedData?: MultiSportEnrichedData | null
 ): AnalyzeResponse {
   const now = new Date().toISOString();
+  const sport = request.matchData.sport?.toLowerCase() || 'soccer';
   
-  // Determine form data source
-  const formDataSource = enrichedData?.homeForm || enrichedData?.awayForm 
-    ? 'API_FOOTBALL' 
-    : 'AI_ESTIMATE';
+  // Check if we have real API data
+  const hasRealFormData = !!(enrichedData?.homeForm || enrichedData?.awayForm);
+  const hasRealStats = !!(enrichedData?.homeStats || enrichedData?.awayStats);
+  const hasH2H = !!(enrichedData?.headToHead && enrichedData.headToHead.length > 0);
+  const hasRealData = hasRealFormData || hasRealStats || hasH2H;
+  
+  // Determine form data source based on sport and data availability
+  let formDataSource: string;
+  if (hasRealData) {
+    // Use sport-appropriate data source label
+    if (sport === 'soccer' || sport === 'football') {
+      formDataSource = 'API_FOOTBALL';
+    } else {
+      formDataSource = 'API_SPORTS';
+    }
+  } else {
+    formDataSource = 'AI_ESTIMATE';
+  }
+  
+  // Determine data quality based on real data availability
+  let dataQuality: DataQuality;
+  if (hasRealFormData && hasRealStats) {
+    dataQuality = 'HIGH';
+  } else if (hasRealFormData || hasRealStats || hasH2H) {
+    dataQuality = 'MEDIUM';
+  } else {
+    // Fall back to AI response or default
+    dataQuality = validateDataQuality(raw.matchInfo?.dataQuality);
+  }
   
   return {
     success: raw.success ?? true,
@@ -865,7 +897,7 @@ function validateAndSanitizeResponse(
       homeTeam: raw.matchInfo?.homeTeam ?? request.matchData.homeTeam,
       awayTeam: raw.matchInfo?.awayTeam ?? request.matchData.awayTeam,
       sourceType: validateSourceType(raw.matchInfo?.sourceType ?? request.matchData.sourceType),
-      dataQuality: validateDataQuality(raw.matchInfo?.dataQuality),
+      dataQuality: dataQuality,
     },
     
     probabilities: {
@@ -916,10 +948,10 @@ function validateAndSanitizeResponse(
       keyFormFactors: Array.isArray(raw.momentumAndForm?.keyFormFactors) 
         ? raw.momentumAndForm.keyFormFactors 
         : ['Form data not available'],
-      // Real form data from API-Football (if available)
+      // Real form data from API (if available)
       homeForm: enrichedData?.homeForm ?? undefined,
       awayForm: enrichedData?.awayForm ?? undefined,
-      formDataSource: formDataSource as 'API_FOOTBALL' | 'AI_ESTIMATE' | 'UNAVAILABLE',
+      formDataSource: formDataSource as 'API_FOOTBALL' | 'API_SPORTS' | 'AI_ESTIMATE' | 'UNAVAILABLE',
       // Head-to-head data
       headToHead: enrichedData?.headToHead ?? undefined,
       h2hSummary: enrichedData?.h2hSummary ?? undefined,
@@ -1223,10 +1255,10 @@ function generateFallbackAnalysis(
       homeTrend: 'UNKNOWN',
       awayTrend: 'UNKNOWN',
       keyFormFactors: ['Form data not available in fallback mode'],
-      // Real form data from API-Football (if available)
+      // Real form data from API (if available)
       homeForm: enrichedData?.homeForm ?? undefined,
       awayForm: enrichedData?.awayForm ?? undefined,
-      formDataSource: formDataSource as 'API_FOOTBALL' | 'AI_ESTIMATE' | 'UNAVAILABLE',
+      formDataSource: formDataSource as 'API_FOOTBALL' | 'API_SPORTS' | 'AI_ESTIMATE' | 'UNAVAILABLE',
       // Head-to-head data
       headToHead: enrichedData?.headToHead ?? undefined,
       h2hSummary: enrichedData?.h2hSummary ?? undefined,
