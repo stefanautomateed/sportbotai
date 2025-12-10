@@ -61,49 +61,58 @@ export interface GenerationStep {
   error?: string;
 }
 
-// Seed keywords for sports betting analytics
+// Seed keywords for sports analytics (optimized for SportBot AI use case)
+// Goal: Attract users searching for sports analysis tools, AI predictions, match insights
 export const SEED_KEYWORDS = [
-  // Core betting concepts
-  "what is value betting in sports",
-  "how to calculate implied probability from odds",
-  "understanding betting odds formats decimal fractional american",
-  "bankroll management strategies for sports betting",
-  "what is expected value EV in betting",
+  // Product-aligned: AI & Tools (high intent)
+  "best AI sports analysis tools 2025",
+  "how AI predicts football match outcomes",
+  "machine learning sports predictions explained",
+  "automated sports analytics platforms",
+  "AI powered match analysis software",
   
-  // Sport-specific analysis
-  "football match analysis techniques",
-  "how to analyze basketball games for betting",
-  "tennis betting strategies and statistics",
-  "factors affecting football match outcomes",
-  "home advantage in football statistics",
+  // Sports Analysis (core value proposition)
+  "how to analyze football matches like a pro",
+  "soccer match prediction factors",
+  "NBA game analysis techniques",
+  "tennis match outcome predictors",
+  "head to head statistics importance sports",
+  "team form analysis for predictions",
   
-  // Data and statistics
-  "using statistics for sports predictions",
-  "xG expected goals explained football",
-  "advanced basketball statistics for betting",
-  "how weather affects football matches",
-  "player performance metrics betting analysis",
+  // Probability & Statistics (educational)
+  "understanding probability in sports outcomes",
+  "how bookmakers calculate odds explained",
+  "implied probability vs true probability",
+  "expected value sports analysis guide",
+  "statistical models for sports predictions",
   
-  // Risk and psychology
-  "responsible gambling tips and strategies",
-  "cognitive biases in sports betting",
-  "how to avoid emotional betting decisions",
-  "understanding variance in sports betting",
-  "setting betting limits and boundaries",
+  // Specific Features (what SportBot offers)
+  "real time sports data analysis",
+  "value betting detection methods",
+  "risk assessment in sports predictions",
+  "Kelly criterion sports betting calculator",
+  "momentum analysis in football matches",
   
-  // Market analysis
-  "how bookmakers set odds",
-  "understanding betting line movement",
-  "what is sharp money in sports betting",
-  "identifying value in betting markets",
-  "closing line value importance",
+  // Sport-specific deep dives
+  "Premier League match analysis guide",
+  "Champions League prediction factors",
+  "NFL game analysis statistics",
+  "NBA player performance metrics",
+  "how weather affects soccer matches",
   
-  // Educational
-  "beginner guide to sports analytics",
-  "how AI is used in sports predictions",
-  "data sources for sports betting research",
-  "building a sports betting model",
-  "probability vs odds conversion guide",
+  // Educational & Responsible
+  "sports betting vs sports analysis difference",
+  "data driven sports predictions beginners",
+  "why most sports predictions fail",
+  "responsible approach to sports analytics",
+  "free sports analysis tools comparison",
+  
+  // Long-tail high-intent
+  "how to predict football match results accurately",
+  "best way to analyze upcoming matches",
+  "understanding home advantage statistics",
+  "what data do professional analysts use",
+  "building sports prediction strategy",
 ];
 
 // Blog categories
