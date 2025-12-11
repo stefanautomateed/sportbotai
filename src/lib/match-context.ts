@@ -98,22 +98,55 @@ async function fetchSoccerInjuries(
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const players: InjuredPlayer[] = data.response
-      .filter((injury: any) => {
-        const fixtureDate = new Date(injury.fixture?.date || '');
-        return fixtureDate >= thirtyDaysAgo;
-      })
-      .slice(0, 10)
+    // API-Football returns one entry per fixture missed, so we need to deduplicate
+    const recentInjuries = data.response.filter((injury: any) => {
+      const fixtureDate = new Date(injury.fixture?.date || '');
+      return fixtureDate >= thirtyDaysAgo;
+    });
+
+    // Deduplicate by player ID first (most reliable), then by normalized name as fallback
+    const playerMap = new Map<string, any>();
+    recentInjuries.forEach((injury: any) => {
+      // Use player ID if available, otherwise use normalized name
+      const playerId = injury.player?.id;
+      const playerName = injury.player?.name || 'Unknown';
+      // Normalize name: lowercase, trim, remove accents for comparison
+      const normalizedName = playerName.toLowerCase().trim()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      
+      // Create a unique key - prefer ID, fallback to normalized name
+      const key = playerId ? `id:${playerId}` : `name:${normalizedName}`;
+      
+      const fixtureDate = new Date(injury.fixture?.date || '');
+      const existing = playerMap.get(key);
+      
+      // Keep the most recent injury entry for each player
+      if (!existing || fixtureDate > new Date(existing.fixture?.date || '')) {
+        playerMap.set(key, injury);
+      }
+    });
+
+    // Map to player objects and do a final name-based deduplication
+    const uniquePlayers = Array.from(playerMap.values())
       .map((injury: any) => ({
         name: injury.player?.name || 'Unknown',
         position: injury.player?.type || 'Unknown',
         reason: injury.player?.reason || 'Unknown',
-        type: injury.player?.reason?.toLowerCase().includes('suspend') 
+        type: (injury.player?.reason?.toLowerCase().includes('suspend') 
           ? 'suspension' 
           : injury.player?.reason?.toLowerCase().includes('doubt')
             ? 'doubtful'
-            : 'injury',
+            : 'injury') as InjuredPlayer['type'],
       }));
+    
+    // Final deduplication by display name (in case ID-based missed some)
+    const seenNames = new Set<string>();
+    const players: InjuredPlayer[] = uniquePlayers.filter(p => {
+      const normalizedName = p.name.toLowerCase().trim();
+      if (seenNames.has(normalizedName)) return false;
+      seenNames.add(normalizedName);
+      return true;
+    }).slice(0, 10);
 
     const result: TeamInjuries = {
       teamName,
@@ -121,8 +154,9 @@ async function fetchSoccerInjuries(
       lastUpdated: new Date().toISOString(),
     };
 
-    await cacheSet(cacheKey, result, CACHE_TTL.TEAM_FORM);
-    console.log(`[Injuries] Found ${players.length} injuries for ${teamName}`);
+    // Use shorter cache TTL of 2 minutes to ensure fresh data
+    await cacheSet(cacheKey, result, 2 * 60);
+    console.log(`[Injuries] Found ${players.length} unique injuries for ${teamName} (from ${data.response.length} raw entries)`);
     
     return result;
   } catch (error) {

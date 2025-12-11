@@ -3,7 +3,7 @@
  * 
  * Provides logo URLs for teams and leagues using multiple sources:
  * 1. ESPN public CDN (most reliable for major leagues)
- * 2. API-Football/API-Sports (if configured)
+ * 2. Transfermarkt CDN for soccer teams (official logos)
  * 3. Generated fallback avatars
  * 
  * Usage:
@@ -125,110 +125,301 @@ const ESPN_TEAM_IDS: Record<string, Record<string, string>> = {
     'Washington Capitals': 'wsh',
     'Winnipeg Jets': 'wpg',
   },
+  // MLB Teams
+  mlb: {
+    'Arizona Diamondbacks': 'ari',
+    'Atlanta Braves': 'atl',
+    'Baltimore Orioles': 'bal',
+    'Boston Red Sox': 'bos',
+    'Chicago Cubs': 'chc',
+    'Chicago White Sox': 'chw',
+    'Cincinnati Reds': 'cin',
+    'Cleveland Guardians': 'cle',
+    'Colorado Rockies': 'col',
+    'Detroit Tigers': 'det',
+    'Houston Astros': 'hou',
+    'Kansas City Royals': 'kc',
+    'Los Angeles Angels': 'laa',
+    'LA Angels': 'laa',
+    'Los Angeles Dodgers': 'lad',
+    'LA Dodgers': 'lad',
+    'Miami Marlins': 'mia',
+    'Milwaukee Brewers': 'mil',
+    'Minnesota Twins': 'min',
+    'New York Mets': 'nym',
+    'NY Mets': 'nym',
+    'New York Yankees': 'nyy',
+    'NY Yankees': 'nyy',
+    'Oakland Athletics': 'oak',
+    'Philadelphia Phillies': 'phi',
+    'Pittsburgh Pirates': 'pit',
+    'San Diego Padres': 'sd',
+    'San Francisco Giants': 'sf',
+    'Seattle Mariners': 'sea',
+    'St. Louis Cardinals': 'stl',
+    'Tampa Bay Rays': 'tb',
+    'Texas Rangers': 'tex',
+    'Toronto Blue Jays': 'tor',
+    'Washington Nationals': 'wsh',
+  },
 };
 
 /**
- * Major soccer league team ID mappings (using API-Football IDs)
- * These can be used with: https://media.api-sports.io/football/teams/{id}.png
+ * Major soccer league team logo mappings
+ * Using Transfermarkt/official CDN URLs for official logos
  */
-const SOCCER_TEAM_IDS: Record<string, number> = {
+const SOCCER_TEAM_LOGOS: Record<string, string> = {
   // Premier League
-  'Arsenal': 42,
-  'Aston Villa': 66,
-  'Bournemouth': 35,
-  'Brentford': 55,
-  'Brighton': 51,
-  'Brighton & Hove Albion': 51,
-  'Chelsea': 49,
-  'Crystal Palace': 52,
-  'Everton': 45,
-  'Fulham': 36,
-  'Ipswich': 57,
-  'Ipswich Town': 57,
-  'Leicester': 46,
-  'Leicester City': 46,
-  'Liverpool': 40,
-  'Manchester City': 50,
-  'Man City': 50,
-  'Manchester United': 33,
-  'Man United': 33,
-  'Newcastle': 34,
-  'Newcastle United': 34,
-  'Nottingham Forest': 65,
-  "Nott'm Forest": 65,
-  'Southampton': 41,
-  'Tottenham': 47,
-  'Tottenham Hotspur': 47,
-  'West Ham': 48,
-  'West Ham United': 48,
-  'Wolves': 39,
-  'Wolverhampton': 39,
+  'Arsenal': 'https://crests.football-data.org/57.png',
+  'Aston Villa': 'https://crests.football-data.org/58.png',
+  'Bournemouth': 'https://crests.football-data.org/1044.png',
+  'AFC Bournemouth': 'https://crests.football-data.org/1044.png',
+  'Brentford': 'https://crests.football-data.org/402.png',
+  'Brighton': 'https://crests.football-data.org/397.png',
+  'Brighton & Hove Albion': 'https://crests.football-data.org/397.png',
+  'Brighton and Hove Albion': 'https://crests.football-data.org/397.png',
+  'Chelsea': 'https://crests.football-data.org/61.png',
+  'Crystal Palace': 'https://crests.football-data.org/354.png',
+  'Everton': 'https://crests.football-data.org/62.png',
+  'Fulham': 'https://crests.football-data.org/63.png',
+  'Ipswich': 'https://crests.football-data.org/349.png',
+  'Ipswich Town': 'https://crests.football-data.org/349.png',
+  'Leicester': 'https://crests.football-data.org/338.png',
+  'Leicester City': 'https://crests.football-data.org/338.png',
+  'Liverpool': 'https://crests.football-data.org/64.png',
+  'Manchester City': 'https://crests.football-data.org/65.png',
+  'Man City': 'https://crests.football-data.org/65.png',
+  'Manchester United': 'https://crests.football-data.org/66.png',
+  'Man United': 'https://crests.football-data.org/66.png',
+  'Man Utd': 'https://crests.football-data.org/66.png',
+  'Newcastle': 'https://crests.football-data.org/67.png',
+  'Newcastle United': 'https://crests.football-data.org/67.png',
+  'Nottingham Forest': 'https://crests.football-data.org/351.png',
+  "Nott'm Forest": 'https://crests.football-data.org/351.png',
+  'Southampton': 'https://crests.football-data.org/340.png',
+  'Tottenham': 'https://crests.football-data.org/73.png',
+  'Tottenham Hotspur': 'https://crests.football-data.org/73.png',
+  'Spurs': 'https://crests.football-data.org/73.png',
+  'West Ham': 'https://crests.football-data.org/563.png',
+  'West Ham United': 'https://crests.football-data.org/563.png',
+  'Wolves': 'https://crests.football-data.org/76.png',
+  'Wolverhampton': 'https://crests.football-data.org/76.png',
+  'Wolverhampton Wanderers': 'https://crests.football-data.org/76.png',
   // La Liga
-  'Real Madrid': 541,
-  'Barcelona': 529,
-  'Atletico Madrid': 530,
-  'Sevilla': 536,
-  'Real Sociedad': 548,
-  'Real Betis': 543,
-  'Villarreal': 533,
-  'Athletic Bilbao': 531,
-  'Valencia': 532,
+  'Real Madrid': 'https://crests.football-data.org/86.png',
+  'Barcelona': 'https://crests.football-data.org/81.png',
+  'FC Barcelona': 'https://crests.football-data.org/81.png',
+  'Atletico Madrid': 'https://crests.football-data.org/78.png',
+  'Atlético Madrid': 'https://crests.football-data.org/78.png',
+  'Sevilla': 'https://crests.football-data.org/559.png',
+  'Sevilla FC': 'https://crests.football-data.org/559.png',
+  'Real Sociedad': 'https://crests.football-data.org/92.png',
+  'Real Betis': 'https://crests.football-data.org/90.png',
+  'Villarreal': 'https://crests.football-data.org/94.png',
+  'Villarreal CF': 'https://crests.football-data.org/94.png',
+  'Athletic Bilbao': 'https://crests.football-data.org/77.png',
+  'Athletic Club': 'https://crests.football-data.org/77.png',
+  'Valencia': 'https://crests.football-data.org/95.png',
+  'Valencia CF': 'https://crests.football-data.org/95.png',
   // Serie A
-  'Juventus': 496,
-  'Inter': 505,
-  'Inter Milan': 505,
-  'AC Milan': 489,
-  'Milan': 489,
-  'Napoli': 492,
-  'Roma': 497,
-  'AS Roma': 497,
-  'Lazio': 487,
-  'Atalanta': 499,
-  'Fiorentina': 502,
+  'Juventus': 'https://crests.football-data.org/109.png',
+  'Inter': 'https://crests.football-data.org/108.png',
+  'Inter Milan': 'https://crests.football-data.org/108.png',
+  'FC Internazionale Milano': 'https://crests.football-data.org/108.png',
+  'AC Milan': 'https://crests.football-data.org/98.png',
+  'Milan': 'https://crests.football-data.org/98.png',
+  'Napoli': 'https://crests.football-data.org/113.png',
+  'SSC Napoli': 'https://crests.football-data.org/113.png',
+  'Roma': 'https://crests.football-data.org/100.png',
+  'AS Roma': 'https://crests.football-data.org/100.png',
+  'Lazio': 'https://crests.football-data.org/110.png',
+  'SS Lazio': 'https://crests.football-data.org/110.png',
+  'Atalanta': 'https://crests.football-data.org/102.png',
+  'Atalanta BC': 'https://crests.football-data.org/102.png',
+  'Fiorentina': 'https://crests.football-data.org/99.png',
+  'ACF Fiorentina': 'https://crests.football-data.org/99.png',
   // Bundesliga
-  'Bayern Munich': 157,
-  'Bayern': 157,
-  'Borussia Dortmund': 165,
-  'Dortmund': 165,
-  'RB Leipzig': 173,
-  'Bayer Leverkusen': 168,
-  'Leverkusen': 168,
-  'Eintracht Frankfurt': 169,
-  'Frankfurt': 169,
-  'Wolfsburg': 161,
+  'Bayern Munich': 'https://crests.football-data.org/5.png',
+  'Bayern': 'https://crests.football-data.org/5.png',
+  'FC Bayern München': 'https://crests.football-data.org/5.png',
+  'Borussia Dortmund': 'https://crests.football-data.org/4.png',
+  'Dortmund': 'https://crests.football-data.org/4.png',
+  'BVB': 'https://crests.football-data.org/4.png',
+  'RB Leipzig': 'https://crests.football-data.org/721.png',
+  'Bayer Leverkusen': 'https://crests.football-data.org/3.png',
+  'Leverkusen': 'https://crests.football-data.org/3.png',
+  'Eintracht Frankfurt': 'https://crests.football-data.org/19.png',
+  'Frankfurt': 'https://crests.football-data.org/19.png',
+  'Wolfsburg': 'https://crests.football-data.org/11.png',
+  'VfL Wolfsburg': 'https://crests.football-data.org/11.png',
   // Ligue 1
-  'Paris Saint-Germain': 85,
-  'PSG': 85,
-  'Marseille': 81,
-  'Lyon': 80,
-  'Monaco': 91,
-  'Lille': 79,
+  'Paris Saint-Germain': 'https://crests.football-data.org/524.png',
+  'PSG': 'https://crests.football-data.org/524.png',
+  'Marseille': 'https://crests.football-data.org/516.png',
+  'Olympique Marseille': 'https://crests.football-data.org/516.png',
+  'OM': 'https://crests.football-data.org/516.png',
+  'Lyon': 'https://crests.football-data.org/523.png',
+  'Olympique Lyon': 'https://crests.football-data.org/523.png',
+  'OL': 'https://crests.football-data.org/523.png',
+  'Monaco': 'https://crests.football-data.org/548.png',
+  'AS Monaco': 'https://crests.football-data.org/548.png',
+  'Lille': 'https://crests.football-data.org/521.png',
+  'LOSC Lille': 'https://crests.football-data.org/521.png',
 };
 
 /**
- * League logo mappings
+ * League logo mappings - using official/reliable CDN sources
+ * Mapped by sport_key from The Odds API and common display names
  */
 const LEAGUE_LOGOS: Record<string, string> = {
-  // US Sports
+  // ============================================
+  // US SPORTS (ESPN CDN - official)
+  // ============================================
+  
+  // NFL
   'NFL': 'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png',
+  'americanfootball_nfl': 'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png',
+  
+  // NCAA Football
+  'NCAA Football': 'https://a.espncdn.com/i/teamlogos/ncaa/500/ncaa.png',
+  'NCAAF': 'https://a.espncdn.com/i/teamlogos/ncaa/500/ncaa.png',
+  'americanfootball_ncaaf': 'https://a.espncdn.com/i/teamlogos/ncaa/500/ncaa.png',
+  
+  // NBA
   'NBA': 'https://a.espncdn.com/i/teamlogos/leagues/500/nba.png',
+  'basketball_nba': 'https://a.espncdn.com/i/teamlogos/leagues/500/nba.png',
+  
+  // NCAA Basketball
+  'NCAA Basketball': 'https://a.espncdn.com/i/teamlogos/ncaa/500/ncaa.png',
+  'NCAAB': 'https://a.espncdn.com/i/teamlogos/ncaa/500/ncaa.png',
+  'basketball_ncaab': 'https://a.espncdn.com/i/teamlogos/ncaa/500/ncaa.png',
+  
+  // NHL
   'NHL': 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',
+  'icehockey_nhl': 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',
+  
+  // MLB
   'MLB': 'https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png',
+  'baseball_mlb': 'https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png',
+  
+  // MLS
   'MLS': 'https://a.espncdn.com/i/teamlogos/leagues/500/mls.png',
-  // Soccer
-  'Premier League': 'https://media.api-sports.io/football/leagues/39.png',
-  'EPL': 'https://media.api-sports.io/football/leagues/39.png',
-  'English Premier League': 'https://media.api-sports.io/football/leagues/39.png',
-  'La Liga': 'https://media.api-sports.io/football/leagues/140.png',
-  'Serie A': 'https://media.api-sports.io/football/leagues/135.png',
-  'Bundesliga': 'https://media.api-sports.io/football/leagues/78.png',
-  'Ligue 1': 'https://media.api-sports.io/football/leagues/61.png',
-  'Champions League': 'https://media.api-sports.io/football/leagues/2.png',
-  'UEFA Champions League': 'https://media.api-sports.io/football/leagues/2.png',
-  'Europa League': 'https://media.api-sports.io/football/leagues/3.png',
-  'UEFA Europa League': 'https://media.api-sports.io/football/leagues/3.png',
-  // MMA
+  'soccer_usa_mls': 'https://a.espncdn.com/i/teamlogos/leagues/500/mls.png',
+  
+  // ============================================
+  // SOCCER/FOOTBALL (football-data.org CDN - official)
+  // ============================================
+  
+  // Premier League
+  'Premier League': 'https://crests.football-data.org/PL.png',
+  'EPL': 'https://crests.football-data.org/PL.png',
+  'English Premier League': 'https://crests.football-data.org/PL.png',
+  'soccer_epl': 'https://crests.football-data.org/PL.png',
+  
+  // La Liga
+  'La Liga': 'https://crests.football-data.org/PD.png',
+  'LaLiga': 'https://crests.football-data.org/PD.png',
+  'soccer_spain_la_liga': 'https://crests.football-data.org/PD.png',
+  
+  // Serie A
+  'Serie A': 'https://crests.football-data.org/SA.png',
+  'soccer_italy_serie_a': 'https://crests.football-data.org/SA.png',
+  
+  // Bundesliga
+  'Bundesliga': 'https://crests.football-data.org/BL1.png',
+  'soccer_germany_bundesliga': 'https://crests.football-data.org/BL1.png',
+  
+  // Ligue 1
+  'Ligue 1': 'https://crests.football-data.org/FL1.png',
+  'soccer_france_ligue_one': 'https://crests.football-data.org/FL1.png',
+  
+  // UEFA Champions League
+  'Champions League': 'https://crests.football-data.org/CL.png',
+  'UEFA Champions League': 'https://crests.football-data.org/CL.png',
+  'soccer_uefa_champs_league': 'https://crests.football-data.org/CL.png',
+  
+  // UEFA Europa League
+  'Europa League': 'https://crests.football-data.org/EL.png',
+  'UEFA Europa League': 'https://crests.football-data.org/EL.png',
+  'soccer_uefa_europa_league': 'https://crests.football-data.org/EL.png',
+  
+  // English Cups
+  'FA Cup': 'https://crests.football-data.org/FAC.png',
+  'EFL Cup': 'https://crests.football-data.org/ELC.png',
+  'Carabao Cup': 'https://crests.football-data.org/ELC.png',
+  'League Cup': 'https://crests.football-data.org/ELC.png',
+  'Championship': 'https://crests.football-data.org/ELC.png',
+  'EFL Championship': 'https://crests.football-data.org/ELC.png',
+  
+  // ============================================
+  // BASKETBALL - EUROPE
+  // ============================================
+  
+  // EuroLeague
+  'EuroLeague': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a0/Euroleague_Basketball_logo.svg/200px-Euroleague_Basketball_logo.svg.png',
+  'Euroleague': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a0/Euroleague_Basketball_logo.svg/200px-Euroleague_Basketball_logo.svg.png',
+  'basketball_euroleague': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a0/Euroleague_Basketball_logo.svg/200px-Euroleague_Basketball_logo.svg.png',
+  
+  // ============================================
+  // TENNIS (Grand Slams)
+  // ============================================
+  
+  'ATP': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/3f/ATP_Tour_logo.svg/200px-ATP_Tour_logo.svg.png',
+  'WTA': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/7b/WTA_logo_2010.svg/200px-WTA_logo_2010.svg.png',
+  'Australian Open': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Australian_Open_Logo_2017.svg/200px-Australian_Open_Logo_2017.svg.png',
+  'ATP Australian Open': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Australian_Open_Logo_2017.svg/200px-Australian_Open_Logo_2017.svg.png',
+  'tennis_atp_aus_open': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Australian_Open_Logo_2017.svg/200px-Australian_Open_Logo_2017.svg.png',
+  'French Open': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2e/Logo_Roland-Garros.svg/200px-Logo_Roland-Garros.svg.png',
+  'Roland Garros': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2e/Logo_Roland-Garros.svg/200px-Logo_Roland-Garros.svg.png',
+  'ATP French Open': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2e/Logo_Roland-Garros.svg/200px-Logo_Roland-Garros.svg.png',
+  'tennis_atp_french_open': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2e/Logo_Roland-Garros.svg/200px-Logo_Roland-Garros.svg.png',
+  'Wimbledon': 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Wimbledon.svg/200px-Wimbledon.svg.png',
+  'ATP Wimbledon': 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Wimbledon.svg/200px-Wimbledon.svg.png',
+  'tennis_atp_wimbledon': 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Wimbledon.svg/200px-Wimbledon.svg.png',
+  'US Open': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2d/US_Open_%28tennis%29_logo.svg/200px-US_Open_%28tennis%29_logo.svg.png',
+  'ATP US Open': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2d/US_Open_%28tennis%29_logo.svg/200px-US_Open_%28tennis%29_logo.svg.png',
+  'tennis_atp_us_open': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2d/US_Open_%28tennis%29_logo.svg/200px-US_Open_%28tennis%29_logo.svg.png',
+  
+  // ============================================
+  // MMA/UFC
+  // ============================================
+  
   'UFC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/200px-UFC_Logo.svg.png',
+  'MMA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/200px-UFC_Logo.svg.png',
+  'UFC/MMA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/200px-UFC_Logo.svg.png',
+  'mma_mixed_martial_arts': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/200px-UFC_Logo.svg.png',
+  
+  // ============================================
+  // GOLF
+  // ============================================
+  
+  'PGA': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/77/PGA_Tour_logo.svg/200px-PGA_Tour_logo.svg.png',
+  'PGA Tour': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/77/PGA_Tour_logo.svg/200px-PGA_Tour_logo.svg.png',
+  'golf_pga': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/77/PGA_Tour_logo.svg/200px-PGA_Tour_logo.svg.png',
+  'Masters': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9e/Masters_Tournament_logo.svg/200px-Masters_Tournament_logo.svg.png',
+  'The Masters': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9e/Masters_Tournament_logo.svg/200px-Masters_Tournament_logo.svg.png',
+  
+  // ============================================
+  // RUGBY
+  // ============================================
+  
+  'Six Nations': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/Six_Nations_Championship_logo.svg/200px-Six_Nations_Championship_logo.svg.png',
+  'rugby_union_six_nations': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/Six_Nations_Championship_logo.svg/200px-Six_Nations_Championship_logo.svg.png',
+  
+  // ============================================
+  // CRICKET
+  // ============================================
+  
+  'IPL': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/200px-Indian_Premier_League_Official_Logo.svg.png',
+  'Indian Premier League': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/200px-Indian_Premier_League_Official_Logo.svg.png',
+  'cricket_ipl': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/200px-Indian_Premier_League_Official_Logo.svg.png',
+  
+  // ============================================
+  // AUSTRALIAN RULES
+  // ============================================
+  
+  'AFL': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/ad/AFL_logo.svg/200px-AFL_logo.svg.png',
+  'aussierules_afl': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/ad/AFL_logo.svg/200px-AFL_logo.svg.png',
 };
 
 // ============================================
@@ -240,11 +431,35 @@ const LEAGUE_LOGOS: Record<string, string> = {
  */
 function normalizeSport(sport: string): string {
   const sportLower = sport.toLowerCase();
-  if (sportLower.includes('football') || sportLower.includes('soccer')) return 'soccer';
-  if (sportLower.includes('basketball') || sportLower === 'nba') return 'nba';
-  if (sportLower.includes('hockey') || sportLower === 'nhl') return 'nhl';
-  if (sportLower.includes('american') || sportLower === 'nfl') return 'nfl';
+  
+  // Soccer/Football
+  if (sportLower.includes('football') && !sportLower.includes('american')) return 'soccer';
+  if (sportLower.includes('soccer') || sportLower.includes('epl') || sportLower.includes('premier')) return 'soccer';
+  if (sportLower.includes('la_liga') || sportLower.includes('serie_a') || sportLower.includes('bundesliga')) return 'soccer';
+  if (sportLower.includes('ligue') || sportLower.includes('champs_league') || sportLower.includes('europa')) return 'soccer';
+  
+  // Basketball
+  if (sportLower.includes('basketball') || sportLower === 'nba' || sportLower.includes('euroleague')) return 'nba';
+  if (sportLower.includes('ncaab')) return 'nba';
+  
+  // Hockey
+  if (sportLower.includes('hockey') || sportLower === 'nhl' || sportLower.includes('icehockey')) return 'nhl';
+  
+  // American Football
+  if (sportLower.includes('american') || sportLower === 'nfl' || sportLower.includes('ncaaf')) return 'nfl';
+  
+  // Baseball
+  if (sportLower.includes('baseball') || sportLower === 'mlb') return 'mlb';
+  
+  // MMA/UFC
   if (sportLower.includes('mma') || sportLower.includes('ufc')) return 'mma';
+  
+  // Tennis
+  if (sportLower.includes('tennis') || sportLower.includes('atp') || sportLower.includes('wta')) return 'tennis';
+  
+  // Golf
+  if (sportLower.includes('golf') || sportLower.includes('pga')) return 'golf';
+  
   return sportLower;
 }
 
@@ -305,8 +520,8 @@ function generateFallbackLogo(name: string, type: 'team' | 'league' = 'team'): s
 export function getTeamLogo(teamName: string, sport: string, league?: string): string {
   const normalizedSport = normalizeSport(sport);
   
-  // Try ESPN for US sports
-  if (['nba', 'nfl', 'nhl'].includes(normalizedSport)) {
+  // Try ESPN for US sports (NBA, NFL, NHL, MLB)
+  if (['nba', 'nfl', 'nhl', 'mlb'].includes(normalizedSport)) {
     const espnIds = ESPN_TEAM_IDS[normalizedSport];
     if (espnIds) {
       // Try exact match first
@@ -324,19 +539,26 @@ export function getTeamLogo(teamName: string, sport: string, league?: string): s
     }
   }
   
-  // Try API-Sports for soccer
+  // Try football-data.org for soccer (official logos, no auth required)
   if (normalizedSport === 'soccer') {
     // Try exact match
-    if (SOCCER_TEAM_IDS[teamName]) {
-      return `https://media.api-sports.io/football/teams/${SOCCER_TEAM_IDS[teamName]}.png`;
+    if (SOCCER_TEAM_LOGOS[teamName]) {
+      return SOCCER_TEAM_LOGOS[teamName];
+    }
+    // Try case-insensitive exact match
+    const exactKey = Object.keys(SOCCER_TEAM_LOGOS).find(key => 
+      key.toLowerCase() === teamName.toLowerCase()
+    );
+    if (exactKey) {
+      return SOCCER_TEAM_LOGOS[exactKey];
     }
     // Try partial match
-    const teamKey = Object.keys(SOCCER_TEAM_IDS).find(key => 
+    const teamKey = Object.keys(SOCCER_TEAM_LOGOS).find(key => 
       key.toLowerCase().includes(teamName.toLowerCase()) ||
       teamName.toLowerCase().includes(key.toLowerCase())
     );
     if (teamKey) {
-      return `https://media.api-sports.io/football/teams/${SOCCER_TEAM_IDS[teamKey]}.png`;
+      return SOCCER_TEAM_LOGOS[teamKey];
     }
   }
   
