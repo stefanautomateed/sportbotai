@@ -1,18 +1,21 @@
 /**
  * Analysis Results Component
  * 
- * Premium 6-layer layout for analysis results:
- * - Layer 1: Quick Glance Card (summary with key metrics + donut chart)
- * - Layer 1.5: Quick Stats + Key Factors (side by side on desktop)
- * - Layer 1.75: H2H Stats Card (enhanced head-to-head visualization)
- * - Layer 2: League Context + Team Comparison (standings & radar chart)
- * - Layer 2.25: Rest & Schedule Analysis (NEW: rest days, schedule density)
- * - Layer 2.5: Match Context Indicators (rest, rivalry, situational factors)
- * - Layer 3: Confidence Meter + Sport Insights (side by side)
- * - Layer 4: Analysis Accordion (detailed sections, collapsed by default)
- * - Layer 5: Extras Section (audio, notes, disclaimer)
+ * Desktop-optimized 6-layer layout for analysis results.
+ * Uses 2-3 column grids on desktop for efficient space use,
+ * falls back to single column on mobile.
  * 
- * Mobile-first, clean, scannable design with premium visualizations.
+ * Layout Structure:
+ * - Layer 1: Quick Glance (full width - hero section)
+ * - Layer 1.5: Quick Stats + Key Factors (2-col)
+ * - Layer 1.75: H2H + Injury Impact (2-col on desktop)
+ * - Layer 2: League Context + Team Radar (2-col)
+ * - Layer 2.25: Rest Schedule + Match Context (2-col)
+ * - Layer 3: Confidence + Sport Insights (2-col)
+ * - Layer 4: Analysis Accordion (full width)
+ * - Layer 5: Extras (full width)
+ * 
+ * Mobile-first, scales beautifully to desktop with efficient layout.
  */
 
 'use client';
@@ -30,6 +33,7 @@ import LeagueContextCard from './LeagueContextCard';
 import TeamComparisonRadar from './TeamComparisonRadar';
 import MatchContextIndicators from './MatchContextIndicators';
 import RestScheduleCard from './RestScheduleCard';
+import InjuryImpactCard from './InjuryImpactCard';
 
 interface AnalysisResultsProps {
   result: AnalyzeResponse;
@@ -55,39 +59,88 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
     );
   }
 
-  // Check if we have H2H data to show
+  // Check for available data
   const hasH2HData = result.momentumAndForm.h2hSummary && result.momentumAndForm.h2hSummary.totalMatches > 0;
+  const hasInjuryData = result.injuryContext && (
+    result.injuryContext.homeTeam?.players.length || 
+    result.injuryContext.awayTeam?.players.length
+  );
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-4xl mx-auto">
-      {/* Layer 1: Quick Glance - Key Metrics Summary with Donut Chart */}
+    <div className="space-y-6 lg:space-y-8 max-w-7xl mx-auto">
+      {/* ================================ */}
+      {/* LAYER 1: HERO - Quick Glance    */}
+      {/* Full width on all screens       */}
+      {/* ================================ */}
       <section>
         <QuickGlanceCard result={result} />
       </section>
 
-      {/* Layer 1.5: Quick Stats + Key Factors */}
+      {/* ================================ */}
+      {/* LAYER 1.5: Quick Stats + Factors*/}
+      {/* 2-col on tablet+                */}
+      {/* ================================ */}
       <section>
-        <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
           <QuickStatsCard result={result} />
           <KeyFactorsCard result={result} />
         </div>
       </section>
 
-      {/* Layer 1.75: H2H Stats Card (if data available) */}
-      {hasH2HData && (
+      {/* ================================ */}
+      {/* LAYER 1.75: H2H + Injuries      */}
+      {/* 2-col on large desktop          */}
+      {/* ================================ */}
+      {(hasH2HData || hasInjuryData) && (
         <section>
-          <H2HStatsCard
-            homeTeam={result.matchInfo.homeTeam}
-            awayTeam={result.matchInfo.awayTeam}
-            h2hMatches={result.momentumAndForm.headToHead}
-            h2hSummary={result.momentumAndForm.h2hSummary}
-          />
+          <div className="flex items-center justify-between mb-3 lg:mb-4 px-1">
+            <h2 className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-wider">
+              Head-to-Head & Squad Status
+            </h2>
+            <span className="text-[10px] sm:text-xs text-accent">
+              📊 Historical Data
+            </span>
+          </div>
+          
+          {/* If both available: side by side on desktop */}
+          {hasH2HData && hasInjuryData ? (
+            <div className="grid xl:grid-cols-2 gap-4 lg:gap-6">
+              <H2HStatsCard
+                homeTeam={result.matchInfo.homeTeam}
+                awayTeam={result.matchInfo.awayTeam}
+                h2hMatches={result.momentumAndForm.headToHead}
+                h2hSummary={result.momentumAndForm.h2hSummary}
+              />
+              <InjuryImpactCard
+                injuryContext={result.injuryContext!}
+                homeTeam={result.matchInfo.homeTeam}
+                awayTeam={result.matchInfo.awayTeam}
+              />
+            </div>
+          ) : hasH2HData ? (
+            <H2HStatsCard
+              homeTeam={result.matchInfo.homeTeam}
+              awayTeam={result.matchInfo.awayTeam}
+              h2hMatches={result.momentumAndForm.headToHead}
+              h2hSummary={result.momentumAndForm.h2hSummary}
+            />
+          ) : hasInjuryData ? (
+            <InjuryImpactCard
+              injuryContext={result.injuryContext!}
+              homeTeam={result.matchInfo.homeTeam}
+              awayTeam={result.matchInfo.awayTeam}
+            />
+          ) : null}
         </section>
       )}
 
-      {/* Layer 2: League Context + Team Comparison Radar (NEW) */}
+      {/* ================================ */}
+      {/* LAYER 2: Team Analytics         */}
+      {/* League Context + Radar Chart    */}
+      {/* 2-col on tablet+                */}
+      {/* ================================ */}
       <section>
-        <div className="flex items-center justify-between mb-3 sm:mb-4 px-1">
+        <div className="flex items-center justify-between mb-3 lg:mb-4 px-1">
           <h2 className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-wider">
             Team Analytics
           </h2>
@@ -95,33 +148,48 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
             📊 Advanced Stats
           </span>
         </div>
-        <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
           <LeagueContextCard result={result} />
           <TeamComparisonRadar result={result} />
         </div>
       </section>
 
-      {/* Layer 2.25: Rest & Schedule Analysis (NEW) */}
+      {/* ================================ */}
+      {/* LAYER 2.25: Rest + Context      */}
+      {/* Rest Schedule + Match Indicators*/}
+      {/* 2-col on large desktop          */}
+      {/* ================================ */}
       <section>
-        <RestScheduleCard result={result} />
+        <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
+          <RestScheduleCard result={result} />
+          <div className="lg:flex lg:flex-col lg:justify-center">
+            <MatchContextIndicators result={result} />
+          </div>
+        </div>
       </section>
 
-      {/* Layer 2.5: Match Context Indicators (NEW) */}
+      {/* ================================ */}
+      {/* LAYER 3: Confidence & Insights  */}
+      {/* 2-col on tablet+                */}
+      {/* ================================ */}
       <section>
-        <MatchContextIndicators result={result} />
-      </section>
-
-      {/* Layer 3: Confidence Meter + Sport Insights */}
-      <section>
-        <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="flex items-center justify-between mb-3 lg:mb-4 px-1">
+          <h2 className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-wider">
+            Analysis Confidence
+          </h2>
+        </div>
+        <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
           <ConfidenceMeter result={result} />
           <SportInsightsCard result={result} />
         </div>
       </section>
 
-      {/* Layer 4: Detailed Analysis Accordion */}
+      {/* ================================ */}
+      {/* LAYER 4: Detailed Accordion     */}
+      {/* Full width, collapsible         */}
+      {/* ================================ */}
       <section>
-        <div className="flex items-center justify-between mb-3 sm:mb-4 px-1">
+        <div className="flex items-center justify-between mb-3 lg:mb-4 px-1">
           <h2 className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-wider">
             Detailed Analysis
           </h2>
@@ -132,9 +200,12 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
         <AnalysisAccordion result={result} />
       </section>
 
-      {/* Layer 5: Extras - Audio, Notes, Disclaimer */}
+      {/* ================================ */}
+      {/* LAYER 5: Extras & Options       */}
+      {/* Audio, Notes, Disclaimer        */}
+      {/* ================================ */}
       <section>
-        <div className="mb-3 sm:mb-4 px-1">
+        <div className="mb-3 lg:mb-4 px-1">
           <h2 className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-wider">
             More Options
           </h2>

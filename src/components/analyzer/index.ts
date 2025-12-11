@@ -58,3 +58,4 @@ export { default as LeagueContextCard } from './LeagueContextCard';
 export { default as TeamComparisonRadar } from './TeamComparisonRadar';
 export { default as MatchContextIndicators } from './MatchContextIndicators';
 export { default as RestScheduleCard } from './RestScheduleCard';
+export { default as InjuryImpactCard } from './InjuryImpactCard';

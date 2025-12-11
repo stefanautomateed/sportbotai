@@ -16,6 +16,45 @@ export type SourceType = 'MANUAL' | 'API';
 export type MarketType = '1X2' | 'OVER_UNDER' | 'BTTS' | 'NONE';
 export type BestValueSide = 'HOME' | 'DRAW' | 'AWAY' | 'NONE';
 export type MarketConfidence = 1 | 2 | 3 | 4 | 5;
+export type InjuryType = 'injury' | 'suspension' | 'doubtful';
+export type PlayerImportance = 'KEY' | 'STARTER' | 'ROTATION' | 'BACKUP';
+
+// ============================================
+// INJURY IMPACT TYPES
+// ============================================
+
+/**
+ * Individual injured/suspended player
+ */
+export interface InjuredPlayer {
+  name: string;
+  position: string;
+  reason: string;
+  type: InjuryType;
+  importance?: PlayerImportance;  // AI-estimated importance
+  impactScore?: number;           // 1-10 impact on team performance
+}
+
+/**
+ * Injury context for a team
+ */
+export interface TeamInjuryContext {
+  players: InjuredPlayer[];
+  totalImpactScore: number;       // Combined impact 0-100
+  keyAbsences: number;            // Count of KEY/STARTER players out
+  summary: string;                // Brief impact summary
+}
+
+/**
+ * Full injury context for the match
+ */
+export interface InjuryContext {
+  homeTeam: TeamInjuryContext | null;
+  awayTeam: TeamInjuryContext | null;
+  overallImpact: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  impactSummary: string;          // How injuries affect the match
+  advantageShift?: 'HOME' | 'AWAY' | 'NEUTRAL';  // Who benefits from absences
+}
 
 // ============================================
 // ANALYZER REQUEST TYPES
@@ -281,6 +320,7 @@ export interface AnalyzeResponse {
   tacticalAnalysis: TacticalAnalysis;
   userContext: UserContext;
   responsibleGambling: ResponsibleGambling;
+  injuryContext?: InjuryContext;   // NEW: Injury impact analysis
   meta: AnalysisMeta;
   error?: string;
   usageInfo?: UsageInfo;

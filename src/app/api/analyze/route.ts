@@ -36,6 +36,10 @@ import {
   MarketType,
   MarketConfidence,
   FormMatch,
+  InjuryContext,
+  TeamInjuryContext,
+  InjuredPlayer as InjuredPlayerType,
+  PlayerImportance,
 } from '@/types';
 import { getSportConfig, getSportTerminology } from '@/lib/config/sportsConfig';
 import {
@@ -586,9 +590,21 @@ export async function POST(request: NextRequest) {
       formDataSource: analysis.momentumAndForm.formDataSource,
     });
 
-    // Add usage info to response
+    // Build injury context for response
+    const injuryContext = buildInjuryContext(matchContext);
+    if (injuryContext) {
+      console.log('[Response] Injury context:', {
+        overallImpact: injuryContext.overallImpact,
+        homeAbsences: injuryContext.homeTeam?.players.length || 0,
+        awayAbsences: injuryContext.awayTeam?.players.length || 0,
+        advantageShift: injuryContext.advantageShift,
+      });
+    }
+
+    // Add usage info and injury context to response
     return NextResponse.json({
       ...analysis,
+      injuryContext: injuryContext || undefined,
       usageInfo: {
         plan: usageCheck.plan,
         remaining: usageCheck.remaining - 1,
@@ -786,6 +802,132 @@ function formatMatchContextForPrompt(context: MatchContext | null): string {
   }
   
   return contextSection;
+}
+
+/**
+ * Build injury impact context from match context data
+ * Estimates player importance and impact on team performance
+ */
+function buildInjuryContext(matchContext: MatchContext | null): InjuryContext | null {
+  if (!matchContext) return null;
+  
+  const hasHomeInjuries = matchContext.homeInjuries && matchContext.homeInjuries.length > 0;
+  const hasAwayInjuries = matchContext.awayInjuries && matchContext.awayInjuries.length > 0;
+  
+  if (!hasHomeInjuries && !hasAwayInjuries) return null;
+  
+  // Helper to estimate player importance based on position
+  const estimateImportance = (position: string): PlayerImportance => {
+    const pos = position.toLowerCase();
+    // Goalkeepers and key positions
+    if (pos.includes('goalkeeper') || pos.includes('gk')) return 'KEY';
+    // Strikers and attacking mids
+    if (pos.includes('forward') || pos.includes('striker') || pos.includes('attacker')) return 'KEY';
+    // Defenders and midfielders
+    if (pos.includes('defender') || pos.includes('midfielder')) return 'STARTER';
+    return 'ROTATION';
+  };
+  
+  // Helper to calculate impact score based on position and type
+  const calculateImpactScore = (player: { position: string; type: string }): number => {
+    const importance = estimateImportance(player.position);
+    let baseScore = importance === 'KEY' ? 8 : importance === 'STARTER' ? 5 : 2;
+    // Injuries tend to keep players out longer than suspensions
+    if (player.type === 'injury') baseScore += 1;
+    return Math.min(10, baseScore);
+  };
+  
+  // Build home team injury context
+  let homeContext: TeamInjuryContext | null = null;
+  if (hasHomeInjuries && matchContext.homeInjuries) {
+    const players: InjuredPlayerType[] = matchContext.homeInjuries.map(p => ({
+      name: p.name,
+      position: p.position,
+      reason: p.reason,
+      type: p.type as InjuredPlayerType['type'],
+      importance: estimateImportance(p.position),
+      impactScore: calculateImpactScore(p),
+    }));
+    
+    const keyAbsences = players.filter(p => p.importance === 'KEY' || p.importance === 'STARTER').length;
+    const totalImpactScore = Math.min(100, players.reduce((sum, p) => sum + (p.impactScore || 0), 0) * 3);
+    
+    homeContext = {
+      players,
+      totalImpactScore,
+      keyAbsences,
+      summary: keyAbsences > 0 
+        ? `${keyAbsences} key player${keyAbsences > 1 ? 's' : ''} unavailable`
+        : `${players.length} player${players.length > 1 ? 's' : ''} out (rotation)`,
+    };
+  }
+  
+  // Build away team injury context
+  let awayContext: TeamInjuryContext | null = null;
+  if (hasAwayInjuries && matchContext.awayInjuries) {
+    const players: InjuredPlayerType[] = matchContext.awayInjuries.map(p => ({
+      name: p.name,
+      position: p.position,
+      reason: p.reason,
+      type: p.type as InjuredPlayerType['type'],
+      importance: estimateImportance(p.position),
+      impactScore: calculateImpactScore(p),
+    }));
+    
+    const keyAbsences = players.filter(p => p.importance === 'KEY' || p.importance === 'STARTER').length;
+    const totalImpactScore = Math.min(100, players.reduce((sum, p) => sum + (p.impactScore || 0), 0) * 3);
+    
+    awayContext = {
+      players,
+      totalImpactScore,
+      keyAbsences,
+      summary: keyAbsences > 0 
+        ? `${keyAbsences} key player${keyAbsences > 1 ? 's' : ''} unavailable`
+        : `${players.length} player${players.length > 1 ? 's' : ''} out (rotation)`,
+    };
+  }
+  
+  // Calculate overall impact
+  const homeImpact = homeContext?.totalImpactScore || 0;
+  const awayImpact = awayContext?.totalImpactScore || 0;
+  const maxImpact = Math.max(homeImpact, awayImpact);
+  
+  let overallImpact: InjuryContext['overallImpact'] = 'NONE';
+  if (maxImpact >= 80) overallImpact = 'CRITICAL';
+  else if (maxImpact >= 50) overallImpact = 'HIGH';
+  else if (maxImpact >= 25) overallImpact = 'MEDIUM';
+  else if (maxImpact > 0) overallImpact = 'LOW';
+  
+  // Determine advantage shift
+  let advantageShift: InjuryContext['advantageShift'] = 'NEUTRAL';
+  const impactDiff = Math.abs(homeImpact - awayImpact);
+  if (impactDiff >= 20) {
+    advantageShift = homeImpact > awayImpact ? 'AWAY' : 'HOME';
+  }
+  
+  // Build impact summary
+  let impactSummary = '';
+  if (overallImpact === 'CRITICAL') {
+    impactSummary = 'Significant absences could heavily influence the outcome.';
+  } else if (overallImpact === 'HIGH') {
+    impactSummary = 'Multiple key players missing may affect team performance.';
+  } else if (overallImpact === 'MEDIUM') {
+    impactSummary = 'Some notable absences to consider in the analysis.';
+  } else if (overallImpact === 'LOW') {
+    impactSummary = 'Minor squad concerns, unlikely to significantly impact result.';
+  }
+  
+  if (advantageShift !== 'NEUTRAL') {
+    impactSummary += ` ${advantageShift === 'HOME' ? 'Home' : 'Away'} team benefits from opponent absences.`;
+  }
+  
+  return {
+    homeTeam: homeContext,
+    awayTeam: awayContext,
+    overallImpact,
+    impactSummary,
+    advantageShift,
+  };
 }
 
 async function callOpenAI(

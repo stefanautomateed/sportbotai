@@ -4,6 +4,20 @@
  * Centralized analytics for Google Analytics and custom events
  */
 
+// Type for gtag function
+type GtagFunction = (
+  command: 'config' | 'event' | 'set',
+  targetId: string,
+  config?: Record<string, unknown>
+) => void;
+
+// Extend Window interface for gtag
+declare global {
+  interface Window {
+    gtag?: GtagFunction;
+  }
+}
+
 // Types for analytics events
 type AnalyticsEvent = {
   action: string;
@@ -26,19 +40,30 @@ type PurchaseEvent = {
 };
 
 /**
+ * Get gtag function if available, otherwise return null
+ */
+function getGtag(): GtagFunction | null {
+  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+    return window.gtag;
+  }
+  return null;
+}
+
+/**
  * Check if Google Analytics is available
  */
 function isGAAvailable(): boolean {
-  return typeof window !== 'undefined' && typeof window.gtag === 'function';
+  return getGtag() !== null;
 }
 
 /**
  * Track a custom event to Google Analytics
  */
 export function trackEvent({ action, category, label, value }: AnalyticsEvent): void {
-  if (!isGAAvailable()) return;
+  const gtag = getGtag();
+  if (!gtag) return;
 
-  window.gtag('event', action, {
+  gtag('event', action, {
     event_category: category,
     event_label: label,
     value: value,
@@ -49,9 +74,10 @@ export function trackEvent({ action, category, label, value }: AnalyticsEvent): 
  * Track page view (for client-side navigation)
  */
 export function trackPageView(url: string): void {
-  if (!isGAAvailable()) return;
+  const gtag = getGtag();
+  if (!gtag) return;
 
-  window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!, {
+  gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!, {
     page_path: url,
   });
 }
@@ -89,9 +115,10 @@ export function trackAnalysisComplete({ sport, homeTeam, awayTeam, plan }: Analy
  * Track checkout started
  */
 export function trackCheckoutStart({ plan, price, currency = 'EUR' }: PurchaseEvent): void {
-  if (!isGAAvailable()) return;
+  const gtag = getGtag();
+  if (!gtag) return;
 
-  window.gtag('event', 'begin_checkout', {
+  gtag('event', 'begin_checkout', {
     currency,
     value: price,
     items: [
@@ -109,9 +136,10 @@ export function trackCheckoutStart({ plan, price, currency = 'EUR' }: PurchaseEv
  * Track purchase completed
  */
 export function trackPurchase({ plan, price, currency = 'EUR' }: PurchaseEvent): void {
-  if (!isGAAvailable()) return;
+  const gtag = getGtag();
+  if (!gtag) return;
 
-  window.gtag('event', 'purchase', {
+  gtag('event', 'purchase', {
     transaction_id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     currency,
     value: price,
@@ -130,9 +158,10 @@ export function trackPurchase({ plan, price, currency = 'EUR' }: PurchaseEvent):
  * Track sign up
  */
 export function trackSignUp(method: 'email' | 'google' | 'github'): void {
-  if (!isGAAvailable()) return;
+  const gtag = getGtag();
+  if (!gtag) return;
 
-  window.gtag('event', 'sign_up', {
+  gtag('event', 'sign_up', {
     method,
   });
 }
@@ -141,9 +170,10 @@ export function trackSignUp(method: 'email' | 'google' | 'github'): void {
  * Track login
  */
 export function trackLogin(method: 'email' | 'google' | 'github'): void {
-  if (!isGAAvailable()) return;
+  const gtag = getGtag();
+  if (!gtag) return;
 
-  window.gtag('event', 'login', {
+  gtag('event', 'login', {
     method,
   });
 }
@@ -152,14 +182,15 @@ export function trackLogin(method: 'email' | 'google' | 'github'): void {
  * Set user properties (plan, etc.)
  */
 export function setUserProperties(properties: { plan?: string; userId?: string }): void {
-  if (!isGAAvailable()) return;
+  const gtag = getGtag();
+  if (!gtag) return;
 
-  window.gtag('set', 'user_properties', {
+  gtag('set', 'user_properties', {
     user_plan: properties.plan,
   });
 
   if (properties.userId) {
-    window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!, {
+    gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!, {
       user_id: properties.userId,
     });
   }
@@ -185,15 +216,4 @@ export function trackFeatureUsage(feature: string): void {
     category: 'Engagement',
     label: feature,
   });
-}
-
-// Extend Window interface for gtag
-declare global {
-  interface Window {
-    gtag: (
-      command: 'config' | 'event' | 'set',
-      targetId: string,
-      config?: Record<string, unknown>
-    ) => void;
-  }
 }
