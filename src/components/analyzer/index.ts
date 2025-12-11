@@ -30,6 +30,16 @@ export { default as UsageCounter } from './UsageCounter';
 export { default as HeadToHeadSection } from './HeadToHeadSection';
 export { default as TeamStatsSection } from './TeamStatsSection';
 
+// NEW: Premium Visualization Components
+export { default as ProbabilityDonut } from './ProbabilityDonut';
+export { default as StatComparisonBar, MultiStatComparison } from './StatComparisonBar';
+export { default as FormTimeline, FormBadgesCompact } from './FormTimeline';
+export { default as MatchCountdown } from './MatchCountdown';
+export { default as H2HStatsCard } from './H2HStatsCard';
+export { default as QuickAnalyzeButton } from './QuickAnalyzeButton';
+export { default as KeyMetricsGrid, AnalysisSummaryMetrics } from './KeyMetricsGrid';
+export { default as DataFreshnessIndicator, DataConfidenceBadge } from './DataFreshnessIndicator';
+
 // Legacy components (kept for reference, not used in new layout)
 export { default as MatchSummaryCard } from './MatchSummaryCard';
 export { default as ProbabilitiesPanel } from './ProbabilitiesPanel';

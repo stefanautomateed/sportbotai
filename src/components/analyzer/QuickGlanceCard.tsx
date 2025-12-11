@@ -3,15 +3,18 @@
  * 
  * Premium summary view showing essential information at a glance:
  * - Match header (teams, league, date)
+ * - Probability donut chart visualization
  * - 4 key metrics: AI Verdict, Win Probabilities, Value Indicator, Risk Level
  * - Expert one-liner conclusion
  * 
- * Clean, scannable, mobile-first design.
+ * Clean, scannable, mobile-first design with premium visualizations.
  */
 
 'use client';
 
 import { AnalyzeResponse, RiskLevel, ValueFlag } from '@/types';
+import ProbabilityDonut from './ProbabilityDonut';
+import MatchCountdown from './MatchCountdown';
 
 interface QuickGlanceCardProps {
   result: AnalyzeResponse;
@@ -122,69 +125,65 @@ export default function QuickGlanceCard({ result }: QuickGlanceCardProps) {
 
       {/* Key Metrics Grid - 2x2 on mobile, 4 on desktop */}
       <div className="p-3 sm:p-5">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        {/* Probability Donut + Metrics Grid */}
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 mb-4">
+          {/* Probability Donut (hidden on small mobile) */}
+          <div className="hidden xs:flex justify-center lg:justify-start">
+            <ProbabilityDonut
+              homeWin={probabilities.homeWin ?? 0}
+              draw={probabilities.draw}
+              awayWin={probabilities.awayWin ?? 0}
+              homeTeam={matchInfo.homeTeam}
+              awayTeam={matchInfo.awayTeam}
+              size={140}
+              className="mb-6"
+            />
+          </div>
           
-          {/* Metric 1: AI Verdict */}
-          <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-card p-2.5 sm:p-4 border border-primary/20">
-            <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-              <span className="text-sm sm:text-lg">{verdict.icon}</span>
-              <span className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide">Verdict</span>
-            </div>
-            <p className="text-xs sm:text-lg font-bold leading-tight truncate text-text-primary">{verdict.team}</p>
-            <p className="text-[9px] sm:text-xs text-accent mt-0.5">{verdict.confidence}</p>
-          </div>
-
-          {/* Metric 2: Win Probabilities */}
-          <div className="bg-bg-hover rounded-card p-2.5 sm:p-4 border border-divider">
-            <p className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1.5 sm:mb-3">Probabilities</p>
-            <div className="space-y-0.5 sm:space-y-1.5">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] sm:text-xs text-text-muted">Home</span>
-                <span className="text-xs sm:text-sm font-bold text-success">
-                  {probabilities.homeWin !== null ? `${probabilities.homeWin}%` : '-'}
-                </span>
+          {/* Metrics Grid */}
+          <div className="flex-1 grid grid-cols-2 gap-2 sm:gap-3">
+          
+            {/* Metric 1: AI Verdict */}
+            <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-card p-2.5 sm:p-4 border border-primary/20">
+              <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                <span className="text-sm sm:text-lg">{verdict.icon}</span>
+                <span className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide">Verdict</span>
               </div>
-              {hasDraw && (
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] sm:text-xs text-text-muted">Draw</span>
-                  <span className="text-xs sm:text-sm font-bold text-text-secondary">
-                    {probabilities.draw !== null ? `${probabilities.draw}%` : '-'}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] sm:text-xs text-text-muted">Away</span>
-                <span className="text-xs sm:text-sm font-bold text-info">
-                  {probabilities.awayWin !== null ? `${probabilities.awayWin}%` : '-'}
-                </span>
-              </div>
+              <p className="text-xs sm:text-lg font-bold leading-tight truncate text-text-primary">{verdict.team}</p>
+              <p className="text-[9px] sm:text-xs text-accent mt-0.5">{verdict.confidence}</p>
             </div>
-          </div>
 
-          {/* Metric 3: Value Indicator */}
-          <div className={`rounded-card p-2.5 sm:p-4 border ${value.bgClass}`}>
-            <p className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1 sm:mb-2">Value</p>
-            <p className={`text-xs sm:text-lg font-bold ${value.color}`}>{value.label}</p>
-            <p className="text-[9px] sm:text-xs text-text-muted mt-0.5 truncate hidden xs:block">
-              {valueAnalysis.bestValueSide !== 'NONE' 
-                ? `Best: ${valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam : 
-                          valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw'}`
-                : value.description}
-            </p>
-          </div>
-
-          {/* Metric 4: Risk Level */}
-          <div className={`rounded-card p-2.5 sm:p-4 border ${risk.bgClass}`}>
-            <p className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1 sm:mb-2">Risk</p>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <span className="text-sm sm:text-lg">{risk.icon}</span>
-              <span className={`text-xs sm:text-lg font-bold ${risk.color}`}>{risk.label}</span>
+            {/* Metric 2: Countdown Timer */}
+            <div className="bg-bg-hover rounded-card p-2.5 sm:p-4 border border-divider">
+              <p className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1.5">Kickoff</p>
+              <MatchCountdown matchDate={matchInfo.matchDate} compact />
             </div>
-            {upsetPotential.upsetProbability >= 25 && (
-              <p className="text-[9px] sm:text-xs text-warning mt-0.5 font-medium hidden xs:block">
-                ⚡ {upsetPotential.upsetProbability}% upset
+
+            {/* Metric 3: Value Indicator */}
+            <div className={`rounded-card p-2.5 sm:p-4 border ${value.bgClass}`}>
+              <p className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1 sm:mb-2">Value</p>
+              <p className={`text-xs sm:text-lg font-bold ${value.color}`}>{value.label}</p>
+              <p className="text-[9px] sm:text-xs text-text-muted mt-0.5 truncate hidden xs:block">
+                {valueAnalysis.bestValueSide !== 'NONE' 
+                  ? `Best: ${valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam : 
+                            valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw'}`
+                  : value.description}
               </p>
-            )}
+            </div>
+
+            {/* Metric 4: Risk Level */}
+            <div className={`rounded-card p-2.5 sm:p-4 border ${risk.bgClass}`}>
+              <p className="text-[9px] sm:text-xs font-medium text-text-muted uppercase tracking-wide mb-1 sm:mb-2">Risk</p>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="text-sm sm:text-lg">{risk.icon}</span>
+                <span className={`text-xs sm:text-lg font-bold ${risk.color}`}>{risk.label}</span>
+              </div>
+              {upsetPotential.upsetProbability >= 25 && (
+                <p className="text-[9px] sm:text-xs text-warning mt-0.5 font-medium hidden xs:block">
+                  ⚡ {upsetPotential.upsetProbability}% upset
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

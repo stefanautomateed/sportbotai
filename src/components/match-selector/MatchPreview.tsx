@@ -4,6 +4,7 @@
  * Premium preview card for selected match.
  * Displays teams, odds, implied probabilities, and analyze CTA.
  * Features: Glass morphism, gradient accents, animated elements.
+ * Enhanced with countdown timer and improved analyze button.
  */
 
 'use client';
@@ -11,6 +12,8 @@
 import { MatchData } from '@/types';
 import { SportConfig } from '@/lib/config/sportsConfig';
 import { formatMatchDate } from './utils';
+import MatchCountdown from '@/components/analyzer/MatchCountdown';
+import QuickAnalyzeButton from '@/components/analyzer/QuickAnalyzeButton';
 
 interface MatchPreviewProps {
   match: MatchData;
@@ -44,12 +47,8 @@ export default function MatchPreview({
               {match.league}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-text-muted text-xs sm:text-sm">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {formatMatchDate(match.commenceTime)}
-          </div>
+          {/* Countdown Timer Badge */}
+          <MatchCountdown matchDate={match.commenceTime} compact />
         </div>
       </div>
 
@@ -194,57 +193,14 @@ export default function MatchPreview({
         )}
       </div>
 
-      {/* Analyze Button */}
+      {/* Analyze Button - Enhanced */}
       <div className="px-5 sm:px-6 pb-5 sm:pb-6">
-        <button
+        <QuickAnalyzeButton
           onClick={onAnalyze}
-          disabled={loading || !hasOdds}
-          className={`
-            w-full py-3.5 sm:py-4 rounded-btn font-semibold text-base sm:text-lg transition-all duration-300 relative overflow-hidden group
-            ${loading || !hasOdds
-              ? 'bg-bg-hover text-text-muted cursor-not-allowed'
-              : 'bg-gradient-to-r from-accent to-accent-dark text-bg hover:shadow-lg hover:shadow-accent/30 active:scale-[0.98]'
-            }
-          `}
-        >
-          {/* Shimmer effect for enabled button */}
-          {!loading && hasOdds && (
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-          )}
-          
-          <span className="relative flex items-center justify-center gap-2">
-            {loading ? (
-              <>
-                <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <span>Analyzing...</span>
-              </>
-            ) : hasOdds ? (
-              <>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span>Run AI Analysis</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                </svg>
-                <span>Odds Required</span>
-              </>
-            )}
-          </span>
-        </button>
-        
-        {/* Subtle hint below button */}
-        {hasOdds && !loading && (
-          <p className="text-[10px] text-text-muted text-center mt-2">
-            Powered by GPT-4 • Takes ~10 seconds
-          </p>
-        )}
+          loading={loading}
+          hasOdds={hasOdds}
+          size="lg"
+        />
       </div>
     </div>
   );

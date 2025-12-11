@@ -2,13 +2,14 @@
  * Analysis Results Component
  * 
  * Premium 4-layer layout for analysis results:
- * - Layer 1: Quick Glance Card (summary with key metrics)
+ * - Layer 1: Quick Glance Card (summary with key metrics + donut chart)
  * - Layer 1.5: Quick Stats + Key Factors (side by side on desktop)
+ * - Layer 1.75: H2H Stats Card (enhanced head-to-head visualization)
  * - Layer 2: Confidence Meter + Sport Insights (side by side)
  * - Layer 3: Analysis Accordion (detailed sections, collapsed by default)
  * - Layer 4: Extras Section (audio, notes, disclaimer)
  * 
- * Mobile-first, clean, scannable design with clear visual hierarchy.
+ * Mobile-first, clean, scannable design with premium visualizations.
  */
 
 'use client';
@@ -21,6 +22,7 @@ import ConfidenceMeter from './ConfidenceMeter';
 import SportInsightsCard from './SportInsightsCard';
 import AnalysisAccordion from './AnalysisAccordion';
 import ExtrasSection from './ExtrasSection';
+import H2HStatsCard from './H2HStatsCard';
 
 interface AnalysisResultsProps {
   result: AnalyzeResponse;
@@ -46,9 +48,12 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
     );
   }
 
+  // Check if we have H2H data to show
+  const hasH2HData = result.momentumAndForm.h2hSummary && result.momentumAndForm.h2hSummary.totalMatches > 0;
+
   return (
     <div className="space-y-6 sm:space-y-8 max-w-4xl mx-auto">
-      {/* Layer 1: Quick Glance - Key Metrics Summary */}
+      {/* Layer 1: Quick Glance - Key Metrics Summary with Donut Chart */}
       <section>
         <QuickGlanceCard result={result} />
       </section>
@@ -60,6 +65,18 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
           <KeyFactorsCard result={result} />
         </div>
       </section>
+
+      {/* Layer 1.75: H2H Stats Card (if data available) */}
+      {hasH2HData && (
+        <section>
+          <H2HStatsCard
+            homeTeam={result.matchInfo.homeTeam}
+            awayTeam={result.matchInfo.awayTeam}
+            h2hMatches={result.momentumAndForm.headToHead}
+            h2hSummary={result.momentumAndForm.h2hSummary}
+          />
+        </section>
+      )}
 
       {/* Layer 2: Confidence Meter + Sport Insights */}
       <section>

@@ -6,26 +6,22 @@
  * - Soccer: Goals, Clean Sheets, H2H record
  * - Basketball: PPG, Form streak, H2H
  * - NFL: Points, Win rate, H2H
- * - Tennis: Sets, Form, Surface record
+ * - MMA: Wins, Finishes, Record
  * 
  * Shows real data when available, gracefully degrades when not.
+ * Enhanced with visual stat comparison bars and form timeline.
  */
 
 'use client';
 
 import { AnalyzeResponse, FormMatch, TeamStats } from '@/types';
+import StatComparisonBar from './StatComparisonBar';
 
 interface QuickStatsCardProps {
   result: AnalyzeResponse;
 }
 
 // Sport-specific stat configurations
-// Note: Keys map to TeamStats interface fields:
-// - goalsScored: Points/Goals/Wins depending on sport
-// - goalsConceded: Points allowed/Goals against/Losses
-// - cleanSheets: Shutouts/Finishes
-// - avgGoalsScored: PPG/Avg goals/Win rate
-// - wins, losses, winPercentage: Optional sport-specific fields
 const SPORT_STATS_CONFIG: Record<string, {
   primaryStats: { key: string; label: string; icon: string }[];
   formLabel: string;
@@ -117,9 +113,6 @@ function getSportStatsConfig(sport: string) {
   if (normalized.includes('mma') || normalized.includes('ufc')) {
     return SPORT_STATS_CONFIG.mma;
   }
-  if (normalized.includes('tennis')) {
-    return SPORT_STATS_CONFIG.tennis;
-  }
   
   return SPORT_STATS_CONFIG.default;
 }
@@ -175,16 +168,15 @@ function FormBadges({ form, limit = 5 }: { form?: FormMatch[]; limit?: number })
 
 // Get stat value from stats object
 function getStatValue(stats: TeamStats | undefined, key: string): string {
-  if (!stats) return '-';
+  if (!stats) return '0';
   
   const value = (stats as any)[key];
-  if (value === undefined || value === null) return '-';
+  if (value === undefined || value === null) return '0';
   
   // Format percentages (values typically 0-1 for win rates)
-  if (key === 'winPercentage' || key === 'avgGoalsScored' && value <= 1) {
-    // If it looks like a decimal percentage (0-1), convert to %
+  if (key === 'winPercentage' || (key === 'avgGoalsScored' && value <= 1)) {
     if (value <= 1) {
-      return `${Math.round(value * 100)}%`;
+      return String(Math.round(value * 100));
     }
   }
   
@@ -214,10 +206,17 @@ export default function QuickStatsCard({ result }: QuickStatsCardProps) {
   // H2H summary
   const h2h = momentumAndForm.h2hSummary;
   const hasH2H = h2h && h2h.totalMatches > 0;
+  
+  // Generate comparison stats for visual bars
+  const comparisonStats = config.primaryStats.slice(0, 3).map((stat) => ({
+    label: stat.label,
+    home: parseFloat(getStatValue(momentumAndForm.homeStats, stat.key)) || 0,
+    away: parseFloat(getStatValue(momentumAndForm.awayStats, stat.key)) || 0,
+  })).filter(s => s.home > 0 || s.away > 0);
 
   return (
     <div className="bg-bg-card rounded-card border border-divider overflow-hidden">
-      {/* Header */}
+      {/* Header with Data Source Badge */}
       <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-divider bg-bg-hover/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -227,68 +226,55 @@ export default function QuickStatsCard({ result }: QuickStatsCardProps) {
             <div>
               <h3 className="text-sm sm:text-base font-semibold text-text-primary">Quick Stats</h3>
               <p className="text-[10px] sm:text-xs text-text-muted">
-                {hasRealData ? 'Live data' : 'AI estimated'}
+                {config.formLabel}
               </p>
             </div>
           </div>
-          {hasRealData && (
-            <span className="flex items-center gap-1 text-[10px] sm:text-xs text-success">
-              <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
-              Real data
-            </span>
-          )}
+          {/* Data Source Badge */}
+          <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-chip text-[10px] font-medium ${
+            hasRealData 
+              ? 'bg-success/10 border-success/20 text-success' 
+              : 'bg-warning/10 border-warning/20 text-warning'
+          } border`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${hasRealData ? 'bg-success animate-pulse' : 'bg-warning'}`}></span>
+            {hasRealData ? 'Live' : 'Estimated'}
+          </span>
         </div>
       </div>
 
       {/* Stats Content */}
       <div className="p-4 sm:p-5">
-        {/* Team Stats Comparison */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-5">
-          {/* Home Team Column */}
-          <div className="text-center">
-            <p className="text-[10px] sm:text-xs text-text-muted mb-2 truncate" title={matchInfo.homeTeam}>
-              {matchInfo.homeTeam.split(' ').pop()}
-            </p>
-            <div className="space-y-2">
-              {config.primaryStats.slice(0, 3).map((stat) => (
-                <div key={stat.key} className="bg-bg-hover rounded-lg p-2">
-                  <span className="text-sm sm:text-base font-bold text-text-primary">
-                    {getStatValue(momentumAndForm.homeStats, stat.key)}
-                  </span>
-                </div>
-              ))}
+        {/* Visual Stat Comparison Bars */}
+        {comparisonStats.length > 0 ? (
+          <div className="space-y-4 mb-5">
+            {/* Team Headers */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-semibold text-success truncate max-w-[35%]">
+                {matchInfo.homeTeam.split(' ').pop()}
+              </span>
+              <span className="text-[10px] text-text-muted">vs</span>
+              <span className="text-xs font-semibold text-info truncate max-w-[35%] text-right">
+                {matchInfo.awayTeam.split(' ').pop()}
+              </span>
             </div>
+            
+            {/* Comparison Bars */}
+            {comparisonStats.map((stat) => (
+              <StatComparisonBar
+                key={stat.label}
+                label={stat.label}
+                homeValue={stat.home}
+                awayValue={stat.away}
+                compact
+              />
+            ))}
           </div>
-
-          {/* Labels Column */}
-          <div className="text-center">
-            <p className="text-[10px] sm:text-xs text-text-muted mb-2">Stat</p>
-            <div className="space-y-2">
-              {config.primaryStats.slice(0, 3).map((stat) => (
-                <div key={stat.key} className="p-2 flex items-center justify-center gap-1">
-                  <span className="text-xs sm:text-sm">{stat.icon}</span>
-                  <span className="text-[10px] sm:text-xs text-text-secondary">{stat.label}</span>
-                </div>
-              ))}
-            </div>
+        ) : (
+          /* Fallback message when no stats */
+          <div className="text-center py-4 text-text-muted text-sm">
+            No detailed statistics available
           </div>
-
-          {/* Away Team Column */}
-          <div className="text-center">
-            <p className="text-[10px] sm:text-xs text-text-muted mb-2 truncate" title={matchInfo.awayTeam}>
-              {matchInfo.awayTeam.split(' ').pop()}
-            </p>
-            <div className="space-y-2">
-              {config.primaryStats.slice(0, 3).map((stat) => (
-                <div key={stat.key} className="bg-bg-hover rounded-lg p-2">
-                  <span className="text-sm sm:text-base font-bold text-text-primary">
-                    {getStatValue(momentumAndForm.awayStats, stat.key)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Divider */}
         <div className="border-t border-divider my-4"></div>
