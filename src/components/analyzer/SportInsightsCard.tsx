@@ -25,13 +25,13 @@ const SPORT_INSIGHTS: Record<string, {
   icon: string;
   title: string;
   aspectLabels: string[];
-  tips: string[];
+  insights: string[];
 }> = {
   soccer: {
     icon: '⚽',
     title: 'Soccer Insights',
     aspectLabels: ['Set Pieces', 'Pressing', 'Possession', 'Counter-Attack'],
-    tips: [
+    insights: [
       'Home advantage is significant in soccer (≈10% boost)',
       'Check for key player injuries/suspensions',
       'Consider fixture congestion & fatigue',
@@ -42,7 +42,7 @@ const SPORT_INSIGHTS: Record<string, {
     icon: '🏀',
     title: 'Basketball Insights',
     aspectLabels: ['Pace', '3PT Shooting', 'Defense', 'Rebounding'],
-    tips: [
+    insights: [
       'Back-to-back games heavily impact performance',
       'Home court advantage is 3-5 points',
       'Check for load management on star players',
@@ -53,7 +53,7 @@ const SPORT_INSIGHTS: Record<string, {
     icon: '🏀',
     title: 'NBA Insights',
     aspectLabels: ['Pace', '3PT%', 'Def Rating', 'Rest Days'],
-    tips: [
+    insights: [
       'B2B games: expect 3-5% drop in performance',
       'Travel schedule matters (coast-to-coast)',
       'Star player rest is common in regular season',
@@ -64,7 +64,7 @@ const SPORT_INSIGHTS: Record<string, {
     icon: '🏈',
     title: 'NFL Insights',
     aspectLabels: ['Red Zone', 'Turnovers', 'Time of Possession', 'Weather'],
-    tips: [
+    insights: [
       'Weather heavily impacts passing games',
       'Divisional games are often closer',
       'Prime time games can be unpredictable',
@@ -75,7 +75,7 @@ const SPORT_INSIGHTS: Record<string, {
     icon: '🎾',
     title: 'Tennis Insights',
     aspectLabels: ['Surface', 'Serve', 'Return', 'Fitness'],
-    tips: [
+    insights: [
       'Surface specialists can outperform rankings',
       'Recent match load affects performance',
       'H2H is more predictive than rankings',
@@ -86,7 +86,7 @@ const SPORT_INSIGHTS: Record<string, {
     icon: '🏒',
     title: 'NHL Insights',
     aspectLabels: ['Power Play', 'Penalty Kill', 'Goaltending', 'Shot Quality'],
-    tips: [
+    insights: [
       'Goalie matchups are crucial',
       'B2B games impact NHL significantly',
       'Road trips wear teams down',
@@ -97,7 +97,7 @@ const SPORT_INSIGHTS: Record<string, {
     icon: '🥊',
     title: 'MMA Insights',
     aspectLabels: ['Striking', 'Grappling', 'Cardio', 'Fight IQ'],
-    tips: [
+    insights: [
       'Style matchups matter more than records',
       'Weight cut can impact performance',
       'Camp/coaching changes are significant',
@@ -108,7 +108,7 @@ const SPORT_INSIGHTS: Record<string, {
     icon: '📊',
     title: 'Match Insights',
     aspectLabels: ['Form', 'Matchup', 'Conditions', 'History'],
-    tips: [
+    insights: [
       'Recent form is a strong predictor',
       'Home advantage varies by sport',
       'Check for any unusual circumstances',
@@ -268,14 +268,14 @@ export default function SportInsightsCard({ result }: SportInsightsCardProps) {
           </div>
         </div>
 
-        {/* Sport Tips */}
+        {/* Sport Key Facts */}
         <div className="border-t border-divider pt-4">
-          <p className="text-[10px] sm:text-xs font-medium text-text-muted mb-2">💡 {matchInfo.sport} Tips</p>
+          <p className="text-[10px] sm:text-xs font-medium text-text-muted mb-2">💡 {matchInfo.sport} Key Facts</p>
           <ul className="space-y-1.5">
-            {config.tips.slice(0, 3).map((tip, i) => (
+            {config.insights.slice(0, 3).map((insight, i) => (
               <li key={i} className="flex items-start gap-2">
                 <span className="text-accent text-[10px] mt-0.5">•</span>
-                <span className="text-[10px] sm:text-xs text-text-secondary leading-relaxed">{tip}</span>
+                <span className="text-[10px] sm:text-xs text-text-secondary leading-relaxed">{insight}</span>
               </li>
             ))}
           </ul>

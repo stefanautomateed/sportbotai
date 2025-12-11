@@ -28,7 +28,7 @@ export function TrendingMatches({
             <span className="text-white text-sm">🔥</span>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-text-primary">Hot Picks</h3>
+            <h3 className="text-sm font-bold text-text-primary">Trending Now</h3>
             <p className="text-xs text-text-muted">Loading trending matches...</p>
           </div>
         </div>
@@ -69,7 +69,7 @@ export function TrendingMatches({
             <span className="text-white text-sm">🔥</span>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-text-primary">Hot Picks</h3>
+            <h3 className="text-sm font-bold text-text-primary">Trending Now</h3>
             <p className="text-xs text-text-muted">{matches.length} trending matches</p>
           </div>
         </div>

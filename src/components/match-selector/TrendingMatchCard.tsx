@@ -124,7 +124,7 @@ export function TrendingMatchCard({
       {/* Header: Hot Badge + Derby indicator */}
       <div className="flex items-center justify-between mb-3">
         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-btn bg-gradient-to-r from-orange-500/10 to-danger/10 text-orange-500 text-[10px] font-bold uppercase tracking-wide">
-          🔥 Hot Pick
+          🔥 Trending
         </span>
         {match.hotFactors.derbyScore > 0 && (
           <span className="text-[10px] text-warning font-medium">⚔️ Derby</span>
