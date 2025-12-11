@@ -57,3 +57,4 @@ export { default as WarningsSection } from './WarningsSection';
 export { default as LeagueContextCard } from './LeagueContextCard';
 export { default as TeamComparisonRadar } from './TeamComparisonRadar';
 export { default as MatchContextIndicators } from './MatchContextIndicators';
+export { default as RestScheduleCard } from './RestScheduleCard';

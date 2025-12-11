@@ -1,12 +1,13 @@
 /**
  * Analysis Results Component
  * 
- * Premium 5-layer layout for analysis results:
+ * Premium 6-layer layout for analysis results:
  * - Layer 1: Quick Glance Card (summary with key metrics + donut chart)
  * - Layer 1.5: Quick Stats + Key Factors (side by side on desktop)
  * - Layer 1.75: H2H Stats Card (enhanced head-to-head visualization)
- * - Layer 2: League Context + Team Comparison (NEW: standings & radar chart)
- * - Layer 2.5: Match Context Indicators (NEW: rest, rivalry, situational factors)
+ * - Layer 2: League Context + Team Comparison (standings & radar chart)
+ * - Layer 2.25: Rest & Schedule Analysis (NEW: rest days, schedule density)
+ * - Layer 2.5: Match Context Indicators (rest, rivalry, situational factors)
  * - Layer 3: Confidence Meter + Sport Insights (side by side)
  * - Layer 4: Analysis Accordion (detailed sections, collapsed by default)
  * - Layer 5: Extras Section (audio, notes, disclaimer)
@@ -28,6 +29,7 @@ import H2HStatsCard from './H2HStatsCard';
 import LeagueContextCard from './LeagueContextCard';
 import TeamComparisonRadar from './TeamComparisonRadar';
 import MatchContextIndicators from './MatchContextIndicators';
+import RestScheduleCard from './RestScheduleCard';
 
 interface AnalysisResultsProps {
   result: AnalyzeResponse;
@@ -97,6 +99,11 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
           <LeagueContextCard result={result} />
           <TeamComparisonRadar result={result} />
         </div>
+      </section>
+
+      {/* Layer 2.25: Rest & Schedule Analysis (NEW) */}
+      <section>
+        <RestScheduleCard result={result} />
       </section>
 
       {/* Layer 2.5: Match Context Indicators (NEW) */}
