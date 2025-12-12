@@ -7,6 +7,7 @@
 
 import Hero from '@/components/Hero';
 import TrendingSection from '@/components/TrendingSection';
+import MatchBrowser from '@/components/MatchBrowser';
 import HowItWorks from '@/components/HowItWorks';
 import WhyNotTipster from '@/components/WhyNotTipster';
 import Features from '@/components/Features';
@@ -25,6 +26,9 @@ export default function HomePage() {
 
       {/* Trending matches - daily habit driver */}
       <TrendingSection maxMatches={6} />
+
+      {/* Browse by League - access all matches */}
+      <MatchBrowser maxMatches={9} />
 
       {/* How it works - 3 steps */}
       <HowItWorks />
