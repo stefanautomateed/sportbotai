@@ -3,6 +3,7 @@
  * 
  * Displays live trending matches from the API on the homepage.
  * Creates daily check-in habit by showing today's interesting matches.
+ * Links to match preview pages for the pre-match intelligence experience.
  */
 
 'use client';
@@ -10,8 +11,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TrendingMatch, getTrendingMatches } from '@/components/match-selector/trending';
-import TeamLogo from '@/components/ui/TeamLogo';
-import LeagueLogo from '@/components/ui/LeagueLogo';
+import MatchCard from '@/components/MatchCard';
 import { MatchData } from '@/types';
 
 interface TrendingSectionProps {
@@ -104,7 +104,7 @@ export default function TrendingSection({ maxMatches = 6 }: TrendingSectionProps
   }
 
   return (
-    <section className="py-12 sm:py-16 bg-bg-primary">
+    <section id="trending" className="py-12 sm:py-16 bg-bg-primary scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex items-center justify-between mb-8">
@@ -143,65 +143,17 @@ export default function TrendingSection({ maxMatches = 6 }: TrendingSectionProps
             {matches.map((match) => {
               const tags = getMatchTags(match);
               return (
-              <Link
-                key={match.matchId}
-                href={`/analyzer?matchId=${match.matchId}&sport=${match.sportKey}`}
-                className="group relative bg-bg-card rounded-xl border border-divider p-4 hover:border-primary/30 hover:bg-bg-elevated transition-all duration-200"
-              >
-                {/* Hot Score Badge */}
-                {match.hotScore >= 8 && (
-                  <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-full text-[10px] font-bold text-white shadow-lg">
-                    HOT
-                  </div>
-                )}
-
-                {/* League & Time */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <LeagueLogo leagueName={match.league || match.sportKey} sport={match.sportKey} size="sm" />
-                    <span className="text-xs text-gray-400 truncate max-w-[120px]">{match.league}</span>
-                  </div>
-                  <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium">
-                    {formatTimeUntil(match.commenceTime)}
-                  </span>
-                </div>
-
-                {/* Teams */}
-                <div className="flex items-center justify-between">
-                  {/* Home Team */}
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <TeamLogo teamName={match.homeTeam} sport={match.sportKey} league={match.league} size="md" />
-                    <span className="text-sm font-semibold text-white truncate">{match.homeTeam}</span>
-                  </div>
-
-                  <span className="text-gray-600 text-sm font-medium px-2">vs</span>
-
-                  {/* Away Team */}
-                  <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-                    <span className="text-sm font-semibold text-white truncate text-right">{match.awayTeam}</span>
-                    <TeamLogo teamName={match.awayTeam} sport={match.sportKey} league={match.league} size="md" />
-                  </div>
-                </div>
-
-                {/* Tags */}
-                {tags.length > 0 && (
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  {tags.slice(0, 2).map((tag) => (
-                    <span 
-                      key={tag}
-                      className="text-[10px] px-2 py-0.5 bg-white/5 text-gray-400 rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                )}
-
-                {/* Hover CTA */}
-                <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-primary/10 to-transparent rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
-                  <span className="text-xs text-primary font-medium">Analyze this match →</span>
-                </div>
-              </Link>
+                <MatchCard
+                  key={match.matchId}
+                  matchId={match.matchId}
+                  homeTeam={match.homeTeam}
+                  awayTeam={match.awayTeam}
+                  league={match.league}
+                  sportKey={match.sportKey}
+                  commenceTime={match.commenceTime}
+                  hotScore={match.hotScore}
+                  tags={tags}
+                />
               );
             })}
           </div>

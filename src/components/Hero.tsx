@@ -32,24 +32,24 @@ export default function Hero() {
 
             {/* Headline - H1 for SEO */}
             <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 sm:mb-6">
-              AI Sports Analysis
+              Know Any Match
               <br className="hidden xs:block" />
-              <span className="text-accent">in 60 Seconds</span>
+              <span className="text-accent">Before It Happens</span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-base sm:text-lg text-gray-400 leading-relaxed mb-6 sm:mb-8 max-w-xl mx-auto lg:mx-0">
-              Quick briefings, live odds, team form & value detection for Soccer, NBA, NFL, NHL, UFC & more.
-              <strong className="text-gray-300"> Listen, share, or read—your choice.</strong>
+              Pre-match intelligence: headlines, form, H2H history & AI insights.
+              <strong className="text-gray-300"> Soccer, NBA, NFL, NHL & UFC—all in 60 seconds.</strong>
             </p>
 
             {/* CTA Buttons - Stack on mobile */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
               <Link 
-                href="/analyzer" 
+                href="#trending" 
                 className="btn-primary text-center text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 w-full sm:w-auto"
               >
-                Start analyzing matches
+                Browse today&apos;s matches
               </Link>
               <Link 
                 href="/pricing" 
@@ -63,16 +63,16 @@ export default function Hero() {
             <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/10">
               <div className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 text-xs sm:text-sm text-gray-400">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🎙️</span>
-                  <span>Audio Briefings</span>
+                  <span className="text-lg">📰</span>
+                  <span>Match Headlines</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📊</span>
-                  <span>17+ Sports</span>
+                  <span>Form & H2H</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">⚡</span>
-                  <span>Live Data</span>
+                  <span className="text-lg">🤖</span>
+                  <span>AI Briefings</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📤</span>
