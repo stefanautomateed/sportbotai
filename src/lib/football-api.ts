@@ -791,8 +791,12 @@ export interface TopPlayerStats {
 export async function getTeamTopScorer(teamId: number, leagueId?: number): Promise<TopPlayerStats | null> {
   const cacheKey = `topscorer:${teamId}:${leagueId || 'all'}`;
   const cached = getCached<TopPlayerStats>(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    console.log(`[TopScorer] Cache hit for team ${teamId}: ${cached.name}`);
+    return cached;
+  }
 
+  console.log(`[TopScorer] Fetching for team ${teamId}, league ${leagueId}`);
   const season = getCurrentSeason();
   
   // First try: Get team's top scorer from players/topscorers endpoint
@@ -815,6 +819,7 @@ export async function getTeamTopScorer(teamId: number, leagueId?: number): Promi
           rating: stats?.games?.rating ? parseFloat(stats.games.rating) : undefined,
           minutesPlayed: stats?.games?.minutes || 0,
         };
+        console.log(`[TopScorer] Found in league top scorers: ${player.name} for team ${teamId}`);
         setCache(cacheKey, player);
         return player;
       }
@@ -831,7 +836,9 @@ export async function getTeamTopScorer(teamId: number, leagueId?: number): Promi
   }
   
   // Third try: Search for players by team and get their stats
+  console.log(`[TopScorer] Trying /players?team=${teamId}&season=${season}`);
   const playersResponse = await apiRequest<any>(`/players?team=${teamId}&season=${season}&page=1`);
+  console.log(`[TopScorer] Players response count: ${playersResponse?.response?.length || 0}`);
   if (playersResponse?.response?.length > 0) {
     // Sort by goals scored
     const sortedPlayers = playersResponse.response
@@ -845,6 +852,8 @@ export async function getTeamTopScorer(teamId: number, leagueId?: number): Promi
     if (sortedPlayers.length > 0) {
       const topPlayer = sortedPlayers[0];
       const stats = topPlayer.statistics?.[0];
+      const playerTeamId = stats?.team?.id;
+      console.log(`[TopScorer] Top player ${topPlayer.player?.name} has team ID ${playerTeamId} (expected ${teamId})`);
       const player: TopPlayerStats = {
         name: topPlayer.player?.name || 'Unknown',
         position: stats?.games?.position || 'Forward',
@@ -854,6 +863,7 @@ export async function getTeamTopScorer(teamId: number, leagueId?: number): Promi
         rating: stats?.games?.rating ? parseFloat(stats.games.rating) : undefined,
         minutesPlayed: stats?.games?.minutes || 0,
       };
+      console.log(`[TopScorer] Found via /players: ${player.name} for team ${teamId}`);
       setCache(cacheKey, player);
       return player;
     }
@@ -905,18 +915,25 @@ export async function getMatchKeyPlayers(
     findTeam(awayTeam, league),
   ]);
 
+  console.log(`[KeyPlayers] Looking up: home="${homeTeam}" (id=${homeTeamId}), away="${awayTeam}" (id=${awayTeamId})`);
+
   if (!homeTeamId || !awayTeamId) {
+    console.log(`[KeyPlayers] Missing team ID - home: ${homeTeamId}, away: ${awayTeamId}`);
     return { home: null, away: null };
   }
 
   // Get league IDs for better player data
   const homeLeagueId = getTeamLeagueId(homeTeam);
   const awayLeagueId = getTeamLeagueId(awayTeam);
+  
+  console.log(`[KeyPlayers] League IDs - home: ${homeLeagueId}, away: ${awayLeagueId}`);
 
   const [homePlayer, awayPlayer] = await Promise.all([
     getTeamTopScorer(homeTeamId, homeLeagueId || undefined),
     getTeamTopScorer(awayTeamId, awayLeagueId || undefined),
   ]);
+
+  console.log(`[KeyPlayers] Results - home: ${homePlayer?.name}, away: ${awayPlayer?.name}`);
 
   return { home: homePlayer, away: awayPlayer };
 }
