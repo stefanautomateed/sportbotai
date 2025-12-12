@@ -788,13 +788,34 @@ export interface TopPlayerStats {
 /**
  * Get top scorer for a team
  */
-export async function getTeamTopScorer(teamId: number): Promise<TopPlayerStats | null> {
-  const cacheKey = `topscorer:${teamId}`;
+export async function getTeamTopScorer(teamId: number, leagueId?: number): Promise<TopPlayerStats | null> {
+  const cacheKey = `topscorer:${teamId}:${leagueId || 'all'}`;
   const cached = getCached<TopPlayerStats>(cacheKey);
   if (cached) return cached;
 
   const season = getCurrentSeason();
-  const response = await apiRequest<any>(`/players/topscorers?team=${teamId}&season=${season}`);
+  
+  // Try league-specific top scorers first if we have a league ID
+  let response = null;
+  if (leagueId) {
+    response = await apiRequest<any>(`/players/topscorers?league=${leagueId}&season=${season}`);
+    // Filter for our team
+    if (response?.response) {
+      const teamPlayer = response.response.find((p: any) => 
+        p.statistics?.some((s: any) => s.team?.id === teamId)
+      );
+      if (teamPlayer) {
+        response = { response: [teamPlayer] };
+      } else {
+        response = null;
+      }
+    }
+  }
+  
+  // Fallback to team-specific top scorers
+  if (!response?.response?.[0]) {
+    response = await apiRequest<any>(`/players/topscorers?team=${teamId}&season=${season}`);
+  }
   
   if (!response?.response?.[0]) {
     // Fallback: try squad endpoint and find an attacker or midfielder
@@ -861,9 +882,13 @@ export async function getMatchKeyPlayers(
     return { home: null, away: null };
   }
 
+  // Get league IDs for better player data
+  const homeLeagueId = getTeamLeagueId(homeTeam);
+  const awayLeagueId = getTeamLeagueId(awayTeam);
+
   const [homePlayer, awayPlayer] = await Promise.all([
-    getTeamTopScorer(homeTeamId),
-    getTeamTopScorer(awayTeamId),
+    getTeamTopScorer(homeTeamId, homeLeagueId || undefined),
+    getTeamTopScorer(awayTeamId, awayLeagueId || undefined),
   ]);
 
   return { home: homePlayer, away: awayPlayer };
