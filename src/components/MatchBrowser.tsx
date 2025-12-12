@@ -89,19 +89,11 @@ export default function MatchBrowser({ initialSport, maxMatches = 12 }: MatchBro
   }, [groupedSports]);
 
   return (
-    <section id="browse" className="py-12 sm:py-16 bg-bg-secondary scroll-mt-20">
+    <section className="py-8 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
+        {/* League Selection Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-xl">🏆</span>
-            </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Browse by League</h2>
-              <p className="text-sm text-gray-400">All upcoming matches</p>
-            </div>
-          </div>
+          <h2 className="text-lg font-semibold text-white">Select a League</h2>
           <button
             onClick={() => setShowAllLeagues(!showAllLeagues)}
             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors"

@@ -46,7 +46,7 @@ export default function Hero() {
             {/* CTA Buttons - Stack on mobile */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
               <Link 
-                href="#trending" 
+                href="/matches" 
                 className="btn-primary text-center text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 w-full sm:w-auto"
               >
                 Browse today&apos;s matches
@@ -88,10 +88,10 @@ export default function Hero() {
               {/* Glow Effect */}
               <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-2xl blur-xl opacity-50" />
               
-              {/* Card */}
+              {/* Card - Match Intelligence Preview */}
               <div className="relative bg-bg-card border border-divider rounded-card p-6 shadow-2xl">
                 {/* Card Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
                       <span className="text-xl">⚽</span>
@@ -101,7 +101,7 @@ export default function Hero() {
                       <p className="text-gray-500 text-sm">Today • 15:00</p>
                     </div>
                   </div>
-                  <span className="badge badge-success">60s Briefing</span>
+                  <span className="badge badge-success">Preview Ready</span>
                 </div>
 
                 {/* Teams */}
@@ -119,47 +119,62 @@ export default function Hero() {
                   </div>
                 </div>
 
-                {/* Probabilities */}
-                <div className="mt-6">
-                  <p className="text-gray-400 text-sm mb-3">AI Probability Estimates</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-accent/10 rounded-lg p-3 text-center border border-accent/20">
-                      <p className="text-accent font-bold text-xl">52%</p>
-                      <p className="text-gray-400 text-xs">Home Win</p>
+                {/* Match Headlines */}
+                <div className="mt-4 space-y-2">
+                  <p className="text-xs text-text-muted uppercase tracking-wider">🔥 Match Headlines</p>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2 bg-green-500/10 rounded-lg p-3 border border-green-500/20">
+                      <span className="text-green-400">📈</span>
+                      <p className="text-sm text-gray-300">Arsenal: 8 home wins in a row</p>
                     </div>
-                    <div className="bg-white/5 rounded-lg p-3 text-center border border-white/10">
-                      <p className="text-gray-300 font-bold text-xl">24%</p>
-                      <p className="text-gray-400 text-xs">Draw</p>
+                    <div className="flex items-start gap-2 bg-red-500/10 rounded-lg p-3 border border-red-500/20">
+                      <span className="text-red-400">📉</span>
+                      <p className="text-sm text-gray-300">Chelsea: Only 2 away wins this season</p>
                     </div>
-                    <div className="bg-white/5 rounded-lg p-3 text-center border border-white/10">
-                      <p className="text-gray-300 font-bold text-xl">24%</p>
-                      <p className="text-gray-400 text-xs">Away Win</p>
+                    <div className="flex items-start gap-2 bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
+                      <span className="text-blue-400">⚔️</span>
+                      <p className="text-sm text-gray-300">H2H: Arsenal unbeaten in last 5</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Analysis Badges */}
-                <div className="mt-6 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="badge badge-success">Odds Gap Found</span>
-                    <span className="badge badge-warning">Medium Volatility</span>
+                {/* Form Comparison */}
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                    <p className="text-xs text-gray-500 mb-2">Arsenal Form</p>
+                    <div className="flex gap-1">
+                      {['W','W','W','D','W'].map((r, i) => (
+                        <span key={i} className={`w-6 h-6 rounded text-xs flex items-center justify-center font-bold ${
+                          r === 'W' ? 'bg-green-500/20 text-green-400' : 
+                          r === 'D' ? 'bg-yellow-500/20 text-yellow-400' : 
+                          'bg-red-500/20 text-red-400'
+                        }`}>{r}</span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-400 text-sm">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                    <span>+12% momentum</span>
+                  <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                    <p className="text-xs text-gray-500 mb-2">Chelsea Form</p>
+                    <div className="flex gap-1">
+                      {['L','D','W','L','L'].map((r, i) => (
+                        <span key={i} className={`w-6 h-6 rounded text-xs flex items-center justify-center font-bold ${
+                          r === 'W' ? 'bg-green-500/20 text-green-400' : 
+                          r === 'D' ? 'bg-yellow-500/20 text-yellow-400' : 
+                          'bg-red-500/20 text-red-400'
+                        }`}>{r}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Mock Analysis Preview */}
-                <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-primary font-medium text-sm">🎙️ Quick Briefing</span>
-                    <span className="text-xs text-gray-500">• 45 sec listen</span>
+                {/* AI Briefing Preview */}
+                <div className="mt-4 p-4 bg-gradient-to-r from-purple-500/10 to-violet-500/10 rounded-lg border border-purple-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">🤖</span>
+                    <span className="text-white font-medium text-sm">AI Briefing</span>
+                    <span className="text-xs text-gray-500">• 60 sec</span>
                   </div>
                   <p className="text-gray-400 text-sm leading-relaxed">
-                    Arsenal&apos;s strong home form (WWWDW) and +12% momentum edge. Chelsea missing key midfielder. Value detected on home win at current odds...
+                    Arsenal enter this London derby in dominant home form. Chelsea&apos;s away struggles continue with just 2 wins on the road...
                   </p>
                 </div>
               </div>
