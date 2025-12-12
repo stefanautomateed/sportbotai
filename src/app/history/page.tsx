@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import TeamLogo from '@/components/ui/TeamLogo';
 import LeagueLogo from '@/components/ui/LeagueLogo';
+import { NoAnalysisHistory, ErrorState } from '@/components/ui';
 import HistoryAccessBanner from '@/components/HistoryAccessBanner';
 
 interface AnalysisSummary {
@@ -145,11 +146,12 @@ export default function HistoryPage() {
     return (
       <div className="min-h-screen bg-bg-primary py-12">
         <div className="container-custom">
-          <div className="text-center py-12">
-            <p className="text-danger mb-4">{error}</p>
-            <button onClick={() => fetchHistory()} className="btn-primary">
-              Try Again
-            </button>
+          <div className="bg-bg-card rounded-card border border-divider">
+            <ErrorState 
+              title="Failed to Load History"
+              message={error}
+              onRetry={() => fetchHistory()}
+            />
           </div>
         </div>
       </div>
@@ -190,14 +192,8 @@ export default function HistoryPage() {
 
         {/* Empty State */}
         {history?.analyses.length === 0 && (
-          <div className="text-center py-16 bg-bg-card rounded-card border border-divider">
-            <div className="text-5xl mb-4">📊</div>
-            <h2 className="text-xl font-semibold text-text-primary mb-2">
-              No analyses yet
-            </h2>
-            <p className="text-text-secondary mb-6">
-              Your analysis history will appear here
-            </p>
+          <div className="bg-bg-card rounded-card border border-divider">
+            <NoAnalysisHistory />
             <Link href="/analyzer" className="btn-primary">
               Start Analyzing
             </Link>
