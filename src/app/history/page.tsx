@@ -176,8 +176,8 @@ export default function HistoryPage() {
               )}
             </p>
           </div>
-          <Link href="/analyzer" className="btn-primary">
-            + New Analysis
+          <Link href="/matches" className="btn-primary">
+            Browse Matches
           </Link>
         </div>
 
@@ -194,8 +194,8 @@ export default function HistoryPage() {
         {history?.analyses.length === 0 && (
           <div className="bg-bg-card rounded-card border border-divider">
             <NoAnalysisHistory />
-            <Link href="/analyzer" className="btn-primary">
-              Start Analyzing
+            <Link href="/matches" className="btn-primary">
+              Browse Matches
             </Link>
           </div>
         )}

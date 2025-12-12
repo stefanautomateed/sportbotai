@@ -169,7 +169,7 @@ export default function MyTeamsDashboard() {
             Start following teams to see their upcoming matches and get quick access to analysis.
           </p>
           <Link
-            href="/analyzer"
+            href="/matches"
             className="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Trophy className="w-4 h-4 mr-2" />

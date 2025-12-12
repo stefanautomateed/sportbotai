@@ -58,8 +58,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/analyzer" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
-                  Analyzer
+                <Link href="/matches" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
+                  Matches
                 </Link>
               </li>
               <li>

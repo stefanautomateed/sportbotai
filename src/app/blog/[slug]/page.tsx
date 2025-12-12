@@ -307,10 +307,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               Use our AI-powered analyzer to apply these concepts to real matches.
             </p>
             <Link
-              href="/analyzer"
+              href="/matches"
               className="inline-flex items-center px-6 py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
             >
-              Analyze a Match
+              Browse Matches
               <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

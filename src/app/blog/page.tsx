@@ -257,10 +257,10 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             Put your knowledge into practice with our AI-powered sports analytics tool.
           </p>
           <Link
-            href="/analyzer"
+            href="/matches"
             className="inline-flex items-center px-6 py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
           >
-            Try the Analyzer
+            Browse Matches
             <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

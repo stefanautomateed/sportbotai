@@ -60,7 +60,7 @@ export default function CancelledPage() {
             View Plans Again
           </Link>
           <Link
-            href="/analyzer"
+            href="/matches"
             className="btn-secondary inline-flex items-center justify-center gap-2"
           >
             Continue Free

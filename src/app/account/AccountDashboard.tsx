@@ -157,10 +157,10 @@ export default function AccountDashboard({ user, recentAnalyses }: Props) {
             </div>
             
             <Link 
-              href="/analyzer"
+              href="/matches"
               className="btn-primary w-full text-center text-sm py-2"
             >
-              Start New Analysis
+              Browse Matches
             </Link>
           </div>
 
@@ -241,8 +241,8 @@ export default function AccountDashboard({ user, recentAnalyses }: Props) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               <p className="text-text-secondary mb-4">No analyses yet</p>
-              <Link href="/analyzer" className="btn-primary inline-block">
-                Create Your First Analysis
+              <Link href="/matches" className="btn-primary inline-block">
+                Browse Matches
               </Link>
             </div>
           ) : (

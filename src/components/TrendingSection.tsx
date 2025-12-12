@@ -118,7 +118,7 @@ export default function TrendingSection({ maxMatches = 6 }: TrendingSectionProps
             </div>
           </div>
           <Link 
-            href="/analyzer"
+            href="/matches"
             className="text-sm text-primary hover:text-primary/80 font-medium hidden sm:flex items-center gap-1 transition-colors"
           >
             View all
@@ -163,7 +163,7 @@ export default function TrendingSection({ maxMatches = 6 }: TrendingSectionProps
         {!isLoading && matches.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-400 mb-4">No trending matches right now</p>
-            <Link href="/analyzer" className="btn-primary">
+            <Link href="/matches" className="btn-primary">
               Browse all matches
             </Link>
           </div>
@@ -171,7 +171,7 @@ export default function TrendingSection({ maxMatches = 6 }: TrendingSectionProps
 
         {/* Mobile CTA */}
         <div className="mt-6 sm:hidden text-center">
-          <Link href="/analyzer" className="btn-secondary inline-flex items-center gap-2">
+          <Link href="/matches" className="btn-secondary inline-flex items-center gap-2">
             View all matches
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

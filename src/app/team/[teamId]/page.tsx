@@ -76,8 +76,8 @@ export default function TeamProfilePage({ params }: PageProps) {
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Team Not Found</h2>
           <p className="text-text-secondary mb-6">{error || 'Unable to load team data'}</p>
-          <Link href="/analyzer" className="btn-primary">
-            Back to Analyzer
+          <Link href="/matches" className="btn-primary">
+            Browse Matches
           </Link>
         </div>
       </div>
