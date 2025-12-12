@@ -23,7 +23,7 @@ interface ExtrasSectionProps {
 export default function ExtrasSection({ result }: ExtrasSectionProps) {
   const warnings = result.meta.warnings || [];
   const userContext = result.userContext;
-  const hasUserPick = userContext?.userPick || (userContext?.userStake && userContext.userStake > 0);
+  const hasUserPick = !!userContext?.userPick;
 
   return (
     <div className="space-y-4">
@@ -34,7 +34,7 @@ export default function ExtrasSection({ result }: ExtrasSectionProps) {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white text-sm">👤</span>
             </div>
-            <h3 className="font-semibold text-white text-sm sm:text-base">Your Selection</h3>
+            <h3 className="font-semibold text-white text-sm sm:text-base">Your Prediction</h3>
           </div>
           
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-3">
@@ -42,12 +42,6 @@ export default function ExtrasSection({ result }: ExtrasSectionProps) {
               <div className="flex items-center gap-2 bg-bg-hover px-3 py-2 rounded-lg">
                 <span className="text-xs text-text-muted">Pick:</span>
                 <span className="font-semibold text-white">{userContext.userPick}</span>
-              </div>
-            )}
-            {userContext.userStake > 0 && (
-              <div className="flex items-center gap-2 bg-bg-hover px-3 py-2 rounded-lg">
-                <span className="text-xs text-text-muted">Stake:</span>
-                <span className="font-semibold text-white">{userContext.userStake} units</span>
               </div>
             )}
           </div>

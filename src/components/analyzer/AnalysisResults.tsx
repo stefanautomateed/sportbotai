@@ -38,8 +38,10 @@ import MatchContextIndicators from './MatchContextIndicators';
 import RestScheduleCard from './RestScheduleCard';
 import InjuryImpactCard from './InjuryImpactCard';
 import QuickBriefingCard from './QuickBriefingCard';
+import OddsComparisonCard from './OddsComparisonCard';
 import ShareCard from './ShareCard';
 import CopyInsightsButton from './CopyInsightsButton';
+import PreMatchInsightsPanel from './PreMatchInsightsPanel';
 
 interface AnalysisResultsProps {
   result: AnalyzeResponse;
@@ -73,6 +75,11 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
   const hasInjuryData = result.injuryContext && (
     result.injuryContext.homeTeam?.players.length || 
     result.injuryContext.awayTeam?.players.length
+  );
+  const hasPreMatchInsights = result.preMatchInsights && (
+    (result.preMatchInsights.headlines?.length || 0) > 0 ||
+    (result.preMatchInsights.streaks?.home?.length || 0) > 0 ||
+    (result.preMatchInsights.streaks?.away?.length || 0) > 0
   );
 
   return (
@@ -115,6 +122,25 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
       </section>
 
       {/* ============================================ */}
+      {/* PRE-MATCH INSIGHTS (Viral Stats)            */}
+      {/* Headlines, Streaks, Venue Splits            */}
+      {/* ============================================ */}
+      
+      {hasPreMatchInsights && (
+        <>
+          <SectionDivider label="Pre-Match Intel" icon="📊" variant="primary" />
+          <section className="bg-[#0A0D10] rounded-2xl p-4 lg:p-6 border border-white/5">
+            <PreMatchInsightsPanel
+              insights={result.preMatchInsights!}
+              homeTeam={result.matchInfo.homeTeam}
+              awayTeam={result.matchInfo.awayTeam}
+              isHomeGame={true}
+            />
+          </section>
+        </>
+      )}
+
+      {/* ============================================ */}
       {/* TIER 2: KEY INSIGHTS                        */}
       {/* Grouped insights, lighter card background   */}
       {/* ============================================ */}
@@ -150,6 +176,17 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
               homeTeam={result.matchInfo.homeTeam}
               awayTeam={result.matchInfo.awayTeam}
               sport={result.matchInfo.sport}
+            />
+          </div>
+        )}
+        
+        {/* Probability Comparison (neutral, educational) */}
+        {result.oddsComparison && (
+          <div className="bg-[#0A0D10] rounded-2xl p-1">
+            <OddsComparisonCard
+              oddsComparison={result.oddsComparison}
+              homeTeam={result.matchInfo.homeTeam}
+              awayTeam={result.matchInfo.awayTeam}
             />
           </div>
         )}

@@ -28,6 +28,7 @@ import OpenAI from 'openai';
 import {
   AnalyzeRequest,
   AnalyzeResponse,
+  OddsComparison,
   RiskLevel,
   ValueFlag,
   Trend,
@@ -40,6 +41,7 @@ import {
   TeamInjuryContext,
   InjuredPlayer as InjuredPlayerType,
   PlayerImportance,
+  AIBriefing,
 } from '@/types';
 import { getSportConfig, getSportTerminology } from '@/lib/config/sportsConfig';
 import {
@@ -68,6 +70,7 @@ import {
 import { prisma } from '@/lib/prisma';
 import { getMatchContext, MatchContext } from '@/lib/match-context';
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rateLimit';
+import { generatePreMatchInsights } from '@/lib/utils/preMatchInsights';
 import * as Sentry from '@sentry/nextjs';
 
 // ============================================
@@ -125,18 +128,20 @@ function buildSystemPrompt(sport: string, sportKey?: string): string {
 
 ${sportContext}
 
-VALUE FLAG THRESHOLDS (based on AI vs Implied probability difference):
-- NONE: <${VALIDATION_RULES.valueFlagThresholds.NONE}% difference
-- LOW: ${VALIDATION_RULES.valueFlagThresholds.NONE}%-${VALIDATION_RULES.valueFlagThresholds.LOW}% difference
-- MEDIUM: ${VALIDATION_RULES.valueFlagThresholds.LOW}%-${VALIDATION_RULES.valueFlagThresholds.MEDIUM}% difference
-- HIGH: >${VALIDATION_RULES.valueFlagThresholds.HIGH}% difference
+PROBABILITY DIFFERENCE INTERPRETATION (for educational context only):
+- Small: <${VALIDATION_RULES.differenceThresholds.SMALL}% difference (AI and market closely aligned)
+- Moderate: ${VALIDATION_RULES.differenceThresholds.SMALL}%-${VALIDATION_RULES.differenceThresholds.MODERATE}% difference (some disagreement)
+- Large: >${VALIDATION_RULES.differenceThresholds.LARGE}% difference (notable difference - investigate why)
+
+IMPORTANT: Do NOT use words like "value", "edge", "recommended", or "bet on". 
+Show differences neutrally and let users draw their own conclusions.
 
 PROBABILITY VALIDATION:
 - All outcomes must sum to 100% (±${VALIDATION_RULES.probabilitySumTolerance}% rounding tolerance)
 - Upset probability for heavy favorites: max ${VALIDATION_RULES.maxUpsetForHeavyFavorite}%
 - Close matches minimum upset probability: ${VALIDATION_RULES.minUpsetForCloseMatch}%
 
-RESPONSIBLE GAMBLING:
+EDUCATIONAL DISCLAIMER:
 Core message to include: "${RESPONSIBLE_GAMBLING_MESSAGES.core}"
 
 You must return ONLY valid JSON, no commentary, no markdown, no prose.
@@ -161,37 +166,34 @@ You must return ONLY valid JSON, no commentary, no markdown, no prose.
     "over": <number 0-100 | null>,
     "under": <number 0-100 | null>
   },
-  "valueAnalysis": {
-    "impliedProbabilities": {
+  "oddsComparison": {
+    "marketImplied": {
+      "homeWin": <number 0-100 | null>,
+      "draw": <number 0-100 | null>,
+      "awayWin": <number 0-100 | null>,
+      "bookmakerMargin": <number percentage | null>
+    },
+    "aiEstimate": {
       "homeWin": <number 0-100 | null>,
       "draw": <number 0-100 | null>,
       "awayWin": <number 0-100 | null>
     },
-    "aiProbabilities": {
-      "homeWin": <number 0-100 | null>,
-      "draw": <number 0-100 | null>,
-      "awayWin": <number 0-100 | null>
+    "comparison": {
+      "homeWin": { "aiEstimate": <number>, "marketImplied": <number>, "difference": <number> },
+      "draw": { "aiEstimate": <number>, "marketImplied": <number>, "difference": <number> },
+      "awayWin": { "aiEstimate": <number>, "marketImplied": <number>, "difference": <number> }
     },
-    "valueFlags": {
-      "homeWin": "NONE" | "LOW" | "MEDIUM" | "HIGH",
-      "draw": "NONE" | "LOW" | "MEDIUM" | "HIGH",
-      "awayWin": "NONE" | "LOW" | "MEDIUM" | "HIGH"
+    "largestDifference": {
+      "outcome": "HOME" | "DRAW" | "AWAY" | "NONE",
+      "difference": <number absolute difference>
     },
-    "bestValueSide": "HOME" | "DRAW" | "AWAY" | "NONE",
-    "kellyStake": {
-      "fullKelly": <number percentage>,
-      "halfKelly": <number percentage>,
-      "quarterKelly": <number percentage>,
-      "edge": <number percentage>,
-      "confidence": "LOW" | "MEDIUM" | "HIGH"
-    } | null,
-    "valueCommentShort": "<string>",
-    "valueCommentDetailed": "<string>"
+    "explanationShort": "<string - neutral explanation of AI vs market difference>",
+    "explanationDetailed": "<string - educational context about what differences mean>"
   },
   "riskAnalysis": {
     "overallRiskLevel": "LOW" | "MEDIUM" | "HIGH",
-    "riskExplanation": "<string>",
-    "bankrollImpact": "<string>",
+    "riskExplanation": "<string - focus on uncertainty factors, NOT betting risk>",
+    "uncertaintyFactors": "<string - what makes this match hard to predict>",
     "psychologyBias": {
       "name": "<string>",
       "description": "<string>"
@@ -243,6 +245,12 @@ You must return ONLY valid JSON, no commentary, no markdown, no prose.
   "responsibleGambling": {
     "coreNote": "<string>",
     "tailoredNote": "<string>"
+  },
+  "briefing": {
+    "headline": "<string 2-3 sentences summarizing the match>",
+    "keyPoints": ["<string key insight 1>", "<string key insight 2>", "<string key insight 3>"],
+    "verdict": "<string one-liner expert verdict>",
+    "confidenceRating": <1-5>
   },
   "meta": {
     "modelVersion": "1.0.0",
@@ -601,10 +609,29 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Add usage info and injury context to response
+    // Generate pre-match insights (viral stats)
+    const preMatchInsights = generatePreMatchInsights({
+      homeTeam: normalizedRequest.matchData.homeTeam,
+      awayTeam: normalizedRequest.matchData.awayTeam,
+      homeForm: analysis.momentumAndForm.homeForm || [],
+      awayForm: analysis.momentumAndForm.awayForm || [],
+      h2h: analysis.momentumAndForm.headToHead || [],
+      injuryContext: injuryContext,
+      homeMomentumScore: analysis.momentumAndForm.homeMomentumScore,
+      awayMomentumScore: analysis.momentumAndForm.awayMomentumScore,
+    });
+    
+    console.log('[Response] Pre-match insights generated:', {
+      headlines: preMatchInsights.headlines?.length || 0,
+      homeStreaks: preMatchInsights.streaks?.home?.length || 0,
+      awayStreaks: preMatchInsights.streaks?.away?.length || 0,
+    });
+
+    // Add usage info, injury context, and pre-match insights to response
     return NextResponse.json({
       ...analysis,
       injuryContext: injuryContext || undefined,
+      preMatchInsights,
       usageInfo: {
         plan: usageCheck.plan,
         remaining: usageCheck.remaining - 1,
@@ -965,15 +992,21 @@ async function callOpenAI(
     (request.matchData as any).sportKey // Optional sportKey for more precise config lookup
   );
 
+  // Select model based on user tier (Premium gets GPT-4o for better analysis)
+  // TODO: Pass user tier from auth check when implementing tiered models
+  const model = 'gpt-4o-mini'; // Future: 'gpt-4o' for premium users
+  
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model,
     messages: [
       { role: 'system', content: sportAwareSystemPrompt },
       { role: 'user', content: userPrompt },
     ],
-    temperature: 0.7,
-    max_tokens: 3000,
+    temperature: 0.3, // Lower temp for more consistent, reliable analysis
+    max_tokens: 3500, // Increased for comprehensive analysis with briefing
     response_format: { type: 'json_object' },
+    // Increase reliability
+    top_p: 0.95,
   });
 
   const content = completion.choices[0]?.message?.content || '';
@@ -985,6 +1018,175 @@ async function callOpenAI(
     console.error('Failed to parse OpenAI response:', content);
     return generateFallbackAnalysis(request, enrichedData);
   }
+}
+
+// ============================================
+// PROBABILITY NORMALIZATION
+// ============================================
+
+interface ProbabilitySet {
+  homeWin: number | null;
+  draw: number | null;
+  awayWin: number | null;
+  over: number | null;
+  under: number | null;
+}
+
+interface ThreeWayProbabilitySet {
+  homeWin: number | null;
+  draw: number | null;
+  awayWin: number | null;
+}
+
+/**
+ * Normalize 3-way probabilities (home/draw/away) to ensure they sum to 100%
+ */
+function normalizeThreeWayProbabilities(probs: ThreeWayProbabilitySet): ThreeWayProbabilitySet {
+  const { homeWin, draw, awayWin } = probs;
+  
+  // Calculate sum of outcomes
+  const mainSum = (homeWin || 0) + (draw || 0) + (awayWin || 0);
+  
+  // If sum is way off (more than 5% deviation), normalize
+  if (mainSum > 0 && Math.abs(mainSum - 100) > 5) {
+    const factor = 100 / mainSum;
+    return {
+      homeWin: homeWin !== null ? Math.round(homeWin * factor * 10) / 10 : null,
+      draw: draw !== null ? Math.round(draw * factor * 10) / 10 : null,
+      awayWin: awayWin !== null ? Math.round(awayWin * factor * 10) / 10 : null,
+    };
+  }
+  
+  // Minor adjustment (within 5%) - adjust the largest value to fix rounding
+  if (mainSum > 0 && Math.abs(mainSum - 100) > 0.1) {
+    const diff = 100 - mainSum;
+    if (homeWin !== null && (draw === null || homeWin >= (draw || 0)) && (awayWin === null || homeWin >= (awayWin || 0))) {
+      return { ...probs, homeWin: Math.round((homeWin + diff) * 10) / 10 };
+    } else if (awayWin !== null && (draw === null || awayWin >= (draw || 0))) {
+      return { ...probs, awayWin: Math.round((awayWin + diff) * 10) / 10 };
+    } else if (draw !== null) {
+      return { ...probs, draw: Math.round((draw + diff) * 10) / 10 };
+    }
+  }
+  
+  return probs;
+}
+
+/**
+ * Normalize full probabilities including over/under to ensure 1X2 sums to 100%
+ */
+function normalizeProbabilities(probs: ProbabilitySet): ProbabilitySet {
+  const normalized = normalizeThreeWayProbabilities({
+    homeWin: probs.homeWin,
+    draw: probs.draw,
+    awayWin: probs.awayWin,
+  });
+  
+  return {
+    ...normalized,
+    over: probs.over,
+    under: probs.under,
+  };
+}
+
+// ============================================
+// ODDS COMPARISON BUILDER (Neutral, Educational)
+// ============================================
+
+/**
+ * Build neutral odds comparison data
+ * Shows AI vs Market probabilities without recommendations
+ */
+function buildOddsComparison(raw: any, request: AnalyzeRequest): OddsComparison {
+  // Get AI estimates from response
+  const aiHome = raw.probabilities?.homeWin ?? raw.oddsComparison?.aiEstimate?.homeWin ?? null;
+  const aiDraw = raw.probabilities?.draw ?? raw.oddsComparison?.aiEstimate?.draw ?? null;
+  const aiAway = raw.probabilities?.awayWin ?? raw.oddsComparison?.aiEstimate?.awayWin ?? null;
+  
+  // Calculate market-implied from odds
+  const odds = request.matchData.odds;
+  const impliedHome = odds.home > 0 ? (1 / odds.home) * 100 : null;
+  const impliedDraw = odds.draw && odds.draw > 0 ? (1 / odds.draw) * 100 : null;
+  const impliedAway = odds.away > 0 ? (1 / odds.away) * 100 : null;
+  
+  // Calculate bookmaker margin (overround)
+  const totalImplied = (impliedHome || 0) + (impliedDraw || 0) + (impliedAway || 0);
+  const bookmakerMargin = totalImplied > 0 ? totalImplied - 100 : null;
+  
+  // Normalize market implied to ~100%
+  const normFactor = totalImplied > 0 ? 100 / totalImplied : 1;
+  const normHome = impliedHome ? Math.round(impliedHome * normFactor * 10) / 10 : null;
+  const normDraw = impliedDraw ? Math.round(impliedDraw * normFactor * 10) / 10 : null;
+  const normAway = impliedAway ? Math.round(impliedAway * normFactor * 10) / 10 : null;
+  
+  // Calculate differences (AI - Market)
+  const diffHome = aiHome !== null && normHome !== null ? Math.round((aiHome - normHome) * 10) / 10 : null;
+  const diffDraw = aiDraw !== null && normDraw !== null ? Math.round((aiDraw - normDraw) * 10) / 10 : null;
+  const diffAway = aiAway !== null && normAway !== null ? Math.round((aiAway - normAway) * 10) / 10 : null;
+  
+  // Find largest absolute difference
+  type LargestDiff = { outcome: 'HOME' | 'DRAW' | 'AWAY' | 'NONE'; difference: number };
+  let largest: LargestDiff = { outcome: 'NONE', difference: 0 };
+  
+  if (diffHome !== null && Math.abs(diffHome) > Math.abs(largest.difference)) {
+    largest = { outcome: 'HOME', difference: diffHome };
+  }
+  if (diffDraw !== null && Math.abs(diffDraw) > Math.abs(largest.difference)) {
+    largest = { outcome: 'DRAW', difference: diffDraw };
+  }
+  if (diffAway !== null && Math.abs(diffAway) > Math.abs(largest.difference)) {
+    largest = { outcome: 'AWAY', difference: diffAway };
+  }
+  
+  return {
+    marketImplied: {
+      homeWin: normHome,
+      draw: normDraw,
+      awayWin: normAway,
+      bookmakerMargin: bookmakerMargin ? Math.round(bookmakerMargin * 10) / 10 : null,
+    },
+    aiEstimate: {
+      homeWin: aiHome,
+      draw: aiDraw,
+      awayWin: aiAway,
+    },
+    comparison: {
+      homeWin: { aiEstimate: aiHome, marketImplied: normHome, difference: diffHome },
+      draw: { aiEstimate: aiDraw, marketImplied: normDraw, difference: diffDraw },
+      awayWin: { aiEstimate: aiAway, marketImplied: normAway, difference: diffAway },
+    },
+    largestDifference: largest,
+    explanationShort: raw.oddsComparison?.explanationShort ?? buildExplanationShort(largest),
+    explanationDetailed: raw.oddsComparison?.explanationDetailed ?? buildExplanationDetailed(largest, bookmakerMargin),
+  };
+}
+
+function buildExplanationShort(largest: { outcome: string; difference: number }): string {
+  if (Math.abs(largest.difference) < 3) {
+    return 'AI and market estimates are closely aligned.';
+  }
+  const direction = largest.difference > 0 ? 'higher' : 'lower';
+  return `AI estimates ${largest.outcome} ${Math.abs(largest.difference).toFixed(1)}% ${direction} than market odds suggest.`;
+}
+
+function buildExplanationDetailed(largest: { outcome: string; difference: number }, margin: number | null): string {
+  let explanation = 'This shows how our probability estimates compare to what bookmaker odds imply. ';
+  
+  if (margin !== null && margin > 5) {
+    explanation += `Note: Bookmaker margin is ${margin.toFixed(1)}%, meaning odds are adjusted in their favor. `;
+  }
+  
+  if (Math.abs(largest.difference) < 3) {
+    explanation += 'The estimates are similar, suggesting market pricing aligns with our analysis.';
+  } else if (Math.abs(largest.difference) < 6) {
+    explanation += 'There is a moderate difference - this could reflect different information or modeling approaches.';
+  } else {
+    explanation += 'There is a notable difference - consider what factors might explain this gap.';
+  }
+  
+  explanation += ' Remember: probability estimates are not predictions, and past analysis does not guarantee future accuracy.';
+  
+  return explanation;
 }
 
 // ============================================
@@ -1042,43 +1244,51 @@ function validateAndSanitizeResponse(
       dataQuality: dataQuality,
     },
     
-    probabilities: {
+    // Normalize probabilities to ensure they sum to ~100%
+    probabilities: normalizeProbabilities({
       homeWin: clampNullable(raw.probabilities?.homeWin, 0, 100),
       draw: clampNullable(raw.probabilities?.draw, 0, 100),
       awayWin: clampNullable(raw.probabilities?.awayWin, 0, 100),
       over: clampNullable(raw.probabilities?.over, 0, 100),
       under: clampNullable(raw.probabilities?.under, 0, 100),
-    },
+    }),
     
+    // NEW: Neutral odds comparison (educational, not recommendations)
+    oddsComparison: buildOddsComparison(raw, request),
+    
+    // DEPRECATED: Keep for backward compatibility but don't generate new Kelly/value data
     valueAnalysis: {
       impliedProbabilities: {
-        homeWin: clampNullable(raw.valueAnalysis?.impliedProbabilities?.homeWin, 0, 100),
-        draw: clampNullable(raw.valueAnalysis?.impliedProbabilities?.draw, 0, 100),
-        awayWin: clampNullable(raw.valueAnalysis?.impliedProbabilities?.awayWin, 0, 100),
+        homeWin: clampNullable(raw.oddsComparison?.marketImplied?.homeWin ?? raw.valueAnalysis?.impliedProbabilities?.homeWin, 0, 100),
+        draw: clampNullable(raw.oddsComparison?.marketImplied?.draw ?? raw.valueAnalysis?.impliedProbabilities?.draw, 0, 100),
+        awayWin: clampNullable(raw.oddsComparison?.marketImplied?.awayWin ?? raw.valueAnalysis?.impliedProbabilities?.awayWin, 0, 100),
       },
-      aiProbabilities: {
-        homeWin: clampNullable(raw.valueAnalysis?.aiProbabilities?.homeWin ?? raw.probabilities?.homeWin, 0, 100),
-        draw: clampNullable(raw.valueAnalysis?.aiProbabilities?.draw ?? raw.probabilities?.draw, 0, 100),
-        awayWin: clampNullable(raw.valueAnalysis?.aiProbabilities?.awayWin ?? raw.probabilities?.awayWin, 0, 100),
-      },
+      aiProbabilities: normalizeThreeWayProbabilities({
+        homeWin: clampNullable(raw.oddsComparison?.aiEstimate?.homeWin ?? raw.probabilities?.homeWin, 0, 100),
+        draw: clampNullable(raw.oddsComparison?.aiEstimate?.draw ?? raw.probabilities?.draw, 0, 100),
+        awayWin: clampNullable(raw.oddsComparison?.aiEstimate?.awayWin ?? raw.probabilities?.awayWin, 0, 100),
+      }),
+      // DEPRECATED: Show NONE for all - don't categorize
       valueFlags: {
-        homeWin: validateValueFlag(raw.valueAnalysis?.valueFlags?.homeWin),
-        draw: validateValueFlag(raw.valueAnalysis?.valueFlags?.draw),
-        awayWin: validateValueFlag(raw.valueAnalysis?.valueFlags?.awayWin),
+        homeWin: 'NONE' as ValueFlag,
+        draw: 'NONE' as ValueFlag,
+        awayWin: 'NONE' as ValueFlag,
       },
-      bestValueSide: validateBestValueSide(raw.valueAnalysis?.bestValueSide),
-      kellyStake: raw.valueAnalysis?.kellyStake ?? null,
-      valueCommentShort: raw.valueAnalysis?.valueCommentShort ?? 'No value assessment available.',
-      valueCommentDetailed: raw.valueAnalysis?.valueCommentDetailed ?? 'Detailed analysis not available.',
+      // DEPRECATED: Don't recommend sides
+      bestValueSide: 'NONE' as BestValueSide,
+      // REMOVED: No Kelly stake - this is betting advice
+      kellyStake: undefined,
+      valueCommentShort: raw.oddsComparison?.explanationShort ?? 'See probability comparison above.',
+      valueCommentDetailed: raw.oddsComparison?.explanationDetailed ?? 'Compare AI estimates with market-implied probabilities to form your own view.',
     },
     
     riskAnalysis: {
       overallRiskLevel: validateRiskLevel(raw.riskAnalysis?.overallRiskLevel),
-      riskExplanation: raw.riskAnalysis?.riskExplanation ?? 'Risk assessment not available.',
-      bankrollImpact: raw.riskAnalysis?.bankrollImpact ?? 'Consider your bankroll limits.',
+      riskExplanation: raw.riskAnalysis?.riskExplanation ?? 'Uncertainty assessment not available.',
+      bankrollImpact: raw.riskAnalysis?.uncertaintyFactors ?? raw.riskAnalysis?.bankrollImpact ?? 'Consider all factors before forming a view.',
       psychologyBias: {
-        name: raw.riskAnalysis?.psychologyBias?.name ?? 'General Caution',
-        description: raw.riskAnalysis?.psychologyBias?.description ?? 'Be aware of cognitive biases when analyzing matches.',
+        name: raw.riskAnalysis?.psychologyBias?.name ?? 'Confirmation Bias',
+        description: raw.riskAnalysis?.psychologyBias?.description ?? 'Be aware of cognitive biases when interpreting match data.',
       },
     },
     
@@ -1138,6 +1348,16 @@ function validateAndSanitizeResponse(
       tailoredNote: raw.responsibleGambling?.tailoredNote ?? 
         'Always bet responsibly and only with money you can afford to lose.',
     },
+    
+    // 60-Second AI Briefing (for quick consumption and sharing)
+    briefing: raw.briefing ? {
+      headline: raw.briefing.headline ?? `${request.matchData.homeTeam} vs ${request.matchData.awayTeam} analysis ready.`,
+      keyPoints: Array.isArray(raw.briefing.keyPoints) && raw.briefing.keyPoints.length > 0
+        ? raw.briefing.keyPoints.slice(0, 5) // Max 5 key points
+        : ['Analysis complete', 'Check detailed sections for more', 'Consider all factors'],
+      verdict: raw.briefing.verdict ?? raw.tacticalAnalysis?.expertConclusionOneLiner ?? 'See detailed analysis.',
+      confidenceRating: clamp(raw.briefing.confidenceRating ?? 3, 1, 5) as 1 | 2 | 3 | 4 | 5,
+    } : generateDefaultBriefing(raw, request),
     
     meta: {
       modelVersion: '1.0.0',
@@ -1209,6 +1429,79 @@ function validateMarketStabilityItem(item: any): { stability: RiskLevel; confide
     stability: validateRiskLevel(item?.stability),
     confidence: clamp(item?.confidence ?? 3, 1, 5) as MarketConfidence,
     comment: item?.comment ?? 'Market analysis not available.',
+  };
+}
+
+// ============================================
+// GENERATE DEFAULT BRIEFING (when AI doesn't provide one)
+// ============================================
+
+function generateDefaultBriefing(raw: any, request: AnalyzeRequest): AIBriefing {
+  const homeTeam = request.matchData.homeTeam;
+  const awayTeam = request.matchData.awayTeam;
+  const homeWin = raw.probabilities?.homeWin || 0;
+  const awayWin = raw.probabilities?.awayWin || 0;
+  const riskLevel = raw.riskAnalysis?.overallRiskLevel || 'MEDIUM';
+  const bestValue = raw.valueAnalysis?.bestValueSide || 'NONE';
+  
+  // Determine favorite
+  const favorite = homeWin > awayWin ? homeTeam : awayTeam;
+  const favoriteProb = Math.max(homeWin, awayWin);
+  const isClose = Math.abs(homeWin - awayWin) < 15;
+  
+  // Build headline
+  let headline = '';
+  if (isClose) {
+    headline = `Evenly matched contest between ${homeTeam} and ${awayTeam}. `;
+  } else {
+    headline = `${favorite} enters as favorite with ${favoriteProb}% win probability. `;
+  }
+  headline += riskLevel === 'HIGH' 
+    ? 'High uncertainty factors present.' 
+    : riskLevel === 'LOW' 
+      ? 'Relatively predictable match profile.'
+      : 'Standard risk levels detected.';
+  
+  // Build key points from analysis
+  const keyPoints: string[] = [];
+  
+  // Add probability insight
+  keyPoints.push(`${homeTeam} ${homeWin}% vs ${awayTeam} ${awayWin}%`);
+  
+  // Add form insight if available
+  if (raw.momentumAndForm?.keyFormFactors?.length > 0) {
+    keyPoints.push(raw.momentumAndForm.keyFormFactors[0]);
+  }
+  
+  // Add value insight
+  if (bestValue !== 'NONE') {
+    keyPoints.push(`Best value detected: ${bestValue}`);
+  } else {
+    keyPoints.push('No significant value edges identified');
+  }
+  
+  // Add risk insight
+  keyPoints.push(`Risk level: ${riskLevel}`);
+  
+  // Ensure at least 3 points
+  while (keyPoints.length < 3) {
+    keyPoints.push('See detailed analysis for more insights');
+  }
+  
+  // Calculate confidence rating based on data quality and risk
+  let confidenceRating: 1 | 2 | 3 | 4 | 5 = 3;
+  const dataQuality = raw.matchInfo?.dataQuality || 'MEDIUM';
+  if (dataQuality === 'HIGH' && riskLevel === 'LOW') confidenceRating = 5;
+  else if (dataQuality === 'HIGH') confidenceRating = 4;
+  else if (dataQuality === 'MEDIUM' && riskLevel !== 'HIGH') confidenceRating = 3;
+  else if (riskLevel === 'HIGH') confidenceRating = 2;
+  else confidenceRating = 3;
+  
+  return {
+    headline,
+    keyPoints: keyPoints.slice(0, 5),
+    verdict: raw.tacticalAnalysis?.expertConclusionOneLiner || `${favorite} slight edge, proceed with caution.`,
+    confidenceRating,
   };
 }
 
@@ -1444,6 +1737,18 @@ function generateFallbackAnalysis(
       tailoredNote: userStake 
         ? `With a €${userStake} stake, ensure this is within your entertainment budget.`
         : 'Always bet responsibly and only with money you can afford to lose.',
+    },
+    
+    // Fallback briefing
+    briefing: {
+      headline: `${matchData.homeTeam} vs ${matchData.awayTeam} - Odds-based analysis. AI analysis temporarily unavailable.`,
+      keyPoints: [
+        `Home: ${homeWin}% | Away: ${awayWin}%${draw ? ` | Draw: ${draw}%` : ''}`,
+        `Bookmaker margin: ${margin.toFixed(1)}%`,
+        'Limited data - exercise caution',
+      ],
+      verdict: 'Fallback analysis - consider waiting for full AI processing.',
+      confidenceRating: 2,
     },
     
     meta: {

@@ -299,14 +299,34 @@ function buildBriefingPoints(result: AnalyzeResponse): BriefingPoint[] {
     color: 'bg-primary/20',
   });
 
-  // 2. Value analysis
-  if (valueAnalysis.bestValueSide !== 'NONE') {
-    const valueSide = valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam :
+  // 2. Probability difference analysis (neutral, not betting advice)
+  // Use oddsComparison if available, otherwise fall back to valueAnalysis
+  if (result.oddsComparison?.largestDifference && result.oddsComparison.largestDifference.outcome !== 'NONE') {
+    const diff = result.oddsComparison.largestDifference;
+    const comp = result.oddsComparison.comparison;
+    
+    if (diff.difference >= 5) {
+      const outcomeName = diff.outcome === 'HOME' ? matchInfo.homeTeam :
+                          diff.outcome === 'AWAY' ? matchInfo.awayTeam : 'Draw';
+      const aiProb = diff.outcome === 'HOME' ? comp.homeWin.aiEstimate :
+                     diff.outcome === 'AWAY' ? comp.awayWin.aiEstimate : comp.draw.aiEstimate;
+      const marketProb = diff.outcome === 'HOME' ? comp.homeWin.marketImplied :
+                         diff.outcome === 'AWAY' ? comp.awayWin.marketImplied : comp.draw.marketImplied;
+      
+      points.push({
+        icon: '🔍',
+        text: `Notable difference: AI estimates ${outcomeName} at ${aiProb?.toFixed(0) ?? '?'}% vs market's ${marketProb?.toFixed(0) ?? '?'}% (${diff.difference.toFixed(0)}pp gap).`,
+        color: 'bg-accent/20',
+      });
+    }
+  } else if (valueAnalysis.bestValueSide && valueAnalysis.bestValueSide !== 'NONE') {
+    // Fallback to old format but with neutral language
+    const diffSide = valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam :
                       valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw';
     points.push({
-      icon: '💰',
-      text: `Best value: ${valueSide}. ${valueAnalysis.valueCommentShort}`,
-      color: 'bg-green-500/20',
+      icon: '🔍',
+      text: `Largest AI vs Market difference: ${diffSide}. ${valueAnalysis.valueCommentShort}`,
+      color: 'bg-accent/20',
     });
   }
 

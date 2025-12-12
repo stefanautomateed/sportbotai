@@ -49,7 +49,7 @@ const plans: PricingPlan[] = [
       '30 analyses per day',
       'All sports',
       'Advanced AI analysis',
-      'Value betting indicators',
+      'Pre-match insights & streaks',
       'Priority support',
       'Analysis history (30 days)',
       'My Teams favorites',
@@ -63,12 +63,12 @@ const plans: PricingPlan[] = [
     name: 'Premium',
     price: '€79/year',
     priceId: 'premium', // Will be resolved to actual Price ID server-side
-    description: 'Best value - 6 weeks free',
+    description: 'Best deal - 6 weeks free',
     features: [
       'Unlimited analyses',
       'All sports + eSports',
       'Premium AI model',
-      'Advanced value detection',
+      'Advanced pattern detection',
       'API access',
       'Priority support 24/7',
       'Analysis history (unlimited)',

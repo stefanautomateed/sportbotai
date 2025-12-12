@@ -246,9 +246,6 @@ export default function ResultCard({ result }: ResultCardProps) {
       <div className={`p-4 rounded-lg ${risk.bg} ${risk.border} border`}>
         <h4 className={`text-sm font-semibold ${risk.text} mb-2`}>Risk Assessment</h4>
         <p className="text-sm text-gray-700 mb-2">{result.riskAnalysis.riskExplanation}</p>
-        <p className="text-xs text-gray-600 mb-2">
-          <strong>Bankroll Impact:</strong> {result.riskAnalysis.bankrollImpact}
-        </p>
         <div className="text-xs text-gray-500 bg-white/50 p-2 rounded">
           <strong>Psychology Alert:</strong> {result.riskAnalysis.psychologyBias.name} - {result.riskAnalysis.psychologyBias.description}
         </div>
@@ -293,12 +290,9 @@ export default function ResultCard({ result }: ResultCardProps) {
       {/* User Context (if provided) */}
       {result.userContext.userPick && (
         <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 className="text-sm font-semibold text-blue-800 mb-1">Your Selection</h4>
+          <h4 className="text-sm font-semibold text-blue-800 mb-1">Your Prediction</h4>
           <p className="text-sm text-blue-700">
             <strong>Pick:</strong> {result.userContext.userPick}
-            {result.userContext.userStake > 0 && (
-              <span> • <strong>Stake:</strong> €{result.userContext.userStake}</span>
-            )}
           </p>
           <p className="text-xs text-blue-600 mt-1">{result.userContext.pickComment}</p>
         </div>

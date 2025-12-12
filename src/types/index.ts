@@ -2,6 +2,9 @@
  * Types for SportBot AI application
  * 
  * Centralized TypeScript types used throughout the application.
+ * 
+ * NOTE: This is an educational match analysis tool, NOT betting advice.
+ * We show probability comparisons, not recommendations.
  */
 
 // ============================================
@@ -9,11 +12,13 @@
 // ============================================
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+/** @deprecated Use 'difference' numbers instead of categorical flags */
 export type ValueFlag = 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
 export type Trend = 'RISING' | 'FALLING' | 'STABLE' | 'UNKNOWN';
 export type DataQuality = 'LOW' | 'MEDIUM' | 'HIGH';
 export type SourceType = 'MANUAL' | 'API';
 export type MarketType = '1X2' | 'OVER_UNDER' | 'BTTS' | 'NONE';
+/** @deprecated Removed - we don't recommend sides */
 export type BestValueSide = 'HOME' | 'DRAW' | 'AWAY' | 'NONE';
 export type MarketConfidence = 1 | 2 | 3 | 4 | 5;
 export type InjuryType = 'injury' | 'suspension' | 'doubtful';
@@ -110,18 +115,64 @@ export interface Probabilities {
 }
 
 /**
- * Kelly Criterion calculation result
+ * Single outcome probability comparison
+ * Shows AI estimate vs market-implied probability
  */
-export interface KellyResult {
-  fullKelly: number;       // Full Kelly stake as % of bankroll
-  halfKelly: number;       // Half Kelly (conservative)
-  quarterKelly: number;    // Quarter Kelly (very conservative)
-  edge: number;            // Expected edge in percentage
-  confidence: 'LOW' | 'MEDIUM' | 'HIGH';  // Confidence in the edge estimate
+export interface ProbabilityComparison {
+  aiEstimate: number | null;
+  marketImplied: number | null;
+  /** Difference (AI - Market). Positive = AI higher, Negative = Market higher */
+  difference: number | null;
 }
 
 /**
- * Value analysis section
+ * Odds comparison section (neutral, educational)
+ * Replaces the old "ValueAnalysis" - no recommendations, just data
+ */
+export interface OddsComparison {
+  /** How market odds translate to probabilities */
+  marketImplied: {
+    homeWin: number | null;
+    draw: number | null;
+    awayWin: number | null;
+    bookmakerMargin: number | null;  // The "vig" or overround
+  };
+  /** AI probability estimates for comparison */
+  aiEstimate: {
+    homeWin: number | null;
+    draw: number | null;
+    awayWin: number | null;
+  };
+  /** Side-by-side comparison */
+  comparison: {
+    homeWin: ProbabilityComparison;
+    draw: ProbabilityComparison;
+    awayWin: ProbabilityComparison;
+  };
+  /** Largest absolute difference between AI and market */
+  largestDifference: {
+    outcome: 'HOME' | 'DRAW' | 'AWAY' | 'NONE';
+    difference: number;
+  };
+  /** Educational explanation of what the numbers mean */
+  explanationShort: string;
+  explanationDetailed: string;
+}
+
+/**
+ * @deprecated Kelly calculations removed - this is betting advice
+ * Kept for backward compatibility with old components
+ */
+export interface KellyResult {
+  fullKelly: number;
+  halfKelly: number;
+  quarterKelly: number;
+  edge: number;
+  confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+/**
+ * @deprecated Use OddsComparison instead - kept for backward compatibility
  */
 export interface ValueAnalysis {
   impliedProbabilities: {
@@ -134,15 +185,150 @@ export interface ValueAnalysis {
     draw: number | null;
     awayWin: number | null;
   };
+  /** @deprecated Don't show categorical flags - show numbers */
   valueFlags: {
     homeWin: ValueFlag;
     draw: ValueFlag;
     awayWin: ValueFlag;
   };
+  /** @deprecated Don't recommend sides */
   bestValueSide: BestValueSide;
-  kellyStake: KellyResult | null;  // Kelly calculation for best value side
+  /** @deprecated Removed - this is betting advice. Always null in new responses */
+  kellyStake?: KellyResult | null;
+  /** Neutral comparison comment */
   valueCommentShort: string;
   valueCommentDetailed: string;
+}
+
+// ============================================
+// PRE-MATCH INSIGHTS (Viral Stats)
+// ============================================
+
+/**
+ * Auto-generated headline fact about the match
+ * Designed to be screenshot-worthy and shareable
+ */
+export interface MatchHeadline {
+  icon: string;              // Emoji for visual impact
+  text: string;              // The headline text
+  category: 'streak' | 'h2h' | 'form' | 'goals' | 'defense' | 'timing' | 'absence' | 'venue' | 'motivation';
+  impactLevel: 'low' | 'medium' | 'high';  // How significant is this fact
+  team?: 'home' | 'away' | 'both';         // Which team it relates to
+}
+
+/**
+ * Streak information for a team
+ */
+export interface TeamStreak {
+  type: 'win' | 'loss' | 'draw' | 'unbeaten' | 'winless' | 'scored' | 'cleanSheet' | 'conceded' | 'btts' | 'over25';
+  count: number;
+  context: 'all' | 'home' | 'away' | 'h2h';  // In what context
+  description: string;       // Human-readable description
+  isActive: boolean;         // Is this streak currently ongoing
+}
+
+/**
+ * Goals timing pattern - when a team typically scores
+ */
+export interface GoalsTimingPattern {
+  '0-15': number;    // Percentage of goals in each 15-min block
+  '16-30': number;
+  '31-45': number;
+  '46-60': number;
+  '61-75': number;
+  '76-90': number;
+  totalGoals: number;
+  insight?: string;  // e.g., "Late goal specialists - 46% after 60'"
+}
+
+/**
+ * Home vs Away performance split
+ */
+export interface VenueSplit {
+  home: {
+    played: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    goalsFor: number;
+    goalsAgainst: number;
+    cleanSheets: number;
+    avgGoals: number;
+  };
+  away: {
+    played: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    goalsFor: number;
+    goalsAgainst: number;
+    cleanSheets: number;
+    avgGoals: number;
+  };
+  insight?: string;  // e.g., "Much stronger at home"
+}
+
+/**
+ * H2H specific insights beyond basic stats
+ */
+export interface H2HInsights {
+  avgGoalsPerMatch: number;
+  bttsPercentage: number;    // Both teams to score %
+  over25Percentage: number;  // Over 2.5 goals %
+  lastWinner?: 'home' | 'away' | 'draw';
+  dominantTeam?: 'home' | 'away' | 'even';
+  recentTrend?: string;      // e.g., "Away team won last 3 meetings"
+}
+
+/**
+ * Complete enhanced pre-match insights
+ */
+export interface PreMatchInsights {
+  /** Auto-generated shareable headlines (3-6 facts) */
+  headlines: MatchHeadline[];
+  
+  /** Notable streaks for both teams */
+  streaks: {
+    home: TeamStreak[];
+    away: TeamStreak[];
+  };
+  
+  /** When each team typically scores */
+  goalsPattern: {
+    home: GoalsTimingPattern | null;
+    away: GoalsTimingPattern | null;
+  };
+  
+  /** Home/Away performance splits */
+  venueSplits: {
+    home: VenueSplit | null;
+    away: VenueSplit | null;
+  };
+  
+  /** Enhanced H2H insights */
+  h2hInsights: H2HInsights | null;
+  
+  /** Key absences summary (most important missing players) */
+  keyAbsences: {
+    home: Array<{ name: string; position: string; importance: PlayerImportance }>;
+    away: Array<{ name: string; position: string; importance: PlayerImportance }>;
+    impactStatement?: string;  // e.g., "Both teams missing key strikers"
+  };
+  
+  /** Motivation factors */
+  motivation: {
+    home: string | null;  // e.g., "Fighting relegation", "Nothing to play for"
+    away: string | null;
+    insight?: string;
+  };
+  
+  /** Quick shareable stats */
+  quickStats: {
+    fixtureGoalsAvg: number | null;        // Avg goals in this fixture historically
+    combinedFormGoalsAvg: number | null;   // Avg goals from both teams' recent form
+    cleanSheetProbability: number | null;  // Based on recent defensive form
+    bttsLikelihood: 'low' | 'medium' | 'high' | null;
+  };
 }
 
 /**
@@ -306,13 +492,33 @@ export interface UsageInfo {
 }
 
 /**
+ * 60-Second AI Briefing
+ * Quick, shareable summary of the analysis
+ */
+export interface AIBriefing {
+  /** 2-3 sentence headline summary */
+  headline: string;
+  /** Key insight bullets (3-5 points) */
+  keyPoints: string[];
+  /** One-liner verdict */
+  verdict: string;
+  /** Confidence rating 1-5 */
+  confidenceRating: 1 | 2 | 3 | 4 | 5;
+}
+
+/**
  * Complete analysis response (FINAL SCHEMA)
+ * 
+ * NOTE: This is educational match intelligence, not betting advice.
  */
 export interface AnalyzeResponse {
   success: boolean;
   matchInfo: MatchInfo;
   probabilities: Probabilities;
+  /** @deprecated Use oddsComparison instead */
   valueAnalysis: ValueAnalysis;
+  /** NEW: Neutral probability comparison (AI vs Market) */
+  oddsComparison?: OddsComparison;
   riskAnalysis: RiskAnalysis;
   momentumAndForm: MomentumAndForm;
   marketStability: MarketStability;
@@ -320,7 +526,11 @@ export interface AnalyzeResponse {
   tacticalAnalysis: TacticalAnalysis;
   userContext: UserContext;
   responsibleGambling: ResponsibleGambling;
-  injuryContext?: InjuryContext;   // NEW: Injury impact analysis
+  /** 60-second AI briefing for quick consumption */
+  briefing?: AIBriefing;
+  injuryContext?: InjuryContext;   // Injury impact analysis
+  /** NEW: Enhanced pre-match insights (viral stats) */
+  preMatchInsights?: PreMatchInsights;
   meta: AnalysisMeta;
   error?: string;
   usageInfo?: UsageInfo;

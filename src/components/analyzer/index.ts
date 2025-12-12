@@ -45,10 +45,12 @@ export { default as QuickAnalyzeButton } from './QuickAnalyzeButton';
 export { default as KeyMetricsGrid, AnalysisSummaryMetrics } from './KeyMetricsGrid';
 export { default as DataFreshnessIndicator, DataConfidenceBadge } from './DataFreshnessIndicator';
 
+// NEW: Neutral/Educational Components (replacing betting-adjacent)
+export { default as OddsComparisonCard } from './OddsComparisonCard';
+
 // Legacy components (kept for reference, not used in new layout)
 export { default as MatchSummaryCard } from './MatchSummaryCard';
 export { default as ProbabilitiesPanel } from './ProbabilitiesPanel';
-export { default as ValueAnalysisCard } from './ValueAnalysisCard';
 export { default as RiskAnalysisCard } from './RiskAnalysisCard';
 export { default as MomentumFormSection } from './MomentumFormSection';
 export { default as MarketStabilitySection } from './MarketStabilitySection';
@@ -69,3 +71,11 @@ export { default as InjuryImpactCard } from './InjuryImpactCard';
 export { default as SectionDivider } from './SectionDivider';
 export { default as MatchStoryCard } from './MatchStoryCard';
 export { default as CoreVerdictCard } from './CoreVerdictCard';
+
+// NEW: Pre-Match Insights Components (Viral/Shareable Stats)
+export { default as MatchHeadlinesCard, MatchHeadlinesInline } from './MatchHeadlinesCard';
+export { default as GoalsTimingCard, GoalsTimingCompact } from './GoalsTimingCard';
+export { default as KeyAbsencesBanner, AbsencesBadge, AbsencesSummary } from './KeyAbsencesBanner';
+export { default as StreaksCard, StreaksInline, StreakHighlight } from './StreaksCard';
+export { default as VenueSplitsCard, VenueSplitCompact, VenueStatBadge } from './VenueSplitsCard';
+export { default as PreMatchInsightsPanel, PreMatchInsightsSummary } from './PreMatchInsightsPanel';

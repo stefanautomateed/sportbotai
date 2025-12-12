@@ -30,10 +30,10 @@ const riskConfig: Record<RiskLevel, { label: string; color: string; bg: string; 
 };
 
 const valueConfig: Record<ValueFlag, { label: string; color: string; bg: string }> = {
-  NONE: { label: 'Fair Odds', color: 'text-text-muted', bg: 'bg-white/5' },
-  LOW: { label: 'Small Gap', color: 'text-info', bg: 'bg-info/15' },
-  MEDIUM: { label: 'Odds Gap', color: 'text-accent', bg: 'bg-accent/15' },
-  HIGH: { label: 'Big Gap', color: 'text-success', bg: 'bg-success/15' },
+  NONE: { label: 'Aligned', color: 'text-text-muted', bg: 'bg-white/5' },
+  LOW: { label: 'Small Diff', color: 'text-info', bg: 'bg-info/15' },
+  MEDIUM: { label: 'Notable Diff', color: 'text-accent', bg: 'bg-accent/15' },
+  HIGH: { label: 'Big Diff', color: 'text-warning', bg: 'bg-warning/15' },
 };
 
 export default function CoreVerdictCard({ result }: CoreVerdictCardProps) {
@@ -161,13 +161,13 @@ export default function CoreVerdictCard({ result }: CoreVerdictCardProps) {
                   <p className="text-[10px] text-text-muted">Analysis Risk</p>
                 </div>
                 
-                {/* Value */}
+                {/* Probability Difference */}
                 <div className={`p-3 sm:p-4 rounded-xl ${value.bg} border border-white/5`}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-lg">📊</span>
                     <span className={`text-sm font-bold ${value.color}`}>{value.label}</span>
                   </div>
-                  <p className="text-[10px] text-text-muted">Odds vs AI</p>
+                  <p className="text-[10px] text-text-muted">AI vs Market</p>
                 </div>
               </div>
             </div>

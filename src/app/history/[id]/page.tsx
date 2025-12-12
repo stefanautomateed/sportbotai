@@ -128,8 +128,7 @@ export default function AnalysisDetailPage() {
           
           {analysis.userPick && (
             <p className="text-text-secondary mt-2">
-              Your pick: <span className="font-semibold text-primary">{analysis.userPick}</span>
-              {analysis.userStake && ` • Stake: €${analysis.userStake}`}
+              Your prediction: <span className="font-semibold text-primary">{analysis.userPick}</span>
             </p>
           )}
         </div>

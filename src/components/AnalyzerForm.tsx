@@ -46,7 +46,6 @@ export default function AnalyzerForm({ onResult, onLoading }: AnalyzerFormProps)
     const oddsDraw = parseFloat(formData.get('oddsDraw') as string) || null;
     const oddsAway = parseFloat(formData.get('oddsAway') as string) || 0;
     const userPick = formData.get('userPrediction') as string;
-    const userStake = parseFloat(formData.get('stake') as string) || 0;
 
     // Build request in new format
     const data: AnalyzeRequest = {
@@ -63,7 +62,6 @@ export default function AnalyzerForm({ onResult, onLoading }: AnalyzerFormProps)
         },
       },
       userPick,
-      userStake,
     };
 
     // Basic validation
@@ -224,35 +222,19 @@ export default function AnalyzerForm({ onResult, onLoading }: AnalyzerFormProps)
         </div>
       </div>
 
-      {/* Your prediction and stake */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="userPrediction" className="input-label">
-            Your Prediction
-          </label>
-          <input
-            type="text"
-            id="userPrediction"
-            name="userPrediction"
-            placeholder="e.g. 1, X, 2, GG, over 2.5..."
-            className="input-field"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="stake" className="input-label">
-            Stake (€)
-          </label>
-          <input
-            type="number"
-            id="stake"
-            name="stake"
-            step="0.01"
-            min="0"
-            placeholder="10.00"
-            className="input-field"
-          />
-        </div>
+      {/* Your prediction */}
+      <div>
+        <label htmlFor="userPrediction" className="input-label">
+          Your Prediction (Optional)
+        </label>
+        <input
+          type="text"
+          id="userPrediction"
+          name="userPrediction"
+          placeholder="e.g. Home win, Over 2.5 goals..."
+          className="input-field"
+        />
+        <p className="text-xs text-text-muted mt-1">Share your prediction and see how it compares</p>
       </div>
 
       {/* Error message */}

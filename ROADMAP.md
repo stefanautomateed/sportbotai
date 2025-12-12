@@ -1,137 +1,167 @@
-# SportBot AI - Product Roadmap
+# SportBot AI - Pre-Match Analyzer Roadmap
 
-> **Mission:** "Understand any match in 60 seconds"
-> 
-> **Positioning:** AI Match Research Assistant - Not tips, not predictions, just clarity.
-
----
-
-## 🎯 Core Value Proposition
-
-| What We Sell | What We Deliver |
-|--------------|-----------------|
-| Time savings | AI summary instead of 30 min research |
-| Confidence | "I understand this match now" feeling |
-| Entertainment | Sports fans love data, even without betting |
-| Education | Learn WHY odds move, HOW form matters |
+> **Business Model:** Premium Pre-Match Intelligence Platform  
+> **Mission:** "Understand any match in 60 seconds"  
+> **Positioning:** We sell UNDERSTANDING, not winning.
 
 ---
 
-## 💰 Monetization Model
+## 🎯 What Users Pay For
 
-**$9.99/month** or **$79/year** (6 weeks free)
-
-| Tier | Features |
-|------|----------|
-| **Free** | 3 analyses/day, basic insights |
-| **Pro** | Unlimited analyses, history, favorites, share cards, AI briefings |
-
----
-
-## 🗓️ 12-Week Execution Plan
-
-### Phase 1: Core Experience (Week 1-2) 🔨
-*Goal: Make the single analysis AMAZING*
-
-- [x] **60-Second AI Briefing** - One-tap summary button on any match ✅
-- [x] **Audio Briefing** - Listen to analysis (TTS) ✅
-- [x] **Rebrand to SportBot AI** - Update all references ✅
-- [x] **Home Page Improvements** - Show trending matches, not empty state ✅
-
-### Phase 2: Personalization (Week 3-4) 👤
-*Goal: Give users reasons to return*
-
-- [x] **My Teams** - Follow up to 10 teams ✅
-- [x] **Favorites Dashboard** - Personalized feed of followed teams ✅
-- [ ] **Quick Analysis Queue** - Batch analyze multiple matches
-
-### Phase 3: Viral Growth (Week 5-6) 📢
-*Goal: Users spread the app for us*
-
-- [x] **Share Cards** - Beautiful, branded insight cards ✅
-- [x] **Social Preview Images** - Auto-generated OG images per match (@vercel/og) ✅
-- [x] **Copy Insights** - One-click copy formatted analysis ✅
-
-### Phase 4: Monetization (Week 7-8) 💳
-*Goal: Convert free users to paid*
-
-- [x] **Payment Wall** - Limit free tier to 3/day ✅
-- [x] **Pro Badge** - Visual indicator for subscribers ✅
-- [x] **History Unlock** - Free users see last 24h only ✅
-- [x] **Usage Limit Banner** - Shows when running low ✅
-
-### Phase 5: Retention (Week 9-12) 📊
-*Goal: Keep users subscribed*
-
-- [ ] ~~Weekly Digest Email~~ (Skipped - legal/spam risks)
-- [x] **Team Intelligence Profiles** - Deep dive per team ✅
-- [x] **Team Search API** - Find teams by name ✅
-- [x] **Form Trend Charts** - Visual form over time ✅
-- [ ] **Trend Tracking** - Form over time graphs (extended)
+| Value | How We Deliver |
+|-------|----------------|
+| **Time savings** | AI summary instead of 30 min research |
+| **Viral stats** | Shareable one-liners, screenshot-worthy insights |
+| **Deep intelligence** | Streaks, H2H patterns, venue splits |
+| **Multi-sport** | Soccer, NBA, NFL, NHL in one app |
+| **Confidence** | "I understand this match now" feeling |
 
 ---
 
-## 🚫 NOT Building (Yet)
+## 📊 Current State (December 2025)
 
-| Feature | Reason |
-|---------|--------|
-| Push Notifications | Easy to annoy users, legal risk |
-| Multi-match comparison | Only 2% would use it |
-| Historical accuracy dashboard | Don't have track record yet |
-| Market movement alerts | Legal gray zone |
-| Betting integrations | Stay educational |
+### ✅ Working Features (Keep & Enhance)
+| Feature | Data Source | Status |
+|---------|-------------|--------|
+| AI Match Analysis | OpenAI GPT-4o-mini | ✅ Real |
+| Soccer Stats/Form | API-Football | ✅ Real |
+| NBA/NHL/NFL Stats | API-Sports | ✅ Real |
+| Live Odds Data | The Odds API | ✅ Real |
+| User Auth | NextAuth + PostgreSQL | ✅ Real |
+| Stripe Payments | Stripe | ✅ Real |
+| Analysis History | PostgreSQL | ✅ Real |
+| Text-to-Speech | ElevenLabs | ✅ Real |
+| Team Profiles | API-Football | ✅ Real |
+| My Teams/Favorites | PostgreSQL | ✅ Real |
 
----
+### ⚠️ Needs Cleanup (Betting-Adjacent)
+| Item | Action | Priority |
+|------|--------|----------|
+| `userStake` input | Remove from forms | 🔴 P1 |
+| `kellyStake` type | Delete entirely | 🔴 P1 |
+| `ValueAnalysisCard` | Delete (deprecated) | 🔴 P1 |
+| "Edge" language | Replace with "Insight" | 🟡 P2 |
+| "Value betting" copy | Change to "Pattern detection" | 🟡 P2 |
 
-## 📋 Current Status
-
-### ✅ Already Built
-- Match analyzer with AI insights
-- Multi-sport support (Soccer, NBA, NFL, NHL, UFC)
-- User authentication
-- Stripe payments infrastructure
-- Analysis history
-- Responsive UI
-- **60-Second AI Briefing** (Phase 1)
-- **Trending Matches Homepage** (Phase 1)
-- **Audio Briefings via TTS** (Phase 1)
-- **My Teams Favorites System** (Phase 2)
-- **Favorites Dashboard at /my-teams** (Phase 2)
-- **FavoriteButton component** (Phase 2)
-- **ShareCard with social sharing** (Phase 3)
-- **OG Image API at /api/og** (Phase 3)
-- **CopyInsightsButton** (Phase 3)
-- **ProBadge component** (Phase 4)
-- **UsageLimitBanner component** (Phase 4)
-- **HistoryAccessBanner component** (Phase 4)
-- **History 24h restriction for free users** (Phase 4)
-- **Team Profile API /api/team/[teamId]** (Phase 5 - NEW)
-- **Team Search API /api/team/search** (Phase 5 - NEW)
-- **Team Profile Page /team/[teamId]** (Phase 5 - NEW)
-- **FormTrendChart component** (Phase 5 - NEW)
-
-### 🔧 Needs Work
-- Quick analysis queue for batch processing
-- Remove debug logging in production
+### 🆕 New Features (Just Built)
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| `MatchHeadlinesCard` | Shareable one-liners | ✅ Created |
+| `StreaksCard` | Win/loss runs | ✅ Created |
+| `VenueSplitsCard` | Home vs away form | ✅ Created |
+| `KeyAbsencesBanner` | Missing players | ✅ Created |
+| `GoalsTimingCard` | When teams score | ✅ Created |
+| `PreMatchInsightsPanel` | Master component | ✅ Created |
+| `generatePreMatchInsights()` | Data generator | ✅ Created |
 
 ---
 
-## 🎯 Success Metrics
+## 🗺️ Build Phases
 
-| Week | Target |
-|------|--------|
-| Week 4 | 100 daily active users |
-| Week 8 | 50 paying subscribers |
-| Week 12 | $500 MRR |
+### Phase 1: CLEANUP 🧹 (This Session)
+Remove betting-adjacent features to position clearly as educational tool.
+
+- [ ] 1.1 Remove `userStake` from analyzer forms
+- [ ] 1.2 Remove `kellyStake` type and all references
+- [ ] 1.3 Delete `ValueAnalysisCard` component
+- [ ] 1.4 Update pricing copy (remove "value betting")
+- [ ] 1.5 Clean deprecated response fields
+
+### Phase 2: INTEGRATE INSIGHTS 🔌 (This Session)
+Wire up the new pre-match components to live data.
+
+- [ ] 2.1 Add `PreMatchInsightsPanel` to `AnalysisResults.tsx`
+- [ ] 2.2 Call generator in `/api/analyze` route
+- [ ] 2.3 Add `preMatchInsights` to API response
+- [ ] 2.4 Test with real match
+
+### Phase 3: AI ENHANCEMENT 🤖 (Next)
+Improve AI output for educational focus.
+
+- [ ] 3.1 Rewrite prompts: "understand" not "bet"
+- [ ] 3.2 Add headline generation to AI
+- [ ] 3.3 Add shareable summary field
+- [ ] 3.4 Remove betting advice from responses
+
+### Phase 4: UI POLISH ✨ (Next)
+Make it screenshot-worthy.
+
+- [ ] 4.1 Redesign results layout
+- [ ] 4.2 Copy-to-clipboard headlines
+- [ ] 4.3 Mobile-first responsive
+- [ ] 4.4 Loading skeletons
+
+### Phase 5: GROWTH 📈 (Future)
+- [ ] Share Card image generator
+- [ ] Push notifications for teams
+- [ ] Weekly email digests
+- [ ] League standings context
 
 ---
 
-## 📝 Notes
+## 🔌 Data Sources
 
-- Focus on **presentation**, not algorithms
-- Sell **understanding**, not winning
-- Every feature should answer: "Will this make someone pay $9.99/month?"
+### What We Have
+```
+The Odds API (500 free/month)
+├── Sports catalog (FREE)
+├── Events list (FREE)
+└── Odds data (costs quota)
+
+API-Football (100 free/day)
+├── Team form (last 5-10 matches)
+├── H2H history
+├── League standings
+└── Team statistics
+
+API-Sports (100 shared/day)
+├── Basketball (NBA)
+├── Hockey (NHL)
+└── American Football (NFL)
+
+OpenAI GPT-4o-mini
+├── Match narrative
+├── Probability estimates
+├── Key factors
+└── Tactical assessment
+```
+
+### What We Calculate
+```
+Our Algorithms
+├── Streak detection
+├── Venue splits
+├── H2H aggregation
+├── Momentum score
+└── Headline generation
+```
 
 ---
 
-*Last Updated: December 13, 2025*
+## 💰 Pricing Tiers
+
+| Tier | Analyses | History | Price |
+|------|----------|---------|-------|
+| **Free** | 3/day | 24 hours | €0 |
+| **Pro** | 30/day | 30 days | €9.99/mo |
+| **Premium** | Unlimited | Forever | €79/year |
+
+---
+
+## 📋 Already Built (Prior Phases)
+- [x] Match analyzer with AI insights
+- [x] Multi-sport support
+- [x] User authentication  
+- [x] Stripe payments
+- [x] Analysis history
+- [x] 60-Second AI Briefing
+- [x] Audio Briefings (TTS)
+- [x] My Teams favorites
+- [x] Share Cards
+- [x] OG Images
+- [x] Team Profiles
+- [x] Form Trend Charts
+
+---
+
+*Last Updated: December 12, 2025*
