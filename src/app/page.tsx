@@ -12,12 +12,16 @@ import WhyNotTipster from '@/components/WhyNotTipster';
 import Features from '@/components/Features';
 import PricingTeaser from '@/components/PricingTeaser';
 import ResponsibleGamblingBlock from '@/components/ResponsibleGamblingBlock';
+import { StatsStrip, TestimonialsSection, TrustBadges } from '@/components/SocialProof';
 
 export default function HomePage() {
   return (
     <>
       {/* Hero section - main visual component */}
       <Hero />
+
+      {/* Stats strip - social proof */}
+      <StatsStrip />
 
       {/* Trending matches - daily habit driver */}
       <TrendingSection maxMatches={6} />
@@ -31,8 +35,16 @@ export default function HomePage() {
       {/* Main features */}
       <Features />
 
+      {/* Testimonials - social proof */}
+      <TestimonialsSection />
+
       {/* Pricing teaser */}
       <PricingTeaser />
+
+      {/* Trust badges */}
+      <div className="py-8 bg-bg">
+        <TrustBadges className="max-w-4xl mx-auto px-4" />
+      </div>
 
       {/* Responsible gambling - MANDATORY */}
       <ResponsibleGamblingBlock />

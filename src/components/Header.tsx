@@ -10,6 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { UserMenu } from './auth';
+import { ShortcutHint } from './CommandPalette';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -71,6 +72,7 @@ export default function Header() {
             >
               Responsible Gaming
             </Link>
+            <ShortcutHint />
             <UserMenu />
           </div>
 

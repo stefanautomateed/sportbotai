@@ -5,6 +5,7 @@
  */
 
 import Link from 'next/link';
+import { LiveStatsCounter } from './SocialProof';
 
 export default function Hero() {
   return (
@@ -20,10 +21,13 @@ export default function Hero() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
           {/* Left Side - Content */}
           <div className="text-center lg:text-left">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full text-xs sm:text-sm font-medium text-gray-300 mb-4 sm:mb-6 backdrop-blur-sm border border-white/10">
-              <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-              Understand any match in 60 seconds
+            {/* Live Stats Badge */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 mb-4 sm:mb-6 justify-center lg:justify-start">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full text-xs sm:text-sm font-medium text-gray-300 backdrop-blur-sm border border-white/10">
+                <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                Understand any match in 60 seconds
+              </div>
+              <LiveStatsCounter className="hidden sm:flex" />
             </div>
 
             {/* Headline - H1 for SEO */}

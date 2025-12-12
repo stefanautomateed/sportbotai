@@ -13,6 +13,8 @@ import MobileBottomNav from '@/components/MobileBottomNav';
 import { AuthProvider } from '@/components/auth';
 import { FavoritesProvider } from '@/lib/FavoritesContext';
 import { ToastProvider } from '@/components/ui';
+import { KeyboardShortcutsProvider } from '@/components/CommandPalette';
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import { SITE_CONFIG, META, OG_DEFAULTS, getOrganizationSchema, getWebsiteSchema } from '@/lib/seo';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import CookieConsent from '@/components/CookieConsent';
@@ -28,6 +30,8 @@ export const viewport: Viewport = {
   themeColor: SITE_CONFIG.themeColor,
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
 };
 
 // Comprehensive SEO metadata
@@ -48,7 +52,17 @@ export const metadata: Metadata = {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
     ],
-    apple: '/favicon.svg',
+    apple: '/icons/icon-192x192.png',
+  },
+  
+  // PWA Manifest
+  manifest: '/manifest.json',
+  
+  // Apple specific
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'SportBot AI',
   },
   
   // Canonical & Base
@@ -128,23 +142,33 @@ export default function RootLayout({
         <AuthProvider>
           <FavoritesProvider>
             <ToastProvider>
-              {/* Flex container for sticky footer */}
-              <div className="min-h-screen flex flex-col pb-16 md:pb-0">
-                <Header />
+              <KeyboardShortcutsProvider>
+                {/* Skip to content link for accessibility */}
+                <a href="#main-content" className="skip-link">
+                  Skip to content
+                </a>
                 
-                {/* Main content */}
-                <main className="flex-grow">
-                  {children}
-                </main>
+                {/* Flex container for sticky footer */}
+                <div className="min-h-screen flex flex-col pb-16 md:pb-0">
+                  <Header />
+                  
+                  {/* Main content */}
+                  <main id="main-content" className="flex-grow" role="main">
+                    {children}
+                  </main>
+                  
+                  <Footer />
+                </div>
                 
-                <Footer />
-              </div>
-              
-              {/* Mobile Bottom Navigation */}
-              <MobileBottomNav />
-              
-              {/* Cookie Consent Banner */}
-              <CookieConsent />
+                {/* Mobile Bottom Navigation */}
+                <MobileBottomNav />
+                
+                {/* Cookie Consent Banner */}
+                <CookieConsent />
+                
+                {/* PWA Install Prompt */}
+                <PWAInstallPrompt />
+              </KeyboardShortcutsProvider>
             </ToastProvider>
           </FavoritesProvider>
         </AuthProvider>
