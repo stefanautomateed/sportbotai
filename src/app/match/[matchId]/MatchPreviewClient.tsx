@@ -1,8 +1,8 @@
 /**
- * Match Preview Client Component
+ * Match Preview Client Component V2
  * 
- * The heart of the pre-match intelligence experience.
- * Fetches match data and renders the preview.
+ * AI-powered match analysis with storytelling approach.
+ * Shows AI verdict, viral stats, and shareable insights.
  */
 
 'use client';
@@ -10,17 +10,39 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import MatchHeader from '@/components/match-preview/MatchHeader';
-import HeadlinesSection from '@/components/match-preview/HeadlinesSection';
-import FormComparison from '@/components/match-preview/FormComparison';
-import H2HTimeline from '@/components/match-preview/H2HTimeline';
-import KeyAbsences from '@/components/match-preview/KeyAbsences';
-import AIBriefing from '@/components/match-preview/AIBriefing';
-import ShareActions from '@/components/match-preview/ShareActions';
-import MatchPreviewSkeleton from '@/components/match-preview/MatchPreviewSkeleton';
+import {
+  MatchStory,
+  ViralStatsBar,
+  MatchHeadlines,
+  HomeAwaySplits,
+  GoalsTiming,
+  ContextFactors,
+  ShareCard,
+} from '@/components/analysis';
 
 interface MatchPreviewClientProps {
   matchId: string;
+}
+
+// Type for goals timing periods
+interface GoalsTimingData {
+  scoring: {
+    '0-15': number;
+    '16-30': number;
+    '31-45': number;
+    '46-60': number;
+    '61-75': number;
+    '76-90': number;
+  };
+  conceding: {
+    '0-15': number;
+    '16-30': number;
+    '31-45': number;
+    '46-60': number;
+    '61-75': number;
+    '76-90': number;
+  };
+  insight?: string;
 }
 
 interface MatchPreviewData {
@@ -33,72 +55,83 @@ interface MatchPreviewData {
     kickoff: string;
     venue?: string;
   };
+  story: {
+    favored: 'home' | 'away' | 'draw';
+    confidence: 'strong' | 'moderate' | 'slight';
+    narrative: string;
+    supportingStats: Array<{
+      icon: string;
+      stat: string;
+      context: string;
+    }>;
+  };
+  viralStats: {
+    h2h: {
+      headline: string;
+      favors: 'home' | 'away' | 'even';
+    };
+    form: {
+      home: string;
+      away: string;
+    };
+    keyAbsence: {
+      player: string;
+      team: 'home' | 'away';
+      impact: string;
+    } | null;
+    streak: {
+      text: string;
+      team: 'home' | 'away';
+    } | null;
+  };
   headlines: Array<{
     icon: string;
     text: string;
-    category: string;
-    impactLevel: 'high' | 'medium' | 'low';
+    favors: 'home' | 'away' | 'neutral';
+    viral?: boolean;
   }>;
-  form: {
+  homeAwaySplits: {
+    homeTeamAtHome: {
+      played: number;
+      wins: number;
+      draws: number;
+      losses: number;
+      goalsFor: number;
+      goalsAgainst: number;
+      cleanSheets: number;
+      highlight?: string | null;
+    };
+    awayTeamAway: {
+      played: number;
+      wins: number;
+      draws: number;
+      losses: number;
+      goalsFor: number;
+      goalsAgainst: number;
+      cleanSheets: number;
+      highlight?: string | null;
+    };
+  };
+  goalsTiming: {
     home: {
-      recent: string; // "WWDLW"
-      trend: 'up' | 'down' | 'stable';
-      goalsScored: number;
-      goalsConceded: number;
-      lastMatches: Array<{
-        opponent: string;
-        result: 'W' | 'D' | 'L';
-        score: string;
-        date: string;
-        home: boolean;
-      }>;
+      scoring: Record<string, number>;
+      conceding: Record<string, number>;
+      insight?: string | null;
     };
     away: {
-      recent: string;
-      trend: 'up' | 'down' | 'stable';
-      goalsScored: number;
-      goalsConceded: number;
-      lastMatches: Array<{
-        opponent: string;
-        result: 'W' | 'D' | 'L';
-        score: string;
-        date: string;
-        home: boolean;
-      }>;
+      scoring: Record<string, number>;
+      conceding: Record<string, number>;
+      insight?: string | null;
     };
   };
-  h2h: {
-    totalMeetings: number;
-    homeWins: number;
-    awayWins: number;
-    draws: number;
-    recentMeetings: Array<{
-      date: string;
-      homeTeam: string;
-      awayTeam: string;
-      score: string;
-      venue: string;
-    }>;
-  };
-  absences: {
-    home: Array<{
-      name: string;
-      position: string;
-      reason: string;
-      impact: 'high' | 'medium' | 'low';
-    }>;
-    away: Array<{
-      name: string;
-      position: string;
-      reason: string;
-      impact: 'high' | 'medium' | 'low';
-    }>;
-  };
-  briefing: {
-    summary: string;
-    keyPoints: string[];
-    audioUrl?: string;
-  };
+  contextFactors: Array<{
+    id: string;
+    icon: string;
+    label: string;
+    value: string;
+    favors: string;
+    note?: string;
+  }>;
 }
 
 export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps) {
@@ -113,7 +146,6 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
         setLoading(true);
         setError(null);
         
-        // Fetch match preview data
         const response = await fetch(`/api/match-preview/${matchId}`);
         
         if (!response.ok) {
@@ -148,7 +180,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
             {error || "We couldn't find this match. It may have already been played or the link is incorrect."}
           </p>
           <Link 
-            href="/"
+            href="/matches"
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary rounded-xl text-white font-medium hover:bg-primary/90 transition-colors"
           >
             <span>←</span>
@@ -167,7 +199,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
       <div className="relative max-w-4xl mx-auto px-4 py-6 sm:py-10">
         {/* Back button */}
         <Link 
-          href="/"
+          href="/matches"
           className="inline-flex items-center gap-2 text-text-muted hover:text-white transition-colors mb-6"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -185,72 +217,118 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
           venue={data.matchInfo.venue}
         />
 
-        {/* Main Content */}
-        <div className="space-y-6 mt-8">
-          {/* Headlines - The viral hook */}
-          <HeadlinesSection 
-            headlines={data.headlines}
+        {/* Viral Stats Bar - The hook */}
+        <div className="mt-6">
+          <ViralStatsBar
             homeTeam={data.matchInfo.homeTeam}
             awayTeam={data.matchInfo.awayTeam}
-          />
-
-          {/* Form Comparison */}
-          <FormComparison 
-            homeTeam={data.matchInfo.homeTeam}
-            awayTeam={data.matchInfo.awayTeam}
-            homeForm={data.form.home}
-            awayForm={data.form.away}
-          />
-
-          {/* H2H Timeline */}
-          <H2HTimeline 
-            homeTeam={data.matchInfo.homeTeam}
-            awayTeam={data.matchInfo.awayTeam}
-            h2h={data.h2h}
-          />
-
-          {/* Key Absences */}
-          <KeyAbsences 
-            homeAbsences={{
-              team: data.matchInfo.homeTeam,
-              absences: data.absences.home.map(a => ({
-                player: a.name,
-                position: a.position,
-                reason: a.reason as 'injury' | 'suspension' | 'doubtful' | 'other',
-                details: a.reason,
-                impact: a.impact === 'high' ? 'high' : a.impact === 'medium' ? 'medium' : 'low',
-              }))
-            }}
-            awayAbsences={{
-              team: data.matchInfo.awayTeam,
-              absences: data.absences.away.map(a => ({
-                player: a.name,
-                position: a.position,
-                reason: a.reason as 'injury' | 'suspension' | 'doubtful' | 'other',
-                details: a.reason,
-                impact: a.impact === 'high' ? 'high' : a.impact === 'medium' ? 'medium' : 'low',
-              }))
+            stats={{
+              h2h: {
+                headline: data.viralStats.h2h.headline,
+                favors: data.viralStats.h2h.favors,
+              },
+              form: {
+                home: data.viralStats.form.home,
+                away: data.viralStats.form.away,
+              },
+              keyAbsence: data.viralStats.keyAbsence ? {
+                team: data.viralStats.keyAbsence.team,
+                player: data.viralStats.keyAbsence.player,
+                impact: 'key' as const,
+              } : undefined,
+              streak: data.viralStats.streak || undefined,
             }}
           />
+        </div>
 
-          {/* AI Briefing */}
-          <AIBriefing 
-            briefing={{
-              summary: data.briefing.summary,
-              keyPoints: data.briefing.keyPoints,
-              verdict: '',
-              audioUrl: data.briefing.audioUrl,
-            }}
+        {/* AI Match Story - The verdict */}
+        <div className="mt-8">
+          <MatchStory
             homeTeam={data.matchInfo.homeTeam}
             awayTeam={data.matchInfo.awayTeam}
+            favored={data.story.favored}
+            confidence={data.story.confidence}
+            narrative={data.story.narrative}
+            supportingStats={data.story.supportingStats}
           />
+        </div>
 
-          {/* Share Actions */}
-          <ShareActions 
+        {/* Match Headlines */}
+        {data.headlines && data.headlines.length > 0 && (
+          <div className="mt-8">
+            <MatchHeadlines
+              headlines={data.headlines}
+              homeTeam={data.matchInfo.homeTeam}
+              awayTeam={data.matchInfo.awayTeam}
+            />
+          </div>
+        )}
+
+        {/* Home/Away Splits */}
+        <div className="mt-8">
+          <HomeAwaySplits
+            homeTeam={data.matchInfo.homeTeam}
+            awayTeam={data.matchInfo.awayTeam}
+            homeTeamAtHome={{
+              played: data.homeAwaySplits.homeTeamAtHome.played,
+              wins: data.homeAwaySplits.homeTeamAtHome.wins,
+              draws: data.homeAwaySplits.homeTeamAtHome.draws,
+              losses: data.homeAwaySplits.homeTeamAtHome.losses,
+              goalsFor: data.homeAwaySplits.homeTeamAtHome.goalsFor,
+              goalsAgainst: data.homeAwaySplits.homeTeamAtHome.goalsAgainst,
+              cleanSheets: data.homeAwaySplits.homeTeamAtHome.cleanSheets,
+              highlight: data.homeAwaySplits.homeTeamAtHome.highlight || undefined,
+            }}
+            awayTeamAway={{
+              played: data.homeAwaySplits.awayTeamAway.played,
+              wins: data.homeAwaySplits.awayTeamAway.wins,
+              draws: data.homeAwaySplits.awayTeamAway.draws,
+              losses: data.homeAwaySplits.awayTeamAway.losses,
+              goalsFor: data.homeAwaySplits.awayTeamAway.goalsFor,
+              goalsAgainst: data.homeAwaySplits.awayTeamAway.goalsAgainst,
+              cleanSheets: data.homeAwaySplits.awayTeamAway.cleanSheets,
+              highlight: data.homeAwaySplits.awayTeamAway.highlight || undefined,
+            }}
+          />
+        </div>
+
+        {/* Goals Timing */}
+        <div className="mt-8">
+          <GoalsTiming
+            homeTeam={data.matchInfo.homeTeam}
+            awayTeam={data.matchInfo.awayTeam}
+            homeTiming={{
+              scoring: data.goalsTiming.home.scoring as GoalsTimingData['scoring'],
+              conceding: data.goalsTiming.home.conceding as GoalsTimingData['conceding'],
+              insight: data.goalsTiming.home.insight || undefined,
+            }}
+            awayTiming={{
+              scoring: data.goalsTiming.away.scoring as GoalsTimingData['scoring'],
+              conceding: data.goalsTiming.away.conceding as GoalsTimingData['conceding'],
+              insight: data.goalsTiming.away.insight || undefined,
+            }}
+          />
+        </div>
+
+        {/* Context Factors */}
+        <div className="mt-8">
+          <ContextFactors 
+            homeTeam={data.matchInfo.homeTeam}
+            awayTeam={data.matchInfo.awayTeam}
+            factors={data.contextFactors.map(f => ({
+              ...f,
+              favors: f.favors as 'home' | 'away' | 'neutral',
+            }))} 
+          />
+        </div>
+
+        {/* Share Card */}
+        <div className="mt-8">
+          <ShareCard
             matchId={matchId}
             homeTeam={data.matchInfo.homeTeam}
             awayTeam={data.matchInfo.awayTeam}
-            headline={data.headlines[0]?.text}
+            verdict={data.headlines?.[0]?.text || `${data.matchInfo.homeTeam} vs ${data.matchInfo.awayTeam} analysis`}
             kickoff={data.matchInfo.kickoff}
           />
         </div>
@@ -260,6 +338,91 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
           SportBot AI provides match intelligence for educational purposes. 
           This is not betting advice. Always gamble responsibly if you choose to bet.
         </p>
+      </div>
+    </div>
+  );
+}
+
+// Inline MatchHeader component
+function MatchHeader({ 
+  homeTeam, 
+  awayTeam, 
+  league, 
+  kickoff, 
+  venue 
+}: { 
+  homeTeam: string; 
+  awayTeam: string; 
+  league: string; 
+  kickoff: string; 
+  venue?: string;
+}) {
+  const kickoffDate = new Date(kickoff);
+  const formattedDate = kickoffDate.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+  const formattedTime = kickoffDate.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return (
+    <div className="text-center">
+      {/* League badge */}
+      <div className="inline-flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full mb-4">
+        <span className="text-sm text-text-secondary">{league}</span>
+      </div>
+
+      {/* Teams */}
+      <div className="flex items-center justify-center gap-4 sm:gap-8 mb-4">
+        <div className="flex-1 text-right">
+          <h1 className="text-xl sm:text-3xl font-bold text-white">{homeTeam}</h1>
+          <span className="text-xs text-text-muted">HOME</span>
+        </div>
+        <div className="flex-shrink-0">
+          <span className="text-2xl sm:text-4xl font-bold text-primary">VS</span>
+        </div>
+        <div className="flex-1 text-left">
+          <h1 className="text-xl sm:text-3xl font-bold text-white">{awayTeam}</h1>
+          <span className="text-xs text-text-muted">AWAY</span>
+        </div>
+      </div>
+
+      {/* Match info */}
+      <div className="flex items-center justify-center gap-4 text-sm text-text-secondary">
+        <span>📅 {formattedDate}</span>
+        <span>⏰ {formattedTime}</span>
+        {venue && <span>📍 {venue}</span>}
+      </div>
+    </div>
+  );
+}
+
+// Inline Skeleton component
+function MatchPreviewSkeleton() {
+  return (
+    <div className="min-h-screen bg-bg-primary">
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        {/* Header skeleton */}
+        <div className="text-center mb-8 animate-pulse">
+          <div className="h-6 w-32 bg-white/10 rounded-full mx-auto mb-4" />
+          <div className="flex items-center justify-center gap-8 mb-4">
+            <div className="h-8 w-32 bg-white/10 rounded" />
+            <div className="h-10 w-12 bg-primary/20 rounded" />
+            <div className="h-8 w-32 bg-white/10 rounded" />
+          </div>
+          <div className="h-4 w-48 bg-white/10 rounded mx-auto" />
+        </div>
+
+        {/* Content skeleton */}
+        <div className="space-y-6">
+          <div className="h-24 bg-white/5 rounded-2xl animate-pulse" />
+          <div className="h-64 bg-white/5 rounded-2xl animate-pulse" />
+          <div className="h-48 bg-white/5 rounded-2xl animate-pulse" />
+          <div className="h-32 bg-white/5 rounded-2xl animate-pulse" />
+        </div>
       </div>
     </div>
   );
