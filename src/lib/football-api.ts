@@ -90,13 +90,16 @@ function setCache(key: string, data: any): void {
 
 /**
  * Get current football season year
- * European seasons run Aug-May, so before August use previous year
+ * European seasons run Aug-May, so:
+ * - Aug 2024 to Jul 2025 = 2024 season
+ * - Aug 2025 to Jul 2026 = 2025 season
  */
 function getCurrentSeason(): number {
   const now = new Date();
   const month = now.getMonth(); // 0-11
   const year = now.getFullYear();
-  // If before August, use previous year (e.g., Jan 2026 = 2025 season)
+  // If before August (months 0-6), we're in the previous year's season
+  // If Aug-Dec (months 7-11), we're in the current year's season
   return month < 7 ? year - 1 : year;
 }
 
@@ -787,6 +790,7 @@ export interface TopPlayerStats {
 
 /**
  * Get top scorer for a team
+ * Uses squad endpoint for accuracy (guaranteed current players only)
  */
 export async function getTeamTopScorer(teamId: number, leagueId?: number): Promise<TopPlayerStats | null> {
   const cacheKey = `topscorer:${teamId}:${leagueId || 'all'}`;
@@ -795,15 +799,37 @@ export async function getTeamTopScorer(teamId: number, leagueId?: number): Promi
 
   const season = getCurrentSeason();
   
-  // First approach: Go directly to team players for accuracy
-  // The league topscorers endpoint can have issues with transfers
+  // First: Get the current squad to ensure we only consider CURRENT players
+  const squadResponse = await apiRequest<any>(`/players/squads?team=${teamId}`);
+  const currentSquadIds = new Set<number>();
+  
+  if (squadResponse?.response?.[0]?.players) {
+    squadResponse.response[0].players.forEach((p: any) => {
+      if (p.id) currentSquadIds.add(p.id);
+    });
+  }
+  
+  // Now get player stats, but ONLY for players in current squad
   const playersResponse = await apiRequest<any>(`/players?team=${teamId}&season=${season}&page=1`);
   
   if (playersResponse?.response?.length > 0) {
-    // Filter for players with stats for THIS team
+    // Filter for players who are:
+    // 1. In the current squad (if we have squad data)
+    // 2. Have actual playing stats for THIS team
+    // 3. Not goalkeepers
     const teamPlayers = playersResponse.response.filter((p: any) => {
+      const playerId = p.player?.id;
       const teamStats = p.statistics?.find((s: any) => s.team?.id === teamId);
-      return teamStats && teamStats.games?.position !== 'Goalkeeper';
+      
+      // If we have squad data, player must be in current squad
+      if (currentSquadIds.size > 0 && playerId && !currentSquadIds.has(playerId)) {
+        return false;
+      }
+      
+      // Must have played at least 1 game and not be a goalkeeper
+      return teamStats && 
+             teamStats.games?.appearences > 0 && 
+             teamStats.games?.position !== 'Goalkeeper';
     });
     
     // Sort by goals scored for this team
