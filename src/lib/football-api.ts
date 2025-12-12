@@ -305,13 +305,33 @@ async function findTeam(teamName: string, league?: string): Promise<number | nul
 /**
  * Get team's last 5 matches form
  */
-async function getTeamForm(teamId: number): Promise<TeamForm | null> {
-  const cacheKey = `form:${teamId}`;
+async function getTeamForm(teamId: number, leagueId?: number): Promise<TeamForm | null> {
+  const cacheKey = `form:${teamId}:${leagueId || 'all'}`;
   const cached = getCached<TeamForm>(cacheKey);
   if (cached) return cached;
 
   const season = getCurrentSeason();
-  const response = await apiRequest<any>(`/teams/statistics?team=${teamId}&season=${season}`);
+  
+  // If no league provided, try to determine from team info
+  if (!leagueId) {
+    const teamInfo = await apiRequest<any>(`/teams?id=${teamId}`);
+    const country = teamInfo?.response?.[0]?.team?.country;
+    if (country) {
+      const leagueMap: Record<string, number> = {
+        'England': 39,
+        'Spain': 140,
+        'Italy': 135,
+        'Germany': 78,
+        'France': 61,
+      };
+      leagueId = leagueMap[country];
+    }
+  }
+  
+  // /teams/statistics requires league parameter
+  if (!leagueId) return null;
+  
+  const response = await apiRequest<any>(`/teams/statistics?team=${teamId}&season=${season}&league=${leagueId}`);
   
   if (!response?.response) return null;
 
@@ -493,10 +513,14 @@ export async function getEnrichedMatchData(
       };
     }
 
+    // Get league IDs for better data
+    const homeLeagueId = getTeamLeagueId(homeTeam);
+    const awayLeagueId = getTeamLeagueId(awayTeam);
+
     // Fetch all data in parallel
     const [homeTeamForm, awayTeamForm, homeFixtures, awayFixtures, h2h] = await Promise.all([
-      getTeamForm(homeTeamId),
-      getTeamForm(awayTeamId),
+      getTeamForm(homeTeamId, homeLeagueId || undefined),
+      getTeamForm(awayTeamId, awayLeagueId || undefined),
       getTeamFixtures(homeTeamId),
       getTeamFixtures(awayTeamId),
       getHeadToHead(homeTeamId, awayTeamId),
