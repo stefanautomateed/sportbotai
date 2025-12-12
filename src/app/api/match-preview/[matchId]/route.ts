@@ -292,6 +292,41 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * Normalize league names for display
+ */
+function normalizeLeagueName(league: string): string {
+  const leagueMap: Record<string, string> = {
+    // EPL variations
+    'epl': 'Premier League',
+    'english premier league': 'Premier League',
+    'premier league': 'Premier League',
+    'england - premier league': 'Premier League',
+    // La Liga
+    'la liga': 'La Liga',
+    'spain - la liga': 'La Liga',
+    'laliga': 'La Liga',
+    // Serie A
+    'serie a': 'Serie A',
+    'italy - serie a': 'Serie A',
+    // Bundesliga
+    'bundesliga': 'Bundesliga',
+    'germany - bundesliga': 'Bundesliga',
+    // Ligue 1
+    'ligue 1': 'Ligue 1',
+    'france - ligue 1': 'Ligue 1',
+    // Champions League
+    'uefa champions league': 'Champions League',
+    'champions league': 'Champions League',
+    // Europa League
+    'uefa europa league': 'Europa League',
+    'europa league': 'Europa League',
+  };
+
+  const normalized = league.toLowerCase().trim();
+  return leagueMap[normalized] || league;
+}
+
 function parseMatchId(matchId: string) {
   try {
     const decoded = Buffer.from(matchId, 'base64').toString('utf-8');
@@ -299,7 +334,7 @@ function parseMatchId(matchId: string) {
     return {
       homeTeam: parsed.homeTeam,
       awayTeam: parsed.awayTeam,
-      league: parsed.league,
+      league: normalizeLeagueName(parsed.league),
       kickoff: parsed.kickoff || new Date().toISOString(),
       venue: parsed.venue || null,
     };
@@ -309,7 +344,7 @@ function parseMatchId(matchId: string) {
       return {
         homeTeam: parts[0].replace(/-/g, ' '),
         awayTeam: parts[1].replace(/-/g, ' '),
-        league: parts[2].replace(/-/g, ' '),
+        league: normalizeLeagueName(parts[2].replace(/-/g, ' ')),
         kickoff: parts[3] ? new Date(parseInt(parts[3])).toISOString() : new Date().toISOString(),
         venue: null,
       };
