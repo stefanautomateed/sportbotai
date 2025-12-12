@@ -132,16 +132,150 @@ async function apiRequest<T>(endpoint: string): Promise<T | null> {
 }
 
 /**
- * Search for team by name
+ * Team name mappings for API-Football
+ * Maps common team names to their API-Football IDs or preferred search terms
+ */
+const TEAM_NAME_MAPPINGS: Record<string, { id?: number; searchName?: string }> = {
+  // Premier League
+  'Arsenal': { id: 42 },
+  'Aston Villa': { id: 66 },
+  'Bournemouth': { id: 35 },
+  'Brentford': { id: 55 },
+  'Brighton': { id: 51 },
+  'Brighton and Hove Albion': { id: 51 },
+  'Burnley': { id: 44 },
+  'Chelsea': { id: 49 },
+  'Crystal Palace': { id: 52 },
+  'Everton': { id: 45 },
+  'Fulham': { id: 36 },
+  'Leeds United': { id: 63 },
+  'Leicester City': { id: 46 },
+  'Liverpool': { id: 40 },
+  'Manchester City': { id: 50 },
+  'Manchester United': { id: 33 },
+  'Newcastle United': { id: 34 },
+  'Newcastle': { id: 34 },
+  'Nottingham Forest': { id: 65 },
+  'Sheffield United': { id: 62 },
+  'Southampton': { id: 41 },
+  'Sunderland': { id: 71 },
+  'Tottenham Hotspur': { id: 47 },
+  'Tottenham': { id: 47 },
+  'West Ham United': { id: 48 },
+  'West Ham': { id: 48 },
+  'Wolverhampton Wanderers': { id: 39 },
+  'Wolves': { id: 39 },
+  // La Liga
+  'Real Madrid': { id: 541 },
+  'Barcelona': { id: 529 },
+  'Atletico Madrid': { id: 530 },
+  'Atlético Madrid': { id: 530 },
+  'Sevilla': { id: 536 },
+  'Valencia': { id: 532 },
+  'Villarreal': { id: 533 },
+  'Real Betis': { id: 543 },
+  'Athletic Bilbao': { id: 531 },
+  'Real Sociedad': { id: 548 },
+  'Celta Vigo': { id: 538 },
+  'Getafe': { id: 546 },
+  'Osasuna': { id: 727 },
+  'CA Osasuna': { id: 727 },
+  'Mallorca': { id: 798 },
+  'Girona': { id: 547 },
+  'Rayo Vallecano': { id: 728 },
+  'Almeria': { id: 723 },
+  'Cadiz': { id: 724 },
+  'Alaves': { id: 542 },
+  'Alavés': { id: 542 },
+  'Espanyol': { id: 540 },
+  'Levante': { id: 539 },
+  // Serie A
+  'Juventus': { id: 496 },
+  'Inter': { id: 505 },
+  'Inter Milan': { id: 505 },
+  'AC Milan': { id: 489 },
+  'Milan': { id: 489 },
+  'Napoli': { id: 492 },
+  'Roma': { id: 497 },
+  'AS Roma': { id: 497 },
+  'Lazio': { id: 487 },
+  'Atalanta': { id: 499 },
+  'Fiorentina': { id: 502 },
+  'Torino': { id: 503 },
+  'Bologna': { id: 500 },
+  // Bundesliga
+  'Bayern Munich': { id: 157 },
+  'Bayern München': { id: 157 },
+  'Borussia Dortmund': { id: 165 },
+  'Dortmund': { id: 165 },
+  'RB Leipzig': { id: 173 },
+  'Bayer Leverkusen': { id: 168 },
+  'Leverkusen': { id: 168 },
+  'Eintracht Frankfurt': { id: 169 },
+  'Frankfurt': { id: 169 },
+  'Wolfsburg': { id: 161 },
+  'Borussia Monchengladbach': { id: 163 },
+  // Ligue 1
+  'Paris Saint Germain': { id: 85 },
+  'PSG': { id: 85 },
+  'Paris Saint-Germain': { id: 85 },
+  'Marseille': { id: 81 },
+  'Lyon': { id: 80 },
+  'Monaco': { id: 91 },
+  'Lille': { id: 79 },
+};
+
+/**
+ * Normalize team name for better matching
+ */
+function normalizeTeamName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '') // Remove special chars
+    .replace(/\s+/g, ' ')        // Normalize spaces
+    .trim();
+}
+
+/**
+ * Search for team by name with improved matching
  */
 async function findTeam(teamName: string, league?: string): Promise<number | null> {
   const cacheKey = `team:${teamName}:${league || ''}`;
   const cached = getCached<number>(cacheKey);
   if (cached) return cached;
 
-  const response = await apiRequest<any>(`/teams?search=${encodeURIComponent(teamName)}`);
+  // Check direct mapping first
+  const mapping = TEAM_NAME_MAPPINGS[teamName];
+  if (mapping?.id) {
+    setCache(cacheKey, mapping.id);
+    return mapping.id;
+  }
+
+  // Try normalized name lookup
+  const normalized = normalizeTeamName(teamName);
+  for (const [key, value] of Object.entries(TEAM_NAME_MAPPINGS)) {
+    if (normalizeTeamName(key) === normalized && value.id) {
+      setCache(cacheKey, value.id);
+      return value.id;
+    }
+  }
+
+  // Fallback to API search
+  const searchName = mapping?.searchName || teamName;
+  const response = await apiRequest<any>(`/teams?search=${encodeURIComponent(searchName)}`);
   
   if (response?.response?.length > 0) {
+    // Try to find exact match first
+    const exactMatch = response.response.find((r: any) => 
+      normalizeTeamName(r.team.name) === normalized
+    );
+    
+    if (exactMatch) {
+      setCache(cacheKey, exactMatch.team.id);
+      return exactMatch.team.id;
+    }
+    
+    // Otherwise take first result
     const teamId = response.response[0].team.id;
     setCache(cacheKey, teamId);
     return teamId;
