@@ -51,6 +51,10 @@ export default function ViralStatsBar({
   awayTeam,
   stats,
 }: ViralStatsBarProps) {
+  // Check if form data is placeholder (all draws = no real data)
+  const isPlaceholderForm = (form: string) => form === 'DDDDD' || form.split('').every(r => r === 'D');
+  const hasRealFormData = !isPlaceholderForm(stats.form.home) || !isPlaceholderForm(stats.form.away);
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       {/* H2H Record */}
