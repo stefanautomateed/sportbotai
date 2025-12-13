@@ -2,6 +2,7 @@
  * League Logo Component
  * 
  * Displays league/competition logos with automatic fallback.
+ * Features smooth fade-in transitions and graceful error handling.
  */
 
 'use client';
@@ -30,6 +31,7 @@ export default function LeagueLogo({
   className = '' 
 }: LeagueLogoProps) {
   const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const logoUrl = getLeagueLogo(leagueName, sport);
   const isFallback = logoUrl.startsWith('data:');
 
@@ -40,25 +42,51 @@ export default function LeagueLogo({
     return words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
   };
 
+  // Generate consistent color from name
+  const getColor = (name: string) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash % 360);
+    return `hsl(${hue}, 50%, 40%)`;
+  };
+
+  // Fallback component with initials
+  const FallbackLogo = () => (
+    <div 
+      className={`${sizeClasses[size]} rounded flex items-center justify-center flex-shrink-0 ${className}`}
+      style={{ backgroundColor: getColor(leagueName) }}
+    >
+      <span className="text-white/90 font-semibold text-[8px]">
+        {getInitials(leagueName)}
+      </span>
+    </div>
+  );
+
   if (hasError || isFallback) {
-    return (
-      <div 
-        className={`${sizeClasses[size]} rounded flex items-center justify-center flex-shrink-0 bg-white/10 ${className}`}
-      >
-        <span className="text-white/60 font-semibold text-[8px]">
-          {getInitials(leagueName)}
-        </span>
-      </div>
-    );
+    return <FallbackLogo />;
   }
 
   return (
-    <img
-      src={logoUrl}
-      alt={`${leagueName} logo`}
-      className={`${sizeClasses[size]} object-contain flex-shrink-0 ${className}`}
-      onError={() => setHasError(true)}
-      loading="lazy"
-    />
+    <div className={`${sizeClasses[size]} relative flex-shrink-0 ${className}`}>
+      {/* Placeholder while loading */}
+      {!isLoaded && (
+        <div 
+          className="absolute inset-0 rounded animate-pulse"
+          style={{ backgroundColor: `${getColor(leagueName)}40` }}
+        />
+      )}
+      <img
+        src={logoUrl}
+        alt={`${leagueName} logo`}
+        className={`w-full h-full object-contain transition-opacity duration-300 ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        onLoad={() => setIsLoaded(true)}
+        onError={() => setHasError(true)}
+        loading="lazy"
+      />
+    </div>
   );
 }

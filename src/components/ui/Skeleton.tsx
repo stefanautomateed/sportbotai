@@ -2,6 +2,7 @@
  * Skeleton Loading Components
  * 
  * Provides shimmer loading placeholders for various content types.
+ * Features smooth shimmer effect for better perceived performance.
  */
 
 'use client';
@@ -9,15 +10,17 @@
 interface SkeletonProps {
   className?: string;
   animate?: boolean;
+  shimmer?: boolean;
 }
 
 // Base skeleton with shimmer animation
-export function Skeleton({ className = '', animate = true }: SkeletonProps) {
+export function Skeleton({ className = '', animate = true, shimmer = true }: SkeletonProps) {
   return (
     <div 
       className={`
-        bg-bg-hover rounded
-        ${animate ? 'animate-pulse' : ''}
+        bg-white/5 rounded relative overflow-hidden
+        ${animate && !shimmer ? 'animate-pulse' : ''}
+        ${shimmer ? 'before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent' : ''}
         ${className}
       `}
     />

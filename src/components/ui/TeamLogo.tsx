@@ -4,6 +4,7 @@
  * Displays team logos with automatic fallback to generated initials.
  * Uses ESPN, API-Sports, or fallback SVG based on sport/team.
  * For MMA/UFC (individual sports), shows fighter's country flag instead.
+ * Features smooth fade-in transitions and graceful error handling.
  */
 
 'use client';
@@ -25,6 +26,13 @@ const sizeClasses = {
   md: 'w-8 h-8',
   lg: 'w-10 h-10',
   xl: 'w-12 h-12',
+};
+
+const textSizeClasses = {
+  sm: 'text-[10px]',
+  md: 'text-xs',
+  lg: 'text-sm',
+  xl: 'text-base',
 };
 
 /**
@@ -50,6 +58,7 @@ export default function TeamLogo({
   className = '' 
 }: TeamLogoProps) {
   const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   // For MMA/UFC/Boxing - show fighter's country flag instead of team logo
   if (isIndividualSport(sport)) {
@@ -73,30 +82,45 @@ export default function TeamLogo({
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     const hue = Math.abs(hash % 360);
-    return `hsl(${hue}, 65%, 50%)`;
+    return `hsl(${hue}, 65%, 45%)`;
   };
+
+  // Fallback component with initials
+  const FallbackLogo = () => (
+    <div 
+      className={`${sizeClasses[size]} rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm ${className}`}
+      style={{ backgroundColor: getColor(teamName) }}
+    >
+      <span className={`text-white font-bold ${textSizeClasses[size]}`}>
+        {getInitials(teamName)}
+      </span>
+    </div>
+  );
 
   // If external logo fails, show initials
   if (hasError || isFallback) {
-    return (
-      <div 
-        className={`${sizeClasses[size]} rounded-lg flex items-center justify-center flex-shrink-0 ${className}`}
-        style={{ backgroundColor: getColor(teamName) }}
-      >
-        <span className="text-white font-bold text-xs">
-          {getInitials(teamName)}
-        </span>
-      </div>
-    );
+    return <FallbackLogo />;
   }
 
   return (
-    <img
-      src={logoUrl}
-      alt={`${teamName} logo`}
-      className={`${sizeClasses[size]} object-contain flex-shrink-0 ${className}`}
-      onError={() => setHasError(true)}
-      loading="lazy"
-    />
+    <div className={`${sizeClasses[size]} relative flex-shrink-0 ${className}`}>
+      {/* Placeholder while loading */}
+      {!isLoaded && (
+        <div 
+          className="absolute inset-0 rounded-lg animate-pulse"
+          style={{ backgroundColor: `${getColor(teamName)}40` }}
+        />
+      )}
+      <img
+        src={logoUrl}
+        alt={`${teamName} logo`}
+        className={`w-full h-full object-contain transition-opacity duration-300 ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        onLoad={() => setIsLoaded(true)}
+        onError={() => setHasError(true)}
+        loading="lazy"
+      />
+    </div>
   );
 }

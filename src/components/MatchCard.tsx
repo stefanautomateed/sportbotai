@@ -10,6 +10,7 @@
 import Link from 'next/link';
 import TeamLogo from '@/components/ui/TeamLogo';
 import LeagueLogo from '@/components/ui/LeagueLogo';
+import MatchCountdown from '@/components/ui/MatchCountdown';
 
 interface MatchCardProps {
   matchId: string;
@@ -41,22 +42,6 @@ export default function MatchCard({
     kickoff: commenceTime,
   };
   const encodedMatchId = Buffer.from(JSON.stringify(matchData)).toString('base64');
-  
-  // Format time until match
-  const formatTimeUntil = (dateString: string) => {
-    const matchDate = new Date(dateString);
-    const now = new Date();
-    const diffMs = matchDate.getTime() - now.getTime();
-    
-    if (diffMs < 0) return 'Live';
-    
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const days = Math.floor(hours / 24);
-    
-    if (days > 0) return `${days}d`;
-    if (hours > 0) return `${hours}h`;
-    return 'Soon';
-  };
 
   // Format match date
   const formatMatchDate = (dateString: string) => {
@@ -77,7 +62,8 @@ export default function MatchCard({
   return (
     <Link
       href={`/match/${encodedMatchId}`}
-      className="group relative bg-bg-card rounded-xl border border-divider p-4 hover:border-primary/30 hover:bg-bg-elevated transition-all duration-200 block"
+      className="group relative bg-bg-card rounded-xl border border-divider p-4 hover:border-primary/30 hover:bg-bg-elevated transition-all duration-300 ease-out block hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+      data-card
     >
       {/* Hot Score Badge */}
       {hotScore >= 8 && (
@@ -92,25 +78,27 @@ export default function MatchCard({
           <LeagueLogo leagueName={league || sportKey} sport={sportKey} size="sm" />
           <span className="text-xs text-gray-400 truncate max-w-[120px]">{league}</span>
         </div>
-        <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium">
-          {formatTimeUntil(commenceTime)}
-        </span>
+        <MatchCountdown commenceTime={commenceTime} size="sm" />
       </div>
 
       {/* Teams */}
       <div className="flex items-center justify-between">
         {/* Home Team */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <TeamLogo teamName={homeTeam} sport={sportKey} league={league} size="md" />
+          <div className="transition-transform duration-300 group-hover:scale-110">
+            <TeamLogo teamName={homeTeam} sport={sportKey} league={league} size="md" />
+          </div>
           <span className="text-sm font-semibold text-white truncate">{homeTeam}</span>
         </div>
 
-        <span className="text-gray-600 text-sm font-medium px-2">vs</span>
+        <span className="text-gray-600 text-sm font-medium px-2 group-hover:text-gray-400 transition-colors">vs</span>
 
         {/* Away Team */}
         <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
           <span className="text-sm font-semibold text-white truncate text-right">{awayTeam}</span>
-          <TeamLogo teamName={awayTeam} sport={sportKey} league={league} size="md" />
+          <div className="transition-transform duration-300 group-hover:scale-110">
+            <TeamLogo teamName={awayTeam} sport={sportKey} league={league} size="md" />
+          </div>
         </div>
       </div>
 

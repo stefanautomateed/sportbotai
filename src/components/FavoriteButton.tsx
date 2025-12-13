@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useFavorites } from '@/lib/FavoritesContext'
@@ -37,6 +37,8 @@ export default function FavoriteButton({
   const { isFavorite, addFavorite, removeFavorite, canAddMore, maxTeams, favorites } = useFavorites()
   const [isUpdating, setIsUpdating] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
+  const [animationClass, setAnimationClass] = useState('')
+  const [showParticles, setShowParticles] = useState(false)
 
   const favorited = isFavorite(teamName, sport)
 
@@ -73,8 +75,14 @@ export default function FavoriteButton({
 
     try {
       if (favorited) {
+        // Removing - bounce out animation
+        setAnimationClass('animate-bounce-out')
         await removeFavorite(teamName, sport)
+        setTimeout(() => setAnimationClass(''), 300)
       } else {
+        // Adding - pop animation with particles
+        setAnimationClass('animate-heart-pop')
+        setShowParticles(true)
         await addFavorite({
           teamName,
           sport,
@@ -83,6 +91,10 @@ export default function FavoriteButton({
           teamLogo,
           country
         })
+        setTimeout(() => {
+          setAnimationClass('')
+          setShowParticles(false)
+        }, 600)
       }
     } finally {
       setIsUpdating(false)
@@ -91,6 +103,22 @@ export default function FavoriteButton({
 
   return (
     <div className="relative inline-flex items-center">
+      {/* Particle burst effect */}
+      {showParticles && (
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(6)].map((_, i) => (
+            <span
+              key={i}
+              className="absolute left-1/2 top-1/2 w-1.5 h-1.5 bg-red-400 rounded-full animate-particle"
+              style={{
+                '--angle': `${i * 60}deg`,
+                '--distance': '20px',
+              } as React.CSSProperties}
+            />
+          ))}
+        </div>
+      )}
+      
       <button
         onClick={handleClick}
         disabled={isUpdating}
@@ -102,6 +130,7 @@ export default function FavoriteButton({
             : 'text-gray-400 hover:text-red-400 hover:bg-gray-100'
           }
           ${isUpdating ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
+          hover:scale-110 active:scale-95
           ${className}
         `}
         title={favorited ? 'Remove from My Teams' : 'Add to My Teams'}
@@ -112,6 +141,8 @@ export default function FavoriteButton({
             ${sizeClasses[size]}
             ${favorited ? 'fill-current' : ''}
             ${isUpdating ? 'animate-pulse' : ''}
+            ${animationClass}
+            transition-transform
           `} 
         />
       </button>

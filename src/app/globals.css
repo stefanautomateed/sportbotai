@@ -163,6 +163,34 @@ a {
   @apply outline-2 outline-offset-2 outline-primary;
 }
 
+/* Enhanced Focus Ring Utility Classes */
+.focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+}
+
+.focus-ring-inset {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent;
+}
+
+/* Card/Link focus states */
+a:focus-visible,
+button:focus-visible {
+  @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-bg rounded-lg;
+}
+
+/* Subtle focus for cards that are links */
+.card:focus-visible,
+[data-card]:focus-visible {
+  @apply outline-none ring-2 ring-accent/50 ring-offset-0;
+  box-shadow: 0 0 0 1px var(--color-accent), 0 0 20px rgba(0, 245, 160, 0.15);
+}
+
+/* Skip link for keyboard nav */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 
+         focus:px-4 focus:py-2 focus:bg-accent focus:text-primary-900 focus:rounded-lg focus:font-semibold;
+}
+
 /* ========================================
    DESIGN SYSTEM COMPONENTS
    ======================================== */
@@ -593,6 +621,46 @@ a {
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
   animation: checkmark 0.5s ease-out forwards;
+}
+
+/* Heart pop animation for favorites */
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.4); }
+  50% { transform: scale(0.9); }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.animate-heart-pop {
+  animation: heart-pop 0.5s ease-out;
+}
+
+/* Bounce out animation for unfavorite */
+@keyframes bounce-out {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.6); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-bounce-out {
+  animation: bounce-out 0.3s ease-out;
+}
+
+/* Particle burst animation */
+@keyframes particle {
+  0% { 
+    transform: translate(-50%, -50%) rotate(var(--angle, 0deg)) translateY(0); 
+    opacity: 1;
+  }
+  100% { 
+    transform: translate(-50%, -50%) rotate(var(--angle, 0deg)) translateY(var(--distance, 20px)); 
+    opacity: 0;
+  }
+}
+
+.animate-particle {
+  animation: particle 0.5s ease-out forwards;
 }
 
 /* Skeleton loading */
