@@ -225,9 +225,13 @@ export default function AIDeskHeroChat() {
                   <div className={`inline-block px-5 py-4 rounded-2xl ${
                     msg.role === 'user'
                       ? 'bg-primary text-white rounded-tr-md'
-                      : 'bg-white/5 text-text-primary rounded-tl-md border border-white/5'
+                      : 'bg-white/[0.03] text-white/90 rounded-tl-md border border-white/[0.06]'
                   }`}>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                    <p className={`whitespace-pre-wrap ${
+                      msg.role === 'user'
+                        ? 'text-sm leading-relaxed'
+                        : 'text-[15px] leading-[1.7] tracking-[-0.01em] font-light'
+                    }`}>{msg.content}</p>
                   </div>
 
                   {/* Real-time search indicator */}

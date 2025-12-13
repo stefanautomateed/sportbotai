@@ -272,9 +272,13 @@ export default function AIDeskChat() {
                   <div className={`inline-block px-4 py-3 rounded-2xl max-w-[85%] ${
                     msg.role === 'user'
                       ? 'bg-primary text-white rounded-tr-md'
-                      : 'bg-white/5 text-text-primary rounded-tl-md'
+                      : 'bg-white/[0.03] text-white/90 rounded-tl-md border border-white/[0.06]'
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    <p className={`whitespace-pre-wrap ${
+                      msg.role === 'user'
+                        ? 'text-sm'
+                        : 'text-[14px] leading-[1.7] tracking-[-0.01em] font-light'
+                    }`}>{msg.content}</p>
                   </div>
 
                   {/* Real-time search indicator */}
