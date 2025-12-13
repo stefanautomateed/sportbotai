@@ -1185,6 +1185,32 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'NHL Regular Season': 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',
   'NHL Playoffs': 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',
   'Stanley Cup': 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',
+  'NHL Championship Winner': 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',
+  
+  // AHL - American Hockey League
+  'AHL': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/22/American_Hockey_League_logo.svg/200px-American_Hockey_League_logo.svg.png',
+  'American Hockey League': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/22/American_Hockey_League_logo.svg/200px-American_Hockey_League_logo.svg.png',
+  'icehockey_ahl': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/22/American_Hockey_League_logo.svg/200px-American_Hockey_League_logo.svg.png',
+  
+  // SHL - Swedish Hockey League (Odds API returns "SHL")
+  'SHL': 'https://upload.wikimedia.org/wikipedia/en/thumb/6/6e/Swedish_Hockey_League_Logo.svg/200px-Swedish_Hockey_League_Logo.svg.png',
+  'Swedish Hockey League': 'https://upload.wikimedia.org/wikipedia/en/thumb/6/6e/Swedish_Hockey_League_Logo.svg/200px-Swedish_Hockey_League_Logo.svg.png',
+  'icehockey_sweden_hockey_league': 'https://upload.wikimedia.org/wikipedia/en/thumb/6/6e/Swedish_Hockey_League_Logo.svg/200px-Swedish_Hockey_League_Logo.svg.png',
+  
+  // HockeyAllsvenskan - Swedish second division (Odds API returns "HockeyAllsvenskan")
+  'HockeyAllsvenskan': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/57/HockeyAllsvenskan_logo.svg/200px-HockeyAllsvenskan_logo.svg.png',
+  'Hockey Allsvenskan': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/57/HockeyAllsvenskan_logo.svg/200px-HockeyAllsvenskan_logo.svg.png',
+  'icehockey_sweden_allsvenskan': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/57/HockeyAllsvenskan_logo.svg/200px-HockeyAllsvenskan_logo.svg.png',
+  
+  // Liiga - Finnish Hockey League (Odds API returns "Liiga")
+  'Liiga': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/07/SM-liiga.svg/200px-SM-liiga.svg.png',
+  'Finnish Liiga': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/07/SM-liiga.svg/200px-SM-liiga.svg.png',
+  'icehockey_liiga': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/07/SM-liiga.svg/200px-SM-liiga.svg.png',
+  
+  // Mestis - Finnish second division (Odds API returns "Mestis")
+  'Mestis': 'https://upload.wikimedia.org/wikipedia/fi/thumb/e/e1/Mestis_logo.svg/200px-Mestis_logo.svg.png',
+  'Finnish Mestis': 'https://upload.wikimedia.org/wikipedia/fi/thumb/e/e1/Mestis_logo.svg/200px-Mestis_logo.svg.png',
+  'icehockey_mestis': 'https://upload.wikimedia.org/wikipedia/fi/thumb/e/e1/Mestis_logo.svg/200px-Mestis_logo.svg.png',
   
   // MLB - All variations
   'MLB': 'https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png',
@@ -1210,72 +1236,88 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'soccer_england_premier_league': 'https://crests.football-data.org/PL.png',
   'England - Premier League': 'https://crests.football-data.org/PL.png',
   
-  // La Liga - All variations
+  // La Liga - All variations (Odds API returns "La Liga - Spain")
   'La Liga': 'https://crests.football-data.org/PD.png',
   'LaLiga': 'https://crests.football-data.org/PD.png',
+  'La Liga - Spain': 'https://crests.football-data.org/PD.png',
   'soccer_spain_la_liga': 'https://crests.football-data.org/PD.png',
   'Spain - La Liga': 'https://crests.football-data.org/PD.png',
   'La Liga Santander': 'https://crests.football-data.org/PD.png',
+  'La Liga 2 - Spain': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5e/LaLiga_Hypermotion_logo.svg/200px-LaLiga_Hypermotion_logo.svg.png',
+  'soccer_spain_segunda_division': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5e/LaLiga_Hypermotion_logo.svg/200px-LaLiga_Hypermotion_logo.svg.png',
   
-  // Serie A - All variations
+  // Serie A - All variations (Odds API returns "Serie A - Italy")
   'Serie A': 'https://crests.football-data.org/SA.png',
+  'Serie A - Italy': 'https://crests.football-data.org/SA.png',
   'soccer_italy_serie_a': 'https://crests.football-data.org/SA.png',
   'Italy - Serie A': 'https://crests.football-data.org/SA.png',
   'Serie A TIM': 'https://crests.football-data.org/SA.png',
+  'Serie B - Italy': 'https://upload.wikimedia.org/wikipedia/en/thumb/6/66/Serie_B_logo.svg/200px-Serie_B_logo.svg.png',
+  'soccer_italy_serie_b': 'https://upload.wikimedia.org/wikipedia/en/thumb/6/66/Serie_B_logo.svg/200px-Serie_B_logo.svg.png',
   
-  // Bundesliga - All variations
+  // Bundesliga - All variations (Odds API returns "Bundesliga - Germany")
   'Bundesliga': 'https://crests.football-data.org/BL1.png',
+  'Bundesliga - Germany': 'https://crests.football-data.org/BL1.png',
   'soccer_germany_bundesliga': 'https://crests.football-data.org/BL1.png',
   'Germany - Bundesliga': 'https://crests.football-data.org/BL1.png',
   '2. Bundesliga': 'https://crests.football-data.org/BL2.png',
   'Bundesliga 2': 'https://crests.football-data.org/BL2.png',
+  'Bundesliga 2 - Germany': 'https://crests.football-data.org/BL2.png',
   'soccer_germany_bundesliga2': 'https://crests.football-data.org/BL2.png',
   
-  // 3. Liga - Germany
+  // 3. Liga - Germany (Odds API returns "3. Liga - Germany")
   '3. Liga': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/3._Liga_logo.svg/200px-3._Liga_logo.svg.png',
   '3. Liga - Germany': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/3._Liga_logo.svg/200px-3._Liga_logo.svg.png',
   'Germany - 3. Liga': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/3._Liga_logo.svg/200px-3._Liga_logo.svg.png',
   'soccer_germany_liga3': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/3._Liga_logo.svg/200px-3._Liga_logo.svg.png',
   
-  // Ligue 1 - All variations
+  // Ligue 1 - All variations (Odds API returns "Ligue 1 - France")
   'Ligue 1': 'https://crests.football-data.org/FL1.png',
+  'Ligue 1 - France': 'https://crests.football-data.org/FL1.png',
   'soccer_france_ligue_one': 'https://crests.football-data.org/FL1.png',
   'France - Ligue 1': 'https://crests.football-data.org/FL1.png',
   'Ligue 1 Uber Eats': 'https://crests.football-data.org/FL1.png',
   
-  // Ligue 2 - France
+  // Ligue 2 - France (Odds API returns "Ligue 2 - France")
   'Ligue 2': 'https://crests.football-data.org/FL2.png',
   'Ligue 2 - France': 'https://crests.football-data.org/FL2.png',
   'France - Ligue 2': 'https://crests.football-data.org/FL2.png',
   'soccer_france_ligue_two': 'https://crests.football-data.org/FL2.png',
   
-  // Eredivisie - Netherlands
+  // Eredivisie - Netherlands (Odds API returns "Dutch Eredivisie")
   'Eredivisie': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Eredivisie_logo_%282024%29.svg/200px-Eredivisie_logo_%282024%29.svg.png',
+  'Dutch Eredivisie': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Eredivisie_logo_%282024%29.svg/200px-Eredivisie_logo_%282024%29.svg.png',
   'soccer_netherlands_eredivisie': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Eredivisie_logo_%282024%29.svg/200px-Eredivisie_logo_%282024%29.svg.png',
   'Netherlands - Eredivisie': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Eredivisie_logo_%282024%29.svg/200px-Eredivisie_logo_%282024%29.svg.png',
   
-  // Primeira Liga - Portugal
+  // Primeira Liga - Portugal (Odds API returns "Primeira Liga - Portugal")
   'Primeira Liga': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Liga_Portugal_logo.png/200px-Liga_Portugal_logo.png',
+  'Primeira Liga - Portugal': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Liga_Portugal_logo.png/200px-Liga_Portugal_logo.png',
   'Liga Portugal': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Liga_Portugal_logo.png/200px-Liga_Portugal_logo.png',
   'soccer_portugal_primeira_liga': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Liga_Portugal_logo.png/200px-Liga_Portugal_logo.png',
   'Portugal - Primeira Liga': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Liga_Portugal_logo.png/200px-Liga_Portugal_logo.png',
   
-  // Scottish Premiership
+  // Scottish Premiership (Odds API returns "Premiership - Scotland")
   'Scottish Premiership': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Scottish_Premiership_logo.svg/200px-Scottish_Premiership_logo.svg.png',
+  'Premiership - Scotland': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Scottish_Premiership_logo.svg/200px-Scottish_Premiership_logo.svg.png',
   'SPFL': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Scottish_Premiership_logo.svg/200px-Scottish_Premiership_logo.svg.png',
   'Scotland - Premiership': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Scottish_Premiership_logo.svg/200px-Scottish_Premiership_logo.svg.png',
+  'soccer_spl': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Scottish_Premiership_logo.svg/200px-Scottish_Premiership_logo.svg.png',
   
-  // Belgian Pro League
+  // Belgian Pro League (Odds API returns "Belgium First Div")
   'Belgian Pro League': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Belgian_Pro_League_logo.svg/200px-Belgian_Pro_League_logo.svg.png',
+  'Belgium First Div': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Belgian_Pro_League_logo.svg/200px-Belgian_Pro_League_logo.svg.png',
   'Jupiler Pro League': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Belgian_Pro_League_logo.svg/200px-Belgian_Pro_League_logo.svg.png',
   'Belgium - First Division A': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Belgian_Pro_League_logo.svg/200px-Belgian_Pro_League_logo.svg.png',
+  'soccer_belgium_first_div': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Belgian_Pro_League_logo.svg/200px-Belgian_Pro_League_logo.svg.png',
   
-  // Turkish Super Lig
+  // Turkish Super Lig (Odds API returns "Turkey Super League")
   'Super Lig': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/38/S%C3%BCper_Lig_logo.svg/200px-S%C3%BCper_Lig_logo.svg.png',
   'Süper Lig': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/38/S%C3%BCper_Lig_logo.svg/200px-S%C3%BCper_Lig_logo.svg.png',
   'Turkey - Super Lig': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/38/S%C3%BCper_Lig_logo.svg/200px-S%C3%BCper_Lig_logo.svg.png',
   'Turkey Super League': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/38/S%C3%BCper_Lig_logo.svg/200px-S%C3%BCper_Lig_logo.svg.png',
   'Turkish Super League': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/38/S%C3%BCper_Lig_logo.svg/200px-S%C3%BCper_Lig_logo.svg.png',
+  'soccer_turkey_super_league': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/38/S%C3%BCper_Lig_logo.svg/200px-S%C3%BCper_Lig_logo.svg.png',
   
   // Liga MX - Mexico
   'Liga MX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Liga_MX_logo.svg/200px-Liga_MX_logo.svg.png',
@@ -1304,9 +1346,61 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'Serie A Brazil': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/42/Campeonato_Brasileiro_S%C3%A9rie_A_logo.png/200px-Campeonato_Brasileiro_S%C3%A9rie_A_logo.png',
   'Brazil - Serie A': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/42/Campeonato_Brasileiro_S%C3%A9rie_A_logo.png/200px-Campeonato_Brasileiro_S%C3%A9rie_A_logo.png',
   
-  // Argentina
+  // Argentina (Odds API returns "Primera División - Argentina")
   'Liga Profesional': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Liga_Profesional_de_F%C3%BAtbol_%28Argentina%29_-_logo.svg/200px-Liga_Profesional_de_F%C3%BAtbol_%28Argentina%29_-_logo.svg.png',
+  'Primera División - Argentina': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Liga_Profesional_de_F%C3%BAtbol_%28Argentina%29_-_logo.svg/200px-Liga_Profesional_de_F%C3%BAtbol_%28Argentina%29_-_logo.svg.png',
   'Argentina - Liga Profesional': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Liga_Profesional_de_F%C3%BAtbol_%28Argentina%29_-_logo.svg/200px-Liga_Profesional_de_F%C3%BAtbol_%28Argentina%29_-_logo.svg.png',
+  'soccer_argentina_primera_division': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Liga_Profesional_de_F%C3%BAtbol_%28Argentina%29_-_logo.svg/200px-Liga_Profesional_de_F%C3%BAtbol_%28Argentina%29_-_logo.svg.png',
+  
+  // English Lower Leagues (Odds API returns "Championship", "League 1", "League 2", "EFL Cup")
+  'Championship': 'https://crests.football-data.org/ELC.png',
+  'EFL Championship': 'https://crests.football-data.org/ELC.png',
+  'soccer_efl_champ': 'https://crests.football-data.org/ELC.png',
+  'England - Championship': 'https://crests.football-data.org/ELC.png',
+  'League 1': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/7c/EFL_League_One_logo.svg/200px-EFL_League_One_logo.svg.png',
+  'EFL League 1': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/7c/EFL_League_One_logo.svg/200px-EFL_League_One_logo.svg.png',
+  'soccer_england_league1': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/7c/EFL_League_One_logo.svg/200px-EFL_League_One_logo.svg.png',
+  'League 2': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2f/EFL_League_Two_logo.svg/200px-EFL_League_Two_logo.svg.png',
+  'EFL League 2': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2f/EFL_League_Two_logo.svg/200px-EFL_League_Two_logo.svg.png',
+  'soccer_england_league2': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2f/EFL_League_Two_logo.svg/200px-EFL_League_Two_logo.svg.png',
+  'EFL Cup': 'https://crests.football-data.org/ELC.png',
+  'soccer_england_efl_cup': 'https://crests.football-data.org/ELC.png',
+  
+  // Denmark (Odds API returns "Denmark Superliga")
+  'Denmark Superliga': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/57/Danish_Superliga_logo.svg/200px-Danish_Superliga_logo.svg.png',
+  'Danish Superliga': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/57/Danish_Superliga_logo.svg/200px-Danish_Superliga_logo.svg.png',
+  'soccer_denmark_superliga': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/57/Danish_Superliga_logo.svg/200px-Danish_Superliga_logo.svg.png',
+  
+  // Poland (Odds API returns "Ekstraklasa - Poland")
+  'Ekstraklasa': 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1f/Ekstraklasa_logo.svg/200px-Ekstraklasa_logo.svg.png',
+  'Ekstraklasa - Poland': 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1f/Ekstraklasa_logo.svg/200px-Ekstraklasa_logo.svg.png',
+  'soccer_poland_ekstraklasa': 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1f/Ekstraklasa_logo.svg/200px-Ekstraklasa_logo.svg.png',
+  
+  // Switzerland (Odds API returns "Swiss Superleague")
+  'Swiss Super League': 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Swiss_Super_League_logo.svg/200px-Swiss_Super_League_logo.svg.png',
+  'Swiss Superleague': 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Swiss_Super_League_logo.svg/200px-Swiss_Super_League_logo.svg.png',
+  'soccer_switzerland_superleague': 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Swiss_Super_League_logo.svg/200px-Swiss_Super_League_logo.svg.png',
+  
+  // Austria (Odds API returns "Austrian Football Bundesliga")
+  'Austrian Bundesliga': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/80/Austrian_Football_Bundesliga_logo.svg/200px-Austrian_Football_Bundesliga_logo.svg.png',
+  'Austrian Football Bundesliga': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/80/Austrian_Football_Bundesliga_logo.svg/200px-Austrian_Football_Bundesliga_logo.svg.png',
+  'soccer_austria_bundesliga': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/80/Austrian_Football_Bundesliga_logo.svg/200px-Austrian_Football_Bundesliga_logo.svg.png',
+  
+  // Greece (Odds API returns "Super League - Greece")
+  'Super League Greece': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Super_League_Greece_logo.svg/200px-Super_League_Greece_logo.svg.png',
+  'Super League - Greece': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Super_League_Greece_logo.svg/200px-Super_League_Greece_logo.svg.png',
+  'soccer_greece_super_league': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Super_League_Greece_logo.svg/200px-Super_League_Greece_logo.svg.png',
+  
+  // Africa Cup of Nations (Odds API returns "Africa Cup of Nations")
+  'Africa Cup of Nations': 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bc/Africa_Cup_of_Nations_logo.svg/200px-Africa_Cup_of_Nations_logo.svg.png',
+  'AFCON': 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bc/Africa_Cup_of_Nations_logo.svg/200px-Africa_Cup_of_Nations_logo.svg.png',
+  'soccer_africa_cup_of_nations': 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bc/Africa_Cup_of_Nations_logo.svg/200px-Africa_Cup_of_Nations_logo.svg.png',
+  
+  // FIFA World Cup (Odds API returns "FIFA World Cup")
+  'FIFA World Cup': 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/FIFA_logo.svg/200px-FIFA_logo.svg.png',
+  'FIFA World Cup Qualifiers - Europe': 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/FIFA_logo.svg/200px-FIFA_logo.svg.png',
+  'soccer_fifa_world_cup': 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/FIFA_logo.svg/200px-FIFA_logo.svg.png',
+  'soccer_fifa_world_cup_qualifiers_europe': 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/FIFA_logo.svg/200px-FIFA_logo.svg.png',
   
   // UEFA Champions League - All variations
   'Champions League': 'https://crests.football-data.org/CL.png',
@@ -1320,48 +1414,20 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'soccer_uefa_europa_league': 'https://crests.football-data.org/EL.png',
   'UEFA EL': 'https://crests.football-data.org/EL.png',
   
-  // UEFA Europa Conference League
+  // UEFA Europa Conference League (Odds API returns "UEFA Europa Conference League")
   'Conference League': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5b/UEFA_Europa_Conference_League_logo.svg/200px-UEFA_Europa_Conference_League_logo.svg.png',
   'UEFA Conference League': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5b/UEFA_Europa_Conference_League_logo.svg/200px-UEFA_Europa_Conference_League_logo.svg.png',
   'UEFA Europa Conference League': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5b/UEFA_Europa_Conference_League_logo.svg/200px-UEFA_Europa_Conference_League_logo.svg.png',
-  
-  // English Cups
-  'FA Cup': 'https://crests.football-data.org/FAC.png',
-  'EFL Cup': 'https://crests.football-data.org/ELC.png',
-  'Carabao Cup': 'https://crests.football-data.org/ELC.png',
-  'League Cup': 'https://crests.football-data.org/ELC.png',
-  'Championship': 'https://crests.football-data.org/ELC.png',
-  'EFL Championship': 'https://crests.football-data.org/ELC.png',
-  'England - Championship': 'https://crests.football-data.org/ELC.png',
-  'England - EFL Cup': 'https://crests.football-data.org/ELC.png',
-  'England - FA Cup': 'https://crests.football-data.org/FAC.png',
-  
-  // Copa del Rey - Spain
-  'Copa del Rey': 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c5/Copa_del_Rey_logo.svg/200px-Copa_del_Rey_logo.svg.png',
-  'Spain - Copa del Rey': 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c5/Copa_del_Rey_logo.svg/200px-Copa_del_Rey_logo.svg.png',
-  
-  // DFB Pokal - Germany
-  'DFB Pokal': 'https://upload.wikimedia.org/wikipedia/en/thumb/c/cf/DFB-Pokal_logo.svg/200px-DFB-Pokal_logo.svg.png',
-  'Germany - DFB Pokal': 'https://upload.wikimedia.org/wikipedia/en/thumb/c/cf/DFB-Pokal_logo.svg/200px-DFB-Pokal_logo.svg.png',
-  
-  // Coppa Italia
-  'Coppa Italia': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/Coppa_Italia_logo.svg/200px-Coppa_Italia_logo.svg.png',
-  'Italy - Coppa Italia': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/Coppa_Italia_logo.svg/200px-Coppa_Italia_logo.svg.png',
-  
-  // Coupe de France
-  'Coupe de France': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Coupe_de_France_logo.svg/200px-Coupe_de_France_logo.svg.png',
-  'France - Coupe de France': 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Coupe_de_France_logo.svg/200px-Coupe_de_France_logo.svg.png',
-  
-  // International
-  'FIFA World Cup': 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/FIFA_logo.svg/200px-FIFA_logo.svg.png',
-  'World Cup': 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/FIFA_logo.svg/200px-FIFA_logo.svg.png',
-  'Euro 2024': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/43/UEFA_Euro_2024_logo.svg/200px-UEFA_Euro_2024_logo.svg.png',
-  'UEFA Euro': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/43/UEFA_Euro_2024_logo.svg/200px-UEFA_Euro_2024_logo.svg.png',
-  'International Friendlies': 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/FIFA_logo.svg/200px-FIFA_logo.svg.png',
+  'soccer_uefa_europa_conference_league': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5b/UEFA_Europa_Conference_League_logo.svg/200px-UEFA_Europa_Conference_League_logo.svg.png',
   
   // ============================================
-  // BASKETBALL - EUROPE
+  // BASKETBALL - AUSTRALIA / EUROPE
   // ============================================
+  
+  // NBL - Australian Basketball (Odds API returns "NBL")
+  'NBL': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5c/NBL_logo.svg/200px-NBL_logo.svg.png',
+  'Australian NBL': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5c/NBL_logo.svg/200px-NBL_logo.svg.png',
+  'basketball_nbl': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5c/NBL_logo.svg/200px-NBL_logo.svg.png',
   
   // EuroLeague
   'EuroLeague': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a0/Euroleague_Basketball_logo.svg/200px-Euroleague_Basketball_logo.svg.png',
@@ -1389,13 +1455,17 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'tennis_atp_us_open': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2d/US_Open_%28tennis%29_logo.svg/200px-US_Open_%28tennis%29_logo.svg.png',
   
   // ============================================
-  // MMA/UFC
+  // MMA/UFC/BOXING
   // ============================================
   
   'UFC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/200px-UFC_Logo.svg.png',
   'MMA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/200px-UFC_Logo.svg.png',
   'UFC/MMA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/200px-UFC_Logo.svg.png',
   'mma_mixed_martial_arts': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UFC_Logo.svg/200px-UFC_Logo.svg.png',
+  
+  // Boxing (Odds API returns "Boxing")
+  'Boxing': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Boxing_pictogram.svg/200px-Boxing_pictogram.svg.png',
+  'boxing_boxing': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Boxing_pictogram.svg/200px-Boxing_pictogram.svg.png',
   
   // ============================================
   // GOLF
@@ -1407,20 +1477,59 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'Masters': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9e/Masters_Tournament_logo.svg/200px-Masters_Tournament_logo.svg.png',
   'The Masters': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9e/Masters_Tournament_logo.svg/200px-Masters_Tournament_logo.svg.png',
   
-  // ============================================
-  // RUGBY
-  // ============================================
+  'Masters Tournament Winner': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9e/Masters_Tournament_logo.svg/200px-Masters_Tournament_logo.svg.png',
+  'PGA Championship Winner': 'https://upload.wikimedia.org/wikipedia/en/thumb/e/ed/PGA_Championship_Logo.svg/200px-PGA_Championship_Logo.svg.png',
+  'The Open Winner': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Open_Championship_logo.svg/200px-The_Open_Championship_logo.svg.png',
+  'US Open Winner': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2d/US_Open_%28tennis%29_logo.svg/200px-US_Open_%28tennis%29_logo.svg.png',
+  'golf_masters_tournament_winner': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9e/Masters_Tournament_logo.svg/200px-Masters_Tournament_logo.svg.png',
+  'golf_pga_championship_winner': 'https://upload.wikimedia.org/wikipedia/en/thumb/e/ed/PGA_Championship_Logo.svg/200px-PGA_Championship_Logo.svg.png',
+  'golf_the_open_championship_winner': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Open_Championship_logo.svg/200px-The_Open_Championship_logo.svg.png',
+  'golf_us_open_winner': 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2d/US_Open_%28tennis%29_logo.svg/200px-US_Open_%28tennis%29_logo.svg.png',
   
-  'Six Nations': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/Six_Nations_Championship_logo.svg/200px-Six_Nations_Championship_logo.svg.png',
-  'rugby_union_six_nations': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/Six_Nations_Championship_logo.svg/200px-Six_Nations_Championship_logo.svg.png',
-  
   // ============================================
-  // CRICKET
+  // CRICKET (Odds API returns "Big Bash", "International Twenty20", "Test Matches")
   // ============================================
   
   'IPL': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/200px-Indian_Premier_League_Official_Logo.svg.png',
   'Indian Premier League': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/200px-Indian_Premier_League_Official_Logo.svg.png',
   'cricket_ipl': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/200px-Indian_Premier_League_Official_Logo.svg.png',
+  
+  // Big Bash - Australian T20 (Odds API returns "Big Bash")
+  'Big Bash': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/ac/Big_Bash_League_logo.svg/200px-Big_Bash_League_logo.svg.png',
+  'Big Bash League': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/ac/Big_Bash_League_logo.svg/200px-Big_Bash_League_logo.svg.png',
+  'cricket_big_bash': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/ac/Big_Bash_League_logo.svg/200px-Big_Bash_League_logo.svg.png',
+  
+  // International Cricket (Odds API returns "International Twenty20", "Test Matches")
+  'International Twenty20': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/78/International_Cricket_Council_%28logo%29.svg/200px-International_Cricket_Council_%28logo%29.svg.png',
+  'cricket_international_t20': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/78/International_Cricket_Council_%28logo%29.svg/200px-International_Cricket_Council_%28logo%29.svg.png',
+  'Test Matches': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/78/International_Cricket_Council_%28logo%29.svg/200px-International_Cricket_Council_%28logo%29.svg.png',
+  'cricket_test_match': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/78/International_Cricket_Council_%28logo%29.svg/200px-International_Cricket_Council_%28logo%29.svg.png',
+  
+  // ============================================
+  // RUGBY (Odds API returns "NRL", "Six Nations", "State of Origin")
+  // ============================================
+  
+  // NRL - Rugby League
+  'NRL': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/43/National_Rugby_League_logo.svg/200px-National_Rugby_League_logo.svg.png',
+  'National Rugby League': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/43/National_Rugby_League_logo.svg/200px-National_Rugby_League_logo.svg.png',
+  'rugbyleague_nrl': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/43/National_Rugby_League_logo.svg/200px-National_Rugby_League_logo.svg.png',
+  
+  // State of Origin
+  'State of Origin': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/43/National_Rugby_League_logo.svg/200px-National_Rugby_League_logo.svg.png',
+  'rugbyleague_nrl_state_of_origin': 'https://upload.wikimedia.org/wikipedia/en/thumb/4/43/National_Rugby_League_logo.svg/200px-National_Rugby_League_logo.svg.png',
+  
+  // Six Nations - Rugby Union
+  'Six Nations': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/Six_Nations_Championship_logo.svg/200px-Six_Nations_Championship_logo.svg.png',
+  'rugby_union_six_nations': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/Six_Nations_Championship_logo.svg/200px-Six_Nations_Championship_logo.svg.png',
+  'rugbyunion_six_nations': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/Six_Nations_Championship_logo.svg/200px-Six_Nations_Championship_logo.svg.png',
+  
+  // ============================================
+  // HANDBALL (Odds API returns "Handball-Bundesliga")
+  // ============================================
+  
+  'Handball-Bundesliga': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8d/Handball-Bundesliga_logo.svg/200px-Handball-Bundesliga_logo.svg.png',
+  'German HBL': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8d/Handball-Bundesliga_logo.svg/200px-Handball-Bundesliga_logo.svg.png',
+  'handball_germany_bundesliga': 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8d/Handball-Bundesliga_logo.svg/200px-Handball-Bundesliga_logo.svg.png',
   
   // ============================================
   // AUSTRALIAN RULES
