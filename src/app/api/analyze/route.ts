@@ -12,6 +12,7 @@
  * 
  * REAL DATA INTEGRATION:
  * - Fetches real team form, H2H, and stats from API-Sports
+ * - Real-time intelligence from Perplexity (injuries, lineups, news)
  * - Supports: Soccer, Basketball (NBA), Hockey (NHL), and more
  * 
  * CACHING:
@@ -71,6 +72,7 @@ import { prisma } from '@/lib/prisma';
 import { getMatchContext, MatchContext } from '@/lib/match-context';
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rateLimit';
 import { generatePreMatchInsights } from '@/lib/utils/preMatchInsights';
+import { getPerplexityClient, type ResearchResult } from '@/lib/perplexity';
 import * as Sentry from '@sentry/nextjs';
 
 // ============================================
@@ -523,6 +525,37 @@ export async function POST(request: NextRequest) {
     }
 
     // ========================================
+    // FETCH REAL-TIME INTELLIGENCE (Perplexity)
+    // ========================================
+    let realTimeIntel: ResearchResult | null = null;
+    
+    const perplexity = getPerplexityClient();
+    if (perplexity.isConfigured()) {
+      try {
+        console.log('[Perplexity] Fetching real-time intelligence...');
+        realTimeIntel = await perplexity.quickResearch(
+          normalizedRequest.matchData.homeTeam,
+          normalizedRequest.matchData.awayTeam,
+          normalizedRequest.matchData.league
+        );
+        
+        if (realTimeIntel.success) {
+          console.log('[Perplexity] Real-time intel retrieved:', {
+            contentLength: realTimeIntel.content.length,
+            citations: realTimeIntel.citations.length,
+          });
+        } else {
+          console.log('[Perplexity] No intel available:', realTimeIntel.error);
+        }
+      } catch (perplexityError) {
+        console.warn('[Perplexity] Research failed, continuing without:', perplexityError);
+        // Continue without real-time intel - not critical
+      }
+    } else {
+      console.log('[Perplexity] Not configured, skipping real-time intel');
+    }
+
+    // ========================================
     // CHECK CACHE FOR EXISTING ANALYSIS
     // ========================================
     const oddsHash = hashOdds(normalizedRequest.matchData.odds || {});
@@ -549,7 +582,10 @@ export async function POST(request: NextRequest) {
       !cachedAnalysis.momentumAndForm?.awayForm?.length
     );
     
-    if (cachedAnalysis && (!cachedMissingFormData || !hasNewFormData)) {
+    // Force refresh if we have real-time intel (it's time-sensitive)
+    const hasRealTimeIntel = realTimeIntel?.success && realTimeIntel?.content;
+    
+    if (cachedAnalysis && (!cachedMissingFormData || !hasNewFormData) && !hasRealTimeIntel) {
       console.log('[Cache] Using cached analysis');
       console.log('[Cache] Cached form data status:', {
         hasHomeForm: !!cachedAnalysis.momentumAndForm?.homeForm?.length,
@@ -585,14 +621,18 @@ export async function POST(request: NextRequest) {
       if (cachedMissingFormData && hasNewFormData) {
         console.log('[Cache] Cache exists but missing form data - regenerating with new data');
       }
+      if (hasRealTimeIntel) {
+        console.log('[Cache] Fresh analysis with real-time intel');
+      }
       
-      // Call OpenAI API with sport-aware prompt, enriched data, and match context
+      // Call OpenAI API with sport-aware prompt, enriched data, match context, and real-time intel
       console.log('[OpenAI] Generating fresh analysis...');
-      analysis = await callOpenAI(openai, normalizedRequest, enrichedData, matchContext);
+      analysis = await callOpenAI(openai, normalizedRequest, enrichedData, matchContext, realTimeIntel);
       
-      // Cache the analysis for future requests
-      await cacheSet(cacheKey, analysis, CACHE_TTL.ANALYSIS);
-      console.log('[Cache] Analysis cached for 1 hour');
+      // Cache the analysis for future requests (shorter TTL if real-time intel used)
+      const cacheTTL = hasRealTimeIntel ? 1800 : CACHE_TTL.ANALYSIS; // 30 min if real-time, else 1 hour
+      await cacheSet(cacheKey, analysis, cacheTTL);
+      console.log(`[Cache] Analysis cached for ${hasRealTimeIntel ? '30 min (real-time)' : '1 hour'}`);
     }
     
     // ========================================
@@ -1000,11 +1040,34 @@ function buildInjuryContext(matchContext: MatchContext | null): InjuryContext | 
   };
 }
 
+/**
+ * Format real-time intelligence from Perplexity for the prompt
+ */
+function formatRealTimeIntelForPrompt(intel: ResearchResult): string {
+  if (!intel.success || !intel.content) {
+    return '';
+  }
+
+  return `
+
+=== REAL-TIME INTELLIGENCE (LIVE DATA - ${intel.timestamp}) ===
+The following is LIVE information from web search. Use this to inform your analysis.
+This data is fresh and should take precedence over any cached or historical assumptions.
+
+${intel.content}
+
+${intel.citations.length > 0 ? `Sources: ${intel.citations.slice(0, 3).join(', ')}` : ''}
+
+IMPORTANT: Incorporate this live intelligence into your analysis. If there are injury updates, lineup changes, or breaking news, factor them into your probability estimates and risk assessment.
+`;
+}
+
 async function callOpenAI(
   openai: OpenAI,
   request: AnalyzeRequest,
   enrichedData?: MultiSportEnrichedData | null,
-  matchContext?: MatchContext | null
+  matchContext?: MatchContext | null,
+  realTimeIntel?: ResearchResult | null
 ): Promise<AnalyzeResponse> {
   // Build base user prompt
   let userPrompt = buildUserPrompt(
@@ -1026,6 +1089,15 @@ async function callOpenAI(
     const contextSection = formatMatchContextForPrompt(matchContext);
     if (contextSection) {
       userPrompt += contextSection;
+    }
+  }
+
+  // Append real-time intelligence from Perplexity
+  if (realTimeIntel?.success && realTimeIntel?.content) {
+    const intelSection = formatRealTimeIntelForPrompt(realTimeIntel);
+    if (intelSection) {
+      userPrompt += intelSection;
+      console.log('[OpenAI] Added real-time intel to prompt');
     }
   }
 
