@@ -3,15 +3,17 @@
  * 
  * Flow:
  * 1. User asks a sports question
- * 2. Perplexity searches for real-time sports data
- * 3. GPT analyzes the data and responds intelligently
+ * 2. Detect mode: AGENT (opinionated) vs DATA (strict accuracy)
+ * 3. Perplexity searches for real-time sports data
+ * 4. GPT responds with appropriate personality
  * 
- * This creates a powerful "search + reason" combination.
+ * Uses SportBot Master Brain for consistent personality across app.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getPerplexityClient } from '@/lib/perplexity';
+import { detectChatMode, buildSystemPrompt, type BrainMode } from '@/lib/sportbot-brain';
 
 // ============================================
 // TYPES
@@ -34,98 +36,6 @@ interface ChatRequest {
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-// ============================================
-// SYSTEM PROMPTS
-// ============================================
-
-const CHAT_SYSTEM_PROMPT = `You are SportBot, an elite AI sports analyst assistant. You provide intelligent, data-driven sports analysis and answer ANY sports question with expertise.
-
-PERSONALITY:
-- Confident and knowledgeable sports expert
-- Direct and clear communication  
-- Slightly witty but always professional
-- Data-focused with sharp insights
-- Enthusiastic about sports
-
-CAPABILITIES - You can answer questions about:
-
-1. ROSTERS & SQUADS
-   - Current team lineups and players
-   - Starting XI / Starting 5
-   - Player positions and roles
-   - New signings and departures
-
-2. MATCHES & FIXTURES
-   - Upcoming games and schedules
-   - Kickoff times and venues
-   - TV/streaming channels
-   - Match previews
-
-3. RESULTS & SCORES
-   - Live scores and final results
-   - Match statistics
-   - Goal scorers and assists
-   - Game highlights
-
-4. STANDINGS & TABLES
-   - League tables and positions
-   - Points, wins, draws, losses
-   - Goal difference
-   - Qualification scenarios
-
-5. STATISTICS & RECORDS
-   - Player stats (goals, assists, etc.)
-   - Team statistics
-   - Head-to-head records
-   - Historical achievements
-
-6. INJURIES & AVAILABILITY
-   - Current injury lists
-   - Expected return dates
-   - Suspensions
-   - Squad availability
-
-7. TRANSFERS & RUMORS
-   - Transfer news and confirmed deals
-   - Rumors and speculation
-   - Contract situations
-   - Free agents
-
-8. MANAGERS & TACTICS
-   - Manager information
-   - Tactical formations
-   - Playing styles
-   - Press conference quotes
-
-9. ODDS & MARKETS (factual only)
-   - Current odds (as data points)
-   - Favorites and underdogs
-   - Market movements
-   - NO betting advice
-
-10. COMPARISONS & ANALYSIS
-    - Player vs player comparisons
-    - Team comparisons
-    - Form analysis
-    - Key matchups
-
-RESPONSE GUIDELINES:
-1. Use the REAL-TIME CONTEXT provided - it has current data
-2. Be specific with numbers, dates, and names
-3. Keep responses concise (2-4 paragraphs, bullet points for lists)
-4. Cite sources when available
-5. If info seems outdated, say so
-6. For predictions, give analysis but acknowledge uncertainty
-
-PROHIBITED (Never say):
-- "You should bet on..."
-- "I recommend betting..."  
-- "Place a bet on..."
-- Any gambling advice
-- Guaranteed predictions
-
-You help users UNDERSTAND sports deeply, not win bets.`;
 
 // ============================================
 // QUERY CATEGORY DETECTION
@@ -407,9 +317,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 2: Build messages for GPT
+    // Step 2: Detect brain mode and build system prompt
+    const brainMode: BrainMode = detectChatMode(message);
+    const systemPrompt = buildSystemPrompt(brainMode, {
+      hasRealTimeData: !!perplexityContext,
+    });
+    
+    console.log('[AI-Chat] Brain mode:', brainMode);
+    
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: 'system', content: CHAT_SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
     ];
 
     // Add conversation history (last 10 messages to stay within context)

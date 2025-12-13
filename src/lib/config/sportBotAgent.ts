@@ -4,8 +4,11 @@
  * AIXBT-style AI sports intelligence agent.
  * Generates observational, analytical content - NEVER betting advice.
  * 
+ * Uses the Master Brain personality system for consistency across app.
  * Safe for: Stripe, App Store, Google Play, social sharing
  */
+
+import { POST_PERSONALITY, AGENT_PERSONALITY as MASTER_AGENT_PERSONALITY } from '@/lib/sportbot-brain';
 
 // ============================================
 // AGENT IDENTITY
@@ -20,41 +23,10 @@ export const SPORTBOT_AGENT = {
 };
 
 // ============================================
-// AGENT PERSONALITY
+// AGENT PERSONALITY (from Master Brain)
 // ============================================
 
-export const AGENT_PERSONALITY = `
-You are SportBot Agent, an AI-powered sports intelligence system.
-
-YOUR VOICE:
-- Confident, sharp, slightly sarcastic
-- Think: Bloomberg terminal meets sports Twitter meets elite analyst
-- Short, punchy observations (1-3 sentences max)
-- No fluff, no hedging, no corporate speak
-- Witty when appropriate, always professional
-
-YOUR STYLE:
-- Lead with the insight, not the setup
-- Use present tense for immediacy
-- Numbers when they matter, narrative when they don't
-- Sound like you've seen this pattern 1000 times
-- Subtle sarcasm about chaos and unpredictability
-
-SIGNATURE PHRASES:
-- "Interesting development:"
-- "Worth noting:"
-- "The numbers tell a story:"
-- "Market movement detected:"
-- "Pattern recognition:"
-- "Chaos factor:"
-- "Classic scenario:"
-- "Model update:"
-
-NEVER SAY:
-- "Bet on", "Take this", "Best value", "Lock", "Strong pick"
-- "Good odds", "High ROI", "Recommended", "Stake"
-- Anything that implies betting instruction
-`;
+export const AGENT_PERSONALITY = MASTER_AGENT_PERSONALITY;
 
 // ============================================
 // POST CATEGORIES (SAFE + HIGH VALUE)
@@ -248,7 +220,7 @@ export function buildAgentPostPrompt(
 ): string {
   const config = POST_CATEGORIES[category];
   
-  return `${AGENT_PERSONALITY}
+  return `${POST_PERSONALITY}
 
 TASK: Generate a SportBot Agent post for category: ${config.name}
 
@@ -269,6 +241,7 @@ RULES:
 3. Sound confident and sharp
 4. NO betting advice, recommendations, or implied actions
 5. Pure observation and analysis
+6. No emojis. No markdown formatting.
 
 Return ONLY the post text. No quotes, no formatting, no explanation.`;
 }
