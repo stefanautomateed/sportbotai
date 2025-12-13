@@ -6,7 +6,7 @@
 
 import { Metadata } from 'next';
 import PricingCards from '@/components/PricingCards';
-import { META, getFAQSchema } from '@/lib/seo';
+import { META, SITE_CONFIG, getFAQSchema, getPricingSchema } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: META.pricing.title,
@@ -15,6 +15,18 @@ export const metadata: Metadata = {
   openGraph: {
     title: META.pricing.title,
     description: META.pricing.description,
+    url: `${SITE_CONFIG.url}/pricing`,
+    siteName: SITE_CONFIG.name,
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: META.pricing.title,
+    description: META.pricing.description,
+    site: SITE_CONFIG.twitter,
+  },
+  alternates: {
+    canonical: `${SITE_CONFIG.url}/pricing`,
   },
 };
 
@@ -40,6 +52,7 @@ const pricingFAQs = [
 
 export default function PricingPage() {
   const faqSchema = getFAQSchema(pricingFAQs);
+  const pricingSchema = getPricingSchema();
 
   return (
     <div className="bg-bg min-h-screen">
@@ -47,6 +60,11 @@ export default function PricingPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      {/* Product/Pricing Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingSchema) }}
       />
       {/* Header section */}
       <section className="bg-bg-card border-b border-divider text-white py-16">

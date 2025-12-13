@@ -7,20 +7,51 @@
 
 import { Metadata } from 'next';
 import AISportsDesk from '@/components/AISportsDesk';
+import { META, SITE_CONFIG, getAIDeskSchema } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'AI Sports Desk | SportBot AI',
-  description: 'Real-time sports intelligence feed. Live injury updates, lineup news, market movements, and AI-powered match insights.',
+  title: META.aiDesk.title,
+  description: META.aiDesk.description,
+  keywords: META.aiDesk.keywords,
   openGraph: {
-    title: 'AI Sports Desk | SportBot AI',
-    description: 'Real-time sports intelligence feed powered by AI',
+    title: META.aiDesk.title,
+    description: META.aiDesk.description,
+    url: `${SITE_CONFIG.url}/ai-desk`,
+    siteName: SITE_CONFIG.name,
+    type: 'website',
+    images: [
+      {
+        url: `${SITE_CONFIG.url}/og-ai-desk.png`,
+        width: 1200,
+        height: 630,
+        alt: 'AI Sports Desk - Real-Time Intelligence Feed',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: META.aiDesk.title,
+    description: META.aiDesk.description,
+    site: SITE_CONFIG.twitter,
+  },
+  alternates: {
+    canonical: `${SITE_CONFIG.url}/ai-desk`,
   },
 };
 
 export default function AIDeskPage() {
+  const jsonLd = getAIDeskSchema();
+  
   return (
-    <main className="min-h-screen bg-bg">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <>
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      
+      <main className="min-h-screen bg-bg">
+        <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -72,5 +103,6 @@ export default function AIDeskPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

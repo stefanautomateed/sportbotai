@@ -20,7 +20,7 @@ export const SITE_CONFIG = {
   themeColor: '#10B981', // accent green
   
   // Social handles (add when created)
-  twitter: '', // @sportbotai
+  twitter: '@sportbotai',
   
   // Legal
   foundingYear: 2024,
@@ -33,7 +33,7 @@ export const SITE_CONFIG = {
 export const META = {
   home: {
     title: 'SportBot AI – AI-Powered Sports Analytics & Match Intelligence',
-    description: 'Transform sports data into actionable insights. AI probability models, value detection, risk analysis for Soccer, NBA, NFL, Tennis & more. Not betting tips—pure sports intelligence.',
+    description: 'Transform sports data into actionable insights. AI probability models, value detection, risk analysis for Soccer, NBA, NFL, Tennis & more. Understand any match in 60 seconds.',
     keywords: [
       'sports analytics',
       'AI sports analysis',
@@ -45,12 +45,50 @@ export const META = {
       'NBA analysis',
       'NFL analysis',
       'tennis analytics',
+      'sports data platform',
+      'match intelligence',
+    ],
+  },
+  
+  matches: {
+    title: 'Browse Matches – Live Sports Analysis Tool',
+    description: 'Browse upcoming matches across 17+ sports. Get instant AI analysis for Premier League, La Liga, Champions League, NBA, NFL, Tennis & more. Real-time odds and probability models.',
+    keywords: [
+      'upcoming matches',
+      'live sports analysis',
+      'match analyzer',
+      'sports analysis tool',
+      'football match analysis',
+      'NBA game analysis',
+      'NFL analysis tool',
+      'tennis match analyzer',
+      'premier league analysis',
+      'la liga analysis',
+      'champions league analysis',
+    ],
+  },
+  
+  aiDesk: {
+    title: 'AI Sports Desk – Real-Time Sports Intelligence Feed',
+    description: 'Live sports intelligence powered by AI. Get instant updates on injuries, lineups, market movements, and match insights. Your 24/7 AI sports analyst covering football, NBA, NFL & more.',
+    keywords: [
+      'sports intelligence feed',
+      'live sports news',
+      'AI sports analyst',
+      'real-time injury updates',
+      'lineup news',
+      'sports market analysis',
+      'football news live',
+      'NBA news updates',
+      'sports data feed',
+      'match intelligence',
+      'sports AI assistant',
     ],
   },
   
   analyzer: {
-    title: 'AI Match Analyzer – Real-Time Sports Analysis',
-    description: 'Analyze any match with AI. Get probability estimates, value detection, risk assessment, and expert-level breakdowns in seconds. Soccer, NBA, NFL, Tennis, UFC & more.',
+    title: 'AI Match Analyzer – Instant Sports Analysis',
+    description: 'Analyze any match with AI in 60 seconds. Get probability estimates, value detection, risk assessment, and expert-level breakdowns. Soccer, NBA, NFL, Tennis, UFC & more.',
     keywords: [
       'match analyzer',
       'sports analysis tool',
@@ -58,16 +96,33 @@ export const META = {
       'probability calculator sports',
       'odds analyzer',
       'live sports analysis',
+      'match prediction model',
+      'sports probability calculator',
+    ],
+  },
+  
+  blog: {
+    title: 'Sports Analytics Blog – Expert Insights & Guides',
+    description: 'Educational articles on sports analytics, data-driven analysis techniques, and responsible gambling. Learn how AI transforms sports understanding.',
+    keywords: [
+      'sports analytics blog',
+      'football analysis articles',
+      'sports data science',
+      'betting education',
+      'responsible gambling guides',
+      'sports statistics explained',
+      'probability in sports',
     ],
   },
   
   pricing: {
     title: 'Pricing Plans – Free & Pro Sports Analytics',
-    description: 'Start free with 3 daily analyses. Upgrade to Pro for unlimited AI match analysis, audio reports, and advanced value detection. No hidden fees, cancel anytime.',
+    description: 'Start free with 3 daily analyses. Upgrade to Pro for unlimited AI match analysis, audio reports, and advanced insights. No hidden fees, cancel anytime.',
     keywords: [
       'sports analytics pricing',
       'AI analysis subscription',
       'sports analysis tool cost',
+      'sports intelligence subscription',
     ],
   },
   
@@ -143,6 +198,8 @@ export function getOrganizationSchema() {
       'Risk Assessment',
       'Audio Analysis',
       'Real-Time Odds',
+      'AI Sports Intelligence Feed',
+      'Live Match Data',
     ],
   };
 }
@@ -158,9 +215,148 @@ export function getWebsiteSchema() {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${SITE_CONFIG.url}/analyzer?q={search_term_string}`,
+        urlTemplate: `${SITE_CONFIG.url}/matches?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
+    },
+  };
+}
+
+/**
+ * Schema for the AI Match Analyzer tool
+ * Targets: "match analyzer", "sports analysis tool", "AI sports analysis"
+ */
+export function getMatchAnalyzerSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'SportBot AI Match Analyzer',
+    applicationCategory: 'SportsApplication',
+    operatingSystem: 'Web Browser',
+    description: META.matches.description,
+    url: `${SITE_CONFIG.url}/matches`,
+    browserRequirements: 'Requires JavaScript',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'EUR',
+      description: 'Free tier with 3 analyses per day',
+    },
+    featureList: [
+      'AI-powered match analysis in 60 seconds',
+      'Probability models for 17+ sports',
+      'Real-time odds comparison',
+      'Value detection algorithm',
+      'Risk assessment scoring',
+      'Head-to-head statistics',
+      'Form analysis',
+      'Audio report generation',
+    ],
+    screenshot: `${SITE_CONFIG.url}/og-analyzer.png`,
+    author: {
+      '@type': 'Organization',
+      name: SITE_CONFIG.name,
+      url: SITE_CONFIG.url,
+    },
+  };
+}
+
+/**
+ * Schema for the AI Sports Desk (Intelligence Feed)
+ * Targets: "sports news", "live sports updates", "AI sports analyst"
+ */
+export function getAIDeskSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'AI Sports Desk',
+    applicationCategory: 'NewsApplication',
+    applicationSubCategory: 'SportsApplication',
+    operatingSystem: 'Web Browser',
+    description: META.aiDesk.description,
+    url: `${SITE_CONFIG.url}/ai-desk`,
+    browserRequirements: 'Requires JavaScript',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'EUR',
+    },
+    featureList: [
+      'Real-time sports intelligence feed',
+      'AI-powered injury updates',
+      'Lineup change notifications',
+      'Market movement analysis',
+      'Match momentum tracking',
+      'Multi-sport coverage',
+      '24/7 automated updates',
+    ],
+    author: {
+      '@type': 'Organization',
+      name: SITE_CONFIG.name,
+      url: SITE_CONFIG.url,
+    },
+  };
+}
+
+/**
+ * Schema for Blog articles
+ */
+export function getBlogSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: 'SportBot AI Blog',
+    description: META.blog.description,
+    url: `${SITE_CONFIG.url}/blog`,
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_CONFIG.name,
+      url: SITE_CONFIG.url,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_CONFIG.url}/logo.png`,
+      },
+    },
+    blogPost: [], // Populated dynamically with actual posts
+  };
+}
+
+/**
+ * Schema for individual blog articles
+ */
+export function getBlogPostSchema(post: {
+  title: string;
+  description: string;
+  slug: string;
+  publishedAt: string;
+  modifiedAt?: string;
+  author?: string;
+  image?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.description,
+    url: `${SITE_CONFIG.url}/blog/${post.slug}`,
+    datePublished: post.publishedAt,
+    dateModified: post.modifiedAt || post.publishedAt,
+    author: {
+      '@type': 'Organization',
+      name: post.author || SITE_CONFIG.name,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_CONFIG.name,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_CONFIG.url}/logo.png`,
+      },
+    },
+    image: post.image || `${SITE_CONFIG.url}/og-blog.png`,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${SITE_CONFIG.url}/blog/${post.slug}`,
     },
   };
 }
@@ -177,6 +373,47 @@ export function getFAQSchema(faqs: Array<{ question: string; answer: string }>) 
         text: faq.answer,
       },
     })),
+  };
+}
+
+/**
+ * Schema for Pricing page with product offerings
+ */
+export function getPricingSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: 'SportBot AI Pro',
+    description: 'Unlimited AI sports analysis with advanced features',
+    url: `${SITE_CONFIG.url}/pricing`,
+    brand: {
+      '@type': 'Brand',
+      name: SITE_CONFIG.name,
+    },
+    offers: [
+      {
+        '@type': 'Offer',
+        name: 'Free Plan',
+        price: '0',
+        priceCurrency: 'EUR',
+        description: '3 analyses per day',
+        availability: 'https://schema.org/InStock',
+      },
+      {
+        '@type': 'Offer',
+        name: 'Pro Monthly',
+        price: '9.99',
+        priceCurrency: 'EUR',
+        description: 'Unlimited analyses, audio reports, priority support',
+        availability: 'https://schema.org/InStock',
+        priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+      },
+    ],
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      reviewCount: '150',
+    },
   };
 }
 

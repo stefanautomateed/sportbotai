@@ -7,15 +7,36 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: [
+          '/',
+          '/matches',
+          '/ai-desk',
+          '/blog',
+          '/pricing',
+          '/contact',
+          '/terms',
+          '/privacy',
+          '/responsible-gambling',
+        ],
         disallow: [
           '/api/',
           '/admin/',
           '/account/',
           '/history/',
+          '/my-teams/',
+          '/login',
+          '/register',
+          '/match/', // Individual match pages (dynamic, not for indexing)
         ],
+      },
+      // Be nice to crawlers - allow specific bots faster crawl
+      {
+        userAgent: 'Googlebot',
+        allow: '/',
+        disallow: ['/api/', '/admin/', '/account/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl,
   };
 }

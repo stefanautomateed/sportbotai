@@ -13,10 +13,35 @@ import Features from '@/components/Features';
 import PricingTeaser from '@/components/PricingTeaser';
 import ResponsibleGamblingBlock from '@/components/ResponsibleGamblingBlock';
 import { StatsStrip, TestimonialsSection, TrustBadges } from '@/components/SocialProof';
+import { getOrganizationSchema, getWebsiteSchema, getMatchAnalyzerSchema, getAIDeskSchema } from '@/lib/seo';
 
 export default function HomePage() {
+  // Structured data for rich search results
+  const organizationSchema = getOrganizationSchema();
+  const websiteSchema = getWebsiteSchema();
+  const analyzerSchema = getMatchAnalyzerSchema();
+  const aiDeskSchema = getAIDeskSchema();
+  
   return (
     <>
+      {/* JSON-LD Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(analyzerSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aiDeskSchema) }}
+      />
+      
       {/* Hero section - main visual component */}
       <Hero />
 

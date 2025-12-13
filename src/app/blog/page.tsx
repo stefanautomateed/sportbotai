@@ -5,14 +5,35 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { BLOG_CATEGORIES } from '@/lib/blog';
+import { META, SITE_CONFIG, getBlogSchema } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Sports Analytics Blog | SportBot AI',
-  description: 'Educational articles about sports analytics, betting strategies, probability analysis, and responsible gambling. Learn data-driven approaches to sports analysis.',
+  title: META.blog.title,
+  description: META.blog.description,
+  keywords: META.blog.keywords,
   openGraph: {
-    title: 'Sports Analytics Blog | SportBot AI',
-    description: 'Educational articles about sports analytics, betting strategies, and responsible gambling.',
+    title: META.blog.title,
+    description: META.blog.description,
+    url: `${SITE_CONFIG.url}/blog`,
+    siteName: SITE_CONFIG.name,
     type: 'website',
+    images: [
+      {
+        url: `${SITE_CONFIG.url}/og-blog.png`,
+        width: 1200,
+        height: 630,
+        alt: 'SportBot AI Blog - Sports Analytics Insights',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: META.blog.title,
+    description: META.blog.description,
+    site: SITE_CONFIG.twitter,
+  },
+  alternates: {
+    canonical: `${SITE_CONFIG.url}/blog`,
   },
 };
 
