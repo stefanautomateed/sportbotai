@@ -804,22 +804,20 @@ export async function getTeamTopScorer(teamId: number, leagueId?: number): Promi
 
   const season = getCurrentSeason();
   
-  // PRIORITY 1: League top scorers (most accurate goal data)
-  // Trust this data as it shows actual season statistics
+  // PRIORITY 1: League top scorers (most accurate goal data for top teams)
   if (leagueId) {
     const topScorersResponse = await apiRequest<any>(`/players/topscorers?league=${leagueId}&season=${season}`);
     if (topScorersResponse?.response) {
-      // Find a player whose ONLY/PRIMARY team is our team (avoid loan/transfer confusion)
+      // Find a player whose ONLY/PRIMARY team is our team
       const teamPlayer = topScorersResponse.response.find((p: any) => {
         const stats = p.statistics || [];
-        // Check if player's primary (first) stats entry is for our team
         const primaryTeam = stats[0]?.team?.id;
         if (primaryTeam === teamId && stats[0]?.goals?.total > 0) {
           return true;
         }
-        // Also check if they have substantial goals for this team specifically
+        // Also check for substantial goals for this team specifically
         const teamStats = stats.find((s: any) => s.team?.id === teamId);
-        return teamStats && teamStats.goals?.total >= 5; // Minimum threshold to avoid noise
+        return teamStats && teamStats.goals?.total >= 3; // Lower threshold
       });
       
       if (teamPlayer) {
@@ -841,7 +839,40 @@ export async function getTeamTopScorer(teamId: number, leagueId?: number): Promi
     }
   }
   
-  // PRIORITY 2: Get current squad and return best attacker (no stats, but reasonably accurate roster)
+  // PRIORITY 2: Query team's player stats directly (catches players not in top scorers list)
+  const playersResponse = await apiRequest<any>(`/players?team=${teamId}&season=${season}&page=1`);
+  if (playersResponse?.response?.length > 0) {
+    // Find player with most goals for this team (non-goalkeeper)
+    const playersWithGoals = playersResponse.response
+      .filter((p: any) => {
+        const stats = p.statistics?.find((s: any) => s.team?.id === teamId);
+        return stats && stats.goals?.total > 0 && stats.games?.position !== 'Goalkeeper';
+      })
+      .sort((a: any, b: any) => {
+        const aGoals = a.statistics?.find((s: any) => s.team?.id === teamId)?.goals?.total || 0;
+        const bGoals = b.statistics?.find((s: any) => s.team?.id === teamId)?.goals?.total || 0;
+        return bGoals - aGoals;
+      });
+    
+    if (playersWithGoals.length > 0) {
+      const topPlayer = playersWithGoals[0];
+      const stats = topPlayer.statistics?.find((s: any) => s.team?.id === teamId);
+      
+      const player: TopPlayerStats = {
+        name: topPlayer.player?.name || 'Unknown',
+        position: stats?.games?.position || 'Forward',
+        photo: topPlayer.player?.photo,
+        goals: stats?.goals?.total || 0,
+        assists: stats?.goals?.assists || 0,
+        rating: stats?.games?.rating ? parseFloat(stats.games.rating) : undefined,
+        minutesPlayed: stats?.games?.minutes || 0,
+      };
+      setCache(cacheKey, player);
+      return player;
+    }
+  }
+  
+  // PRIORITY 3: Get current squad and return best attacker (no stats, but reasonably accurate roster)
   const squadResponse = await apiRequest<any>(`/players/squads?team=${teamId}`);
   
   if (squadResponse?.response?.[0]?.players) {
