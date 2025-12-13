@@ -7,6 +7,7 @@
 
 import { Metadata } from 'next';
 import AISportsDesk from '@/components/AISportsDesk';
+import AIDeskChat from '@/components/AIDeskChat';
 import { META, SITE_CONFIG, getAIDeskSchema } from '@/lib/seo';
 
 export const metadata: Metadata = {
@@ -102,6 +103,9 @@ export default function AIDeskPage() {
           </p>
         </div>
       </div>
+
+      {/* AI Chat - Floating component */}
+      <AIDeskChat />
     </main>
     </>
   );

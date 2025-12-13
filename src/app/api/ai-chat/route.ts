@@ -1,0 +1,248 @@
+/**
+ * AI Chat API - Combines Perplexity (real-time search) + GPT (reasoning)
+ * 
+ * Flow:
+ * 1. User asks a sports question
+ * 2. Perplexity searches for real-time sports data
+ * 3. GPT analyzes the data and responds intelligently
+ * 
+ * This creates a powerful "search + reason" combination.
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+import { getPerplexityClient } from '@/lib/perplexity';
+
+// ============================================
+// TYPES
+// ============================================
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface ChatRequest {
+  message: string;
+  history?: ChatMessage[];
+}
+
+// ============================================
+// OPENAI CLIENT
+// ============================================
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// ============================================
+// SYSTEM PROMPTS
+// ============================================
+
+const CHAT_SYSTEM_PROMPT = `You are SportBot, an AI sports analyst assistant. You provide intelligent, data-driven sports analysis and answer questions about matches, teams, players, and sports news.
+
+PERSONALITY:
+- Confident and knowledgeable
+- Direct and clear communication
+- Slightly witty but always professional
+- Data-focused with sharp insights
+
+GUIDELINES:
+1. Use the real-time context provided to give accurate, current information
+2. If asked about specific matches, teams, or players, reference the latest data
+3. Be helpful and informative
+4. Acknowledge when information might be outdated or uncertain
+5. NEVER give betting advice, tips, or tell users to bet
+6. You can discuss odds factually (as data points) but never recommend bets
+7. Focus on analysis, insights, and understanding - not predictions
+
+RESPONSE STYLE:
+- Keep responses concise but informative (2-4 paragraphs max)
+- Use bullet points for clarity when listing facts
+- Cite sources when relevant (from the provided context)
+- If no relevant real-time data was found, acknowledge it and give general insights
+
+PROHIBITED:
+- "You should bet on..."
+- "I recommend betting..."
+- "Place a bet on..."
+- Any gambling advice or encouragement
+- Guaranteed predictions
+
+You help users UNDERSTAND sports, not win bets.`;
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Detect if the query needs real-time search
+ * Some questions don't need Perplexity (e.g., "what is offside?")
+ */
+function needsRealTimeSearch(message: string): boolean {
+  const lowerMessage = message.toLowerCase();
+  
+  // Keywords that suggest real-time data is needed
+  const realTimeKeywords = [
+    'today', 'tonight', 'tomorrow', 'this week', 'weekend',
+    'latest', 'recent', 'news', 'update', 'injured', 'injury',
+    'lineup', 'starting', 'confirmed', 'rumor', 'transfer',
+    'form', 'streak', 'odds', 'price', 'market',
+    'vs', 'versus', 'match', 'game', 'play',
+    'who will', 'what time', 'when is', 'where is',
+    'score', 'result', 'won', 'lost', 'draw',
+    'premier league', 'la liga', 'champions league', 'nba', 'nfl',
+    'manager', 'coach', 'press conference', 'said',
+  ];
+  
+  return realTimeKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
+ * Extract search query from user message
+ */
+function extractSearchQuery(message: string): string {
+  // Clean up the message for search
+  let query = message
+    .replace(/\?/g, '')
+    .replace(/please|can you|could you|tell me|what do you think/gi, '')
+    .trim();
+  
+  // Add "latest news" if it seems like a team/player query
+  if (query.length < 50 && !query.toLowerCase().includes('news')) {
+    query += ' latest news today';
+  }
+  
+  return query;
+}
+
+// ============================================
+// POST HANDLER
+// ============================================
+
+export async function POST(request: NextRequest) {
+  try {
+    const body: ChatRequest = await request.json();
+    const { message, history = [] } = body;
+
+    if (!message || typeof message !== 'string') {
+      return NextResponse.json(
+        { error: 'Message is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if OpenAI is configured
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'AI chat is not configured' },
+        { status: 503 }
+      );
+    }
+
+    let perplexityContext = '';
+    let citations: string[] = [];
+
+    // Step 1: Use Perplexity for real-time search if needed
+    if (needsRealTimeSearch(message)) {
+      const perplexity = getPerplexityClient();
+      
+      if (perplexity.isConfigured()) {
+        console.log('[AI-Chat] Fetching real-time context from Perplexity...');
+        
+        const searchQuery = extractSearchQuery(message);
+        const searchResult = await perplexity.search(searchQuery, {
+          recency: 'day',
+          model: 'sonar-pro',
+          maxTokens: 800,
+        });
+
+        if (searchResult.success && searchResult.content) {
+          perplexityContext = searchResult.content;
+          citations = searchResult.citations || [];
+          console.log('[AI-Chat] Perplexity context retrieved:', perplexityContext.slice(0, 200) + '...');
+        } else {
+          console.log('[AI-Chat] No Perplexity results:', searchResult.error);
+        }
+      }
+    }
+
+    // Step 2: Build messages for GPT
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+      { role: 'system', content: CHAT_SYSTEM_PROMPT },
+    ];
+
+    // Add conversation history (last 10 messages to stay within context)
+    const recentHistory = history.slice(-10);
+    for (const msg of recentHistory) {
+      messages.push({
+        role: msg.role,
+        content: msg.content,
+      });
+    }
+
+    // Add current message with Perplexity context
+    let userContent = message;
+    if (perplexityContext) {
+      userContent = `USER QUESTION: ${message}
+
+REAL-TIME SPORTS DATA (from web search, use this for your answer):
+${perplexityContext}
+
+Please answer the user's question using the real-time data above. Cite sources if relevant.`;
+    }
+
+    messages.push({ role: 'user', content: userContent });
+
+    // Step 3: Get GPT response
+    console.log('[AI-Chat] Sending to GPT...');
+    
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini', // Fast and cost-effective
+      messages,
+      max_tokens: 800,
+      temperature: 0.7,
+    });
+
+    const response = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+
+    console.log('[AI-Chat] Response generated successfully');
+
+    return NextResponse.json({
+      success: true,
+      response,
+      citations,
+      usedRealTimeSearch: !!perplexityContext,
+      model: 'gpt-4o-mini + sonar-pro',
+    });
+
+  } catch (error) {
+    console.error('[AI-Chat] Error:', error);
+    
+    return NextResponse.json(
+      { 
+        error: 'Failed to process chat message',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// ============================================
+// GET - Health check
+// ============================================
+
+export async function GET() {
+  const perplexity = getPerplexityClient();
+  
+  return NextResponse.json({
+    status: 'ok',
+    capabilities: {
+      gpt: !!process.env.OPENAI_API_KEY,
+      perplexity: perplexity.isConfigured(),
+      model: 'gpt-4o-mini + sonar-pro',
+    },
+    description: 'AI Chat API combining Perplexity (real-time search) + GPT (reasoning)',
+  });
+}
