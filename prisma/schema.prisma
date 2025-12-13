@@ -244,3 +244,142 @@ enum PostStatus {
   SCHEDULED   // Will publish at scheduledAt
   ARCHIVED    // Hidden from public
 }
+
+// ============================================
+// SPORTBOT AGENT MEMORY SYSTEM
+// ============================================
+
+// Track all chat queries for learning
+model ChatQuery {
+  id              String   @id @default(cuid())
+  
+  // Query content
+  query           String   @db.Text      // The user's question
+  queryNormalized String?  @db.Text      // Lowercase, cleaned version
+  category        String?               // ROSTER, FIXTURE, INJURY, etc.
+  brainMode       String?               // agent, data, analysis
+  
+  // Context
+  sport           String?               // Detected sport
+  team            String?               // Primary team mentioned
+  league          String?               // League if detected
+  
+  // Response metadata
+  usedRealTimeSearch Boolean @default(false)
+  responseLength  Int?                  // Character count
+  hadCitations    Boolean @default(false)
+  
+  // Frequency tracking
+  queryHash       String?               // Hash for deduplication
+  similarCount    Int      @default(1)  // How many similar queries
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  
+  @@index([category])
+  @@index([sport])
+  @@index([team])
+  @@index([queryHash])
+  @@index([createdAt])
+}
+
+// Track popular topics and trending queries
+model TrendingTopic {
+  id              String   @id @default(cuid())
+  
+  topic           String   @unique      // e.g., "arsenal injuries", "lakers roster"
+  category        String?               // ROSTER, INJURY, TRANSFER, etc.
+  sport           String?
+  
+  // Metrics
+  queryCount      Int      @default(1)  // Total queries about this topic
+  last24hCount    Int      @default(0)  // Queries in last 24 hours
+  last7dCount     Int      @default(0)  // Queries in last 7 days
+  
+  // Spike detection
+  isSpike         Boolean  @default(false)  // Unusual interest
+  spikeDetectedAt DateTime?
+  
+  // For pre-fetching/caching
+  lastFetchedAt   DateTime?
+  cachedResponse  String?  @db.Text     // Cached answer for fast responses
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([queryCount])
+  @@index([last24hCount])
+  @@index([sport])
+  @@index([isSpike])
+}
+
+// Agent posts history for context/memory
+model AgentPost {
+  id              String   @id @default(cuid())
+  
+  // Content
+  content         String   @db.Text
+  category        String               // MARKET_MOVEMENT, LINEUP_INTEL, etc.
+  
+  // Match context
+  homeTeam        String?
+  awayTeam        String?
+  matchRef        String?              // "Team A vs Team B"
+  league          String?
+  sport           String?
+  
+  // Signals at time of generation
+  narrativeAngle  String?              // CHAOS, CONTROL, etc.
+  publicMismatch  String?              // ALIGNED, OVERHYPED, etc.
+  clarityLevel    Int?
+  confidence      Int?
+  severity        Int?
+  
+  // Metadata
+  realTimeData    Boolean  @default(false)
+  citations       String[]             // Source URLs
+  
+  // Engagement (for future X integration)
+  postedToX       Boolean  @default(false)
+  xPostId         String?
+  impressions     Int      @default(0)
+  engagement      Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([category])
+  @@index([homeTeam])
+  @@index([awayTeam])
+  @@index([createdAt])
+  @@index([postedToX])
+}
+
+// Learning from outcomes (post-match validation)
+model PredictionOutcome {
+  id              String   @id @default(cuid())
+  
+  // The prediction
+  matchRef        String               // "Team A vs Team B"
+  league          String?
+  matchDate       DateTime
+  
+  // What we said
+  narrativeAngle  String?
+  predictedScenario String?            // Brief summary of prediction
+  confidenceLevel Int?
+  
+  // What happened
+  actualResult    String?              // "home_win", "away_win", "draw"
+  actualScore     String?              // "2-1"
+  keyFactor       String?              // What drove the result
+  
+  // Learning
+  wasAccurate     Boolean?
+  learningNote    String?  @db.Text    // What to learn from this
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([matchRef])
+  @@index([wasAccurate])
+  @@index([matchDate])
+}

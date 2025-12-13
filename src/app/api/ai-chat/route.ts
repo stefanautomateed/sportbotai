@@ -6,6 +6,7 @@
  * 2. Detect mode: AGENT (opinionated) vs DATA (strict accuracy)
  * 3. Perplexity searches for real-time sports data
  * 4. GPT responds with appropriate personality
+ * 5. Track query in memory system for learning
  * 
  * Uses SportBot Master Brain for consistent personality across app.
  */
@@ -14,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getPerplexityClient } from '@/lib/perplexity';
 import { detectChatMode, buildSystemPrompt, type BrainMode } from '@/lib/sportbot-brain';
+import { trackQuery } from '@/lib/sportbot-memory';
 
 // ============================================
 // TYPES
@@ -364,6 +366,16 @@ Please answer the user's question using the real-time data above. Cite sources i
     const response = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
 
     console.log('[AI-Chat] Response generated successfully');
+
+    // Track query in memory system (async, don't block response)
+    trackQuery({
+      query: message,
+      category,
+      brainMode,
+      usedRealTimeSearch: !!perplexityContext,
+      responseLength: response.length,
+      hadCitations: citations.length > 0,
+    }).catch(err => console.error('[AI-Chat] Memory tracking failed:', err));
 
     return NextResponse.json({
       success: true,
