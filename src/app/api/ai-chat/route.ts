@@ -144,123 +144,92 @@ function detectQueryCategory(message: string): QueryCategory {
 /**
  * SMART ROUTING: Decide if query needs Perplexity (real-time) or GPT-only
  * 
- * PERPLEXITY (sonar-pro) - Use when:
- *   ✓ Current data needed (today's scores, live standings, recent news)
- *   ✓ Specific team/player info (rosters, injuries, transfers)
- *   ✓ Time-sensitive questions (fixtures, odds, form)
- *   ✓ Breaking news / rumors
- *   ✓ Factual lookups that change frequently
+ * DEFAULT: SEARCH EVERYTHING (safer - ensures fresh data)
  * 
- * GPT-ONLY - Use when:
- *   ✓ Static knowledge (rules, history pre-2023, sport explanations)
- *   ✓ Opinion / analysis questions (who's better, predictions)
- *   ✓ Hypothetical scenarios ("what if Messi...")
- *   ✓ General sports knowledge that doesn't change
- *   ✓ Simple greetings / chitchat
+ * Only skip search for:
+ *   - Rules/definitions ("what is offside")
+ *   - Simple greetings ("hello", "thanks")
+ *   - Pure opinions with no factual component
  */
 
-// Time-sensitive keywords that REQUIRE real-time search
-const REALTIME_KEYWORDS = [
-  // Current state
-  'today', 'tonight', 'now', 'current', 'currently', 'right now', 'latest', 'recent',
-  'this week', 'this season', 'this month', '2024', '2025', 'december',
+// Keywords that indicate GPT can answer alone (static knowledge ONLY)
+const GPT_ONLY_PATTERNS = [
+  // Rules & definitions (never change)
+  /what (is|are) (offside|a foul|the rules|handball)/i,
+  /rules of (football|soccer|basketball|tennis)/i,
+  /how many players/i,
+  /explain .*(rule|offside|foul)/i,
   
-  // Player lookups (where does X play, who is X)
-  'where does', 'where do', 'where is', 'which team', 'what team', 'plays for',
-  'who is', 'play for', 'signed for', 'joined',
+  // Simple greetings (no search needed)
+  /^(hello|hi|hey|thanks|thank you|bye|ok|okay)[\s!?.]*$/i,
+  /^(who are you|what can you do|help me?)[\s!?.]*$/i,
   
-  // Roster/Team composition (changes frequently)
-  'roster', 'squad', 'lineup', 'starting', 'team sheet', 'formation',
-  'who plays for', 'who is on', 'players on',
-  
-  // Time-sensitive data
-  'injury', 'injured', 'fit', 'available', 'ruled out', 'doubtful', 'suspended',
-  'transfer', 'signing', 'signed', 'deal', 'rumor', 'linked',
-  'standings', 'table', 'position', 'points', 'rank',
-  'score', 'result', 'won', 'lost', 'beat', 'draw',
-  'next match', 'next game', 'upcoming', 'fixture', 'when is', 'when does',
-  'odds', 'favorite', 'underdog', 'price', 'market',
-  
-  // News-related
-  'news', 'update', 'said', 'announced', 'confirmed', 'report', 'according',
-  'press conference', 'interview', 'quote',
-  
-  // Stat lookups that need current data
-  'top scorer', 'leading', 'most goals', 'most assists', 'golden boot',
-  'form', 'streak', 'unbeaten', 'winless',
-];
-
-// Keywords that indicate GPT can answer alone (static knowledge)
-const GPT_ONLY_KEYWORDS = [
-  // Rules & definitions
-  'what is offside', 'what are the rules', 'rules of', 'how many players',
-  'what is a foul', 'explain', 'definition', 'meaning of',
-  'how does .* work', 'what counts as', 'when is it',
-  
-  // Historical (pre-2023, won't change)
-  'all.time', 'history of', 'when was .* invented', 'originated',
-  'first ever', 'record for', 'most .* ever', 'greatest of all time',
-  'hall of fame', 'legend', 'retired',
-  
-  // Opinion / Analysis (GPT reasoning)
-  'who is better', 'who would win', 'compare', 'vs',
-  'should i', 'do you think', 'your opinion', 'what do you think',
-  'predict', 'will .* win', 'chances of',
-  
-  // Hypothetical
-  'what if', 'imagine', 'hypothetically', 'would it be possible',
-  
-  // General chat
-  'hello', 'hi', 'hey', 'thanks', 'thank you', 'bye', 'help',
-  'who are you', 'what can you do',
+  // Pure hypotheticals with no real lookup
+  /^what if .* (never|didn't|hadn't)/i,
+  /^imagine if/i,
 ];
 
 /**
  * Smart detection: Does this query need real-time data?
+ * DEFAULT: YES - search unless clearly static
  */
 function needsRealTimeSearch(message: string): boolean {
-  const lower = message.toLowerCase();
+  const lower = message.toLowerCase().trim();
   
-  // First check: Is this clearly a GPT-only question?
-  for (const keyword of GPT_ONLY_KEYWORDS) {
-    if (keyword.includes('.*')) {
-      if (new RegExp(keyword, 'i').test(lower)) {
-        console.log(`[Router] GPT-only match: "${keyword}"`);
-        return false;
-      }
-    } else if (lower.includes(keyword)) {
-      console.log(`[Router] GPT-only match: "${keyword}"`);
+  // Check if it's a static/greeting question that doesn't need search
+  for (const pattern of GPT_ONLY_PATTERNS) {
+    if (pattern.test(message)) {
+      console.log(`[Router] GPT-only pattern match - skipping search`);
       return false;
     }
   }
   
-  // Second check: Does it contain real-time keywords?
-  for (const keyword of REALTIME_KEYWORDS) {
-    if (lower.includes(keyword)) {
-      console.log(`[Router] Real-time match: "${keyword}"`);
-      return true;
-    }
-  }
-  
-  // Third check: Does it mention a specific team/player? (likely needs current data)
-  const hasTeamOrPlayer = /\b(fc|bc|ac|united|city|real|atletico|juventus|barcelona|bayern|arsenal|chelsea|liverpool|tottenham|lakers|celtics|warriors|chiefs|eagles|cowboys|yankees|dodgers|messi|ronaldo|lebron|curry|mahomes|haaland|mbappe|salah)\b/i.test(message);
-  
-  if (hasTeamOrPlayer) {
-    console.log('[Router] Team/player detected - using real-time search');
+  // Check for explicit search requests
+  if (/check|look up|search|find|wikipedia|google|tell me about/i.test(lower)) {
+    console.log('[Router] Explicit search request detected');
     return true;
   }
   
-  // Fourth check: Is it a specific question (who, what, when, where)?
-  const isSpecificQuestion = /^(who|what|when|where|how many|how much|which)\b/i.test(message);
-  
-  if (isSpecificQuestion && message.length > 20) {
-    console.log('[Router] Specific question - using real-time search');
+  // Check for proper nouns (capitalized words that aren't sentence starters)
+  // This catches player names like "Goran Huskic"
+  const hasProperNoun = /\s[A-Z][a-z]{2,}/.test(message) || /^[A-Z][a-z]+\s+[A-Z]/.test(message);
+  if (hasProperNoun) {
+    console.log('[Router] Proper noun detected (likely player/team name) - searching');
     return true;
   }
   
-  // Default: Short/vague queries can use GPT alone
-  console.log('[Router] No strong signals - defaulting to GPT-only');
-  return false;
+  // Check for non-English sports queries (common patterns)
+  // Serbian/Croatian: gde, ko, koji, kada
+  // Spanish: donde, quien, cual, cuando
+  // German: wo, wer, welche, wann
+  // French: où, qui, quel, quand
+  if (/\b(gde|ko je|koji|kada|donde|quien|cual|cuando|wo spielt|wer ist|où|qui est|quel)\b/i.test(lower)) {
+    console.log('[Router] Non-English query detected - searching');
+    return true;
+  }
+  
+  // If message contains any word that looks like a name (2+ capitalized words)
+  const capitalizedWords = message.match(/\b[A-Z][a-z]+\b/g) || [];
+  if (capitalizedWords.length >= 2) {
+    console.log('[Router] Multiple capitalized words (likely names) - searching');
+    return true;
+  }
+  
+  // If it's a question (any language), default to searching
+  if (/\?$/.test(message.trim()) || lower.length > 15) {
+    console.log('[Router] Question detected - defaulting to search');
+    return true;
+  }
+  
+  // Very short messages without question marks - probably greetings
+  if (lower.length < 15 && !/\?/.test(message)) {
+    console.log('[Router] Short non-question - skipping search');
+    return false;
+  }
+  
+  // DEFAULT: Search to be safe
+  console.log('[Router] Defaulting to real-time search');
+  return true;
 }
 
 /**
