@@ -1,0 +1,583 @@
+/**
+ * Basketball Adapter
+ * 
+ * Transforms API-Sports basketball data into normalized format.
+ * Handles NBA and other basketball leagues.
+ */
+
+import { BaseSportAdapter, AdapterConfig } from './base';
+import {
+  Sport,
+  DataProvider,
+  DataLayerResponse,
+  NormalizedTeam,
+  NormalizedMatch,
+  NormalizedTeamStats,
+  NormalizedH2H,
+  NormalizedRecentGames,
+  MatchStatus,
+  TeamQuery,
+  MatchQuery,
+  StatsQuery,
+  H2HQuery,
+} from '../types';
+import {
+  getAPISportsProvider,
+  LEAGUE_IDS,
+  BasketballTeamResponse,
+  BasketballGameResponse,
+  BasketballStandingsResponse,
+} from '../providers/api-sports';
+
+// Team name mappings for NBA
+const NBA_TEAM_MAPPINGS: Record<string, string> = {
+  // Short names
+  'lakers': 'Lakers',
+  'celtics': 'Celtics',
+  'warriors': 'Warriors',
+  'nets': 'Nets',
+  'knicks': 'Knicks',
+  'bulls': 'Bulls',
+  'heat': 'Heat',
+  'sixers': '76ers',
+  '76ers': '76ers',
+  'suns': 'Suns',
+  'bucks': 'Bucks',
+  'mavericks': 'Mavericks',
+  'mavs': 'Mavericks',
+  'clippers': 'Clippers',
+  'nuggets': 'Nuggets',
+  'grizzlies': 'Grizzlies',
+  'pelicans': 'Pelicans',
+  'timberwolves': 'Timberwolves',
+  'wolves': 'Timberwolves',
+  'thunder': 'Thunder',
+  'blazers': 'Trail Blazers',
+  'trail blazers': 'Trail Blazers',
+  'jazz': 'Jazz',
+  'kings': 'Kings',
+  'spurs': 'Spurs',
+  'rockets': 'Rockets',
+  'hawks': 'Hawks',
+  'hornets': 'Hornets',
+  'cavaliers': 'Cavaliers',
+  'cavs': 'Cavaliers',
+  'pistons': 'Pistons',
+  'pacers': 'Pacers',
+  'raptors': 'Raptors',
+  'magic': 'Magic',
+  'wizards': 'Wizards',
+  
+  // City names
+  'los angeles lakers': 'Lakers',
+  'la lakers': 'Lakers',
+  'los angeles clippers': 'Clippers',
+  'la clippers': 'Clippers',
+  'golden state': 'Warriors',
+  'golden state warriors': 'Warriors',
+  'brooklyn': 'Nets',
+  'brooklyn nets': 'Nets',
+  'new york': 'Knicks',
+  'new york knicks': 'Knicks',
+  'boston': 'Celtics',
+  'boston celtics': 'Celtics',
+  'chicago': 'Bulls',
+  'chicago bulls': 'Bulls',
+  'miami': 'Heat',
+  'miami heat': 'Heat',
+  'philadelphia': '76ers',
+  'philadelphia 76ers': '76ers',
+  'phoenix': 'Suns',
+  'phoenix suns': 'Suns',
+  'milwaukee': 'Bucks',
+  'milwaukee bucks': 'Bucks',
+  'dallas': 'Mavericks',
+  'dallas mavericks': 'Mavericks',
+  'denver': 'Nuggets',
+  'denver nuggets': 'Nuggets',
+  'memphis': 'Grizzlies',
+  'memphis grizzlies': 'Grizzlies',
+  'new orleans': 'Pelicans',
+  'new orleans pelicans': 'Pelicans',
+  'minnesota': 'Timberwolves',
+  'minnesota timberwolves': 'Timberwolves',
+  'oklahoma city': 'Thunder',
+  'oklahoma city thunder': 'Thunder',
+  'okc': 'Thunder',
+  'portland': 'Trail Blazers',
+  'portland trail blazers': 'Trail Blazers',
+  'utah': 'Jazz',
+  'utah jazz': 'Jazz',
+  'sacramento': 'Kings',
+  'sacramento kings': 'Kings',
+  'san antonio': 'Spurs',
+  'san antonio spurs': 'Spurs',
+  'houston': 'Rockets',
+  'houston rockets': 'Rockets',
+  'atlanta': 'Hawks',
+  'atlanta hawks': 'Hawks',
+  'charlotte': 'Hornets',
+  'charlotte hornets': 'Hornets',
+  'cleveland': 'Cavaliers',
+  'cleveland cavaliers': 'Cavaliers',
+  'detroit': 'Pistons',
+  'detroit pistons': 'Pistons',
+  'indiana': 'Pacers',
+  'indiana pacers': 'Pacers',
+  'toronto': 'Raptors',
+  'toronto raptors': 'Raptors',
+  'orlando': 'Magic',
+  'orlando magic': 'Magic',
+  'washington': 'Wizards',
+  'washington wizards': 'Wizards',
+};
+
+export class BasketballAdapter extends BaseSportAdapter {
+  readonly sport: Sport = 'basketball';
+  readonly provider: DataProvider = 'api-sports';
+  
+  private apiProvider = getAPISportsProvider();
+  
+  constructor(config: AdapterConfig = {}) {
+    super({
+      ...config,
+      apiKey: config.apiKey || process.env.API_FOOTBALL_KEY,
+    });
+  }
+  
+  isAvailable(): boolean {
+    return this.apiProvider.isConfigured();
+  }
+  
+  /**
+   * Get current NBA season string
+   */
+  private getCurrentSeason(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    
+    // NBA season runs Oct-June, use current year if Oct+, else use previous year
+    if (month >= 10) {
+      return `${year}-${year + 1}`;
+    } else {
+      return `${year - 1}-${year}`;
+    }
+  }
+  
+  /**
+   * Normalize team name for search
+   */
+  private normalizeTeamName(name: string): string {
+    const lower = name.toLowerCase().trim();
+    return NBA_TEAM_MAPPINGS[lower] || name;
+  }
+  
+  /**
+   * Find a basketball team
+   */
+  async findTeam(query: TeamQuery): Promise<DataLayerResponse<NormalizedTeam>> {
+    if (!query.name && !query.id) {
+      return this.error('INVALID_QUERY', 'Team name or ID required');
+    }
+    
+    const season = this.getCurrentSeason();
+    const leagueId = LEAGUE_IDS.NBA;
+    
+    // Try by ID first
+    if (query.id) {
+      const result = await this.apiProvider.getBasketballTeams({
+        id: parseInt(query.id),
+        league: leagueId,
+        season,
+      });
+      
+      if (result.success && result.data && result.data.length > 0) {
+        return this.success(this.transformTeam(result.data[0]));
+      }
+    }
+    
+    // Search by name
+    if (query.name) {
+      const searchName = this.normalizeTeamName(query.name);
+      
+      const result = await this.apiProvider.getBasketballTeams({
+        name: searchName,
+        league: leagueId,
+        season,
+      });
+      
+      if (result.success && result.data && result.data.length > 0) {
+        return this.success(this.transformTeam(result.data[0]));
+      }
+      
+      // Try search with just league to get all teams and filter
+      const allTeams = await this.apiProvider.getBasketballTeams({
+        league: leagueId,
+        season,
+      });
+      
+      if (allTeams.success && allTeams.data) {
+        const lowerSearch = searchName.toLowerCase();
+        const found = allTeams.data.find(t => 
+          t.name.toLowerCase().includes(lowerSearch)
+        );
+        
+        if (found) {
+          return this.success(this.transformTeam(found));
+        }
+      }
+    }
+    
+    return this.error('TEAM_NOT_FOUND', `Could not find basketball team: ${query.name || query.id}`);
+  }
+  
+  /**
+   * Get basketball matches
+   */
+  async getMatches(query: MatchQuery): Promise<DataLayerResponse<NormalizedMatch[]>> {
+    const season = this.getCurrentSeason();
+    const params: Record<string, string | number> = {
+      league: LEAGUE_IDS.NBA,
+      season,
+    };
+    
+    if (query.team) {
+      const teamResult = await this.findTeam({ name: query.team, sport: 'basketball' });
+      if (teamResult.success && teamResult.data) {
+        params.team = parseInt(teamResult.data.externalId);
+      }
+    }
+    
+    if (query.date) {
+      params.date = query.date.toISOString().split('T')[0];
+    }
+    
+    const result = await this.apiProvider.getBasketballGames(params);
+    
+    if (!result.success || !result.data) {
+      return this.error('FETCH_ERROR', result.error || 'Failed to fetch basketball games');
+    }
+    
+    const matches = result.data
+      .slice(0, query.limit || 20)
+      .map(game => this.transformMatch(game));
+    
+    return this.success(matches);
+  }
+  
+  /**
+   * Get team statistics
+   */
+  async getTeamStats(query: StatsQuery): Promise<DataLayerResponse<NormalizedTeamStats>> {
+    const season = query.season || this.getCurrentSeason();
+    const leagueId = LEAGUE_IDS.NBA;
+    
+    // First try the /statistics endpoint
+    const statsResult = await this.apiProvider.getBasketballTeamStats({
+      team: parseInt(query.teamId),
+      league: leagueId,
+      season,
+    });
+    
+    if (statsResult.success && statsResult.data) {
+      return this.success(this.transformStats(statsResult.data, query.teamId, season));
+    }
+    
+    // Fallback to standings
+    const standingsResult = await this.apiProvider.getBasketballStandings({
+      league: leagueId,
+      season,
+    });
+    
+    if (standingsResult.success && standingsResult.data) {
+      const allStandings = standingsResult.data.flat();
+      const teamStanding = allStandings.find(s => 
+        s.team.id === parseInt(query.teamId)
+      );
+      
+      if (teamStanding) {
+        return this.success(this.transformStandingsToStats(teamStanding, season));
+      }
+    }
+    
+    return this.error('STATS_NOT_FOUND', `Could not find stats for team ${query.teamId}`);
+  }
+  
+  /**
+   * Get recent games for a team
+   */
+  async getRecentGames(teamId: string, limit: number = 5): Promise<DataLayerResponse<NormalizedRecentGames>> {
+    const season = this.getCurrentSeason();
+    
+    const result = await this.apiProvider.getBasketballGames({
+      team: parseInt(teamId),
+      league: LEAGUE_IDS.NBA,
+      season,
+    });
+    
+    if (!result.success || !result.data) {
+      return this.error('FETCH_ERROR', result.error || 'Failed to fetch games');
+    }
+    
+    // Filter to finished games and sort by date descending
+    const finishedGames = result.data
+      .filter(g => g.status.short === 'FT' || g.status.short === 'AOT')
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, limit);
+    
+    const matches = finishedGames.map(g => this.transformMatch(g));
+    
+    // Calculate summary
+    let wins = 0, losses = 0, goalsFor = 0, goalsAgainst = 0;
+    
+    for (const game of finishedGames) {
+      const isHome = game.teams.home.id === parseInt(teamId);
+      const teamScore = isHome ? game.scores.home.total : game.scores.away.total;
+      const oppScore = isHome ? game.scores.away.total : game.scores.home.total;
+      
+      if (teamScore !== null && oppScore !== null) {
+        goalsFor += teamScore;
+        goalsAgainst += oppScore;
+        if (teamScore > oppScore) wins++;
+        else losses++;
+      }
+    }
+    
+    return this.success({
+      teamId,
+      sport: 'basketball',
+      games: matches,
+      summary: {
+        wins,
+        losses,
+        draws: 0,
+        goalsFor,
+        goalsAgainst,
+      },
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    });
+  }
+  
+  /**
+   * Get head-to-head history
+   */
+  async getH2H(query: H2HQuery): Promise<DataLayerResponse<NormalizedH2H>> {
+    // Find both teams
+    const team1Result = await this.findTeam({ name: query.team1, sport: 'basketball' });
+    const team2Result = await this.findTeam({ name: query.team2, sport: 'basketball' });
+    
+    if (!team1Result.success || !team1Result.data) {
+      return this.error('TEAM_NOT_FOUND', `Could not find team: ${query.team1}`);
+    }
+    if (!team2Result.success || !team2Result.data) {
+      return this.error('TEAM_NOT_FOUND', `Could not find team: ${query.team2}`);
+    }
+    
+    const team1Id = team1Result.data.externalId;
+    const team2Id = team2Result.data.externalId;
+    const h2hString = `${team1Id}-${team2Id}`;
+    
+    const result = await this.apiProvider.getBasketballGames({
+      h2h: h2hString,
+      league: LEAGUE_IDS.NBA,
+      season: this.getCurrentSeason(),
+    });
+    
+    if (!result.success || !result.data) {
+      return this.error('FETCH_ERROR', result.error || 'Failed to fetch H2H');
+    }
+    
+    const games = result.data.slice(0, query.limit || 10);
+    const matches = games.map(g => this.transformMatch(g));
+    
+    // Calculate summary
+    let team1Wins = 0, team2Wins = 0, team1Goals = 0, team2Goals = 0;
+    
+    for (const game of games) {
+      const homeIsTeam1 = game.teams.home.id === parseInt(team1Id);
+      const homeScore = game.scores.home.total || 0;
+      const awayScore = game.scores.away.total || 0;
+      
+      if (homeIsTeam1) {
+        team1Goals += homeScore;
+        team2Goals += awayScore;
+        if (homeScore > awayScore) team1Wins++;
+        else team2Wins++;
+      } else {
+        team2Goals += homeScore;
+        team1Goals += awayScore;
+        if (homeScore > awayScore) team2Wins++;
+        else team1Wins++;
+      }
+    }
+    
+    return this.success({
+      team1Id,
+      team2Id,
+      sport: 'basketball',
+      summary: {
+        totalGames: games.length,
+        team1Wins,
+        team2Wins,
+        draws: 0,
+        team1Goals,
+        team2Goals,
+      },
+      matches,
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    });
+  }
+  
+  // ============================================================================
+  // Transform Methods
+  // ============================================================================
+  
+  private transformTeam(raw: BasketballTeamResponse): NormalizedTeam {
+    return {
+      id: `basketball-${raw.id}`,
+      externalId: String(raw.id),
+      name: raw.name,
+      shortName: raw.name.split(' ').pop() || raw.name,
+      logo: raw.logo,
+      country: raw.country?.name,
+      sport: 'basketball',
+      league: 'NBA',
+    };
+  }
+  
+  private transformMatch(raw: BasketballGameResponse): NormalizedMatch {
+    return {
+      id: `basketball-${raw.id}`,
+      externalId: String(raw.id),
+      sport: 'basketball',
+      league: raw.league.name,
+      leagueId: String(raw.league.id),
+      season: raw.league.season,
+      
+      homeTeam: {
+        id: `basketball-${raw.teams.home.id}`,
+        externalId: String(raw.teams.home.id),
+        name: raw.teams.home.name,
+        shortName: raw.teams.home.name.split(' ').pop() || raw.teams.home.name,
+        logo: raw.teams.home.logo,
+        sport: 'basketball',
+      },
+      awayTeam: {
+        id: `basketball-${raw.teams.away.id}`,
+        externalId: String(raw.teams.away.id),
+        name: raw.teams.away.name,
+        shortName: raw.teams.away.name.split(' ').pop() || raw.teams.away.name,
+        logo: raw.teams.away.logo,
+        sport: 'basketball',
+      },
+      
+      status: this.mapStatus(raw.status.short),
+      date: new Date(raw.timestamp * 1000),
+      
+      score: {
+        home: raw.scores.home.total || 0,
+        away: raw.scores.away.total || 0,
+        periods: [
+          { home: raw.scores.home.quarter_1 || 0, away: raw.scores.away.quarter_1 || 0 },
+          { home: raw.scores.home.quarter_2 || 0, away: raw.scores.away.quarter_2 || 0 },
+          { home: raw.scores.home.quarter_3 || 0, away: raw.scores.away.quarter_3 || 0 },
+          { home: raw.scores.home.quarter_4 || 0, away: raw.scores.away.quarter_4 || 0 },
+        ],
+      },
+      
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    };
+  }
+  
+  private transformStats(raw: any, teamId: string, season: string): NormalizedTeamStats {
+    return {
+      teamId,
+      season,
+      league: 'NBA',
+      sport: 'basketball',
+      
+      record: {
+        wins: raw.games?.wins?.all?.total || 0,
+        losses: raw.games?.loses?.all?.total || 0,
+        winPercentage: parseFloat(raw.games?.wins?.all?.percentage || '0'),
+      },
+      
+      scoring: {
+        totalFor: raw.points?.for?.total?.all || 0,
+        totalAgainst: raw.points?.against?.total?.all || 0,
+        averageFor: parseFloat(raw.points?.for?.average?.all || '0'),
+        averageAgainst: parseFloat(raw.points?.against?.average?.all || '0'),
+        homeFor: raw.points?.for?.total?.home,
+        homeAgainst: raw.points?.against?.total?.home,
+        awayFor: raw.points?.for?.total?.away,
+        awayAgainst: raw.points?.against?.total?.away,
+      },
+      
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    };
+  }
+  
+  private transformStandingsToStats(standing: BasketballStandingsResponse, season: string): NormalizedTeamStats {
+    return {
+      teamId: String(standing.team.id),
+      season,
+      league: 'NBA',
+      sport: 'basketball',
+      
+      record: {
+        wins: standing.games.win.total,
+        losses: standing.games.lose.total,
+        winPercentage: parseFloat(standing.games.win.percentage),
+      },
+      
+      scoring: {
+        totalFor: standing.points.for,
+        totalAgainst: standing.points.against,
+        averageFor: standing.games.played > 0 ? standing.points.for / standing.games.played : 0,
+        averageAgainst: standing.games.played > 0 ? standing.points.against / standing.games.played : 0,
+      },
+      
+      form: standing.form ? {
+        last5: standing.form.slice(0, 5),
+        last10: standing.form.slice(0, 10),
+      } : undefined,
+      
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    };
+  }
+  
+  private mapStatus(status: string): MatchStatus {
+    const statusMap: Record<string, MatchStatus> = {
+      'NS': 'scheduled',
+      'LIVE': 'live',
+      'Q1': 'live',
+      'Q2': 'live',
+      'Q3': 'live',
+      'Q4': 'live',
+      'OT': 'live',
+      'HT': 'halftime',
+      'FT': 'finished',
+      'AOT': 'finished',
+      'POST': 'postponed',
+      'CANC': 'cancelled',
+      'SUSP': 'suspended',
+    };
+    return statusMap[status] || 'unknown';
+  }
+}
+
+// Export singleton
+let instance: BasketballAdapter | null = null;
+
+export function getBasketballAdapter(): BasketballAdapter {
+  if (!instance) {
+    instance = new BasketballAdapter();
+  }
+  return instance;
+}

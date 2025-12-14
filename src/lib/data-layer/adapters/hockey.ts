@@ -1,0 +1,566 @@
+/**
+ * Hockey Adapter
+ * 
+ * Transforms API-Sports hockey data into normalized format.
+ * Handles NHL and other hockey leagues.
+ */
+
+import { BaseSportAdapter, AdapterConfig } from './base';
+import {
+  Sport,
+  DataProvider,
+  DataLayerResponse,
+  NormalizedTeam,
+  NormalizedMatch,
+  NormalizedTeamStats,
+  NormalizedH2H,
+  NormalizedRecentGames,
+  MatchStatus,
+  TeamQuery,
+  MatchQuery,
+  StatsQuery,
+  H2HQuery,
+} from '../types';
+import {
+  getAPISportsProvider,
+  LEAGUE_IDS,
+  HockeyTeamResponse,
+  HockeyGameResponse,
+  HockeyStandingsResponse,
+} from '../providers/api-sports';
+
+// Team name mappings for NHL
+const NHL_TEAM_MAPPINGS: Record<string, string> = {
+  // Short names
+  'bruins': 'Bruins',
+  'sabres': 'Sabres',
+  'red wings': 'Red Wings',
+  'panthers': 'Panthers',
+  'canadiens': 'Canadiens',
+  'habs': 'Canadiens',
+  'senators': 'Senators',
+  'sens': 'Senators',
+  'lightning': 'Lightning',
+  'bolts': 'Lightning',
+  'maple leafs': 'Maple Leafs',
+  'leafs': 'Maple Leafs',
+  'hurricanes': 'Hurricanes',
+  'canes': 'Hurricanes',
+  'blue jackets': 'Blue Jackets',
+  'jackets': 'Blue Jackets',
+  'devils': 'Devils',
+  'islanders': 'Islanders',
+  'isles': 'Islanders',
+  'rangers': 'Rangers',
+  'flyers': 'Flyers',
+  'penguins': 'Penguins',
+  'pens': 'Penguins',
+  'capitals': 'Capitals',
+  'caps': 'Capitals',
+  'blackhawks': 'Blackhawks',
+  'hawks': 'Blackhawks',
+  'avalanche': 'Avalanche',
+  'avs': 'Avalanche',
+  'stars': 'Stars',
+  'wild': 'Wild',
+  'predators': 'Predators',
+  'preds': 'Predators',
+  'blues': 'Blues',
+  'jets': 'Jets',
+  'flames': 'Flames',
+  'oilers': 'Oilers',
+  'kings': 'Kings',
+  'ducks': 'Ducks',
+  'coyotes': 'Coyotes',
+  'sharks': 'Sharks',
+  'kraken': 'Kraken',
+  'canucks': 'Canucks',
+  'golden knights': 'Golden Knights',
+  'knights': 'Golden Knights',
+  
+  // City mappings
+  'boston': 'Bruins',
+  'buffalo': 'Sabres',
+  'detroit': 'Red Wings',
+  'florida': 'Panthers',
+  'montreal': 'Canadiens',
+  'ottawa': 'Senators',
+  'tampa bay': 'Lightning',
+  'tampa': 'Lightning',
+  'toronto': 'Maple Leafs',
+  'carolina': 'Hurricanes',
+  'columbus': 'Blue Jackets',
+  'new jersey': 'Devils',
+  'new york islanders': 'Islanders',
+  'ny islanders': 'Islanders',
+  'new york rangers': 'Rangers',
+  'ny rangers': 'Rangers',
+  'philadelphia': 'Flyers',
+  'pittsburgh': 'Penguins',
+  'washington': 'Capitals',
+  'chicago': 'Blackhawks',
+  'colorado': 'Avalanche',
+  'dallas': 'Stars',
+  'minnesota': 'Wild',
+  'nashville': 'Predators',
+  'st. louis': 'Blues',
+  'st louis': 'Blues',
+  'winnipeg': 'Jets',
+  'calgary': 'Flames',
+  'edmonton': 'Oilers',
+  'los angeles': 'Kings',
+  'la kings': 'Kings',
+  'anaheim': 'Ducks',
+  'arizona': 'Coyotes',
+  'san jose': 'Sharks',
+  'seattle': 'Kraken',
+  'vancouver': 'Canucks',
+  'vegas': 'Golden Knights',
+  'las vegas': 'Golden Knights',
+};
+
+export class HockeyAdapter extends BaseSportAdapter {
+  readonly sport: Sport = 'hockey';
+  readonly provider: DataProvider = 'api-sports';
+  
+  private apiProvider = getAPISportsProvider();
+  
+  constructor(config: AdapterConfig = {}) {
+    super({
+      ...config,
+      apiKey: config.apiKey || process.env.API_FOOTBALL_KEY,
+    });
+  }
+  
+  isAvailable(): boolean {
+    return this.apiProvider.isConfigured();
+  }
+  
+  /**
+   * Get current NHL season (single year format)
+   */
+  private getCurrentSeason(): number {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    
+    // NHL season runs Oct-June
+    if (month >= 10) {
+      return year;
+    } else {
+      return year - 1;
+    }
+  }
+  
+  /**
+   * Normalize team name for search
+   */
+  private normalizeTeamName(name: string): string {
+    const lower = name.toLowerCase().trim();
+    return NHL_TEAM_MAPPINGS[lower] || name;
+  }
+  
+  /**
+   * Find a hockey team
+   */
+  async findTeam(query: TeamQuery): Promise<DataLayerResponse<NormalizedTeam>> {
+    if (!query.name && !query.id) {
+      return this.error('INVALID_QUERY', 'Team name or ID required');
+    }
+    
+    const season = this.getCurrentSeason();
+    const leagueId = LEAGUE_IDS.NHL;
+    
+    // Try by ID first
+    if (query.id) {
+      const result = await this.apiProvider.getHockeyTeams({
+        id: parseInt(query.id),
+        league: leagueId,
+        season,
+      });
+      
+      if (result.success && result.data && result.data.length > 0) {
+        return this.success(this.transformTeam(result.data[0]));
+      }
+    }
+    
+    // Search by name
+    if (query.name) {
+      const searchName = this.normalizeTeamName(query.name);
+      
+      const result = await this.apiProvider.getHockeyTeams({
+        name: searchName,
+        league: leagueId,
+        season,
+      });
+      
+      if (result.success && result.data && result.data.length > 0) {
+        return this.success(this.transformTeam(result.data[0]));
+      }
+      
+      // Try search with just league to get all teams and filter
+      const allTeams = await this.apiProvider.getHockeyTeams({
+        league: leagueId,
+        season,
+      });
+      
+      if (allTeams.success && allTeams.data) {
+        const lowerSearch = searchName.toLowerCase();
+        const found = allTeams.data.find(t => 
+          t.name.toLowerCase().includes(lowerSearch)
+        );
+        
+        if (found) {
+          return this.success(this.transformTeam(found));
+        }
+      }
+    }
+    
+    return this.error('TEAM_NOT_FOUND', `Could not find hockey team: ${query.name || query.id}`);
+  }
+  
+  /**
+   * Get hockey matches
+   */
+  async getMatches(query: MatchQuery): Promise<DataLayerResponse<NormalizedMatch[]>> {
+    const season = this.getCurrentSeason();
+    const params: Record<string, string | number> = {
+      league: LEAGUE_IDS.NHL,
+      season,
+    };
+    
+    if (query.team) {
+      const teamResult = await this.findTeam({ name: query.team, sport: 'hockey' });
+      if (teamResult.success && teamResult.data) {
+        params.team = parseInt(teamResult.data.externalId);
+      }
+    }
+    
+    if (query.date) {
+      params.date = query.date.toISOString().split('T')[0];
+    }
+    
+    const result = await this.apiProvider.getHockeyGames(params);
+    
+    if (!result.success || !result.data) {
+      return this.error('FETCH_ERROR', result.error || 'Failed to fetch hockey games');
+    }
+    
+    const matches = result.data
+      .slice(0, query.limit || 20)
+      .map(game => this.transformMatch(game));
+    
+    return this.success(matches);
+  }
+  
+  /**
+   * Get team statistics
+   */
+  async getTeamStats(query: StatsQuery): Promise<DataLayerResponse<NormalizedTeamStats>> {
+    const season = query.season ? parseInt(query.season) : this.getCurrentSeason();
+    const leagueId = LEAGUE_IDS.NHL;
+    
+    // Try /teams/statistics endpoint first
+    const statsResult = await this.apiProvider.getHockeyTeamStats({
+      team: parseInt(query.teamId),
+      league: leagueId,
+      season,
+    });
+    
+    if (statsResult.success && statsResult.data) {
+      return this.success(this.transformStats(statsResult.data, query.teamId, String(season)));
+    }
+    
+    // Fallback to standings
+    const standingsResult = await this.apiProvider.getHockeyStandings({
+      league: leagueId,
+      season,
+    });
+    
+    if (standingsResult.success && standingsResult.data) {
+      const allStandings = standingsResult.data.flat();
+      const teamStanding = allStandings.find(s => 
+        s.team.id === parseInt(query.teamId)
+      );
+      
+      if (teamStanding) {
+        return this.success(this.transformStandingsToStats(teamStanding, String(season)));
+      }
+    }
+    
+    return this.error('STATS_NOT_FOUND', `Could not find stats for team ${query.teamId}`);
+  }
+  
+  /**
+   * Get recent games for a team
+   */
+  async getRecentGames(teamId: string, limit: number = 5): Promise<DataLayerResponse<NormalizedRecentGames>> {
+    const season = this.getCurrentSeason();
+    
+    const result = await this.apiProvider.getHockeyGames({
+      team: parseInt(teamId),
+      league: LEAGUE_IDS.NHL,
+      season,
+    });
+    
+    if (!result.success || !result.data) {
+      return this.error('FETCH_ERROR', result.error || 'Failed to fetch games');
+    }
+    
+    // Filter to finished games and sort by date descending
+    const finishedGames = result.data
+      .filter(g => g.status.short === 'FT' || g.status.short === 'AOT' || g.status.short === 'AP')
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, limit);
+    
+    const matches = finishedGames.map(g => this.transformMatch(g));
+    
+    // Calculate summary
+    let wins = 0, losses = 0, goalsFor = 0, goalsAgainst = 0;
+    
+    for (const game of finishedGames) {
+      const isHome = game.teams.home.id === parseInt(teamId);
+      const teamScore = isHome ? game.scores.home : game.scores.away;
+      const oppScore = isHome ? game.scores.away : game.scores.home;
+      
+      if (teamScore !== null && oppScore !== null) {
+        goalsFor += teamScore;
+        goalsAgainst += oppScore;
+        if (teamScore > oppScore) wins++;
+        else losses++;
+      }
+    }
+    
+    return this.success({
+      teamId,
+      sport: 'hockey',
+      games: matches,
+      summary: {
+        wins,
+        losses,
+        draws: 0,
+        goalsFor,
+        goalsAgainst,
+      },
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    });
+  }
+  
+  /**
+   * Get head-to-head history
+   */
+  async getH2H(query: H2HQuery): Promise<DataLayerResponse<NormalizedH2H>> {
+    // Find both teams
+    const team1Result = await this.findTeam({ name: query.team1, sport: 'hockey' });
+    const team2Result = await this.findTeam({ name: query.team2, sport: 'hockey' });
+    
+    if (!team1Result.success || !team1Result.data) {
+      return this.error('TEAM_NOT_FOUND', `Could not find team: ${query.team1}`);
+    }
+    if (!team2Result.success || !team2Result.data) {
+      return this.error('TEAM_NOT_FOUND', `Could not find team: ${query.team2}`);
+    }
+    
+    const team1Id = team1Result.data.externalId;
+    const team2Id = team2Result.data.externalId;
+    const h2hString = `${team1Id}-${team2Id}`;
+    
+    const result = await this.apiProvider.getHockeyGames({
+      h2h: h2hString,
+      league: LEAGUE_IDS.NHL,
+      season: this.getCurrentSeason(),
+    });
+    
+    if (!result.success || !result.data) {
+      return this.error('FETCH_ERROR', result.error || 'Failed to fetch H2H');
+    }
+    
+    const games = result.data.slice(0, query.limit || 10);
+    const matches = games.map(g => this.transformMatch(g));
+    
+    // Calculate summary
+    let team1Wins = 0, team2Wins = 0, team1Goals = 0, team2Goals = 0;
+    
+    for (const game of games) {
+      const homeIsTeam1 = game.teams.home.id === parseInt(team1Id);
+      const homeScore = game.scores.home || 0;
+      const awayScore = game.scores.away || 0;
+      
+      if (homeIsTeam1) {
+        team1Goals += homeScore;
+        team2Goals += awayScore;
+        if (homeScore > awayScore) team1Wins++;
+        else team2Wins++;
+      } else {
+        team2Goals += homeScore;
+        team1Goals += awayScore;
+        if (homeScore > awayScore) team2Wins++;
+        else team1Wins++;
+      }
+    }
+    
+    return this.success({
+      team1Id,
+      team2Id,
+      sport: 'hockey',
+      summary: {
+        totalGames: games.length,
+        team1Wins,
+        team2Wins,
+        draws: 0,
+        team1Goals,
+        team2Goals,
+      },
+      matches,
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    });
+  }
+  
+  // ============================================================================
+  // Transform Methods
+  // ============================================================================
+  
+  private transformTeam(raw: HockeyTeamResponse): NormalizedTeam {
+    return {
+      id: `hockey-${raw.id}`,
+      externalId: String(raw.id),
+      name: raw.name,
+      shortName: raw.name.split(' ').pop() || raw.name,
+      logo: raw.logo,
+      country: raw.country?.name,
+      sport: 'hockey',
+      league: 'NHL',
+    };
+  }
+  
+  private transformMatch(raw: HockeyGameResponse): NormalizedMatch {
+    return {
+      id: `hockey-${raw.id}`,
+      externalId: String(raw.id),
+      sport: 'hockey',
+      league: raw.league.name,
+      leagueId: String(raw.league.id),
+      season: String(raw.league.season),
+      
+      homeTeam: {
+        id: `hockey-${raw.teams.home.id}`,
+        externalId: String(raw.teams.home.id),
+        name: raw.teams.home.name,
+        shortName: raw.teams.home.name.split(' ').pop() || raw.teams.home.name,
+        logo: raw.teams.home.logo,
+        sport: 'hockey',
+      },
+      awayTeam: {
+        id: `hockey-${raw.teams.away.id}`,
+        externalId: String(raw.teams.away.id),
+        name: raw.teams.away.name,
+        shortName: raw.teams.away.name.split(' ').pop() || raw.teams.away.name,
+        logo: raw.teams.away.logo,
+        sport: 'hockey',
+      },
+      
+      status: this.mapStatus(raw.status.short),
+      date: new Date(raw.timestamp * 1000),
+      
+      score: {
+        home: raw.scores.home || 0,
+        away: raw.scores.away || 0,
+        periods: [
+          { home: raw.periods.first?.home || 0, away: raw.periods.first?.away || 0 },
+          { home: raw.periods.second?.home || 0, away: raw.periods.second?.away || 0 },
+          { home: raw.periods.third?.home || 0, away: raw.periods.third?.away || 0 },
+        ],
+      },
+      
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    };
+  }
+  
+  private transformStats(raw: any, teamId: string, season: string): NormalizedTeamStats {
+    return {
+      teamId,
+      season,
+      league: 'NHL',
+      sport: 'hockey',
+      
+      record: {
+        wins: raw.games?.wins?.total || 0,
+        losses: raw.games?.loses?.total || 0,
+        winPercentage: parseFloat(raw.games?.wins?.percentage || '0'),
+      },
+      
+      scoring: {
+        totalFor: raw.goals?.for || 0,
+        totalAgainst: raw.goals?.against || 0,
+        averageFor: raw.games?.played ? (raw.goals?.for || 0) / raw.games.played : 0,
+        averageAgainst: raw.games?.played ? (raw.goals?.against || 0) / raw.games.played : 0,
+      },
+      
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    };
+  }
+  
+  private transformStandingsToStats(standing: HockeyStandingsResponse, season: string): NormalizedTeamStats {
+    return {
+      teamId: String(standing.team.id),
+      season,
+      league: 'NHL',
+      sport: 'hockey',
+      
+      record: {
+        wins: standing.games.win.total,
+        losses: standing.games.lose.total,
+        winPercentage: parseFloat(standing.games.win.percentage),
+      },
+      
+      scoring: {
+        totalFor: standing.points.for,
+        totalAgainst: standing.points.against,
+        averageFor: standing.games.played > 0 ? standing.points.for / standing.games.played : 0,
+        averageAgainst: standing.games.played > 0 ? standing.points.against / standing.games.played : 0,
+      },
+      
+      form: standing.form ? {
+        last5: standing.form.slice(0, 5),
+        last10: standing.form.slice(0, 10),
+      } : undefined,
+      
+      provider: 'api-sports',
+      fetchedAt: new Date(),
+    };
+  }
+  
+  private mapStatus(status: string): MatchStatus {
+    const statusMap: Record<string, MatchStatus> = {
+      'NS': 'scheduled',
+      'LIVE': 'live',
+      'P1': 'live',
+      'P2': 'live',
+      'P3': 'live',
+      'OT': 'live',
+      'PT': 'live', // Penalty time
+      'BT': 'halftime', // Break time
+      'FT': 'finished',
+      'AOT': 'finished', // After overtime
+      'AP': 'finished', // After penalties
+      'POST': 'postponed',
+      'CANC': 'cancelled',
+      'SUSP': 'suspended',
+    };
+    return statusMap[status] || 'unknown';
+  }
+}
+
+// Export singleton
+let instance: HockeyAdapter | null = null;
+
+export function getHockeyAdapter(): HockeyAdapter {
+  if (!instance) {
+    instance = new HockeyAdapter();
+  }
+  return instance;
+}
