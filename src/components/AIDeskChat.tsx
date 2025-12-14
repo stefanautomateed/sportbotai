@@ -20,6 +20,7 @@ interface ChatMessage {
   content: string;
   citations?: string[];
   usedRealTimeSearch?: boolean;
+  followUps?: string[];
   timestamp: Date;
 }
 
@@ -222,8 +223,16 @@ export default function AIDeskChat() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
+    // Create placeholder for streaming response
+    const assistantMessageId = (Date.now() + 1).toString();
+    let streamedContent = '';
+    let streamCitations: string[] = [];
+    let streamUsedSearch = false;
+    let streamFollowUps: string[] = [];
+
     try {
-      const response = await fetch('/api/ai-chat', {
+      // Try streaming endpoint first
+      const response = await fetch('/api/ai-chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -235,26 +244,85 @@ export default function AIDeskChat() {
         }),
       });
 
-      const data: ChatResponse = await response.json();
+      // Check if streaming is supported
+      if (response.headers.get('Content-Type')?.includes('text/event-stream')) {
+        // Add empty assistant message for streaming
+        setMessages(prev => [...prev, {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: '',
+          timestamp: new Date(),
+        }]);
+        setIsLoading(false); // Show the streaming message
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to get response');
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  
+                  if (data.type === 'metadata') {
+                    streamCitations = data.citations || [];
+                    streamUsedSearch = data.usedRealTimeSearch;
+                    streamFollowUps = data.followUps || [];
+                  } else if (data.type === 'content') {
+                    streamedContent += data.content;
+                    // Update the message with streamed content
+                    setMessages(prev => prev.map(m => 
+                      m.id === assistantMessageId 
+                        ? { 
+                            ...m, 
+                            content: streamedContent, 
+                            citations: streamCitations, 
+                            usedRealTimeSearch: streamUsedSearch,
+                            followUps: streamFollowUps,
+                          }
+                        : m
+                    ));
+                  } else if (data.type === 'error') {
+                    throw new Error(data.error);
+                  }
+                } catch (e) {
+                  // Ignore JSON parse errors for incomplete chunks
+                }
+              }
+            }
+          }
+        }
+      } else {
+        // Fallback to non-streaming response
+        const data: ChatResponse = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to get response');
+        }
+
+        const assistantMessage: ChatMessage = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: data.response,
+          citations: data.citations,
+          usedRealTimeSearch: data.usedRealTimeSearch,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, assistantMessage]);
       }
-
-      // Add assistant message
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        citations: data.citations,
-        usedRealTimeSearch: data.usedRealTimeSearch,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMessage]);
 
     } catch (err) {
       console.error('Chat error:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
+      // Remove the empty streaming message if it was added
+      setMessages(prev => prev.filter(m => m.id !== assistantMessageId || m.content));
     } finally {
       setIsLoading(false);
     }
@@ -435,6 +503,25 @@ export default function AIDeskChat() {
                           Failed
                         </span>
                       )}
+                    </div>
+                  )}
+                  
+                  {/* Follow-up suggestions */}
+                  {msg.role === 'assistant' && msg.followUps && msg.followUps.length > 0 && msg.content && (
+                    <div className="mt-3 space-y-1.5">
+                      <p className="text-[10px] text-text-muted uppercase tracking-wider">Follow up:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {msg.followUps.map((followUp, i) => (
+                          <button
+                            key={i}
+                            onClick={() => sendMessage(followUp)}
+                            disabled={isLoading}
+                            className="text-xs px-2.5 py-1.5 bg-white/5 hover:bg-primary/20 border border-white/10 hover:border-primary/30 rounded-lg text-text-secondary hover:text-white transition-all disabled:opacity-50"
+                          >
+                            {followUp}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

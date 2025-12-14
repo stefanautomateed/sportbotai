@@ -88,6 +88,14 @@ export const CACHE_TTL = {
   // AI Analysis
   ANALYSIS: 60 * 60,        // 1 hour (same inputs = same analysis)
   
+  // Chat responses (category-based TTL)
+  CHAT_STANDINGS: 5 * 60,   // 5 minutes (standings change after matches)
+  CHAT_ROSTER: 15 * 60,     // 15 minutes (rosters rarely change mid-day)
+  CHAT_STATS: 10 * 60,      // 10 minutes (stats update after matches)
+  CHAT_RULES: 24 * 60 * 60, // 24 hours (rules never change)
+  CHAT_HISTORY: 60 * 60,    // 1 hour (historical facts are stable)
+  CHAT_DEFAULT: 5 * 60,     // 5 minutes (default for news/updates)
+  
   // User data
   USER_USAGE: 60,           // 1 minute
 } as const;
@@ -120,9 +128,58 @@ export const CACHE_KEYS = {
   analysis: (homeTeam: string, awayTeam: string, sport: string, oddsHash: string) => 
     `analysis:${sport}:${homeTeam.toLowerCase()}:${awayTeam.toLowerCase()}:${oddsHash}`,
   
+  // Chat responses
+  chat: (queryHash: string) => `chat:${queryHash}`,
+  
   // User
   userUsage: (userId: string) => `user:usage:${userId}`,
 };
+
+// ============================================
+// CHAT CACHE HELPERS
+// ============================================
+
+/**
+ * Generate a cache key hash for a chat query
+ * Normalizes the query to catch similar questions
+ */
+export function hashChatQuery(query: string): string {
+  // Normalize: lowercase, remove punctuation, collapse whitespace
+  const normalized = query
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    const char = normalized.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
+
+/**
+ * Get TTL for chat based on query category
+ */
+export function getChatTTL(category: string): number {
+  switch (category) {
+    case 'STANDINGS':
+      return CACHE_TTL.CHAT_STANDINGS;
+    case 'ROSTER':
+      return CACHE_TTL.CHAT_ROSTER;
+    case 'STATS':
+      return CACHE_TTL.CHAT_STATS;
+    case 'HISTORY':
+    case 'VENUE':
+      return CACHE_TTL.CHAT_HISTORY;
+    default:
+      // Dynamic content (results, injuries, transfers, etc.)
+      return CACHE_TTL.CHAT_DEFAULT;
+  }
+}
 
 // ============================================
 // CACHE OPERATIONS
