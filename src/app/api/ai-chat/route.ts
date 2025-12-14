@@ -201,9 +201,9 @@ function detectBettingIntent(message: string): {
   
   // Check for betting advice intent
   let isBettingAdvice = false;
-  let matchedKeywords: string[] = [];
+  const matchedKeywords: string[] = [];
   
-  for (const [lang, keywords] of Object.entries(bettingKeywords)) {
+  for (const keywords of Object.values(bettingKeywords)) {
     for (const kw of keywords) {
       if (msg.includes(kw)) {
         isBettingAdvice = true;
