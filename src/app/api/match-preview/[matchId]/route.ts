@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getEnrichedMatchData, getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
+import { getMultiSportEnrichedData } from '@/lib/sports-api';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
@@ -36,42 +37,71 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Fetch enriched data from API-Football
-    const [enrichedData, injuries, goalTimingData, keyPlayers, referee, fixtureInfo] = await Promise.all([
-      getEnrichedMatchData(
+    // Determine if this is a non-soccer sport
+    const isNonSoccer = ['basketball', 'basketball_nba', 'nba', 'americanfootball', 'nfl', 'icehockey', 'nhl', 'baseball', 'mlb', 'mma', 'ufc']
+      .includes(matchInfo.sport.toLowerCase());
+
+    // Fetch enriched data based on sport type
+    let enrichedData;
+    let injuries: { home: any[]; away: any[] } = { home: [], away: [] };
+    let goalTimingData: any = null;
+    let keyPlayers: { home: any; away: any } = { home: null, away: null };
+    let referee: any = null;
+    let fixtureInfo: { venue: string | null } = { venue: null };
+
+    if (isNonSoccer) {
+      // Use multi-sport API for basketball, NFL, etc.
+      console.log(`[Match-Preview] Using multi-sport API for ${matchInfo.sport}`);
+      enrichedData = await getMultiSportEnrichedData(
         matchInfo.homeTeam,
         matchInfo.awayTeam,
+        matchInfo.sport,
         matchInfo.league
-      ),
-      getMatchInjuries(
-        matchInfo.homeTeam,
-        matchInfo.awayTeam,
-        matchInfo.league
-      ),
-      getMatchGoalTiming(
-        matchInfo.homeTeam,
-        matchInfo.awayTeam,
-        matchInfo.league
-      ),
-      getMatchKeyPlayers(
-        matchInfo.homeTeam,
-        matchInfo.awayTeam,
-        matchInfo.league
-      ),
-      getFixtureReferee(
-        matchInfo.homeTeam,
-        matchInfo.awayTeam,
-        matchInfo.league
-      ),
-      getMatchFixtureInfo(
-        matchInfo.homeTeam,
-        matchInfo.awayTeam,
-        matchInfo.league
-      ),
-    ]);
+      );
+      console.log(`[Match-Preview] ${matchInfo.sport} data:`, {
+        dataSource: enrichedData.dataSource,
+        homeFormGames: enrichedData.homeForm?.length || 0,
+        awayFormGames: enrichedData.awayForm?.length || 0,
+        h2hGames: enrichedData.headToHead?.length || 0,
+      });
+    } else {
+      // Use football API for soccer
+      [enrichedData, injuries, goalTimingData, keyPlayers, referee, fixtureInfo] = await Promise.all([
+        getEnrichedMatchData(
+          matchInfo.homeTeam,
+          matchInfo.awayTeam,
+          matchInfo.league
+        ),
+        getMatchInjuries(
+          matchInfo.homeTeam,
+          matchInfo.awayTeam,
+          matchInfo.league
+        ),
+        getMatchGoalTiming(
+          matchInfo.homeTeam,
+          matchInfo.awayTeam,
+          matchInfo.league
+        ),
+        getMatchKeyPlayers(
+          matchInfo.homeTeam,
+          matchInfo.awayTeam,
+          matchInfo.league
+        ),
+        getFixtureReferee(
+          matchInfo.homeTeam,
+          matchInfo.awayTeam,
+          matchInfo.league
+        ),
+        getMatchFixtureInfo(
+          matchInfo.homeTeam,
+          matchInfo.awayTeam,
+          matchInfo.league
+        ),
+      ]);
+    }
 
     // Use venue from fixture info if available, fallback to matchInfo
-    const venue = fixtureInfo.venue || matchInfo.venue;
+    const venue = fixtureInfo?.venue || matchInfo.venue;
 
     // Build form strings
     const homeFormStr = enrichedData.homeForm?.map(m => m.result).join('') || 'DDDDD';
