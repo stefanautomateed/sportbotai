@@ -439,3 +439,178 @@ model SportExpertise {
   
   @@index([sport])
 }
+
+// ============================================
+// SPORTBOT TWITTER INTEGRATION
+// ============================================
+
+// Predictions made by SportBot
+model Prediction {
+  id              String            @id @default(cuid())
+  
+  // Match info
+  matchId         String
+  matchName       String            // "Arsenal vs Chelsea"
+  sport           String            // football, basketball
+  league          String
+  kickoff         DateTime
+  
+  // The prediction
+  type            CallType
+  prediction      String            // "Arsenal Win", "Over 2.5", etc.
+  reasoning       String            @db.Text
+  conviction      Int               // 1-5 (fire level)
+  
+  // Odds at time of prediction
+  odds            Float?
+  impliedProb     Float?            // Calculated from odds
+  
+  // Tweet tracking
+  tweetId         String?           // Original prediction tweet
+  validationTweetId String?         // "Called it" tweet
+  
+  // Outcome
+  outcome         CallOutcome       @default(PENDING)
+  actualResult    String?           // "Arsenal 2-1 Chelsea"
+  validatedAt     DateTime?
+  
+  // Meta
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([matchId])
+  @@index([outcome])
+  @@index([sport])
+  @@index([createdAt])
+  @@index([conviction])
+}
+
+// Scheduled posts for Twitter
+model ScheduledPost {
+  id              String            @id @default(cuid())
+  
+  // Content
+  content         String            @db.Text
+  contentType     PostCategory
+  
+  // Scheduling
+  scheduledFor    DateTime
+  timezone        String            @default("UTC")
+  
+  // Related entities
+  matchId         String?
+  predictionId    String?
+  
+  // Status
+  posted          Boolean           @default(false)
+  postedAt        DateTime?
+  tweetId         String?
+  error           String?           // If posting failed
+  
+  // Meta
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([scheduledFor])
+  @@index([posted])
+  @@index([contentType])
+}
+
+// Twitter posting history
+model TwitterPost {
+  id              String            @id @default(cuid())
+  
+  // Tweet info
+  tweetId         String            @unique
+  content         String            @db.Text
+  category        PostCategory
+  
+  // Thread info (if part of thread)
+  threadId        String?           // First tweet ID of thread
+  threadPosition  Int?              // Position in thread (1, 2, 3...)
+  
+  // Performance (can be updated later via API)
+  likes           Int               @default(0)
+  retweets        Int               @default(0)
+  replies         Int               @default(0)
+  impressions     Int               @default(0)
+  
+  // Meta
+  postedAt        DateTime          @default(now())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([category])
+  @@index([postedAt])
+  @@index([threadId])
+}
+
+// Daily stats snapshot for tracking performance
+model DailyStats {
+  id              String            @id @default(cuid())
+  date            DateTime          @unique @db.Date
+  
+  // Prediction stats
+  totalPredictions Int              @default(0)
+  hits            Int               @default(0)
+  misses          Int               @default(0)
+  pushes          Int               @default(0)
+  hitRate         Float             @default(0)
+  
+  // By conviction
+  conv1Hits       Int               @default(0)
+  conv1Total      Int               @default(0)
+  conv2Hits       Int               @default(0)
+  conv2Total      Int               @default(0)
+  conv3Hits       Int               @default(0)
+  conv3Total      Int               @default(0)
+  conv4Hits       Int               @default(0)
+  conv4Total      Int               @default(0)
+  conv5Hits       Int               @default(0)
+  conv5Total      Int               @default(0)
+  
+  // Twitter engagement
+  postsCount      Int               @default(0)
+  totalLikes      Int               @default(0)
+  totalRetweets   Int               @default(0)
+  totalImpressions Int              @default(0)
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([date])
+}
+
+// Enums for Twitter/Prediction system
+enum CallType {
+  MATCH_RESULT
+  OVER_UNDER
+  BTTS
+  PLAYER_PROP
+  FIRST_SCORER
+  CLEAN_SHEET
+  CORNER_COUNT
+  CARD_COUNT
+  HANDICAP
+  DOUBLE_CHANCE
+}
+
+enum CallOutcome {
+  PENDING
+  HIT
+  MISS
+  PUSH
+  VOID
+}
+
+enum PostCategory {
+  MORNING_BRIEFING
+  MATCH_PREVIEW
+  LIVE_UPDATE
+  POST_MATCH
+  CALL_VALIDATION
+  HOT_TAKE
+  TRENDING
+  WEEKLY_STATS
+  THREAD
+}

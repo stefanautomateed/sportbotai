@@ -6,6 +6,18 @@
     {
       "path": "/api/blog/generate",
       "schedule": "0 */2 * * *"
+    },
+    {
+      "path": "/api/cron/morning-briefing",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/match-validation",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/weekly-stats",
+      "schedule": "0 18 * * 0"
     }
   ]
 }

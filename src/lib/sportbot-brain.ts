@@ -199,6 +199,23 @@ export function getCatchphrase(category: keyof typeof SIGNATURE_CATCHPHRASES): s
   return phrases[Math.floor(Math.random() * phrases.length)];
 }
 
+/**
+ * Get a random catchphrase from any category (for general use)
+ */
+export function getRandomCatchphrase(): string {
+  const categories = Object.keys(SIGNATURE_CATCHPHRASES) as (keyof typeof SIGNATURE_CATCHPHRASES)[];
+  const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+  return getCatchphrase(randomCategory);
+}
+
+/**
+ * Get conviction score display for a level
+ */
+export function getConvictionDisplay(level: number): ConvictionScore {
+  const clampedLevel = Math.max(1, Math.min(5, level)) as ConvictionLevel;
+  return CONVICTION_LEVELS[clampedLevel];
+}
+
 // ============================================
 // HOT TAKES GENERATOR (quotable one-liners)
 // ============================================
