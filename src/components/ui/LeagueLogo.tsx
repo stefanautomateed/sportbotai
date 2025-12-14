@@ -13,15 +13,26 @@ import { getLeagueLogo } from '@/lib/logos';
 interface LeagueLogoProps {
   leagueName: string;
   sport?: string;
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
+// Bigger, more visible sizes
 const sizeClasses = {
-  xs: 'w-4 h-4',
-  sm: 'w-5 h-5',
-  md: 'w-6 h-6',
-  lg: 'w-8 h-8',
+  xs: 'w-5 h-5',
+  sm: 'w-7 h-7',
+  md: 'w-9 h-9',
+  lg: 'w-12 h-12',
+  xl: 'w-16 h-16',
+};
+
+// Font sizes for fallback initials
+const fontSizeClasses = {
+  xs: 'text-[8px]',
+  sm: 'text-[10px]',
+  md: 'text-xs',
+  lg: 'text-sm',
+  xl: 'text-base',
 };
 
 export default function LeagueLogo({ 
@@ -55,10 +66,10 @@ export default function LeagueLogo({
   // Fallback component with initials
   const FallbackLogo = () => (
     <div 
-      className={`${sizeClasses[size]} rounded flex items-center justify-center flex-shrink-0 ${className}`}
+      className={`${sizeClasses[size]} rounded-lg flex items-center justify-center flex-shrink-0 ${className}`}
       style={{ backgroundColor: getColor(leagueName) }}
     >
-      <span className="text-white/90 font-semibold text-[8px]">
+      <span className={`text-white/90 font-semibold ${fontSizeClasses[size]}`}>
         {getInitials(leagueName)}
       </span>
     </div>
@@ -73,7 +84,7 @@ export default function LeagueLogo({
       {/* Placeholder while loading */}
       {!isLoaded && (
         <div 
-          className="absolute inset-0 rounded animate-pulse"
+          className="absolute inset-0 rounded-lg animate-pulse"
           style={{ backgroundColor: `${getColor(leagueName)}40` }}
         />
       )}
