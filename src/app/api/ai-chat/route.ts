@@ -62,12 +62,137 @@ type QueryCategory =
   | 'HISTORY'     // Historical records
   | 'BROADCAST'   // TV/streaming info
   | 'VENUE'       // Stadium info
+  | 'PLAYER_PROP' // Player prop questions (over/under on stats)
+  | 'BETTING_ADVICE' // Should I bet? (decline with analysis)
   | 'GENERAL';    // Generic sports question
+
+// ============================================
+// BETTING/PLAYER PROP DETECTION (multi-language)
+// ============================================
+
+/**
+ * Detect if query is asking for betting advice or player props
+ * Supports multiple languages: English, Serbian/Croatian, Spanish, German, etc.
+ */
+function detectBettingIntent(message: string): { 
+  isBettingAdvice: boolean; 
+  isPlayerProp: boolean;
+  detectedType: 'over' | 'under' | 'points' | 'rebounds' | 'assists' | 'general' | null;
+  playerMentioned: string | null;
+} {
+  const msg = message.toLowerCase();
+  
+  // Multi-language betting keywords
+  const bettingKeywords = {
+    // English
+    english: [
+      'should i bet', 'should i play', 'should i take', 'is it worth betting',
+      'bet on', 'place a bet', 'wager on', 'lock', 'slam', 'max bet',
+      'good value', 'worth it', 'smart bet', 'safe bet',
+    ],
+    // Serbian/Croatian/Bosnian
+    serbian: [
+      'da igram', 'da li da igram', 'treba li', 'da uplatim', 'da stavim',
+      'isplati li se', 'vredi li', 'plus', 'minus', 'kladim se',
+      'da li vredi', 'da li da stavim', 'uplatiti',
+    ],
+    // Spanish
+    spanish: [
+      'debo apostar', 'apostar por', 'vale la pena', 'apuesta segura',
+      'más de', 'menos de', 'apuesto',
+    ],
+    // German
+    german: [
+      'soll ich wetten', 'lohnt sich', 'wette auf', 'über', 'unter',
+    ],
+    // Common betting terms (language-agnostic)
+    universal: [
+      'o/u', 'over under', 'over/under', 'pts o', 'reb o', 'ast o',
+      'points over', 'points under', 'rebounds over', 'assists over',
+      'player prop', 'prop bet', 'pts+reb', 'pra', 'p+r+a',
+    ],
+  };
+  
+  // Player prop stat keywords
+  const propStats = {
+    points: ['points', 'pts', 'poena', 'puntos', 'punkte', 'koseva'],
+    rebounds: ['rebounds', 'reb', 'rebs', 'skokovi', 'rebotes'],
+    assists: ['assists', 'ast', 'asistencije', 'asistencias'],
+    threes: ['threes', '3pt', '3s', 'trojke', 'triples'],
+    blocks: ['blocks', 'blk', 'blokade', 'tapones'],
+    steals: ['steals', 'stl', 'ukradene', 'robos'],
+  };
+  
+  // Check for betting advice intent
+  let isBettingAdvice = false;
+  for (const keywords of Object.values(bettingKeywords)) {
+    if (keywords.some(kw => msg.includes(kw))) {
+      isBettingAdvice = true;
+      break;
+    }
+  }
+  
+  // Check for player prop patterns
+  let isPlayerProp = false;
+  let detectedType: 'over' | 'under' | 'points' | 'rebounds' | 'assists' | 'general' | null = null;
+  
+  // Over/under pattern
+  if (/plus|over|\+|više|más|über|o\d|over \d/i.test(msg)) {
+    detectedType = 'over';
+    isPlayerProp = true;
+  } else if (/minus|under|-|manje|menos|unter|u\d|under \d/i.test(msg)) {
+    detectedType = 'under';
+    isPlayerProp = true;
+  }
+  
+  // Stat type detection
+  for (const [statType, keywords] of Object.entries(propStats)) {
+    if (keywords.some(kw => msg.includes(kw))) {
+      detectedType = statType as typeof detectedType;
+      isPlayerProp = true;
+      break;
+    }
+  }
+  
+  // Extract player name (look for capitalized words or known player patterns)
+  let playerMentioned: string | null = null;
+  const playerPatterns = [
+    // Common NBA player name patterns
+    /jokic|jokić|nikola/i,
+    /lebron|james/i,
+    /curry|steph/i,
+    /doncic|dončić|luka/i,
+    /giannis|antetokounmpo/i,
+    /embiid|joel/i,
+    /durant|kd/i,
+    /tatum|jayson/i,
+    // Generic pattern: Capitalized FirstName LastName
+    /([A-Z][a-z]+\s+[A-Z][a-z]+)/,
+  ];
+  
+  for (const pattern of playerPatterns) {
+    const match = message.match(pattern);
+    if (match) {
+      playerMentioned = match[0];
+      break;
+    }
+  }
+  
+  return { isBettingAdvice, isPlayerProp, detectedType, playerMentioned };
+}
 
 /**
  * Detect the category of sports question
  */
 function detectQueryCategory(message: string): QueryCategory {
+  // FIRST: Check for betting advice / player props (highest priority)
+  const bettingIntent = detectBettingIntent(message);
+  if (bettingIntent.isBettingAdvice) {
+    return 'BETTING_ADVICE';
+  }
+  if (bettingIntent.isPlayerProp) {
+    return 'PLAYER_PROP';
+  }
   // Roster/Squad
   if (/who (plays|is|are)|roster|squad|lineup|starting|player|team sheet|formation/i.test(message)) {
     return 'ROSTER';
@@ -383,6 +508,28 @@ function extractSearchQuery(message: string): { query: string; category: QueryCa
       recency = 'month';
       break;
       
+    case 'PLAYER_PROP':
+      // For player prop questions - get current stats and recent performance
+      const propIntent = detectBettingIntent(message);
+      if (propIntent.playerMentioned) {
+        query = `${propIntent.playerMentioned} 2024-2025 season stats averages points rebounds assists per game recent form last 5 games`;
+      } else {
+        query += ' 2024-2025 season player stats averages performance';
+      }
+      recency = 'day';
+      break;
+      
+    case 'BETTING_ADVICE':
+      // For betting questions - still get stats but we'll reframe the response
+      const bettingIntent = detectBettingIntent(message);
+      if (bettingIntent.playerMentioned) {
+        query = `${bettingIntent.playerMentioned} 2024-2025 season stats averages points rebounds assists performance recent form injury status`;
+      } else {
+        query += ' 2024-2025 recent performance stats form';
+      }
+      recency = 'day';
+      break;
+      
     case 'GENERAL':
     default:
       query += ' latest news December 2024';
@@ -511,7 +658,38 @@ export async function POST(request: NextRequest) {
 
     // Add current message with Perplexity context
     let userContent = message;
-    if (perplexityContext) {
+    
+    // Special handling for betting/player prop questions
+    if (queryCategory === 'BETTING_ADVICE' || queryCategory === 'PLAYER_PROP') {
+      const bettingIntent = detectBettingIntent(message);
+      const propType = bettingIntent.detectedType;
+      const player = bettingIntent.playerMentioned;
+      
+      // Build context-aware prompt
+      let propContext = '';
+      if (bettingIntent.isPlayerProp && player) {
+        propContext = `\n\nUSER IS ASKING ABOUT: ${player}'s ${propType || 'stats'} (over/under prop)`;
+        if (propType === 'over') {
+          propContext += `\nThey want to know if ${player} will EXCEED their line.`;
+        } else if (propType === 'under') {
+          propContext += `\nThey want to know if ${player} will go UNDER their line.`;
+        }
+      }
+      
+      userContent = `USER QUESTION: ${message}
+${propContext}
+
+IMPORTANT FRAMING:
+- User is asking about a player prop bet (points/rebounds/assists over/under)
+- You MUST acknowledge you understood the betting context
+- Provide statistical analysis WITHOUT giving direct betting advice
+- Discuss: current averages, recent form, matchup factors, injury status
+- End with something like: "The data is [favorable/concerning/mixed]. Make your own informed decision."
+
+${perplexityContext ? `REAL-TIME SPORTS DATA:\n${perplexityContext}` : ''}
+
+Provide analysis that helps them understand the player's current form and metrics. Be analytical, not advisory.`;
+    } else if (perplexityContext) {
       userContent = `USER QUESTION: ${message}
 
 REAL-TIME SPORTS DATA (from web search, use this for your answer):
