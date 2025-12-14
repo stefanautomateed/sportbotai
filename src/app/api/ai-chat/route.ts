@@ -2,13 +2,14 @@
  * AI Chat API - Combines Perplexity (real-time search) + GPT (reasoning)
  * 
  * Flow:
- * 1. User asks a sports question
- * 2. Detect mode: AGENT (opinionated) vs DATA (strict accuracy)
- * 3. Check knowledge base for similar past answers
- * 4. Perplexity searches for real-time sports data
- * 5. GPT responds with appropriate personality
- * 6. Save successful Q&A to knowledge base for learning
- * 7. Track query in memory system for analytics
+ * 1. User asks a sports question (any language)
+ * 2. Detect language and translate to English for search (if needed)
+ * 3. Detect mode: AGENT (opinionated) vs DATA (strict accuracy)
+ * 4. Check knowledge base for similar past answers
+ * 5. Perplexity searches for real-time sports data (in English)
+ * 6. GPT responds with appropriate personality (in user's original language)
+ * 7. Save successful Q&A to knowledge base for learning
+ * 8. Track query in memory system for analytics
  * 
  * Uses SportBot Master Brain for consistent personality across app.
  * Uses SportBot Knowledge for self-learning capabilities.
@@ -42,6 +43,85 @@ interface ChatRequest {
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// ============================================
+// LANGUAGE DETECTION & TRANSLATION
+// ============================================
+
+/**
+ * Detect if message is non-English and translate for better search results
+ * Returns the original language code and English translation
+ */
+async function translateToEnglish(message: string): Promise<{
+  originalLanguage: string;
+  englishQuery: string;
+  needsTranslation: boolean;
+}> {
+  // Quick check for non-ASCII characters or common non-English patterns
+  const hasNonAscii = /[^\x00-\x7F]/.test(message);
+  const hasCyrillic = /[\u0400-\u04FF]/.test(message);
+  const hasCommonNonEnglish = /\b(je|da|li|sta|šta|što|kako|koliko|gdje|gde|kada|zašto|porque|qué|cómo|cuándo|dónde|wie|was|wann|wo|warum|où|quand|pourquoi|comment|combien)\b/i.test(message);
+  
+  // If message appears to be English, skip translation
+  if (!hasNonAscii && !hasCyrillic && !hasCommonNonEnglish) {
+    return {
+      originalLanguage: 'en',
+      englishQuery: message,
+      needsTranslation: false
+    };
+  }
+  
+  try {
+    // Use GPT for quick translation
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a translator. Translate the following sports-related query to English. 
+Keep player names, team names, and sports terms intact (don't translate proper nouns).
+Return ONLY the English translation, nothing else.
+If the message is already in English, return it unchanged.`
+        },
+        {
+          role: 'user',
+          content: message
+        }
+      ],
+      max_tokens: 200,
+      temperature: 0.1, // Low temperature for consistent translation
+    });
+    
+    const englishQuery = response.choices[0]?.message?.content?.trim() || message;
+    
+    // Detect original language (simplified)
+    let originalLanguage = 'unknown';
+    if (hasCyrillic || /\b(je|da|li|koliko|postigao|utakmic|košev|poena)\b/i.test(message)) {
+      originalLanguage = 'sr'; // Serbian/Croatian
+    } else if (/\b(porque|qué|cómo|cuándo|dónde|goles|partido)\b/i.test(message)) {
+      originalLanguage = 'es'; // Spanish
+    } else if (/\b(wie|was|wann|wo|warum|spiel|tore)\b/i.test(message)) {
+      originalLanguage = 'de'; // German
+    } else if (/\b(où|quand|pourquoi|comment|combien|match|buts)\b/i.test(message)) {
+      originalLanguage = 'fr'; // French
+    }
+    
+    console.log(`[AI-Chat] Translated from ${originalLanguage}: "${message}" -> "${englishQuery}"`);
+    
+    return {
+      originalLanguage,
+      englishQuery,
+      needsTranslation: true
+    };
+  } catch (error) {
+    console.error('[AI-Chat] Translation error:', error);
+    return {
+      originalLanguage: 'unknown',
+      englishQuery: message,
+      needsTranslation: false
+    };
+  }
+}
 
 // ============================================
 // QUERY CATEGORY DETECTION
@@ -319,10 +399,19 @@ function detectQueryCategory(message: string): QueryCategory {
   
   // Statistics - THIS MUST COME BEFORE PLAYER to catch "player + stats" queries
   // Including current season questions about player performance
+  // Supports multiple languages and sports
   if (/stats|statistics|goals|assists|top scorer|most|average|record|career/i.test(message) ||
-      /koliko (golova|asistencija|utakmica)|how many goals|goals this season|season stats/i.test(message) ||
-      /golova je postigao|goals (has|did) .* score|scored this season/i.test(message) ||
-      /sezon|this season|current season|2024|2025/i.test(message)) {
+      // Serbian/Croatian - football
+      /koliko (golova|asistencija|utakmica)|golova je postigao/i.test(message) ||
+      // Serbian/Croatian - basketball  
+      /koliko (koseva|poena|skokova|asistencija)|postigao (koseva|poena)|ubacio|trojki/i.test(message) ||
+      // English - last game queries
+      /how many (goals|points|rebounds|assists)|scored (this|last)|last (game|match)/i.test(message) ||
+      /points (did|in)|rebounds (did|in)|assists (did|in)/i.test(message) ||
+      // Season queries
+      /goals this season|season stats|sezon|this season|current season|2024|2025/i.test(message) ||
+      // NBA specific
+      /ppg|rpg|apg|per game|game average|season average/i.test(message)) {
     return 'STATS';
   }
   
@@ -997,15 +1086,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Step 0: Translate non-English queries to English for better search
+    const translation = await translateToEnglish(message);
+    const searchMessage = translation.englishQuery; // Use English for search
+    const originalLanguage = translation.originalLanguage;
+    
+    if (translation.needsTranslation) {
+      console.log(`[AI-Chat] Original (${originalLanguage}): "${message}"`);
+      console.log(`[AI-Chat] English for search: "${searchMessage}"`);
+    }
+
     let perplexityContext = '';
     let citations: string[] = [];
     
-    // Use intelligent routing engine
-    const route = getOptimalRoute(message);
+    // Use intelligent routing engine (with English query for better detection)
+    const route = getOptimalRoute(searchMessage);
     const shouldSearch = route.shouldSearch;
     
-    // Detect category for all queries (for tracking)
-    const queryCategory = detectQueryCategory(message);
+    // Detect category for all queries (for tracking) - use English for better accuracy
+    const queryCategory = detectQueryCategory(searchMessage);
 
     // Step 1: Use Perplexity for real-time search if needed
     if (shouldSearch) {
@@ -1016,8 +1115,8 @@ export async function POST(request: NextRequest) {
         console.log(`[AI-Chat] Route decision: ${route.source} (${route.confidence}% confidence)`);
         console.log(`[AI-Chat] Reason: ${route.reason}`);
         
-        // Build optimized search query using new router
-        const searchQuery = buildOptimizedSearchQuery(message, route);
+        // Build optimized search query using English translation
+        const searchQuery = buildOptimizedSearchQuery(searchMessage, route);
         const recency = route.recency || 'week';
         
         console.log(`[AI-Chat] Category: ${queryCategory} | Source: ${route.source} | Recency: ${recency}`);
@@ -1089,7 +1188,23 @@ export async function POST(request: NextRequest) {
       enhancedSystemPrompt += `\n\nSPORT TERMINOLOGY TO USE: ${sportTerminology.slice(0, 10).join(', ')}`;
     }
     
+    // Add language instruction if user wrote in non-English
+    if (translation.needsTranslation && originalLanguage !== 'en') {
+      const languageNames: Record<string, string> = {
+        'sr': 'Serbian/Croatian',
+        'es': 'Spanish', 
+        'de': 'German',
+        'fr': 'French',
+        'unknown': 'the same language as the user'
+      };
+      const langName = languageNames[originalLanguage] || languageNames['unknown'];
+      enhancedSystemPrompt += `\n\nIMPORTANT: The user wrote in ${langName}. RESPOND IN ${langName.toUpperCase()}, not English. Match the user's language exactly.`;
+    }
+    
     console.log('[AI-Chat] Brain mode:', brainMode);
+    if (translation.needsTranslation) {
+      console.log(`[AI-Chat] Response language: ${originalLanguage}`);
+    }
     
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: 'system', content: enhancedSystemPrompt },
