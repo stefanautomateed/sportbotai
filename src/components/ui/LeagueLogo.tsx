@@ -44,7 +44,7 @@ export default function LeagueLogo({
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const logoUrl = getLeagueLogo(leagueName, sport);
-  const isFallback = logoUrl.startsWith('data:');
+  const isFallback = !logoUrl || logoUrl.startsWith('data:');
 
   // Generate initials for fallback
   const getInitials = (name: string) => {

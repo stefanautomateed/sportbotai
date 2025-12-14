@@ -1428,28 +1428,10 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'soccer_africa_cup_of_nations': 'https://media.api-sports.io/football/leagues/6.png',
   
   // ============================================
-  // BASKETBALL - EUROPE / AUSTRALIA
+  // BASKETBALL - EUROPE / AUSTRALIA (use generated fallbacks - external APIs unreliable)
   // ============================================
   
-  // Euroleague
-  'EuroLeague': 'https://media.api-sports.io/basketball/leagues/120.png',
-  'Euroleague': 'https://media.api-sports.io/basketball/leagues/120.png',
-  'basketball_euroleague': 'https://media.api-sports.io/basketball/leagues/120.png',
-  
-  // EuroCup
-  'EuroCup': 'https://media.api-sports.io/basketball/leagues/121.png',
-  'Eurocup': 'https://media.api-sports.io/basketball/leagues/121.png',
-  'basketball_eurocup': 'https://media.api-sports.io/basketball/leagues/121.png',
-  
-  // NBL - Australian Basketball
-  'NBL': 'https://media.api-sports.io/basketball/leagues/21.png',
-  'Australian NBL': 'https://media.api-sports.io/basketball/leagues/21.png',
-  'basketball_nbl': 'https://media.api-sports.io/basketball/leagues/21.png',
-  
-  // ACB - Spanish Basketball
-  'Liga ACB': 'https://media.api-sports.io/basketball/leagues/117.png',
-  'ACB': 'https://media.api-sports.io/basketball/leagues/117.png',
-  'Spain - ACB': 'https://media.api-sports.io/basketball/leagues/117.png',
+  // Note: These leagues will use generated letter-based logos since external APIs are unreliable
   
   // ============================================
   // TENNIS (ESPN-style icons)
