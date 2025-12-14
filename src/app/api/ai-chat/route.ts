@@ -758,18 +758,18 @@ function buildOptimizedSearchQuery(message: string, route: RoutingDecision): str
       if (extractedName) {
         // For current status queries (where does X play)
         if (REALTIME_TRIGGERS.currentStatus.test(message)) {
-          return `"${extractedName}" 2024-2025 current club team transfermarkt soccerway sofascore`;
+          return `"${extractedName}" 2024-2025 current club team transfermarkt sofascore`;
         }
         // For stats queries (how many goals, season stats)
         if (REALTIME_TRIGGERS.currentSeason.test(message)) {
-          return `"${extractedName}" 2024-2025 season goals assists appearances statistics sofascore flashscore transfermarkt`;
+          return `"${extractedName}" 2024-25 goals scored season statistics fbref sofascore transfermarkt appearances matches`;
         }
         // For injury queries
         if (REALTIME_TRIGGERS.breakingNews.test(message)) {
           return `"${extractedName}" injury news update December 2024`;
         }
         // Default: combined current team + stats search
-        return `"${extractedName}" 2024-2025 current team goals statistics sofascore transfermarkt`;
+        return `"${extractedName}" 2024-25 goals statistics fbref sofascore transfermarkt`;
       }
       // Default real-time enhancement
       return `${query} ${route.recency === 'hour' ? 'today' : route.recency === 'day' ? 'December 2024' : '2024-2025'}`;
