@@ -467,7 +467,7 @@ export default function AIDeskChat() {
       )}
 
       {/* Input Area */}
-      <div className="p-4 border-t border-white/10">
+      <div className="p-3 sm:p-4 border-t border-white/10">
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -475,14 +475,14 @@ export default function AIDeskChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about any match, team, or player..."
+            placeholder="Ask about any match..."
             disabled={isLoading}
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-primary/50 disabled:opacity-50"
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-primary/50 disabled:opacity-50"
           />
           <button
             onClick={() => sendMessage()}
             disabled={!input.trim() || isLoading}
-            className="w-12 h-12 bg-primary hover:bg-primary/80 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl flex items-center justify-center transition-colors"
+            className="w-11 h-11 sm:w-12 sm:h-12 bg-primary hover:bg-primary/80 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl flex items-center justify-center transition-colors active:scale-95"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -491,7 +491,7 @@ export default function AIDeskChat() {
             )}
           </button>
         </div>
-        <p className="text-xs text-text-muted mt-2 text-center">
+        <p className="text-[10px] sm:text-xs text-text-muted mt-2 text-center">
           Real-time sports intelligence • No betting advice
         </p>
       </div>

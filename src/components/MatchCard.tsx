@@ -62,7 +62,7 @@ export default function MatchCard({
   return (
     <Link
       href={`/match/${encodedMatchId}`}
-      className="group relative bg-bg-card rounded-xl border border-divider p-4 hover:border-primary/30 hover:bg-bg-elevated transition-all duration-300 ease-out block hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+      className="group relative bg-bg-card rounded-xl border border-divider p-3 sm:p-4 hover:border-primary/30 hover:bg-bg-elevated transition-all duration-300 ease-out block hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg touch-manipulation"
       data-card
     >
       {/* Hot Score Badge */}

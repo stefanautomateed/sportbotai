@@ -290,7 +290,7 @@ export default function AIDeskHeroChat() {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {messages.length === 0 ? (
           // Welcome state - minimalistic
           <div className="h-full flex flex-col justify-end max-w-3xl mx-auto pb-4">
@@ -300,7 +300,7 @@ export default function AIDeskHeroChat() {
                 <button
                   key={i}
                   onClick={() => sendMessage(q.text)}
-                  className="px-4 py-2 text-xs text-text-muted hover:text-white border border-white/10 hover:border-white/20 rounded-full transition-all hover:bg-white/5"
+                  className="px-3 sm:px-4 py-2 text-[11px] sm:text-xs text-text-muted hover:text-white border border-white/10 hover:border-white/20 rounded-full transition-all hover:bg-white/5 active:scale-95"
                 >
                   {q.text}
                 </button>
@@ -309,36 +309,36 @@ export default function AIDeskHeroChat() {
           </div>
         ) : (
           // Chat messages
-          <div className="space-y-6 max-w-3xl mx-auto">
+          <div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto">
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                className={`flex gap-2 sm:gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
                 {/* Avatar */}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${
                   msg.role === 'user' 
                     ? 'bg-primary/20' 
                     : 'bg-gradient-to-br from-primary/20 to-accent/20'
                 }`}>
                   {msg.role === 'user' ? (
-                    <User className="w-5 h-5 text-primary" />
+                    <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   ) : (
-                    <Bot className="w-5 h-5 text-primary" />
+                    <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   )}
                 </div>
 
                 {/* Message content */}
-                <div className={`flex-1 max-w-[85%] ${msg.role === 'user' ? 'text-right' : ''}`}>
-                  <div className={`inline-block px-5 py-4 rounded-2xl ${
+                <div className={`flex-1 max-w-[90%] sm:max-w-[85%] ${msg.role === 'user' ? 'text-right' : ''}`}>
+                  <div className={`inline-block px-4 sm:px-5 py-3 sm:py-4 rounded-xl sm:rounded-2xl ${
                     msg.role === 'user'
                       ? 'bg-primary text-white rounded-tr-md'
                       : 'bg-white/[0.03] text-white/90 rounded-tl-md border border-white/[0.06]'
                   }`}>
                     <p className={`whitespace-pre-wrap ${
                       msg.role === 'user'
-                        ? 'text-sm leading-relaxed'
-                        : 'text-[15px] leading-[1.7] tracking-[-0.01em] font-light'
+                        ? 'text-[13px] sm:text-sm leading-relaxed'
+                        : 'text-[13px] sm:text-[15px] leading-[1.6] sm:leading-[1.7] tracking-[-0.01em] font-light'
                     }`}>{msg.content}</p>
                   </div>
 
@@ -396,13 +396,13 @@ export default function AIDeskHeroChat() {
 
             {/* Loading indicator */}
             {isLoading && (
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-primary" />
+              <div className="flex gap-2 sm:gap-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <div className="flex items-center gap-3 px-5 py-4 bg-white/5 rounded-2xl rounded-tl-md border border-white/5">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <span className="text-sm text-text-muted">Searching the web & analyzing...</span>
+                <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 bg-white/5 rounded-xl sm:rounded-2xl sm:rounded-tl-md border border-white/5">
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-primary" />
+                  <span className="text-xs sm:text-sm text-text-muted">Searching...</span>
                 </div>
               </div>
             )}
@@ -420,7 +420,7 @@ export default function AIDeskHeroChat() {
       )}
 
       {/* Input Area - Large prominent input */}
-      <div className="p-6 border-t border-white/10 bg-gradient-to-t from-bg-secondary to-transparent">
+      <div className="p-4 sm:p-6 border-t border-white/10 bg-gradient-to-t from-bg-secondary to-transparent">
         <div className="max-w-3xl mx-auto">
           <div className="relative">
             <textarea
@@ -430,13 +430,13 @@ export default function AIDeskHeroChat() {
               onKeyDown={handleKeyDown}
               placeholder="Ask anything about sports..."
               disabled={isLoading}
-              rows={4}
-              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-5 pr-16 text-base text-white placeholder-text-muted/50 focus:outline-none focus:border-primary/30 focus:bg-white/[0.05] disabled:opacity-50 resize-none min-h-[140px] transition-all"
+              rows={3}
+              className="w-full bg-white/[0.03] border border-white/10 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-4 sm:py-5 pr-14 sm:pr-16 text-sm sm:text-base text-white placeholder-text-muted/50 focus:outline-none focus:border-primary/30 focus:bg-white/[0.05] disabled:opacity-50 resize-none min-h-[100px] sm:min-h-[140px] transition-all"
             />
             <button
               onClick={() => sendMessage()}
               disabled={!input.trim() || isLoading}
-              className="absolute bottom-4 right-4 w-10 h-10 bg-primary hover:bg-primary/80 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl flex items-center justify-center transition-all"
+              className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 w-10 h-10 bg-primary hover:bg-primary/80 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl flex items-center justify-center transition-all active:scale-95"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin text-white" />
