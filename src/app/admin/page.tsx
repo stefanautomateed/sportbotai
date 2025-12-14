@@ -4,9 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import AdminDashboard from './AdminDashboard';
 
-// Only owner has access - DO NOT share or add other emails
+// Admin access list
 const ADMIN_EMAILS = [
   'gogecmaestrotib92@gmail.com',
+  'aiinstamarketing@gmail.com',
 ];
 
 export default async function AdminPage() {

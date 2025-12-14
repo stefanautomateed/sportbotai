@@ -5,8 +5,11 @@ import Link from 'next/link';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import ProBadge from '@/components/ProBadge';
 
-// Admin email - only this user sees admin link
-const ADMIN_EMAIL = 'gogecmaestrotib92@gmail.com';
+// Admin emails - only these users see admin link
+const ADMIN_EMAILS = [
+  'gogecmaestrotib92@gmail.com',
+  'aiinstamarketing@gmail.com',
+];
 
 const PLAN_LIMITS: Record<string, number> = {
   FREE: 3,
@@ -195,7 +198,7 @@ export function UserMenu() {
           {/* Menu Items */}
           <div className="py-2" role="none">
             {/* Admin Link - only visible to admin */}
-            {session.user?.email === ADMIN_EMAIL && (
+            {session.user?.email && ADMIN_EMAILS.includes(session.user.email) && (
               <Link
                 href="/admin"
                 onClick={closeMenu}
