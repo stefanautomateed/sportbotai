@@ -242,7 +242,7 @@ function extractFactsFromAnswers(answers: string[]): string[] {
   }
   
   // Return unique facts, limited
-  return [...new Set(facts)].slice(0, 20);
+  return Array.from(new Set(facts)).slice(0, 20);
 }
 
 // ============================================
