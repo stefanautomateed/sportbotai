@@ -39,6 +39,7 @@ export default function MatchCard({
     homeTeam,
     awayTeam,
     league,
+    sport: sportKey,
     kickoff: commenceTime,
   };
   const encodedMatchId = Buffer.from(JSON.stringify(matchData)).toString('base64');

@@ -56,6 +56,8 @@ interface MatchPreviewData {
     awayTeam: string;
     league: string;
     sport: string;
+    hasDraw?: boolean;
+    scoringUnit?: string;
     kickoff: string;
     venue?: string;
   };
@@ -262,6 +264,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
             <ViralStatsBar
               homeTeam={data.matchInfo.homeTeam}
               awayTeam={data.matchInfo.awayTeam}
+              hasDraw={data.matchInfo.hasDraw !== false}
               stats={{
                 h2h: data.viralStats.h2h ? {
                   headline: data.viralStats.h2h.headline || 'No H2H data',
@@ -288,7 +291,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
             <MatchStory
               homeTeam={data.matchInfo.homeTeam}
               awayTeam={data.matchInfo.awayTeam}
-              favored={data.story.favored || 'draw'}
+              favored={data.matchInfo.hasDraw === false && data.story.favored === 'draw' ? 'home' : (data.story.favored || 'draw')}
               confidence={data.story.confidence || 'moderate'}
               narrative={data.story.narrative || 'Analysis unavailable.'}
               supportingStats={data.story.supportingStats || []}
@@ -313,6 +316,8 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
             <HomeAwaySplits
               homeTeam={data.matchInfo.homeTeam}
               awayTeam={data.matchInfo.awayTeam}
+              hasDraw={data.matchInfo.hasDraw !== false}
+              scoringUnit={data.matchInfo.scoringUnit || 'goals'}
               homeTeamAtHome={{
                 played: data.homeAwaySplits.homeTeamAtHome.played || 0,
                 wins: data.homeAwaySplits.homeTeamAtHome.wins || 0,
@@ -337,8 +342,8 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
           </div>
         )}
 
-        {/* Goals Timing */}
-        {data.goalsTiming && data.goalsTiming.home && data.goalsTiming.away && (
+        {/* Goals Timing - Only for soccer/hockey */}
+        {data.goalsTiming && data.goalsTiming.home && data.goalsTiming.away && data.matchInfo.scoringUnit === 'goals' && (
           <div className="mt-8">
             <GoalsTiming
               homeTeam={data.matchInfo.homeTeam}

@@ -24,6 +24,8 @@ interface HomeAwaySplitsProps {
   awayTeam: string;
   homeTeamAtHome: TeamSplits;
   awayTeamAway: TeamSplits;
+  hasDraw?: boolean; // Whether this sport has draws
+  scoringUnit?: string; // 'goals', 'points', 'runs', etc.
 }
 
 export default function HomeAwaySplits({
@@ -31,8 +33,31 @@ export default function HomeAwaySplits({
   awayTeam,
   homeTeamAtHome,
   awayTeamAway,
+  hasDraw = true,
+  scoringUnit = 'goals',
 }: HomeAwaySplitsProps) {
   
+  // Get display labels based on sport
+  const getLabels = () => {
+    if (scoringUnit === 'points') {
+      return { perGame: 'PPG', cleanSheet: 'Blowouts' };
+    }
+    if (scoringUnit === 'runs') {
+      return { perGame: 'Runs/Game', cleanSheet: 'Shutouts' };
+    }
+    return { perGame: 'Goals/Game', cleanSheet: 'Clean Sheets' };
+  };
+  
+  const labels = getLabels();
+  
+  // Format record string based on sport
+  const formatRecord = (splits: TeamSplits) => {
+    if (hasDraw) {
+      return `${splits.wins}W-${splits.draws}D-${splits.losses}L`;
+    }
+    return `${splits.wins}W-${splits.losses}L`;
+  };
+
   // Check if we have meaningful data
   const hasHomeData = homeTeamAtHome.played > 0 || homeTeamAtHome.goalsFor > 0;
   const hasAwayData = awayTeamAway.played > 0 || awayTeamAway.goalsFor > 0;
@@ -120,15 +145,15 @@ export default function HomeAwaySplits({
             <div className="flex justify-between text-xs">
               <span className="text-text-muted">Record</span>
               <span className="text-white font-medium">
-                {homeTeamAtHome.wins}W-{homeTeamAtHome.draws}D-{homeTeamAtHome.losses}L
+                {formatRecord(homeTeamAtHome)}
               </span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-text-muted">Goals/Game</span>
+              <span className="text-text-muted">{labels.perGame}</span>
               <span className="text-white font-medium">{calcGoalsPerGame(homeTeamAtHome)}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-text-muted">Clean Sheets</span>
+              <span className="text-text-muted">{labels.cleanSheet}</span>
               <span className="text-white font-medium">{homeTeamAtHome.cleanSheets}</span>
             </div>
           </div>
@@ -176,15 +201,15 @@ export default function HomeAwaySplits({
             <div className="flex justify-between text-xs">
               <span className="text-text-muted">Record</span>
               <span className="text-white font-medium">
-                {awayTeamAway.wins}W-{awayTeamAway.draws}D-{awayTeamAway.losses}L
+                {formatRecord(awayTeamAway)}
               </span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-text-muted">Goals/Game</span>
+              <span className="text-text-muted">{labels.perGame}</span>
               <span className="text-white font-medium">{calcGoalsPerGame(awayTeamAway)}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-text-muted">Clean Sheets</span>
+              <span className="text-text-muted">{labels.cleanSheet}</span>
               <span className="text-white font-medium">{awayTeamAway.cleanSheets}</span>
             </div>
           </div>

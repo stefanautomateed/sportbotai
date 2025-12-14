@@ -10,6 +10,7 @@
 interface ViralStatsBarProps {
   homeTeam: string;
   awayTeam: string;
+  hasDraw?: boolean; // Whether this sport has draws
   stats: {
     h2h: {
       /** e.g., "7 matches unbeaten" or "3 wins in a row" */
@@ -33,7 +34,10 @@ interface ViralStatsBarProps {
   };
 }
 
-const FormBadge = ({ result }: { result: string }) => {
+const FormBadge = ({ result, showDraws = true }: { result: string; showDraws?: boolean }) => {
+  // Don't show draws if sport doesn't have them
+  if (result === 'D' && !showDraws) return null;
+  
   const colors: Record<string, string> = {
     'W': 'bg-green-500',
     'D': 'bg-yellow-500', 
@@ -49,11 +53,22 @@ const FormBadge = ({ result }: { result: string }) => {
 export default function ViralStatsBar({
   homeTeam,
   awayTeam,
+  hasDraw = true,
   stats,
 }: ViralStatsBarProps) {
   // Check if form data is placeholder (all draws = no real data)
   const isPlaceholderForm = (form: string) => form === 'DDDDD' || form.split('').every(r => r === 'D');
   const hasRealFormData = !isPlaceholderForm(stats.form.home) || !isPlaceholderForm(stats.form.away);
+  
+  // Filter form for display based on sport
+  const filterFormForSport = (form: string) => {
+    if (hasDraw) return form;
+    // Remove draws from display for no-draw sports
+    return form.replace(/D/g, '');
+  };
+  
+  const homeFormDisplay = filterFormForSport(stats.form.home);
+  const awayFormDisplay = filterFormForSport(stats.form.away);
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -83,18 +98,26 @@ export default function ViralStatsBar({
           <div className="flex items-center justify-between">
             <span className="text-xs text-text-muted truncate mr-2">{homeTeam}</span>
             <div className="flex gap-1">
-              {stats.form.home.split('').map((r, i) => (
-                <FormBadge key={i} result={r} />
+              {homeFormDisplay.split('').map((r, i) => (
+                <FormBadge key={i} result={r} showDraws={hasDraw} />
               ))}
+              {/* Show placeholder if no games after filtering */}
+              {homeFormDisplay.length === 0 && (
+                <span className="text-xs text-text-muted">No recent games</span>
+              )}
             </div>
           </div>
           {/* Away form */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-text-muted truncate mr-2">{awayTeam}</span>
             <div className="flex gap-1">
-              {stats.form.away.split('').map((r, i) => (
-                <FormBadge key={i} result={r} />
+              {awayFormDisplay.split('').map((r, i) => (
+                <FormBadge key={i} result={r} showDraws={hasDraw} />
               ))}
+              {/* Show placeholder if no games after filtering */}
+              {awayFormDisplay.length === 0 && (
+                <span className="text-xs text-text-muted">No recent games</span>
+              )}
             </div>
           </div>
         </div>

@@ -120,6 +120,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       homeTeam: matchInfo.homeTeam,
       awayTeam: matchInfo.awayTeam,
       league: matchInfo.league,
+      sport: matchInfo.sport,
       kickoff: matchInfo.kickoff,
       homeForm: homeFormStr,
       awayForm: awayFormStr,
@@ -236,13 +237,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    // Get sport config for terminology
+    const sportConfig = getSportConfig(matchInfo.sport);
+    
     const response = {
       matchInfo: {
         id: matchId,
         homeTeam: matchInfo.homeTeam,
         awayTeam: matchInfo.awayTeam,
         league: matchInfo.league,
-        sport: 'soccer',
+        sport: matchInfo.sport,
+        hasDraw: sportConfig.hasDraw,
+        scoringUnit: sportConfig.scoringUnit,
         kickoff: matchInfo.kickoff,
         venue: venue, // Use venue from fixture info
       },
@@ -253,7 +259,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       viralStats,
       headlines: aiAnalysis.headlines,
       homeAwaySplits,
-      goalsTiming,
+      goalsTiming: sportConfig.scoringUnit === 'goals' ? goalsTiming : null, // Only show for soccer/hockey
       contextFactors,
       // New viral features
       keyPlayerBattle: keyPlayers.home && keyPlayers.away ? {
@@ -327,6 +333,60 @@ function normalizeLeagueName(league: string): string {
   return leagueMap[normalized] || league;
 }
 
+/**
+ * Detect sport from league name
+ */
+function detectSportFromLeague(league: string): string | null {
+  const lower = league.toLowerCase();
+  
+  // Basketball
+  if (lower.includes('nba') || lower.includes('basketball') || lower.includes('euroleague') || 
+      lower.includes('ncaab') || lower.includes('wnba') || lower.includes('nbl') || lower.includes('acb')) {
+    return 'basketball';
+  }
+  
+  // American Football
+  if (lower.includes('nfl') || lower.includes('ncaaf') || lower.includes('american football')) {
+    return 'americanfootball';
+  }
+  
+  // Ice Hockey
+  if (lower.includes('nhl') || lower.includes('hockey') || lower.includes('khl')) {
+    return 'icehockey';
+  }
+  
+  // Baseball
+  if (lower.includes('mlb') || lower.includes('baseball')) {
+    return 'baseball';
+  }
+  
+  // Tennis
+  if (lower.includes('atp') || lower.includes('wta') || lower.includes('tennis')) {
+    return 'tennis';
+  }
+  
+  return null;
+}
+
+/**
+ * Get sport configuration
+ */
+function getSportConfig(sport: string) {
+  const configs: Record<string, { hasDraw: boolean; scoringUnit: string; matchTerm: string; analystType: string }> = {
+    'soccer': { hasDraw: true, scoringUnit: 'goals', matchTerm: 'match', analystType: 'football analyst' },
+    'basketball': { hasDraw: false, scoringUnit: 'points', matchTerm: 'game', analystType: 'basketball analyst' },
+    'basketball_nba': { hasDraw: false, scoringUnit: 'points', matchTerm: 'game', analystType: 'NBA analyst' },
+    'basketball_euroleague': { hasDraw: false, scoringUnit: 'points', matchTerm: 'game', analystType: 'basketball analyst' },
+    'americanfootball': { hasDraw: false, scoringUnit: 'points', matchTerm: 'game', analystType: 'NFL analyst' },
+    'americanfootball_nfl': { hasDraw: false, scoringUnit: 'points', matchTerm: 'game', analystType: 'NFL analyst' },
+    'icehockey': { hasDraw: false, scoringUnit: 'goals', matchTerm: 'game', analystType: 'hockey analyst' },
+    'baseball': { hasDraw: false, scoringUnit: 'runs', matchTerm: 'game', analystType: 'baseball analyst' },
+    'tennis': { hasDraw: false, scoringUnit: 'sets', matchTerm: 'match', analystType: 'tennis analyst' },
+  };
+  
+  return configs[sport] || configs['soccer'];
+}
+
 function parseMatchId(matchId: string) {
   try {
     const decoded = Buffer.from(matchId, 'base64').toString('utf-8');
@@ -335,16 +395,19 @@ function parseMatchId(matchId: string) {
       homeTeam: parsed.homeTeam,
       awayTeam: parsed.awayTeam,
       league: normalizeLeagueName(parsed.league),
+      sport: parsed.sport || detectSportFromLeague(parsed.league) || 'soccer',
       kickoff: parsed.kickoff || new Date().toISOString(),
       venue: parsed.venue || null,
     };
   } catch {
     const parts = matchId.split('_');
     if (parts.length >= 3) {
+      const league = normalizeLeagueName(parts[2].replace(/-/g, ' '));
       return {
         homeTeam: parts[0].replace(/-/g, ' '),
         awayTeam: parts[1].replace(/-/g, ' '),
-        league: normalizeLeagueName(parts[2].replace(/-/g, ' ')),
+        league,
+        sport: detectSportFromLeague(league) || 'soccer',
         kickoff: parts[3] ? new Date(parseInt(parts[3])).toISOString() : new Date().toISOString(),
         venue: null,
       };
@@ -461,6 +524,7 @@ async function generateAIAnalysis(data: {
   homeTeam: string;
   awayTeam: string;
   league: string;
+  sport: string;
   kickoff: string;
   homeForm: string;
   awayForm: string;
@@ -468,26 +532,41 @@ async function generateAIAnalysis(data: {
   awayStats: { goalsScored: number; goalsConceded: number; played: number; wins: number; draws: number; losses: number };
   h2h: { totalMeetings: number; homeWins: number; awayWins: number; draws: number };
 }) {
-  const prompt = `You are an expert football analyst. Analyze this upcoming match and provide your verdict.
+  const sportConfig = getSportConfig(data.sport);
+  const scoringTerm = sportConfig.scoringUnit === 'points' ? 'points' : 
+                      sportConfig.scoringUnit === 'runs' ? 'runs' : 'goals';
+  
+  // For no-draw sports, use W/L form format
+  const formatFormForSport = (form: string) => {
+    if (sportConfig.hasDraw) return form;
+    // Replace D with W or L based on context (for display purposes, show as played)
+    return form.replace(/D/g, ''); // Remove draws for basketball/NFL display
+  };
+  
+  const homeFormDisplay = formatFormForSport(data.homeForm);
+  const awayFormDisplay = formatFormForSport(data.awayForm);
+  
+  // For no-draw sports, don't include draw option in prompt
+  const favoredOptions = sportConfig.hasDraw ? '"home" | "away" | "draw"' : '"home" | "away"';
+  
+  const prompt = `You are an expert ${sportConfig.analystType}. Analyze this upcoming ${sportConfig.matchTerm} and provide your verdict.
 
-MATCH: ${data.homeTeam} vs ${data.awayTeam}
+${sportConfig.matchTerm.toUpperCase()}: ${data.homeTeam} vs ${data.awayTeam}
 COMPETITION: ${data.league}
 DATE: ${data.kickoff}
 
 DATA:
-- ${data.homeTeam} form: ${data.homeForm} (Last 5: ${data.homeForm.slice(-5)})
-- ${data.homeTeam} season: ${data.homeStats.wins}W-${data.homeStats.draws}D-${data.homeStats.losses}L, ${data.homeStats.goalsScored} goals scored, ${data.homeStats.goalsConceded} conceded
-- ${data.awayTeam} form: ${data.awayForm} (Last 5: ${data.awayForm.slice(-5)})  
-- ${data.awayTeam} season: ${data.awayStats.wins}W-${data.awayStats.draws}D-${data.awayStats.losses}L, ${data.awayStats.goalsScored} goals scored, ${data.awayStats.goalsConceded} conceded
-- Head to Head (${data.h2h.totalMeetings} matches): ${data.homeTeam} ${data.h2h.homeWins} wins, ${data.awayTeam} ${data.h2h.awayWins} wins, ${data.h2h.draws} draws
+- ${data.homeTeam} record: ${data.homeStats.wins}W-${data.homeStats.losses}L${sportConfig.hasDraw ? `-${data.homeStats.draws}D` : ''}, ${data.homeStats.goalsScored} ${scoringTerm} scored
+- ${data.awayTeam} record: ${data.awayStats.wins}W-${data.awayStats.losses}L${sportConfig.hasDraw ? `-${data.awayStats.draws}D` : ''}, ${data.awayStats.goalsScored} ${scoringTerm} scored
+- Head to Head (${data.h2h.totalMeetings} ${sportConfig.matchTerm}s): ${data.homeTeam} ${data.h2h.homeWins} wins, ${data.awayTeam} ${data.h2h.awayWins} wins${sportConfig.hasDraw ? `, ${data.h2h.draws} draws` : ''}
 
 Generate a compelling analysis. Return JSON:
 
 {
   "story": {
-    "favored": "home" | "away" | "draw",
+    "favored": ${favoredOptions},
     "confidence": "strong" | "moderate" | "slight",
-    "narrative": "2-3 paragraphs explaining WHY you favor this outcome. Use storytelling. Reference specific stats. Be engaging but analytical. Explain the key factors that tip the balance.",
+    "narrative": "2-3 paragraphs explaining WHY you favor this outcome. Use storytelling. Reference specific stats. Be engaging but analytical. Explain the key factors that tip the balance. Use ${scoringTerm} not goals. This is ${data.league}, a ${sportConfig.matchTerm}.",
     "supportingStats": [
       { "icon": "emoji", "stat": "Key stat", "context": "Why it matters" }
     ]
@@ -498,6 +577,9 @@ Generate a compelling analysis. Return JSON:
 }
 
 IMPORTANT:
+- This is ${data.league} (${sportConfig.scoringUnit === 'points' ? 'basketball/football' : sportConfig.scoringUnit})
+- Use "${scoringTerm}" not "goals" if this is basketball or American football
+- ${!sportConfig.hasDraw ? 'This sport has NO DRAWS - one team MUST win. Do NOT suggest a draw.' : 'Draws are possible in this sport.'}
 - Be specific with data, don't be vague
 - Your narrative should JUSTIFY your verdict
 - Headlines should be screenshot-worthy facts
@@ -525,13 +607,24 @@ IMPORTANT:
       .replace(/\u2014/g, '--')         // Em-dash to double hyphen
       .replace(/\u2026/g, '...');       // Ellipsis to dots
     
-    return JSON.parse(normalizedContent);
+    const result = JSON.parse(normalizedContent);
+    
+    // Ensure no-draw sports don't return draw
+    if (!sportConfig.hasDraw && result.story?.favored === 'draw') {
+      // Force to home advantage if somehow draw is returned
+      result.story.favored = 'home';
+    }
+    
+    return result;
   } catch (error) {
     console.error('AI generation failed:', error);
     
     const homeWinRate = data.homeStats.played > 0 ? data.homeStats.wins / data.homeStats.played : 0.33;
     const awayWinRate = data.awayStats.played > 0 ? data.awayStats.wins / data.awayStats.played : 0.33;
-    const favored = homeWinRate > awayWinRate + 0.1 ? 'home' : awayWinRate > homeWinRate + 0.1 ? 'away' : 'draw';
+    // For no-draw sports, never suggest draw
+    const favored = sportConfig.hasDraw 
+      ? (homeWinRate > awayWinRate + 0.1 ? 'home' : awayWinRate > homeWinRate + 0.1 ? 'away' : 'draw')
+      : (homeWinRate >= awayWinRate ? 'home' : 'away');
 
     return {
       story: {
