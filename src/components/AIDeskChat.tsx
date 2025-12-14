@@ -21,6 +21,8 @@ interface ChatMessage {
   citations?: string[];
   usedRealTimeSearch?: boolean;
   followUps?: string[];
+  fromCache?: boolean;
+  isStreaming?: boolean;
   timestamp: Date;
 }
 
@@ -247,6 +249,7 @@ export default function AIDeskChat() {
       // Check if response is OK and has a body we can stream
       const contentType = response.headers.get('Content-Type') || '';
       const isStreamable = contentType.includes('text/event-stream') || response.body !== null;
+      let isFromCache = false;
       
       if (response.ok && isStreamable && response.body) {
         // Add empty assistant message for streaming
@@ -254,6 +257,7 @@ export default function AIDeskChat() {
           id: assistantMessageId,
           role: 'assistant',
           content: '',
+          isStreaming: true,
           timestamp: new Date(),
         }]);
         setIsLoading(false); // Show the streaming message
@@ -282,6 +286,7 @@ export default function AIDeskChat() {
                     streamCitations = data.citations || [];
                     streamUsedSearch = data.usedRealTimeSearch;
                     streamFollowUps = data.followUps || [];
+                    isFromCache = data.fromCache || false;
                   } else if (data.type === 'content') {
                     streamedContent += data.content;
                     // Update the message with streamed content
@@ -293,7 +298,16 @@ export default function AIDeskChat() {
                             citations: streamCitations, 
                             usedRealTimeSearch: streamUsedSearch,
                             followUps: streamFollowUps,
+                            fromCache: isFromCache,
+                            isStreaming: true,
                           }
+                        : m
+                    ));
+                  } else if (data.type === 'done') {
+                    // Mark streaming as complete
+                    setMessages(prev => prev.map(m => 
+                      m.id === assistantMessageId 
+                        ? { ...m, isStreaming: false }
                         : m
                     ));
                   } else if (data.type === 'error') {
@@ -306,6 +320,13 @@ export default function AIDeskChat() {
               }
             }
           }
+          
+          // Ensure streaming is marked complete after reader is done
+          setMessages(prev => prev.map(m => 
+            m.id === assistantMessageId 
+              ? { ...m, isStreaming: false }
+              : m
+          ));
         } finally {
           reader.releaseLock();
         }
@@ -464,19 +485,34 @@ export default function AIDeskChat() {
                       msg.role === 'user'
                         ? 'text-sm'
                         : 'text-[14px] leading-[1.7] tracking-[-0.01em] font-light'
-                    }`}>{msg.content}</p>
+                    }`}>
+                      {msg.content}
+                      {msg.role === 'assistant' && msg.isStreaming && (
+                        <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse rounded-sm" />
+                      )}
+                    </p>
                   </div>
 
-                  {/* Real-time search indicator */}
-                  {msg.role === 'assistant' && msg.usedRealTimeSearch && (
-                    <div className="flex items-center gap-1 mt-1 text-xs text-green-400">
-                      <Sparkles className="w-3 h-3" />
-                      <span>Used real-time search</span>
+                  {/* Status indicators */}
+                  {msg.role === 'assistant' && (
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {msg.usedRealTimeSearch && (
+                        <div className="flex items-center gap-1 text-xs text-green-400">
+                          <Sparkles className="w-3 h-3" />
+                          <span>Live search</span>
+                        </div>
+                      )}
+                      {msg.fromCache && (
+                        <div className="flex items-center gap-1 text-xs text-yellow-400/70">
+                          <span className="text-[10px]">⚡</span>
+                          <span>Instant</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Voice read button for assistant messages */}
-                  {msg.role === 'assistant' && (
+                  {msg.role === 'assistant' && msg.content && (
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         onClick={() => playMessage(msg.id, msg.content)}
