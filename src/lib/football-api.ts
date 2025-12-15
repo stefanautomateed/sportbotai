@@ -116,22 +116,43 @@ async function apiRequest<T>(endpoint: string): Promise<T | null> {
     return null;
   }
 
+  const url = `${API_FOOTBALL_BASE}${endpoint}`;
+  console.log(`[API-Football] Request: ${url}`);
+
   try {
-    const response = await fetch(`${API_FOOTBALL_BASE}${endpoint}`, {
+    const response = await fetch(url, {
       headers: {
         'x-apisports-key': apiKey,
       },
     });
 
+    // Log remaining API calls from headers
+    const remaining = response.headers.get('x-ratelimit-requests-remaining');
+    const limit = response.headers.get('x-ratelimit-requests-limit');
+    console.log(`[API-Football] Rate limit: ${remaining}/${limit} remaining`);
+
     if (!response.ok) {
-      console.error(`API-Football error: ${response.status}`);
+      console.error(`[API-Football] HTTP Error: ${response.status} ${response.statusText}`);
       return null;
     }
 
     const data = await response.json();
+    
+    // Log API response errors
+    if (data.errors && Object.keys(data.errors).length > 0) {
+      console.error(`[API-Football] API Errors:`, data.errors);
+    }
+    
+    // Log empty responses
+    if (!data.response || data.response.length === 0) {
+      console.warn(`[API-Football] Empty response for: ${endpoint}`);
+    } else {
+      console.log(`[API-Football] Got ${data.response.length} results`);
+    }
+    
     return data;
   } catch (error) {
-    console.error('API-Football request failed:', error);
+    console.error('[API-Football] Request failed:', error);
     return null;
   }
 }
