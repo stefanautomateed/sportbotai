@@ -1,22 +1,16 @@
 /**
- * Match Preview Page - The Core Product
+ * Match Preview Page - The Core Product V3
  * 
- * This is the main product page where users understand a match.
- * Completely redesigned for pre-match intelligence, not betting.
+ * Premium, minimal match intelligence.
+ * Clean design that works across ALL sports.
+ * Zero betting advice. Pure understanding.
  * 
- * Sections:
- * 1. Match Header (teams, time, league)
- * 2. Headlines (shareable viral facts)
- * 3. Form Comparison (visual side-by-side)
- * 4. H2H History (timeline view)
- * 5. Key Absences (impact-focused)
- * 6. AI Briefing (audio-first)
- * 7. Share Actions
+ * "Understand any match in 60 seconds"
  */
 
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import MatchPreviewClient from './MatchPreviewClient';
+import MatchPreviewClientV3 from './MatchPreviewClientV3';
 
 interface PageProps {
   params: Promise<{ matchId: string }>;
@@ -26,14 +20,12 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { matchId } = await params;
   
-  // In production, fetch match data here
-  // For now, return generic metadata
   return {
-    title: `Match Preview | SportBot AI`,
-    description: 'Get instant match intelligence with AI-powered pre-match analysis.',
+    title: `Match Analysis | SportBot AI`,
+    description: 'Premium match intelligence powered by AI. Understand any match in 60 seconds.',
     openGraph: {
-      title: `Match Preview | SportBot AI`,
-      description: 'Understand any match in 60 seconds',
+      title: `Match Analysis | SportBot AI`,
+      description: 'Premium match intelligence powered by AI',
       type: 'article',
     },
   };
@@ -46,5 +38,5 @@ export default async function MatchPreviewPage({ params }: PageProps) {
     notFound();
   }
 
-  return <MatchPreviewClient matchId={matchId} />;
+  return <MatchPreviewClientV3 matchId={matchId} />;
 }

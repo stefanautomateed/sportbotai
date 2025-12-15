@@ -283,14 +283,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Generate TTS audio for the narrative (async, don't block)
     let audioUrl: string | undefined;
-    if (process.env.ELEVENLABS_API_KEY && aiAnalysis.story?.narrative) {
+    const narrativeText = aiAnalysis.story?.narrative || (aiAnalysis.story as { gameFlow?: string })?.gameFlow;
+    if (process.env.ELEVENLABS_API_KEY && narrativeText) {
       try {
         const ttsText = buildTTSScript(
           matchInfo.homeTeam,
           matchInfo.awayTeam,
-          aiAnalysis.story.favored,
-          aiAnalysis.story.confidence,
-          aiAnalysis.story.narrative
+          aiAnalysis.story.favored as 'home' | 'away' | 'draw',
+          aiAnalysis.story.confidence as 'strong' | 'moderate' | 'slight',
+          narrativeText
         );
         audioUrl = await generateTTSAudio(ttsText, matchId);
       } catch (error) {
@@ -312,18 +313,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         hasDraw: sportConfig.hasDraw,
         scoringUnit: sportConfig.scoringUnit,
         kickoff: matchInfo.kickoff,
-        venue: venue, // Use venue from fixture info
+        venue: venue,
       },
       story: {
         ...aiAnalysis.story,
         audioUrl,
       },
+      // Include normalized signals for UI
+      signals: aiAnalysis.signals,
       viralStats,
       headlines: aiAnalysis.headlines,
       homeAwaySplits,
-      goalsTiming: sportConfig.scoringUnit === 'goals' ? goalsTiming : null, // Only show for soccer/hockey
+      goalsTiming: sportConfig.scoringUnit === 'goals' ? goalsTiming : null,
       contextFactors,
-      // New viral features
       keyPlayerBattle: keyPlayers.home && keyPlayers.away ? {
         homePlayer: {
           name: keyPlayers.home.name,
@@ -607,64 +609,86 @@ async function generateAIAnalysis(data: {
   h2h: { totalMeetings: number; homeWins: number; awayWins: number; draws: number };
 }) {
   const sportConfig = getSportConfig(data.sport);
-  const scoringTerm = sportConfig.scoringUnit === 'points' ? 'points' : 
-                      sportConfig.scoringUnit === 'runs' ? 'runs' : 'goals';
   
-  // For no-draw sports, use W/L form format
-  const formatFormForSport = (form: string) => {
-    if (sportConfig.hasDraw) return form;
-    // Replace D with W or L based on context (for display purposes, show as played)
-    return form.replace(/D/g, ''); // Remove draws for basketball/NFL display
-  };
-  
-  const homeFormDisplay = formatFormForSport(data.homeForm);
-  const awayFormDisplay = formatFormForSport(data.awayForm);
+  // Calculate normalized signals
+  const signals = calculateNormalizedSignals(data, sportConfig);
   
   // For no-draw sports, don't include draw option in prompt
   const favoredOptions = sportConfig.hasDraw ? '"home" | "away" | "draw"' : '"home" | "away"';
   
-  const prompt = `You are an expert ${sportConfig.analystType} with AIXBT-style personality: confident, sharp, data-driven, slightly sarcastic. You've seen thousands of ${sportConfig.matchTerm}s and aren't easily impressed.
+  // SportBotAgent System Prompt - Confident, data-driven, zero betting advice
+  const systemPrompt = `You are SportBotAgent, a confident, data-driven sports analyst.
 
-${sportConfig.matchTerm.toUpperCase()}: ${data.homeTeam} vs ${data.awayTeam}
+Your role: Turn normalized match signals into clear, sharp, premium match analysis.
+You do NOT give betting advice, tips, or calls to action.
+You explain what the data implies, not what the user should bet.
+
+You speak with:
+- Confidence (never uncertain or apologetic)
+- Precision (no fluff, no filler)
+- Authority (short sentences, decisive tone)
+- Calm intelligence (never hype, never emojis)
+
+You NEVER:
+- Mention odds explicitly unless provided as a market signal
+- Use raw statistics, tables, or percentages unless already normalized
+- Say "this could go either way"
+- Over-explain or hedge excessively
+- Use slang, memes, or hype language
+
+You ALWAYS:
+- Start with the most important insight
+- Explain WHY, not WHAT
+- Use plain language
+- Keep analysis short and structured`;
+
+  const userPrompt = `Analyze this ${sportConfig.matchTerm}:
+
+MATCH: ${data.homeTeam} vs ${data.awayTeam}
 COMPETITION: ${data.league}
-DATE: ${data.kickoff}
+SPORT: ${signals.sportLabel}
 
-DATA:
-- ${data.homeTeam} record: ${data.homeStats.wins}W-${data.homeStats.losses}L${sportConfig.hasDraw ? `-${data.homeStats.draws}D` : ''}, ${data.homeStats.goalsScored} ${scoringTerm} scored
-- ${data.awayTeam} record: ${data.awayStats.wins}W-${data.awayStats.losses}L${sportConfig.hasDraw ? `-${data.awayStats.draws}D` : ''}, ${data.awayStats.goalsScored} ${scoringTerm} scored
-- Head to Head (${data.h2h.totalMeetings} ${sportConfig.matchTerm}s): ${data.homeTeam} ${data.h2h.homeWins} wins, ${data.awayTeam} ${data.h2h.awayWins} wins${sportConfig.hasDraw ? `, ${data.h2h.draws} draws` : ''}
+NORMALIZED SIGNALS:
+- Form: ${signals.formLabel}
+- Strength Edge: ${signals.strengthEdgeLabel}
+- Tempo: ${signals.tempoLabel}
+- Efficiency Edge: ${signals.efficiencyLabel}
+- Availability Impact: ${signals.availabilityLabel}
 
-Generate a compelling analysis with AIXBT ANALYST PERSONALITY:
-- Confident, slightly sarcastic, sharp and clever
-- Short punchy sentences (no fluff, no filler)
-- Use phrases like: "Predictably...", "Classic behavior...", "As if on schedule...", "The numbers don't lie."
-- Sound like an elite analyst who's seen it all
-- Be witty about chaos, inconsistency, and unpredictability
-- NO emojis in narrative. NO betting advice. NO hype.
-
-Return JSON:
+Return JSON with this EXACT structure:
 
 {
-  "story": {
+  "analysis": {
     "favored": ${favoredOptions},
-    "confidence": "strong" | "moderate" | "slight",
-    "narrative": "2-3 paragraphs in AIXBT style: sharp, confident, data-backed. Tell the story with attitude. Reference specific stats. Explain why you favor this outcome. Sound like you've called this before.",
-    "supportingStats": [
-      { "icon": "📊", "stat": "Key stat with number", "context": "Sharp one-liner why it matters" }
+    "confidence": "high" | "medium" | "low",
+    "snapshot": [
+      "One sentence insight about form",
+      "One sentence insight about strength edge",
+      "One sentence insight about tempo/pace",
+      "One sentence insight about efficiency (if relevant)",
+      "One sentence insight about availability (if relevant)"
+    ],
+    "gameFlow": "2-3 sentences describing how the match is likely to unfold. Reference tempo and efficiency. No predictions, no scores.",
+    "riskFactors": [
+      "One meaningful risk factor",
+      "Another risk factor (optional)"
     ]
   },
   "headlines": [
-    { "icon": "emoji", "text": "Punchy, quotable one-liner", "favors": "home|away|neutral", "viral": true/false }
+    { "text": "Sharp, quotable one-liner about this match", "favors": "home|away|neutral" }
   ]
 }
 
 CRITICAL RULES:
-- This is ${data.league} (${sportConfig.scoringUnit === 'points' ? 'basketball/football' : sportConfig.scoringUnit})
-- Use "${scoringTerm}" not "goals" if this is basketball or American football
-- ${!sportConfig.hasDraw ? 'This sport has NO DRAWS - one team MUST win. Do NOT suggest a draw.' : 'Draws are possible in this sport.'}
-- Headlines should be screenshot-worthy, shareable
-- No generic corporate speak - be an analyst with edge
-- Use standard ASCII apostrophes (') not fancy quotes`;
+- Maximum 5 snapshot bullets, each must be a DIFFERENT signal
+- Each bullet is ONE sentence, ONE idea
+- If data is weak or neutral, say so confidently: "Signals are balanced. No strong edge stands out."
+- No repetition of the same metric
+- ${!sportConfig.hasDraw ? 'This sport has NO DRAWS - one team MUST win.' : 'Draws are possible.'}
+- Use standard ASCII apostrophes (') not fancy quotes
+- Silence is better than filler`;
+
+  const prompt = `${systemPrompt}\n\n${userPrompt}`;
 
   try {
     const completion = await openai.chat.completions.create({
@@ -688,38 +712,207 @@ CRITICAL RULES:
     const result = JSON.parse(normalizedContent);
     
     // Ensure no-draw sports don't return draw
-    if (!sportConfig.hasDraw && result.story?.favored === 'draw') {
-      // Force to home advantage if somehow draw is returned
-      result.story.favored = 'home';
+    if (!sportConfig.hasDraw && result.analysis?.favored === 'draw') {
+      result.analysis.favored = 'home';
     }
     
-    return result;
+    // Transform new format to expected response format
+    return {
+      story: {
+        favored: result.analysis?.favored || 'draw',
+        confidence: mapConfidence(result.analysis?.confidence),
+        narrative: result.analysis?.gameFlow || '',
+        snapshot: result.analysis?.snapshot || [],
+        riskFactors: result.analysis?.riskFactors || [],
+      },
+      headlines: (result.headlines || []).map((h: { text: string; favors: string }) => ({
+        icon: '📊',
+        text: h.text,
+        favors: h.favors,
+        viral: true,
+      })),
+      // Include normalized signals in response for UI
+      signals,
+    };
   } catch (error) {
     console.error('AI generation failed:', error);
     
-    const homeWinRate = data.homeStats.played > 0 ? data.homeStats.wins / data.homeStats.played : 0.33;
-    const awayWinRate = data.awayStats.played > 0 ? data.awayStats.wins / data.awayStats.played : 0.33;
-    // For no-draw sports, never suggest draw
-    const favored = sportConfig.hasDraw 
-      ? (homeWinRate > awayWinRate + 0.1 ? 'home' : awayWinRate > homeWinRate + 0.1 ? 'away' : 'draw')
-      : (homeWinRate >= awayWinRate ? 'home' : 'away');
+    // Fallback analysis using normalized signals
+    const favored = signals.strengthEdgeDirection === 'even' 
+      ? (sportConfig.hasDraw ? 'draw' : 'home')
+      : signals.strengthEdgeDirection;
 
     return {
       story: {
         favored,
         confidence: 'moderate',
-        narrative: `${data.homeTeam} welcomes ${data.awayTeam} in what promises to be a competitive ${data.league} fixture.\n\n${data.homeTeam} come into this match with a record of ${data.homeStats.wins} wins from ${data.homeStats.played} games, while ${data.awayTeam} have ${data.awayStats.wins} wins from ${data.awayStats.played}. The head-to-head record shows ${data.h2h.homeWins} wins for the home side and ${data.h2h.awayWins} for the visitors.\n\nBased on current form and home advantage, ${favored === 'home' ? data.homeTeam : favored === 'away' ? data.awayTeam : 'neither side'} appears to have a slight edge heading into this fixture.`,
-        supportingStats: [
-          { icon: '📊', stat: `${data.homeForm.slice(-5)} recent form`, context: `${data.homeTeam}'s last 5` },
-          { icon: '⚔️', stat: `${data.h2h.totalMeetings} meetings`, context: 'Head to head record' },
+        narrative: `${data.homeTeam} hosts ${data.awayTeam} in this ${data.league} fixture.`,
+        snapshot: [
+          `Form: ${signals.formLabel}`,
+          `Edge: ${signals.strengthEdgeLabel}`,
+          `Expected tempo: ${signals.tempoLabel}`,
+        ],
+        riskFactors: [
+          'Limited data available for deeper analysis.',
         ],
       },
       headlines: [
-        { icon: '⚽', text: `${data.homeTeam} have scored ${data.homeStats.goalsScored} goals this season`, favors: 'neutral', viral: false },
-        { icon: '📈', text: `${data.awayTeam} form: ${data.awayForm.slice(-5)}`, favors: 'neutral', viral: false },
+        { icon: '📊', text: `${data.homeTeam} vs ${data.awayTeam}: ${signals.strengthEdgeLabel}`, favors: 'neutral', viral: false },
       ],
+      signals,
     };
   }
+}
+
+/**
+ * Map confidence levels between formats
+ */
+function mapConfidence(confidence: string | undefined): 'strong' | 'moderate' | 'slight' {
+  if (confidence === 'high') return 'strong';
+  if (confidence === 'low') return 'slight';
+  return 'moderate';
+}
+
+/**
+ * Calculate normalized signals from raw match data
+ */
+function calculateNormalizedSignals(
+  data: {
+    homeTeam: string;
+    awayTeam: string;
+    sport: string;
+    homeForm: string;
+    awayForm: string;
+    homeStats: { goalsScored: number; goalsConceded: number; played: number; wins: number; draws: number; losses: number };
+    awayStats: { goalsScored: number; goalsConceded: number; played: number; wins: number; draws: number; losses: number };
+    h2h: { totalMeetings: number; homeWins: number; awayWins: number; draws: number };
+  },
+  sportConfig: { hasDraw: boolean; scoringUnit: string; matchTerm: string; analystType: string }
+) {
+  // Calculate form ratings
+  const calculateFormRating = (form: string): number => {
+    if (!form || form.length === 0) return 50;
+    let points = 0;
+    const weights = [1.5, 1.3, 1.1, 1.0, 0.9];
+    for (let i = 0; i < Math.min(form.length, 5); i++) {
+      const result = form[i].toUpperCase();
+      const weight = weights[i] || 1;
+      if (result === 'W') points += 3 * weight;
+      else if (result === 'D') points += 1 * weight;
+    }
+    const maxPossible = weights.slice(0, Math.min(form.length, 5)).reduce((a, b) => a + b, 0) * 3;
+    return maxPossible > 0 ? (points / maxPossible) * 100 : 50;
+  };
+
+  const homeFormRating = calculateFormRating(data.homeForm);
+  const awayFormRating = calculateFormRating(data.awayForm);
+  
+  const formLabel = (rating: number): string => {
+    if (rating >= 65) return 'strong';
+    if (rating <= 35) return 'weak';
+    return 'neutral';
+  };
+  
+  const homeFormLabel = formLabel(homeFormRating);
+  const awayFormLabel = formLabel(awayFormRating);
+  
+  // Form comparison
+  let formComparison: string;
+  if (homeFormRating > awayFormRating + 15) {
+    formComparison = `${data.homeTeam} in stronger form`;
+  } else if (awayFormRating > homeFormRating + 15) {
+    formComparison = `${data.awayTeam} in stronger form`;
+  } else {
+    formComparison = 'Both sides in similar form';
+  }
+  
+  // Strength edge
+  const homeWinRate = data.homeStats.played > 0 ? data.homeStats.wins / data.homeStats.played : 0.5;
+  const awayWinRate = data.awayStats.played > 0 ? data.awayStats.wins / data.awayStats.played : 0.5;
+  const homeGD = data.homeStats.played > 0 ? (data.homeStats.goalsScored - data.homeStats.goalsConceded) / data.homeStats.played : 0;
+  const awayGD = data.awayStats.played > 0 ? (data.awayStats.goalsScored - data.awayStats.goalsConceded) / data.awayStats.played : 0;
+  const h2hFactor = data.h2h.totalMeetings > 0 ? (data.h2h.homeWins - data.h2h.awayWins) / data.h2h.totalMeetings * 0.1 : 0;
+  
+  const totalEdge = ((homeWinRate - awayWinRate) + (homeGD - awayGD) * 0.05 + h2hFactor + 0.03) * 100;
+  const clampedEdge = Math.max(-20, Math.min(20, totalEdge));
+  
+  let strengthEdgeDirection: 'home' | 'away' | 'even';
+  let strengthEdgeLabel: string;
+  if (Math.abs(clampedEdge) < 3) {
+    strengthEdgeDirection = 'even';
+    strengthEdgeLabel = 'Even';
+  } else if (clampedEdge > 0) {
+    strengthEdgeDirection = 'home';
+    strengthEdgeLabel = `Home +${Math.round(clampedEdge)}%`;
+  } else {
+    strengthEdgeDirection = 'away';
+    strengthEdgeLabel = `Away +${Math.abs(Math.round(clampedEdge))}%`;
+  }
+  
+  // Tempo
+  const homeScoring = data.homeStats.played > 0 ? data.homeStats.goalsScored / data.homeStats.played : 0;
+  const awayScoring = data.awayStats.played > 0 ? data.awayStats.goalsScored / data.awayStats.played : 0;
+  const avgScoring = (homeScoring + awayScoring) / 2;
+  
+  const tempoThresholds: Record<string, { low: number; high: number }> = {
+    'soccer': { low: 1.2, high: 1.8 },
+    'basketball': { low: 105, high: 115 },
+    'americanfootball': { low: 20, high: 28 },
+    'icehockey': { low: 2.5, high: 3.5 },
+  };
+  
+  const sportKey = data.sport.includes('basketball') ? 'basketball' 
+    : data.sport.includes('american') || data.sport.includes('nfl') ? 'americanfootball'
+    : data.sport.includes('hockey') || data.sport.includes('nhl') ? 'icehockey'
+    : 'soccer';
+  
+  const t = tempoThresholds[sportKey] || tempoThresholds.soccer;
+  let tempoLabel: string;
+  if (avgScoring < t.low) tempoLabel = 'Low tempo expected';
+  else if (avgScoring > t.high) tempoLabel = 'High tempo expected';
+  else tempoLabel = 'Medium tempo expected';
+  
+  // Efficiency
+  const homeOffEff = data.homeStats.played > 0 ? data.homeStats.goalsScored / data.homeStats.played : 0;
+  const awayOffEff = data.awayStats.played > 0 ? data.awayStats.goalsScored / data.awayStats.played : 0;
+  const homeDefEff = data.homeStats.played > 0 ? data.homeStats.goalsConceded / data.homeStats.played : 999;
+  const awayDefEff = data.awayStats.played > 0 ? data.awayStats.goalsConceded / data.awayStats.played : 999;
+  
+  const homeNet = homeOffEff - homeDefEff;
+  const awayNet = awayOffEff - awayDefEff;
+  const effDiff = homeNet - awayNet;
+  
+  let efficiencyLabel: string;
+  if (Math.abs(effDiff) < 0.2) {
+    efficiencyLabel = 'No clear efficiency edge';
+  } else if (effDiff > 0) {
+    efficiencyLabel = 'Home team more efficient';
+  } else {
+    efficiencyLabel = 'Away team more efficient';
+  }
+  
+  // Sport label for AI
+  const sportLabels: Record<string, string> = {
+    'soccer': 'Soccer',
+    'basketball': 'Basketball',
+    'basketball_nba': 'NBA Basketball',
+    'americanfootball': 'American Football',
+    'americanfootball_nfl': 'NFL',
+    'icehockey': 'Ice Hockey',
+    'icehockey_nhl': 'NHL Hockey',
+  };
+  
+  return {
+    sportLabel: sportLabels[data.sport] || 'Soccer',
+    formLabel: formComparison,
+    homeForm: homeFormLabel,
+    awayForm: awayFormLabel,
+    strengthEdgeDirection,
+    strengthEdgeLabel,
+    tempoLabel,
+    efficiencyLabel,
+    availabilityLabel: 'Availability impact: Low', // Default, can be enhanced with injury data
+  };
 }
 
 /**

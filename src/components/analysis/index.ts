@@ -13,3 +13,7 @@ export { default as ContextFactors } from './ContextFactors';
 export { default as ShareCard } from './ShareCard';
 export { default as KeyPlayerBattle } from './KeyPlayerBattle';
 export { default as RefereeProfile } from './RefereeProfile';
+
+// New Premium Components - V2
+export { default as SignalAnalysis } from './SignalAnalysis';
+export { default as PremiumMatchHeader } from './PremiumMatchHeader';
