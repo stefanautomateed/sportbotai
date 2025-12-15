@@ -1,9 +1,16 @@
 /**
- * Match Preview Client Component V3 - Premium Redesign
+ * Match Preview Client Component V3 - Universal Signals Framework
  * 
  * Clean, minimal, confident analysis.
  * Universal design that works across ALL sports.
  * Zero betting advice. Pure match intelligence.
+ * 
+ * Uses the 5 normalized signals:
+ * - Form
+ * - Strength Edge
+ * - Tempo
+ * - Efficiency
+ * - Availability
  */
 
 'use client';
@@ -12,10 +19,11 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
-  SignalAnalysis,
   PremiumMatchHeader,
   ShareCard,
+  UniversalSignalsDisplay,
 } from '@/components/analysis';
+import type { UniversalSignals } from '@/lib/universal-signals';
 
 interface MatchPreviewClientProps {
   matchId: string;
@@ -46,6 +54,9 @@ interface MatchPreviewData {
     }>;
     audioUrl?: string;
   };
+  // New Universal Signals (V3)
+  universalSignals?: UniversalSignals;
+  // Legacy signals format (backwards compatibility)
   signals?: {
     formLabel: string;
     strengthEdgeLabel: string;
@@ -168,38 +179,73 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
           venue={data.matchInfo.venue}
         />
 
-        {/* Signal-based Analysis - The Core Product */}
-        <div className="mt-8">
-          <SignalAnalysis
-            homeTeam={data.matchInfo.homeTeam}
-            awayTeam={data.matchInfo.awayTeam}
-            sport={data.matchInfo.sport}
-            favored={data.matchInfo.hasDraw === false && data.story.favored === 'draw' ? 'home' : data.story.favored}
-            confidence={mapConfidence(data.story.confidence)}
-            snapshot={snapshot}
-            gameFlow={gameFlow}
-            riskFactors={riskFactors}
-            signals={data.signals}
-          />
-        </div>
+        {/* Universal Signals Display - The Core Product */}
+        {data.universalSignals && (
+          <div className="mt-8">
+            <UniversalSignalsDisplay
+              signals={data.universalSignals}
+              homeTeam={data.matchInfo.homeTeam}
+              awayTeam={data.matchInfo.awayTeam}
+            />
+          </div>
+        )}
 
-        {/* Quick Headlines (if available) */}
-        {data.headlines && data.headlines.length > 0 && (
-          <div className="mt-8 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-6">
-            <h3 className="text-[11px] font-medium text-zinc-500 uppercase tracking-widest mb-4">
-              Key Takeaways
+        {/* Match Snapshot - AI Insights */}
+        {snapshot && snapshot.length > 0 && (
+          <div className="mt-6 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-5">
+            <h3 className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-4">
+              Match Snapshot
             </h3>
-            <div className="space-y-3">
-              {data.headlines.slice(0, 3).map((headline, index) => (
-                <div 
-                  key={index}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.03]"
-                >
-                  <span className="text-lg flex-shrink-0">{headline.icon || '📊'}</span>
-                  <p className="text-sm text-zinc-300">{headline.text}</p>
-                </div>
+            <ul className="space-y-2.5">
+              {snapshot.slice(0, 4).map((insight, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <span className="w-1 h-1 rounded-full bg-white/30 mt-2 flex-shrink-0" />
+                  <span className="text-sm text-zinc-300 leading-relaxed">{insight}</span>
+                </li>
               ))}
-            </div>
+            </ul>
+          </div>
+        )}
+
+        {/* Game Flow - How it unfolds */}
+        {gameFlow && (
+          <div className="mt-5 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-5">
+            <h3 className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-3">
+              Game Flow
+            </h3>
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              {gameFlow}
+            </p>
+          </div>
+        )}
+
+        {/* Risk Factors */}
+        {riskFactors && riskFactors.length > 0 && (
+          <div className="mt-5 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-5">
+            <h3 className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <span className="text-amber-500/80">⚠</span>
+              Risk Factors
+            </h3>
+            <ul className="space-y-2">
+              {riskFactors.map((risk, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <span className="w-1 h-1 rounded-full bg-amber-500/40 mt-2 flex-shrink-0" />
+                  <span className="text-sm text-zinc-500 leading-relaxed">{risk}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Headline Quote (if available) */}
+        {data.headlines && data.headlines.length > 0 && (
+          <div className="mt-6 p-5 rounded-2xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/[0.06]">
+            <p className="text-base text-white font-medium leading-relaxed">
+              "{data.headlines[0].text}"
+            </p>
+            <p className="text-[10px] text-zinc-600 mt-2 uppercase tracking-wider">
+              — SportBot Analysis
+            </p>
           </div>
         )}
 

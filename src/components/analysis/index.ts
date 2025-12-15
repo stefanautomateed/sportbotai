@@ -17,3 +17,6 @@ export { default as RefereeProfile } from './RefereeProfile';
 // New Premium Components - V2
 export { default as SignalAnalysis } from './SignalAnalysis';
 export { default as PremiumMatchHeader } from './PremiumMatchHeader';
+
+// Universal Signals Framework - V3
+export { default as UniversalSignalsDisplay, SignalPills } from './UniversalSignalsDisplay';

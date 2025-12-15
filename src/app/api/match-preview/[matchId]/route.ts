@@ -1,18 +1,18 @@
 /**
- * Match Preview API - V2
+ * Match Preview API - V3
  * 
- * Generates comprehensive match analysis data:
+ * Generates comprehensive match analysis using Universal Signals Framework:
+ * - 5 Normalized Signals (Form, Edge, Tempo, Efficiency, Availability)
  * - AI Match Story (verdict + narrative)
- * - Viral Stats (H2H, Form, Key Absence)
- * - Match Headlines (shareable facts)
- * - Home/Away Splits
- * - Goals Timing
- * - Context Factors
+ * - Clean JSON for AI consumption
+ * 
+ * No raw stats exposed. Same UI across ALL sports.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getEnrichedMatchData, getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
 import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
+import { normalizeToUniversalSignals, formatSignalsForAI, getSignalSummary, type RawMatchInput } from '@/lib/universal-signals';
 import OpenAI from 'openai';
 
 // Allow longer execution time for multi-API calls (NBA, NFL, etc.)
@@ -607,11 +607,45 @@ async function generateAIAnalysis(data: {
   homeStats: { goalsScored: number; goalsConceded: number; played: number; wins: number; draws: number; losses: number };
   awayStats: { goalsScored: number; goalsConceded: number; played: number; wins: number; draws: number; losses: number };
   h2h: { totalMeetings: number; homeWins: number; awayWins: number; draws: number };
+  injuries?: { home: string[]; away: string[] };
 }) {
   const sportConfig = getSportConfig(data.sport);
   
-  // Calculate normalized signals
-  const signals = calculateNormalizedSignals(data, sportConfig);
+  // Build input for Universal Signals Framework
+  const signalInput: RawMatchInput = {
+    sport: data.sport,
+    homeTeam: data.homeTeam,
+    awayTeam: data.awayTeam,
+    homeForm: data.homeForm,
+    awayForm: data.awayForm,
+    homeStats: {
+      played: data.homeStats.played,
+      wins: data.homeStats.wins,
+      draws: data.homeStats.draws,
+      losses: data.homeStats.losses,
+      scored: data.homeStats.goalsScored,
+      conceded: data.homeStats.goalsConceded,
+    },
+    awayStats: {
+      played: data.awayStats.played,
+      wins: data.awayStats.wins,
+      draws: data.awayStats.draws,
+      losses: data.awayStats.losses,
+      scored: data.awayStats.goalsScored,
+      conceded: data.awayStats.goalsConceded,
+    },
+    h2h: {
+      total: data.h2h.totalMeetings,
+      homeWins: data.h2h.homeWins,
+      awayWins: data.h2h.awayWins,
+      draws: data.h2h.draws,
+    },
+    homeInjuries: data.injuries?.home || [],
+    awayInjuries: data.injuries?.away || [],
+  };
+  
+  // Generate Universal Signals (the core of the system)
+  const universalSignals = normalizeToUniversalSignals(signalInput);
   
   // For no-draw sports, don't include draw option in prompt
   const favoredOptions = sportConfig.hasDraw ? '"home" | "away" | "draw"' : '"home" | "away"';
@@ -619,74 +653,72 @@ async function generateAIAnalysis(data: {
   // SportBotAgent System Prompt - Confident, data-driven, zero betting advice
   const systemPrompt = `You are SportBotAgent, a confident, data-driven sports analyst.
 
-Your role: Turn normalized match signals into clear, sharp, premium match analysis.
-You do NOT give betting advice, tips, or calls to action.
-You explain what the data implies, not what the user should bet.
+IDENTITY:
+- You're the sharpest analyst in the room
+- You see patterns others miss
+- You speak with calm authority
+- You never hedge or waffle
 
-You speak with:
-- Confidence (never uncertain or apologetic)
-- Precision (no fluff, no filler)
-- Authority (short sentences, decisive tone)
-- Calm intelligence (never hype, never emojis)
+INPUT: You receive ONLY normalized signals (not raw stats):
+${formatSignalsForAI(universalSignals)}
 
-You NEVER:
-- Mention odds explicitly unless provided as a market signal
-- Use raw statistics, tables, or percentages unless already normalized
-- Say "this could go either way"
-- Over-explain or hedge excessively
-- Use slang, memes, or hype language
+YOUR JOB:
+1. Read the 5 signals above
+2. Identify the story they tell
+3. Express it in premium, quotable language
+4. Never mention the signal names directly - translate them into insights
 
-You ALWAYS:
-- Start with the most important insight
+VOICE:
+- Confident, not arrogant
+- Sharp, not wordy
+- Premium, not casual
+- Decisive, not wishy-washy
+
+NEVER:
+- Give betting advice or tips
+- Mention odds explicitly
+- Use raw stats or percentages
+- Say "this could go either way" without explanation
+- Use emojis or hype language
+- Repeat yourself
+
+ALWAYS:
+- Lead with the strongest signal
 - Explain WHY, not WHAT
-- Use plain language
-- Keep analysis short and structured`;
+- Be quotable - your lines should be screenshot-worthy
+- If signals conflict, acknowledge the complexity`;
 
-  const userPrompt = `Analyze this ${sportConfig.matchTerm}:
-
-MATCH: ${data.homeTeam} vs ${data.awayTeam}
+  const userPrompt = `MATCH: ${data.homeTeam} vs ${data.awayTeam}
 COMPETITION: ${data.league}
-SPORT: ${signals.sportLabel}
 
-NORMALIZED SIGNALS:
-- Form: ${signals.formLabel}
-- Strength Edge: ${signals.strengthEdgeLabel}
-- Tempo: ${signals.tempoLabel}
-- Efficiency Edge: ${signals.efficiencyLabel}
-- Availability Impact: ${signals.availabilityLabel}
+SIGNALS:
+${getSignalSummary(universalSignals)}
 
-Return JSON with this EXACT structure:
+Confidence Level: ${universalSignals.confidence.toUpperCase()} (${universalSignals.clarity_score}% clarity)
+
+Generate JSON:
 
 {
   "analysis": {
     "favored": ${favoredOptions},
-    "confidence": "high" | "medium" | "low",
+    "confidence": "${universalSignals.confidence}",
     "snapshot": [
-      "One sentence insight about form",
-      "One sentence insight about strength edge",
-      "One sentence insight about tempo/pace",
-      "One sentence insight about efficiency (if relevant)",
-      "One sentence insight about availability (if relevant)"
+      "First insight (most important signal)",
+      "Second insight (supporting signal)", 
+      "Third insight (context or tempo)",
+      "Fourth insight (risk or opportunity)"
     ],
-    "gameFlow": "2-3 sentences describing how the match is likely to unfold. Reference tempo and efficiency. No predictions, no scores.",
-    "riskFactors": [
-      "One meaningful risk factor",
-      "Another risk factor (optional)"
-    ]
+    "gameFlow": "2-3 sentences on HOW the game will unfold. What will each team try to do? Where will the battle be won/lost?",
+    "riskFactors": ["Key risk 1", "Key risk 2 (optional)"]
   },
-  "headlines": [
-    { "text": "Sharp, quotable one-liner about this match", "favors": "home|away|neutral" }
-  ]
+  "headline": "One sharp, quotable line that captures the match story"
 }
 
-CRITICAL RULES:
-- Maximum 5 snapshot bullets, each must be a DIFFERENT signal
-- Each bullet is ONE sentence, ONE idea
-- If data is weak or neutral, say so confidently: "Signals are balanced. No strong edge stands out."
-- No repetition of the same metric
-- ${!sportConfig.hasDraw ? 'This sport has NO DRAWS - one team MUST win.' : 'Draws are possible.'}
-- Use standard ASCII apostrophes (') not fancy quotes
-- Silence is better than filler`;
+RULES:
+- Maximum 4 snapshot bullets
+- Each bullet = ONE distinct insight
+- If confidence is LOW, say so directly: "Signals point nowhere clearly."
+- ${!sportConfig.hasDraw ? 'This sport has NO DRAWS - pick a winner.' : 'Draw is possible.'}`;
 
   const prompt = `${systemPrompt}\n\n${userPrompt}`;
 
@@ -695,7 +727,7 @@ CRITICAL RULES:
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
-      max_tokens: 1200,
+      max_tokens: 800,
     });
 
     const content = completion.choices[0].message.content;
@@ -703,11 +735,11 @@ CRITICAL RULES:
     
     // Normalize unicode characters
     const normalizedContent = content
-      .replace(/[\u2018\u2019]/g, "'")  // Fancy single quotes to straight
-      .replace(/[\u201C\u201D]/g, '"')  // Fancy double quotes to straight
-      .replace(/\u2013/g, '-')          // En-dash to hyphen
-      .replace(/\u2014/g, '--')         // Em-dash to double hyphen
-      .replace(/\u2026/g, '...');       // Ellipsis to dots
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/\u2013/g, '-')
+      .replace(/\u2014/g, '--')
+      .replace(/\u2026/g, '...');
     
     const result = JSON.parse(normalizedContent);
     
@@ -716,7 +748,7 @@ CRITICAL RULES:
       result.analysis.favored = 'home';
     }
     
-    // Transform new format to expected response format
+    // Build response with Universal Signals
     return {
       story: {
         favored: result.analysis?.favored || 'draw',
@@ -725,41 +757,54 @@ CRITICAL RULES:
         snapshot: result.analysis?.snapshot || [],
         riskFactors: result.analysis?.riskFactors || [],
       },
-      headlines: (result.headlines || []).map((h: { text: string; favors: string }) => ({
-        icon: '📊',
-        text: h.text,
-        favors: h.favors,
-        viral: true,
-      })),
-      // Include normalized signals in response for UI
-      signals,
+      headlines: result.headline ? [
+        { icon: '📊', text: result.headline, favors: result.analysis?.favored || 'neutral', viral: true }
+      ] : [],
+      // Universal Signals for UI display
+      universalSignals,
+      // Legacy format for backwards compatibility
+      signals: {
+        formLabel: universalSignals.form,
+        strengthEdgeLabel: universalSignals.strength_edge,
+        strengthEdgeDirection: universalSignals.display.edge.direction,
+        tempoLabel: universalSignals.tempo,
+        efficiencyLabel: universalSignals.efficiency_edge,
+        availabilityLabel: universalSignals.availability_impact,
+      },
     };
   } catch (error) {
     console.error('AI generation failed:', error);
     
-    // Fallback analysis using normalized signals
-    const favored = signals.strengthEdgeDirection === 'even' 
+    // Fallback using Universal Signals
+    const favored = universalSignals.display.edge.direction === 'even' 
       ? (sportConfig.hasDraw ? 'draw' : 'home')
-      : signals.strengthEdgeDirection;
+      : universalSignals.display.edge.direction;
 
     return {
       story: {
         favored,
-        confidence: 'moderate',
+        confidence: mapConfidence(universalSignals.confidence),
         narrative: `${data.homeTeam} hosts ${data.awayTeam} in this ${data.league} fixture.`,
         snapshot: [
-          `Form: ${signals.formLabel}`,
-          `Edge: ${signals.strengthEdgeLabel}`,
-          `Expected tempo: ${signals.tempoLabel}`,
+          `${universalSignals.form} form heading into this match.`,
+          `Strength edge: ${universalSignals.strength_edge}.`,
+          `Expected tempo: ${universalSignals.tempo}.`,
+          `Availability impact: ${universalSignals.availability_impact}.`,
         ],
-        riskFactors: [
-          'Limited data available for deeper analysis.',
-        ],
+        riskFactors: ['Limited data for deeper analysis.'],
       },
       headlines: [
-        { icon: '📊', text: `${data.homeTeam} vs ${data.awayTeam}: ${signals.strengthEdgeLabel}`, favors: 'neutral', viral: false },
+        { icon: '📊', text: `${data.homeTeam} vs ${data.awayTeam}`, favors: 'neutral', viral: false }
       ],
-      signals,
+      universalSignals,
+      signals: {
+        formLabel: universalSignals.form,
+        strengthEdgeLabel: universalSignals.strength_edge,
+        strengthEdgeDirection: universalSignals.display.edge.direction,
+        tempoLabel: universalSignals.tempo,
+        efficiencyLabel: universalSignals.efficiency_edge,
+        availabilityLabel: universalSignals.availability_impact,
+      },
     };
   }
 }
