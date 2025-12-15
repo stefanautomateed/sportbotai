@@ -75,6 +75,13 @@ export async function getEnrichedMatchDataV2(
     
     const data = result.data;
     
+    // Helper to safely convert date to ISO string
+    const toISOString = (date: Date | string | undefined): string => {
+      if (!date) return new Date().toISOString();
+      if (typeof date === 'string') return date;
+      return date.toISOString();
+    };
+    
     // Transform to old format for backward compatibility
     return {
       sport: normalizedSport,
@@ -95,7 +102,7 @@ export async function getEnrichedMatchDataV2(
           result,
           opponent,
           score: `${teamScore || 0}-${oppScore || 0}`,
-          date: game.date.toISOString(),
+          date: toISOString(game.date),
         };
       }) || null,
       
@@ -115,7 +122,7 @@ export async function getEnrichedMatchDataV2(
           result,
           opponent,
           score: `${teamScore || 0}-${oppScore || 0}`,
-          date: game.date.toISOString(),
+          date: toISOString(game.date),
         };
       }) || null,
       
@@ -124,7 +131,7 @@ export async function getEnrichedMatchDataV2(
         awayTeam: match.awayTeam.name,
         homeScore: match.score?.home || 0,
         awayScore: match.score?.away || 0,
-        date: match.date.toISOString(),
+        date: toISOString(match.date),
       })) || null,
       
       h2hSummary: data.h2h ? {
@@ -135,28 +142,29 @@ export async function getEnrichedMatchDataV2(
       } : null,
       
       homeStats: data.homeTeam.stats ? {
-        goalsScored: data.homeTeam.stats.scoring.totalFor,
-        goalsConceded: data.homeTeam.stats.scoring.totalAgainst,
+        goalsScored: data.homeTeam.stats.scoring?.totalFor || 0,
+        goalsConceded: data.homeTeam.stats.scoring?.totalAgainst || 0,
         cleanSheets: 0, // Not tracked in DataLayer yet
-        wins: data.homeTeam.stats.record.wins,
-        losses: data.homeTeam.stats.record.losses,
-        draws: data.homeTeam.stats.record.draws,
+        wins: data.homeTeam.stats.record?.wins || 0,
+        losses: data.homeTeam.stats.record?.losses || 0,
+        draws: data.homeTeam.stats.record?.draws,
       } : null,
       
       awayStats: data.awayTeam.stats ? {
-        goalsScored: data.awayTeam.stats.scoring.totalFor,
-        goalsConceded: data.awayTeam.stats.scoring.totalAgainst,
+        goalsScored: data.awayTeam.stats.scoring?.totalFor || 0,
+        goalsConceded: data.awayTeam.stats.scoring?.totalAgainst || 0,
         cleanSheets: 0, // Not tracked in DataLayer yet
-        wins: data.awayTeam.stats.record.wins,
-        losses: data.awayTeam.stats.record.losses,
-        draws: data.awayTeam.stats.record.draws,
+        wins: data.awayTeam.stats.record?.wins || 0,
+        losses: data.awayTeam.stats.record?.losses || 0,
+        draws: data.awayTeam.stats.record?.draws,
       } : null,
       
       dataSource: 'API_SPORTS' as const,
     };
     
   } catch (error) {
-    console.error(`[DataLayer] Error fetching data:`, error);
+    console.error(`[DataLayer Bridge] Error fetching data for ${homeTeam} vs ${awayTeam} (${sport}):`, error);
+    console.error(`[DataLayer Bridge] Stack:`, error instanceof Error ? error.stack : 'No stack');
     return createEmptyResponse(sport);
   }
 }
