@@ -102,9 +102,7 @@ function getCurrentSeason(): number {
   // The API uses the starting year (e.g., 2024 for the 2024-25 season)
   // Before August: we're still in the previous year's season (e.g., May 2025 = 2024-25 season)
   // Aug onwards: we're in the new season (e.g., Sept 2025 = 2025-26 season)
-  // However, use 2024 as maximum to avoid future/mock data issues
-  const calculatedSeason = month < 7 ? year - 1 : year;
-  return Math.min(calculatedSeason, 2024);
+  return month < 7 ? year - 1 : year;
 }
 
 /**
