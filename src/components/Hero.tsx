@@ -8,6 +8,7 @@
 
 import Link from 'next/link';
 import { LiveStatsCounter } from './SocialProof';
+import LiveIntelCard from './LiveIntelCard';
 
 export default function Hero() {
   return (
@@ -87,125 +88,9 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right Side - SportBot Agent Card */}
+          {/* Right Side - Live Intel Card */}
           <div className="relative lg:pl-8">
-            <div className="relative">
-              {/* Animated Glow Effect */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/30 via-violet-500/20 to-fuchsia-500/30 rounded-3xl blur-2xl opacity-60 animate-pulse" />
-              <div className="absolute -inset-2 bg-gradient-to-br from-purple-500/10 to-transparent rounded-2xl" />
-              
-              {/* Card - SportBot Agent */}
-              <div className="relative bg-gradient-to-br from-bg-card via-bg-card to-purple-950/20 border border-purple-500/30 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
-                {/* Animated Header Bar */}
-                <div className="relative bg-gradient-to-r from-purple-600/20 via-violet-600/20 to-fuchsia-600/20 px-4 sm:px-6 py-3 sm:py-4 border-b border-purple-500/20">
-                  <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(168,85,247,0.1),transparent)] animate-shimmer" />
-                  <div className="flex items-center justify-between relative">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="relative">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
-                          <span className="text-xl sm:text-2xl">🧠</span>
-                        </div>
-                        <span className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-bg-card animate-pulse" />
-                      </div>
-                      <div>
-                        <p className="text-white font-bold text-base sm:text-lg">SportBot Agent</p>
-                        <p className="text-purple-300 text-xs sm:text-sm flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                          AI Sports Desk
-                        </p>
-                      </div>
-                    </div>
-                    <Link href="/ai-desk" className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-[10px] sm:text-xs font-semibold rounded-full border border-purple-500/30 transition-all hover:scale-105 active:scale-95">
-                      Open →
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Live Intelligence Feed */}
-                <div className="p-3 sm:p-5 space-y-2 sm:space-y-3">
-                  {/* Post 1 - Market Movement */}
-                  <div className="group relative bg-gradient-to-r from-orange-500/10 to-transparent rounded-lg sm:rounded-xl p-3 sm:p-4 border border-orange-500/20 hover:border-orange-500/40 transition-all cursor-pointer">
-                    <div className="flex items-start gap-2 sm:gap-3">
-                      <span className="text-lg sm:text-2xl">📊</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-orange-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Market Move</span>
-                          <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] sm:text-[10px] font-bold rounded">MODERATE</span>
-                        </div>
-                        <p className="text-gray-200 text-xs sm:text-sm leading-relaxed line-clamp-2">
-                          Sharp movement detected on the early Premier League fixture. Market uncertainty elevated.
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs sm:text-sm">⚽</span>
-                          <span className="text-white/80 text-[10px] sm:text-xs font-medium">Chelsea vs Everton</span>
-                          <span className="text-gray-500 text-[9px] sm:text-[10px]">• 15m ago</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Post 2 - Lineup Intel */}
-                  <div className="group relative bg-gradient-to-r from-green-500/10 to-transparent rounded-lg sm:rounded-xl p-3 sm:p-4 border border-green-500/20 hover:border-green-500/40 transition-all cursor-pointer">
-                    <div className="flex items-start gap-2 sm:gap-3">
-                      <span className="text-lg sm:text-2xl">📋</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-green-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Lineup Intel</span>
-                          <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-[9px] sm:text-[10px] font-bold rounded">CONFIDENT</span>
-                        </div>
-                        <p className="text-gray-200 text-xs sm:text-sm leading-relaxed line-clamp-2">
-                          Key midfielder confirmed out. Model volatility adjusted upward.
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs sm:text-sm">⚽</span>
-                          <span className="text-white/80 text-[10px] sm:text-xs font-medium">Man City vs Man United</span>
-                          <span className="text-gray-500 text-[9px] sm:text-[10px]">• 2h ago</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Post 3 - AI Insight - Hidden on smallest screens */}
-                  <div className="hidden xs:block group relative bg-gradient-to-r from-purple-500/10 to-transparent rounded-lg sm:rounded-xl p-3 sm:p-4 border border-purple-500/20 hover:border-purple-500/40 transition-all cursor-pointer">
-                    <div className="flex items-start gap-2 sm:gap-3">
-                      <span className="text-lg sm:text-2xl">🎯</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-purple-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">AI Insight</span>
-                          <span className="px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 text-[9px] sm:text-[10px] font-bold rounded">UNCERTAIN</span>
-                        </div>
-                        <p className="text-gray-200 text-xs sm:text-sm leading-relaxed line-clamp-2">
-                          High-complexity alert. Both sides showing inconsistent form.
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs sm:text-sm">⚽</span>
-                          <span className="text-white/80 text-[10px] sm:text-xs font-medium">Liverpool vs Tottenham</span>
-                          <span className="text-gray-500 text-[9px] sm:text-[10px]">• 3h ago</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer - Feature Pills */}
-                <div className="px-3 sm:px-5 pb-3 sm:pb-5">
-                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                    <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 bg-purple-500/10 text-purple-300 text-[10px] sm:text-xs font-medium rounded-full border border-purple-500/20">
-                      ⚡ Real-Time
-                    </span>
-                    <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 bg-blue-500/10 text-blue-300 text-[10px] sm:text-xs font-medium rounded-full border border-blue-500/20">
-                      🔄 Auto-Update
-                    </span>
-                    <span className="hidden xs:inline-flex px-2 sm:px-2.5 py-0.5 sm:py-1 bg-green-500/10 text-green-300 text-[10px] sm:text-xs font-medium rounded-full border border-green-500/20">
-                      🏥 Injuries
-                    </span>
-                    <span className="hidden sm:inline-flex px-2.5 py-1 bg-orange-500/10 text-orange-300 text-xs font-medium rounded-full border border-orange-500/20">
-                      📈 Odds Shifts
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <LiveIntelCard />
           </div>
         </div>
       </div>
