@@ -13,6 +13,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getEnrichedMatchData, getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
 import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
 import { normalizeToUniversalSignals, formatSignalsForAI, getSignalSummary, type RawMatchInput } from '@/lib/universal-signals';
+import { analyzeMarket, type MarketIntel, type OddsData } from '@/lib/value-detection';
+import { theOddsApi } from '@/lib/theOdds';
 import OpenAI from 'openai';
 
 // Allow longer execution time for multi-API calls (NBA, NFL, etc.)
@@ -281,6 +283,70 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Build context factors
     const contextFactors = buildContextFactors(matchInfo, homeStats, awayStats, h2h);
 
+    // Fetch odds and calculate market intel (don't block on failure)
+    let marketIntel: MarketIntel | null = null;
+    let odds: OddsData | null = null;
+    
+    try {
+      // Only fetch odds if API is configured
+      if (theOddsApi.isConfigured()) {
+        console.log(`[Match-Preview] Fetching odds for ${matchInfo.sport}`);
+        const oddsResponse = await theOddsApi.getOddsForSport(matchInfo.sport, {
+          regions: ['eu', 'us'],
+          markets: ['h2h'],
+        });
+        
+        // Find matching event
+        const events = oddsResponse.data || [];
+        const matchingEvent = events.find(e => 
+          (e.home_team.toLowerCase().includes(matchInfo.homeTeam.toLowerCase().split(' ')[0]) ||
+           matchInfo.homeTeam.toLowerCase().includes(e.home_team.toLowerCase().split(' ')[0])) &&
+          (e.away_team.toLowerCase().includes(matchInfo.awayTeam.toLowerCase().split(' ')[0]) ||
+           matchInfo.awayTeam.toLowerCase().includes(e.away_team.toLowerCase().split(' ')[0]))
+        );
+        
+        if (matchingEvent && matchingEvent.bookmakers?.length > 0) {
+          const bookmaker = matchingEvent.bookmakers[0];
+          const h2hMarket = bookmaker.markets?.find(m => m.key === 'h2h');
+          
+          if (h2hMarket?.outcomes) {
+            const homeOutcome = h2hMarket.outcomes.find(o => 
+              o.name.toLowerCase().includes(matchInfo.homeTeam.toLowerCase().split(' ')[0]) ||
+              matchInfo.homeTeam.toLowerCase().includes(o.name.toLowerCase().split(' ')[0])
+            );
+            const awayOutcome = h2hMarket.outcomes.find(o => 
+              o.name.toLowerCase().includes(matchInfo.awayTeam.toLowerCase().split(' ')[0]) ||
+              matchInfo.awayTeam.toLowerCase().includes(o.name.toLowerCase().split(' ')[0])
+            );
+            const drawOutcome = h2hMarket.outcomes.find(o => o.name.toLowerCase() === 'draw');
+            
+            if (homeOutcome && awayOutcome) {
+              odds = {
+                homeOdds: homeOutcome.price,
+                awayOdds: awayOutcome.price,
+                drawOdds: drawOutcome?.price,
+                bookmaker: bookmaker.title,
+                lastUpdate: bookmaker.last_update,
+              };
+              
+              // Calculate market intel using universal signals
+              const sportConfig = getSportConfig(matchInfo.sport);
+              marketIntel = analyzeMarket(
+                aiAnalysis.universalSignals,
+                odds,
+                sportConfig.hasDraw
+              );
+              
+              console.log(`[Match-Preview] Market intel calculated: ${marketIntel.recommendation}`);
+            }
+          }
+        }
+      }
+    } catch (oddsError) {
+      console.error('[Match-Preview] Failed to fetch odds:', oddsError);
+      // Continue without odds - not critical
+    }
+
     // Generate TTS audio for the narrative (async, don't block)
     let audioUrl: string | undefined;
     const narrativeText = aiAnalysis.story?.narrative || (aiAnalysis.story as { gameFlow?: string })?.gameFlow;
@@ -352,6 +418,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         battleType: 'top-scorers' as const,
       } : null,
       referee: referee,
+      // Premium Edge Features
+      marketIntel: marketIntel,
+      odds: odds,
     };
 
     console.log(`[Match-Preview] Completed in ${Date.now() - startTime}ms`);

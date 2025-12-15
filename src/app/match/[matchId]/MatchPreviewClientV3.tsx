@@ -22,8 +22,10 @@ import {
   PremiumMatchHeader,
   ShareCard,
   UniversalSignalsDisplay,
+  MarketIntelSection,
 } from '@/components/analysis';
 import type { UniversalSignals } from '@/lib/universal-signals';
+import type { MarketIntel, OddsData } from '@/lib/value-detection';
 
 interface MatchPreviewClientProps {
   matchId: string;
@@ -77,6 +79,9 @@ interface MatchPreviewData {
     favors: string;
     viral?: boolean;
   }>;
+  // Premium Edge Features
+  marketIntel?: MarketIntel;
+  odds?: OddsData;
 }
 
 export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps) {
@@ -188,6 +193,20 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
               awayTeam={data.matchInfo.awayTeam}
               homeForm={data.viralStats?.form?.home || 'DDDDD'}
               awayForm={data.viralStats?.form?.away || 'DDDDD'}
+            />
+          </div>
+        )}
+
+        {/* Market Edge - Premium Value Detection */}
+        {data.marketIntel && data.odds && (
+          <div className="mt-8">
+            <MarketIntelSection
+              marketIntel={data.marketIntel}
+              odds={data.odds}
+              homeTeam={data.matchInfo.homeTeam}
+              awayTeam={data.matchInfo.awayTeam}
+              hasDraw={data.matchInfo.hasDraw}
+              isPro={session?.user?.subscriptionStatus === 'pro' || session?.user?.subscriptionStatus === 'premium'}
             />
           </div>
         )}
