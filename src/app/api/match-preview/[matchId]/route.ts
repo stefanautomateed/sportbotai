@@ -99,7 +99,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`[Match-Preview] Registered user: ${session.user.email} - proceeding with live analysis`);
 
     // Determine if this is a non-soccer sport
-    const isNonSoccer = ['basketball', 'basketball_nba', 'nba', 'americanfootball', 'nfl', 'icehockey', 'nhl', 'baseball', 'mlb', 'mma', 'ufc']
+    const isNonSoccer = ['basketball', 'basketball_nba', 'basketball_euroleague', 'euroleague', 'nba', 'americanfootball', 'nfl', 'icehockey', 'nhl', 'baseball', 'mlb', 'mma', 'ufc']
       .includes(matchInfo.sport.toLowerCase());
 
     // Fetch enriched data based on sport type
@@ -115,10 +115,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const normalizedSport = normalizeSport(matchInfo.sport);
       console.log(`[Match-Preview] Using DataLayer for ${matchInfo.sport} (normalized: ${normalizedSport})`);
       try {
+        // Pass original sport string to preserve league info (e.g., 'basketball_euroleague')
         enrichedData = await getEnrichedMatchDataV2(
           matchInfo.homeTeam,
           matchInfo.awayTeam,
-          normalizedSport,
+          matchInfo.sport, // Use original sport, not normalizedSport - bridge needs this for league detection
           matchInfo.league
         );
         console.log(`[Match-Preview] ${matchInfo.sport} data fetched in ${Date.now() - startTime}ms:`, {
@@ -565,9 +566,15 @@ function normalizeLeagueName(league: string): string {
 function detectSportFromLeague(league: string): string | null {
   const lower = league.toLowerCase();
   
-  // Basketball
-  if (lower.includes('nba') || lower.includes('basketball') || lower.includes('euroleague') || 
-      lower.includes('ncaab') || lower.includes('wnba') || lower.includes('nbl') || lower.includes('acb')) {
+  // Basketball - detect specific leagues
+  if (lower.includes('euroleague')) {
+    return 'basketball_euroleague';
+  }
+  if (lower.includes('nba')) {
+    return 'basketball_nba';
+  }
+  if (lower.includes('basketball') || lower.includes('ncaab') || lower.includes('wnba') || 
+      lower.includes('nbl') || lower.includes('acb')) {
     return 'basketball';
   }
   
