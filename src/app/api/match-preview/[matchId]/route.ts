@@ -298,7 +298,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         
         // Find matching event
         const events = oddsResponse.data || [];
-        const matchingEvent = events.find(e => 
+        const matchingEvent = events.find((e: { home_team: string; away_team: string }) => 
           (e.home_team.toLowerCase().includes(matchInfo.homeTeam.toLowerCase().split(' ')[0]) ||
            matchInfo.homeTeam.toLowerCase().includes(e.home_team.toLowerCase().split(' ')[0])) &&
           (e.away_team.toLowerCase().includes(matchInfo.awayTeam.toLowerCase().split(' ')[0]) ||
