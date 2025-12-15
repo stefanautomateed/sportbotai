@@ -84,6 +84,15 @@ interface MatchPreviewData {
   // Premium Edge Features
   marketIntel?: MarketIntel;
   odds?: OddsData;
+  // Demo match indicators
+  isDemo?: boolean;
+  demoId?: string;
+  requestedMatch?: {
+    homeTeam: string;
+    awayTeam: string;
+    sport: string;
+  };
+  message?: string;
 }
 
 export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps) {
@@ -164,12 +173,53 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
   // Build risk factors
   const riskFactors = data.story.riskFactors || [];
 
+  // Check if this is a demo match being shown to anonymous user
+  const isDemo = data.isDemo && !session;
+  const requestedDifferentMatch = data.requestedMatch && 
+    (data.requestedMatch.homeTeam !== data.matchInfo.homeTeam || 
+     data.requestedMatch.awayTeam !== data.matchInfo.awayTeam);
+
   return (
     <div className="min-h-screen bg-[#050506]">
       {/* Subtle gradient overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-white/[0.01] via-transparent to-transparent pointer-events-none" />
       
       <div className="relative max-w-2xl mx-auto px-4 py-6 sm:py-10">
+        {/* Demo Banner - Show when anonymous user views demo */}
+        {isDemo && (
+          <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-xl">✨</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-amber-400 font-medium text-sm mb-1">
+                  {requestedDifferentMatch ? 'Sample Analysis Preview' : 'Demo Analysis'}
+                </h3>
+                <p className="text-zinc-400 text-xs leading-relaxed">
+                  {requestedDifferentMatch ? (
+                    <>
+                      You asked for <span className="text-white">{data.requestedMatch?.homeTeam} vs {data.requestedMatch?.awayTeam}</span>. 
+                      Register for free to get real-time AI analysis of any match!
+                    </>
+                  ) : (
+                    <>This is a sample analysis. Register for free to analyze any match with live AI insights!</>
+                  )}
+                </p>
+                <Link 
+                  href="/register"
+                  className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black text-xs font-semibold rounded-lg transition-colors"
+                >
+                  <span>Register Free</span>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Back navigation - Minimal */}
         <Link 
           href="/matches"

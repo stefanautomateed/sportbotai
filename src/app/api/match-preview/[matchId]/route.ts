@@ -7,14 +7,21 @@
  * - Clean JSON for AI consumption
  * 
  * No raw stats exposed. Same UI across ALL sports.
+ * 
+ * ANONYMOUS USER HANDLING:
+ * - Unregistered users get pre-generated demo analyses (zero API cost)
+ * - Registered users get real-time AI analysis
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { getEnrichedMatchData, getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
 import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
 import { normalizeToUniversalSignals, formatSignalsForAI, getSignalSummary, type RawMatchInput } from '@/lib/universal-signals';
 import { analyzeMarket, type MarketIntel, type OddsData } from '@/lib/value-detection';
 import { getDataLayer } from '@/lib/data-layer';
+import { findMatchingDemo, getRandomFeaturedDemo, type DemoMatch } from '@/lib/demo-matches';
 import OpenAI from 'openai';
 
 // Allow longer execution time for multi-API calls (NBA, NFL, etc.)
@@ -47,6 +54,49 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     console.log(`[Match-Preview] Parsed match: ${matchInfo.homeTeam} vs ${matchInfo.awayTeam} (${matchInfo.sport})`);
+
+    // ==========================================
+    // ANONYMOUS USER CHECK - Serve demo analyses
+    // ==========================================
+    const session = await getServerSession(authOptions);
+    const isAnonymous = !session?.user;
+    
+    if (isAnonymous) {
+      console.log(`[Match-Preview] Anonymous user - checking for demo match`);
+      
+      // Try to find a matching demo for this specific matchup
+      const matchingDemo = findMatchingDemo(matchInfo.homeTeam, matchInfo.awayTeam, matchInfo.sport);
+      
+      if (matchingDemo) {
+        console.log(`[Match-Preview] Serving demo: ${matchingDemo.id} (exact match)`);
+        return NextResponse.json({
+          ...matchingDemo.data,
+          isDemo: true,
+          demoId: matchingDemo.id,
+        });
+      }
+      
+      // No exact match - serve a random featured demo with registration CTA
+      const randomDemo = getRandomFeaturedDemo();
+      console.log(`[Match-Preview] No matching demo, serving featured: ${randomDemo.id}`);
+      
+      return NextResponse.json({
+        ...randomDemo.data,
+        isDemo: true,
+        demoId: randomDemo.id,
+        requestedMatch: {
+          homeTeam: matchInfo.homeTeam,
+          awayTeam: matchInfo.awayTeam,
+          sport: matchInfo.sport,
+        },
+        message: 'Register for free to analyze this exact match!',
+      });
+    }
+
+    // ==========================================
+    // REGISTERED USER - Full API analysis
+    // ==========================================
+    console.log(`[Match-Preview] Registered user: ${session.user.email} - proceeding with live analysis`);
 
     // Determine if this is a non-soccer sport
     const isNonSoccer = ['basketball', 'basketball_nba', 'nba', 'americanfootball', 'nfl', 'icehockey', 'nhl', 'baseball', 'mlb', 'mma', 'ufc']
