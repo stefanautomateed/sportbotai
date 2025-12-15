@@ -103,9 +103,9 @@ export default function AIDeskHeroChat() {
     setSuggestedQuestions(shuffled.slice(0, 6));
   }, []);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom (block: 'nearest' prevents page scroll)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   // Focus input on mount

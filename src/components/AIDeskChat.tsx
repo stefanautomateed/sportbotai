@@ -110,9 +110,9 @@ export default function AIDeskChat() {
     setSuggestedQuestions(shuffled.slice(0, 4));
   }, []);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom (block: 'nearest' prevents page scroll)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   // Focus input when chat opens
