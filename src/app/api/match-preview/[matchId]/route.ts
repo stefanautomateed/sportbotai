@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getEnrichedMatchData, getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
-import { getMultiSportEnrichedData } from '@/lib/sports-api';
+import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
 import OpenAI from 'openai';
 
 // Allow longer execution time for multi-API calls (NBA, NFL, etc.)
@@ -59,13 +59,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     let fixtureInfo: { venue: string | null } = { venue: null };
 
     if (isNonSoccer) {
-      // Use multi-sport API for basketball, NFL, etc.
-      console.log(`[Match-Preview] Using multi-sport API for ${matchInfo.sport}`);
+      // Use DataLayer for basketball, NFL, hockey, etc.
+      const normalizedSport = normalizeSport(matchInfo.sport);
+      console.log(`[Match-Preview] Using DataLayer for ${matchInfo.sport} (normalized: ${normalizedSport})`);
       try {
-        enrichedData = await getMultiSportEnrichedData(
+        enrichedData = await getEnrichedMatchDataV2(
           matchInfo.homeTeam,
           matchInfo.awayTeam,
-          matchInfo.sport,
+          normalizedSport,
           matchInfo.league
         );
         console.log(`[Match-Preview] ${matchInfo.sport} data fetched in ${Date.now() - startTime}ms:`, {
