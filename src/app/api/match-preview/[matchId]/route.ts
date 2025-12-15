@@ -319,7 +319,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         ...aiAnalysis.story,
         audioUrl,
       },
-      // Include normalized signals for UI
+      // Universal Signals for visual display
+      universalSignals: aiAnalysis.universalSignals,
+      // Include normalized signals for UI (legacy format)
       signals: aiAnalysis.signals,
       viralStats,
       headlines: aiAnalysis.headlines,
