@@ -792,9 +792,10 @@ function normalizeBasketballTeamName(name: string): string {
   return NBA_TEAM_MAPPINGS[lower] || EUROLEAGUE_TEAM_MAPPINGS[lower] || name;
 }
 
-async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: boolean = false): Promise<number | null> {
+async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: boolean = false, league?: string): Promise<number | null> {
   const normalizedName = normalizeBasketballTeamName(teamName);
-  const cacheKey = `basketball:team:${normalizedName}:${isNBA ? 'nba' : 'other'}`;
+  const leagueLower = (league || '').toLowerCase();
+  const cacheKey = `basketball:team:${normalizedName}:${league || (isNBA ? 'nba' : 'other')}`;
   const cached = getCached<number>(cacheKey);
   if (cached) return cached;
 
@@ -802,16 +803,41 @@ async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: bool
   const season = getCurrentBasketballSeason();
   let response: any = null;
   
-  if (isNBA) {
-    // For NBA, search only in NBA league (ID 12)
-    console.log(`[Basketball] Searching NBA (league 12) for team: "${teamName}" (normalized: "${normalizedName}") season ${season}`);
+  // Determine which league ID to search
+  let targetLeagueId: number | null = null;
+  if (isNBA || leagueLower.includes('nba') || leagueLower === '') {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.NBA;
+  } else if (leagueLower.includes('euroleague')) {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.EUROLEAGUE;
+  } else if (leagueLower.includes('eurocup')) {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.EUROCUP;
+  } else if (leagueLower.includes('acb') || leagueLower.includes('spain')) {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.ACB_SPAIN;
+  } else if (leagueLower.includes('ncaa') || leagueLower.includes('college')) {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.NCAAB;
+  } else if (leagueLower.includes('italy') || leagueLower.includes('lega')) {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.ITALY_LEGA;
+  } else if (leagueLower.includes('germany') || leagueLower.includes('bbl')) {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.GERMANY_BBL;
+  } else if (leagueLower.includes('france')) {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.FRANCE_PRO_A;
+  } else if (leagueLower.includes('turkey') || leagueLower.includes('bsl')) {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.BSL_TURKEY;
+  } else if (leagueLower.includes('vtb') || leagueLower.includes('russia')) {
+    targetLeagueId = BASKETBALL_LEAGUE_IDS.VTB_LEAGUE;
+  }
+  
+  // If we have a specific league, search there first
+  if (targetLeagueId) {
+    const leagueName = Object.entries(BASKETBALL_LEAGUE_IDS).find(([, id]) => id === targetLeagueId)?.[0] || targetLeagueId;
+    console.log(`[Basketball] Searching ${leagueName} (league ${targetLeagueId}) for team: "${teamName}" (normalized: "${normalizedName}") season ${season}`);
     
     // Try normalized name first
-    response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(normalizedName)}&league=${BASKETBALL_LEAGUE_IDS.NBA}&season=${season}`);
+    response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(normalizedName)}&league=${targetLeagueId}&season=${season}`);
     
     if (!response?.response?.length && normalizedName !== teamName) {
       // Try original name
-      response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(teamName)}&league=${BASKETBALL_LEAGUE_IDS.NBA}&season=${season}`);
+      response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(teamName)}&league=${targetLeagueId}&season=${season}`);
     }
     
     // Try searching by name parts (city or team name)
@@ -820,24 +846,22 @@ async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: bool
       // Try last word (usually the team name like "Cavaliers", "Lakers")
       if (parts.length > 1) {
         const lastWord = parts[parts.length - 1];
-        console.log(`[Basketball] Trying NBA search with team nickname: "${lastWord}"`);
-        response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(lastWord)}&league=${BASKETBALL_LEAGUE_IDS.NBA}&season=${season}`);
+        console.log(`[Basketball] Trying search with team nickname: "${lastWord}"`);
+        response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(lastWord)}&league=${targetLeagueId}&season=${season}`);
       }
     }
     
     if (response?.response?.length > 0) {
       const teamId = response.response[0].id;
-      console.log(`[Basketball] Found NBA team "${teamName}" -> ID ${teamId} (${response.response[0].name})`);
+      console.log(`[Basketball] Found team "${teamName}" -> ID ${teamId} (${response.response[0].name})`);
       setCache(cacheKey, teamId);
       return teamId;
     }
-    
-    console.warn(`[Basketball] NBA team not found: "${teamName}"`);
-    return null;
   }
 
-  // Non-NBA basketball: Priority search order for European basketball
+  // Fallback: search across multiple leagues
   const leagueSearchOrder = [
+    BASKETBALL_LEAGUE_IDS.NBA,
     BASKETBALL_LEAGUE_IDS.EUROLEAGUE,
     BASKETBALL_LEAGUE_IDS.EUROCUP,
     BASKETBALL_LEAGUE_IDS.ACB_SPAIN,
@@ -851,6 +875,8 @@ async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: bool
   
   // Try each league in priority order (with season parameter required by API)
   for (const leagueId of leagueSearchOrder) {
+    if (leagueId === targetLeagueId) continue; // Already tried this one
+    
     response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(normalizedName)}&league=${leagueId}&season=${season}`);
     if (response?.response?.length > 0) {
       const teamId = response.response[0].id;
@@ -861,7 +887,7 @@ async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: bool
     }
   }
   
-  // Fallback: search without league filter (still needs season)
+  // Final fallback: search without league filter (still needs season)
   response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(normalizedName)}&season=${season}`);
   if (!response?.response?.length && normalizedName !== teamName) {
     response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(teamName)}&season=${season}`);
@@ -874,7 +900,7 @@ async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: bool
     return teamId;
   }
   
-  console.warn(`[Basketball] Team not found: "${teamName}" (normalized: "${normalizedName}")`);
+  console.warn(`[Basketball] Team not found: "${teamName}" (normalized: "${normalizedName}", league: "${league}")`);
   return null;
 }
 
@@ -1961,13 +1987,21 @@ async function fetchBasketballData(homeTeam: string, awayTeam: string, baseUrl: 
   // Determine if this is NBA - check both sport string and league
   const sportLower = originalSport.toLowerCase();
   const leagueLower = (league || '').toLowerCase();
-  const isNBA = sportLower.includes('nba') || leagueLower.includes('nba') || sportLower === 'basketball';
   
-  console.log(`[Basketball] Fetching ${isNBA ? 'NBA' : 'basketball'} data for ${homeTeam} vs ${awayTeam} (sport: ${originalSport}, league: ${league})`);
+  // Determine league type from league parameter
+  const isNBA = sportLower.includes('nba') || leagueLower.includes('nba') || leagueLower === '';
+  const isEuroleague = leagueLower.includes('euroleague');
+  const isNCAAB = leagueLower.includes('ncaa') || leagueLower.includes('college');
+  const isACB = leagueLower.includes('acb') || leagueLower.includes('spain');
+  
+  // Default to NBA if no specific league is identified (most common use case)
+  const leagueType = isEuroleague ? 'Euroleague' : isNCAAB ? 'NCAAB' : isACB ? 'ACB' : 'NBA';
+  
+  console.log(`[Basketball] Fetching ${leagueType} data for ${homeTeam} vs ${awayTeam} (sport: ${originalSport}, league: ${league})`);
   
   const [homeTeamId, awayTeamId] = await Promise.all([
-    findBasketballTeam(homeTeam, baseUrl, isNBA),
-    findBasketballTeam(awayTeam, baseUrl, isNBA),
+    findBasketballTeam(homeTeam, baseUrl, isNBA, league),
+    findBasketballTeam(awayTeam, baseUrl, isNBA, league),
   ]);
 
   if (!homeTeamId || !awayTeamId) {
