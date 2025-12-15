@@ -162,22 +162,33 @@ export class HockeyAdapter extends BaseSportAdapter {
   
   /**
    * Find a hockey team with improved fuzzy matching
+   * Tries current season first, falls back to previous season if no teams found
    */
   async findTeam(query: TeamQuery): Promise<DataLayerResponse<NormalizedTeam>> {
     if (!query.name && !query.id) {
       return this.error('INVALID_QUERY', 'Team name or ID required');
     }
     
-    const season = this.getCurrentSeason();
+    let season = this.getCurrentSeason();
     const leagueId = LEAGUE_IDS.NHL;
     
     // Try by ID first
     if (query.id) {
-      const result = await this.apiProvider.getHockeyTeams({
+      let result = await this.apiProvider.getHockeyTeams({
         id: parseInt(query.id),
         league: leagueId,
         season,
       });
+      
+      // Fallback to previous season if no results
+      if ((!result.success || !result.data || result.data.length === 0) && season > 2020) {
+        console.log(`[Hockey] No team by ID in ${season}, trying ${season - 1}`);
+        result = await this.apiProvider.getHockeyTeams({
+          id: parseInt(query.id),
+          league: leagueId,
+          season: season - 1,
+        });
+      }
       
       if (result.success && result.data && result.data.length > 0) {
         return this.success(this.transformTeam(result.data[0]));
@@ -190,10 +201,20 @@ export class HockeyAdapter extends BaseSportAdapter {
       console.log(`[Hockey] Searching for "${query.name}" with variations:`, searchVariations);
       
       // Get all teams once for efficient matching
-      const allTeams = await this.apiProvider.getHockeyTeams({
+      let allTeams = await this.apiProvider.getHockeyTeams({
         league: leagueId,
         season,
       });
+      
+      // Fallback to previous season if no teams found
+      if ((!allTeams.success || !allTeams.data || allTeams.data.length === 0) && season > 2020) {
+        console.log(`[Hockey] No teams in ${season}, trying ${season - 1}`);
+        season = season - 1;
+        allTeams = await this.apiProvider.getHockeyTeams({
+          league: leagueId,
+          season,
+        });
+      }
       
       if (!allTeams.success || !allTeams.data || allTeams.data.length === 0) {
         return this.error('FETCH_ERROR', 'Could not fetch NHL teams');
@@ -287,13 +308,14 @@ export class HockeyAdapter extends BaseSportAdapter {
   
   /**
    * Get team statistics
+   * Tries current season first, falls back to previous season if no stats found
    */
   async getTeamStats(query: StatsQuery): Promise<DataLayerResponse<NormalizedTeamStats>> {
-    const season = query.season ? parseInt(query.season) : this.getCurrentSeason();
+    let season = query.season ? parseInt(query.season) : this.getCurrentSeason();
     const leagueId = LEAGUE_IDS.NHL;
     
     // Try /teams/statistics endpoint first
-    const statsResult = await this.apiProvider.getHockeyTeamStats({
+    let statsResult = await this.apiProvider.getHockeyTeamStats({
       team: parseInt(query.teamId),
       league: leagueId,
       season,
@@ -303,8 +325,23 @@ export class HockeyAdapter extends BaseSportAdapter {
       return this.success(this.transformStats(statsResult.data, query.teamId, String(season)));
     }
     
-    // Fallback to standings
-    const standingsResult = await this.apiProvider.getHockeyStandings({
+    // Try previous season if current season has no stats
+    if (!query.season && season > 2020) {
+      console.log(`[Hockey Stats] No stats in ${season}, trying ${season - 1}`);
+      season = season - 1;
+      statsResult = await this.apiProvider.getHockeyTeamStats({
+        team: parseInt(query.teamId),
+        league: leagueId,
+        season,
+      });
+      
+      if (statsResult.success && statsResult.data) {
+        return this.success(this.transformStats(statsResult.data, query.teamId, String(season)));
+      }
+    }
+    
+    // Fallback to standings (try both current and previous season)
+    let standingsResult = await this.apiProvider.getHockeyStandings({
       league: leagueId,
       season,
     });
@@ -317,6 +354,25 @@ export class HockeyAdapter extends BaseSportAdapter {
       
       if (teamStanding) {
         return this.success(this.transformStandingsToStats(teamStanding, String(season)));
+      }
+    }
+    
+    // Try previous season for standings too
+    if (season === this.getCurrentSeason() && season > 2020) {
+      standingsResult = await this.apiProvider.getHockeyStandings({
+        league: leagueId,
+        season: season - 1,
+      });
+      
+      if (standingsResult.success && standingsResult.data) {
+        const allStandings = standingsResult.data.flat();
+        const teamStanding = allStandings.find(s => 
+          s.team.id === parseInt(query.teamId)
+        );
+        
+        if (teamStanding) {
+          return this.success(this.transformStandingsToStats(teamStanding, String(season - 1)));
+        }
       }
     }
     
@@ -401,6 +457,7 @@ export class HockeyAdapter extends BaseSportAdapter {
   
   /**
    * Get head-to-head history
+   * Tries current season first, falls back to previous season
    */
   async getH2H(query: H2HQuery): Promise<DataLayerResponse<NormalizedH2H>> {
     // Find both teams
@@ -418,11 +475,23 @@ export class HockeyAdapter extends BaseSportAdapter {
     const team2Id = team2Result.data.externalId;
     const h2hString = `${team1Id}-${team2Id}`;
     
-    const result = await this.apiProvider.getHockeyGames({
+    let season = this.getCurrentSeason();
+    let result = await this.apiProvider.getHockeyGames({
       h2h: h2hString,
       league: LEAGUE_IDS.NHL,
-      season: this.getCurrentSeason(),
+      season,
     });
+    
+    // Fallback to previous season if no H2H found
+    if ((!result.success || !result.data || result.data.length === 0) && season > 2020) {
+      console.log(`[Hockey H2H] No games in ${season}, trying ${season - 1}`);
+      season = season - 1;
+      result = await this.apiProvider.getHockeyGames({
+        h2h: h2hString,
+        league: LEAGUE_IDS.NHL,
+        season,
+      });
+    }
     
     if (!result.success || !result.data) {
       return this.error('FETCH_ERROR', result.error || 'Failed to fetch H2H');
