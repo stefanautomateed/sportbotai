@@ -20,3 +20,4 @@ export { default as PremiumMatchHeader } from './PremiumMatchHeader';
 
 // Universal Signals Framework - V3
 export { default as UniversalSignalsDisplay, SignalPills } from './UniversalSignalsDisplay';
+export * from './VisualSignals';

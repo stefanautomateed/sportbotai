@@ -186,6 +186,8 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
               signals={data.universalSignals}
               homeTeam={data.matchInfo.homeTeam}
               awayTeam={data.matchInfo.awayTeam}
+              homeForm={data.viralStats?.form?.home || 'DDDDD'}
+              awayForm={data.viralStats?.form?.away || 'DDDDD'}
             />
           </div>
         )}
