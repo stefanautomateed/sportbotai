@@ -14,7 +14,7 @@ import { getEnrichedMatchData, getMatchInjuries, getMatchGoalTiming, getMatchKey
 import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
 import { normalizeToUniversalSignals, formatSignalsForAI, getSignalSummary, type RawMatchInput } from '@/lib/universal-signals';
 import { analyzeMarket, type MarketIntel, type OddsData } from '@/lib/value-detection';
-import { theOddsApi } from '@/lib/theOdds';
+import { getDataLayer } from '@/lib/data-layer';
 import OpenAI from 'openai';
 
 // Allow longer execution time for multi-API calls (NBA, NFL, etc.)
@@ -288,59 +288,41 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     let odds: OddsData | null = null;
     
     try {
-      // Only fetch odds if API is configured
-      if (theOddsApi.isConfigured()) {
-        console.log(`[Match-Preview] Fetching odds for ${matchInfo.sport}`);
-        const oddsResponse = await theOddsApi.getOddsForSport(matchInfo.sport, {
-          regions: ['eu', 'us'],
-          markets: ['h2h'],
-        });
+      // Use data layer to fetch odds
+      const dataLayer = getDataLayer();
+      const oddsResult = await dataLayer.getOdds(
+        normalizeSport(matchInfo.sport) as 'soccer' | 'basketball' | 'hockey' | 'american_football' | 'baseball' | 'mma' | 'tennis',
+        matchInfo.homeTeam,
+        matchInfo.awayTeam,
+        { markets: ['h2h'] }
+      );
+      
+      if (oddsResult.success && oddsResult.data && oddsResult.data.length > 0) {
+        // Get the first bookmaker's odds
+        const firstBookmaker = oddsResult.data[0];
         
-        // Find matching event
-        const events = oddsResponse.data || [];
-        const matchingEvent = events.find((e: { home_team: string; away_team: string }) => 
-          (e.home_team.toLowerCase().includes(matchInfo.homeTeam.toLowerCase().split(' ')[0]) ||
-           matchInfo.homeTeam.toLowerCase().includes(e.home_team.toLowerCase().split(' ')[0])) &&
-          (e.away_team.toLowerCase().includes(matchInfo.awayTeam.toLowerCase().split(' ')[0]) ||
-           matchInfo.awayTeam.toLowerCase().includes(e.away_team.toLowerCase().split(' ')[0]))
-        );
-        
-        if (matchingEvent && matchingEvent.bookmakers?.length > 0) {
-          const bookmaker = matchingEvent.bookmakers[0];
-          const h2hMarket = bookmaker.markets?.find(m => m.key === 'h2h');
+        if (firstBookmaker.moneyline) {
+          odds = {
+            homeOdds: firstBookmaker.moneyline.home,
+            awayOdds: firstBookmaker.moneyline.away,
+            drawOdds: firstBookmaker.moneyline.draw,
+            bookmaker: firstBookmaker.bookmaker,
+            lastUpdate: firstBookmaker.lastUpdate?.toISOString(),
+          };
           
-          if (h2hMarket?.outcomes) {
-            const homeOutcome = h2hMarket.outcomes.find(o => 
-              o.name.toLowerCase().includes(matchInfo.homeTeam.toLowerCase().split(' ')[0]) ||
-              matchInfo.homeTeam.toLowerCase().includes(o.name.toLowerCase().split(' ')[0])
-            );
-            const awayOutcome = h2hMarket.outcomes.find(o => 
-              o.name.toLowerCase().includes(matchInfo.awayTeam.toLowerCase().split(' ')[0]) ||
-              matchInfo.awayTeam.toLowerCase().includes(o.name.toLowerCase().split(' ')[0])
-            );
-            const drawOutcome = h2hMarket.outcomes.find(o => o.name.toLowerCase() === 'draw');
-            
-            if (homeOutcome && awayOutcome) {
-              odds = {
-                homeOdds: homeOutcome.price,
-                awayOdds: awayOutcome.price,
-                drawOdds: drawOutcome?.price,
-                bookmaker: bookmaker.title,
-                lastUpdate: bookmaker.last_update,
-              };
-              
-              // Calculate market intel using universal signals
-              const sportConfig = getSportConfig(matchInfo.sport);
-              marketIntel = analyzeMarket(
-                aiAnalysis.universalSignals,
-                odds,
-                sportConfig.hasDraw
-              );
-              
-              console.log(`[Match-Preview] Market intel calculated: ${marketIntel.recommendation}`);
-            }
-          }
+          // Calculate market intel using universal signals
+          const sportConfig = getSportConfig(matchInfo.sport);
+          marketIntel = analyzeMarket(
+            aiAnalysis.universalSignals,
+            odds,
+            sportConfig.hasDraw
+          );
+          
+          console.log(`[Match-Preview] Market intel calculated: ${marketIntel.recommendation}`);
+          console.log(`[Match-Preview] Odds quota: ${oddsResult.metadata.quotaUsed} used, ${oddsResult.metadata.quotaRemaining} remaining`);
         }
+      } else if (!oddsResult.success) {
+        console.log(`[Match-Preview] Could not get odds: ${oddsResult.error?.message}`);
       }
     } catch (oddsError) {
       console.error('[Match-Preview] Failed to fetch odds:', oddsError);

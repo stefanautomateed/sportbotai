@@ -206,7 +206,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
               homeTeam={data.matchInfo.homeTeam}
               awayTeam={data.matchInfo.awayTeam}
               hasDraw={data.matchInfo.hasDraw}
-              isPro={session?.user?.subscriptionStatus === 'pro' || session?.user?.subscriptionStatus === 'premium'}
+              isPro={session?.user?.plan === 'PRO' || session?.user?.plan === 'PREMIUM'}
             />
           </div>
         )}

@@ -21,12 +21,15 @@ import {
   NormalizedH2H,
   NormalizedRecentGames,
   NormalizedInjury,
+  NormalizedOdds,
   EnrichedMatchData,
   TeamQuery,
   MatchQuery,
   StatsQuery,
   H2HQuery,
 } from './types';
+
+import { theOddsClient } from '@/lib/theOdds';
 
 import { ISportAdapter, AdapterRegistry } from './adapters/base';
 import { getBasketballAdapter } from './adapters/basketball';
@@ -369,6 +372,228 @@ export class DataLayer {
     }
     
     return result;
+  }
+  
+  /**
+   * Get odds for a match from The Odds API
+   * Maps sport to The Odds API sport key format
+   */
+  async getOdds(
+    sport: Sport,
+    homeTeam: string,
+    awayTeam: string,
+    options: {
+      regions?: string[];
+      markets?: string[];
+    } = {}
+  ): Promise<DataLayerResponse<NormalizedOdds[]>> {
+    const opts = {
+      regions: options.regions ?? ['eu', 'us'],
+      markets: options.markets ?? ['h2h', 'spreads', 'totals'],
+    };
+    
+    const cacheKey = this.getCacheKey('getOdds', { sport, homeTeam, awayTeam, ...opts });
+    const cached = this.getFromCache<DataLayerResponse<NormalizedOdds[]>>(cacheKey);
+    if (cached) return cached;
+    
+    this.log('getOdds', { sport, homeTeam, awayTeam, options: opts });
+    
+    // Check if odds API is configured
+    if (!theOddsClient.isConfigured()) {
+      return {
+        success: false,
+        error: {
+          code: 'API_NOT_CONFIGURED',
+          message: 'The Odds API key is not configured',
+        },
+        metadata: {
+          provider: 'the-odds-api',
+          cached: false,
+          fetchedAt: new Date(),
+        },
+      };
+    }
+    
+    try {
+      // Map internal sport to The Odds API sport key
+      const sportKey = this.mapSportToOddsKey(sport);
+      
+      const oddsResponse = await theOddsClient.getOddsForSport(sportKey, {
+        regions: opts.regions,
+        markets: opts.markets,
+      });
+      
+      if (!oddsResponse.data || oddsResponse.data.length === 0) {
+        return {
+          success: false,
+          error: {
+            code: 'NO_ODDS_FOUND',
+            message: `No odds available for ${sport}`,
+          },
+          metadata: {
+            provider: 'the-odds-api',
+            cached: false,
+            fetchedAt: new Date(),
+          },
+        };
+      }
+      
+      // Find the matching event
+      const matchingEvent = oddsResponse.data.find((e: { home_team: string; away_team: string }) => 
+        this.fuzzyMatchTeam(e.home_team, homeTeam) && this.fuzzyMatchTeam(e.away_team, awayTeam)
+      );
+      
+      if (!matchingEvent || !matchingEvent.bookmakers || matchingEvent.bookmakers.length === 0) {
+        return {
+          success: false,
+          error: {
+            code: 'MATCH_NOT_FOUND',
+            message: `Could not find odds for ${homeTeam} vs ${awayTeam}`,
+          },
+          metadata: {
+            provider: 'the-odds-api',
+            cached: false,
+            fetchedAt: new Date(),
+          },
+        };
+      }
+      
+      // Normalize the odds data
+      const normalizedOdds: NormalizedOdds[] = matchingEvent.bookmakers.map((bookmaker: {
+        key: string;
+        title: string;
+        last_update?: string;
+        markets?: Array<{
+          key: string;
+          outcomes: Array<{ name: string; price: number; point?: number }>;
+        }>;
+      }) => {
+        const h2hMarket = bookmaker.markets?.find((m: { key: string }) => m.key === 'h2h');
+        const spreadsMarket = bookmaker.markets?.find((m: { key: string }) => m.key === 'spreads');
+        const totalsMarket = bookmaker.markets?.find((m: { key: string }) => m.key === 'totals');
+        
+        const normalized: NormalizedOdds = {
+          matchId: matchingEvent.id,
+          sport,
+          bookmaker: bookmaker.title || bookmaker.key,
+          lastUpdate: bookmaker.last_update ? new Date(bookmaker.last_update) : new Date(),
+          provider: 'the-odds-api',
+          fetchedAt: new Date(),
+        };
+        
+        // H2H (Moneyline)
+        if (h2hMarket?.outcomes) {
+          const homeOutcome = h2hMarket.outcomes.find((o: { name: string; price: number }) => 
+            this.fuzzyMatchTeam(o.name, homeTeam)
+          );
+          const awayOutcome = h2hMarket.outcomes.find((o: { name: string; price: number }) => 
+            this.fuzzyMatchTeam(o.name, awayTeam)
+          );
+          const drawOutcome = h2hMarket.outcomes.find((o: { name: string; price: number }) => 
+            o.name.toLowerCase() === 'draw'
+          );
+          
+          if (homeOutcome && awayOutcome) {
+            normalized.moneyline = {
+              home: homeOutcome.price,
+              away: awayOutcome.price,
+              draw: drawOutcome?.price,
+            };
+          }
+        }
+        
+        // Spreads
+        if (spreadsMarket?.outcomes) {
+          const homeSpread = spreadsMarket.outcomes.find((o: { name: string }) => 
+            this.fuzzyMatchTeam(o.name, homeTeam)
+          );
+          const awaySpread = spreadsMarket.outcomes.find((o: { name: string }) => 
+            this.fuzzyMatchTeam(o.name, awayTeam)
+          );
+          
+          if (homeSpread && awaySpread) {
+            normalized.spread = {
+              home: { line: homeSpread.point ?? 0, odds: homeSpread.price },
+              away: { line: awaySpread.point ?? 0, odds: awaySpread.price },
+            };
+          }
+        }
+        
+        // Totals
+        if (totalsMarket?.outcomes) {
+          const over = totalsMarket.outcomes.find((o: { name: string }) => 
+            o.name.toLowerCase() === 'over'
+          );
+          const under = totalsMarket.outcomes.find((o: { name: string }) => 
+            o.name.toLowerCase() === 'under'
+          );
+          
+          if (over && under) {
+            normalized.total = {
+              over: { line: over.point ?? 0, odds: over.price },
+              under: { line: under.point ?? 0, odds: under.price },
+            };
+          }
+        }
+        
+        return normalized;
+      });
+      
+      const result: DataLayerResponse<NormalizedOdds[]> = {
+        success: true,
+        data: normalizedOdds,
+        metadata: {
+          provider: 'the-odds-api',
+          cached: false,
+          fetchedAt: new Date(),
+          quotaUsed: oddsResponse.requestsUsed,
+          quotaRemaining: oddsResponse.requestsRemaining,
+        },
+      };
+      
+      this.setCache(cacheKey, result);
+      return result;
+      
+    } catch (error) {
+      console.error('[DataLayer] Error fetching odds:', error);
+      return {
+        success: false,
+        error: {
+          code: 'API_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to fetch odds',
+        },
+        metadata: {
+          provider: 'the-odds-api',
+          cached: false,
+          fetchedAt: new Date(),
+        },
+      };
+    }
+  }
+  
+  /**
+   * Map internal sport type to The Odds API sport key
+   */
+  private mapSportToOddsKey(sport: Sport): string {
+    const mapping: Record<Sport, string> = {
+      soccer: 'soccer_epl', // Default to EPL, can be overridden
+      basketball: 'basketball_nba',
+      hockey: 'icehockey_nhl',
+      american_football: 'americanfootball_nfl',
+      baseball: 'baseball_mlb',
+      mma: 'mma_mixed_martial_arts',
+      tennis: 'tennis_atp_french_open', // Default, varies by tournament
+    };
+    return mapping[sport] || sport;
+  }
+  
+  /**
+   * Fuzzy match team names (handles partial matches)
+   */
+  private fuzzyMatchTeam(name1: string, name2: string): boolean {
+    const n1 = name1.toLowerCase().split(' ')[0];
+    const n2 = name2.toLowerCase().split(' ')[0];
+    return n1.includes(n2) || n2.includes(n1);
   }
   
   /**

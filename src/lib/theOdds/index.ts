@@ -3,4 +3,4 @@
  */
 
 export * from './theOddsClient';
-export { theOddsApi } from './theOddsClient';
+export { theOddsClient } from './theOddsClient';

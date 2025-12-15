@@ -341,6 +341,8 @@ export interface DataLayerResponse<T> {
     cached: boolean;
     fetchedAt: Date;
     cacheExpiry?: Date;
+    quotaUsed?: number;
+    quotaRemaining?: number;
   };
 }
 
