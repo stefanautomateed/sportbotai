@@ -11,6 +11,13 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Auto-reload on chunk load errors (happens after deployments)
+    if (error.name === 'ChunkLoadError' || error.message?.includes('Loading chunk')) {
+      // Clear cache and reload
+      window.location.reload();
+      return;
+    }
+    
     // Log the error to Sentry
     Sentry.captureException(error);
     console.error('Application error:', error);
