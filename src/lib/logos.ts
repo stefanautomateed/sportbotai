@@ -722,22 +722,22 @@ const SOCCER_TEAM_LOGOS: Record<string, string> = {
   'Qarabag': 'https://media.api-sports.io/football/teams/556.png',
   'Qarabağ': 'https://media.api-sports.io/football/teams/556.png',
   
-  // Slavia Praha (Czech Republic)
-  'Slavia Praha': 'https://media.api-sports.io/football/teams/592.png',
-  'Slavia Prague': 'https://media.api-sports.io/football/teams/592.png',
-  'SK Slavia Praha': 'https://media.api-sports.io/football/teams/592.png',
-  'SK Slavia Prague': 'https://media.api-sports.io/football/teams/592.png',
-  'Slavia': 'https://media.api-sports.io/football/teams/592.png',
-  'SK Slavia': 'https://media.api-sports.io/football/teams/592.png',
-  'Slavia Prag': 'https://media.api-sports.io/football/teams/592.png',
+  // Slavia Praha (Czech Republic) - using Wikipedia for reliability
+  'Slavia Praha': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/SK_Slavia_Praha_logo.svg/200px-SK_Slavia_Praha_logo.svg.png',
+  'Slavia Prague': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/SK_Slavia_Praha_logo.svg/200px-SK_Slavia_Praha_logo.svg.png',
+  'SK Slavia Praha': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/SK_Slavia_Praha_logo.svg/200px-SK_Slavia_Praha_logo.svg.png',
+  'SK Slavia Prague': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/SK_Slavia_Praha_logo.svg/200px-SK_Slavia_Praha_logo.svg.png',
+  'Slavia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/SK_Slavia_Praha_logo.svg/200px-SK_Slavia_Praha_logo.svg.png',
+  'SK Slavia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/SK_Slavia_Praha_logo.svg/200px-SK_Slavia_Praha_logo.svg.png',
+  'Slavia Prag': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/SK_Slavia_Praha_logo.svg/200px-SK_Slavia_Praha_logo.svg.png',
   
-  // Pafos FC (Cyprus)
-  'Pafos FC': 'https://media.api-sports.io/football/teams/4741.png',
-  'Pafos': 'https://media.api-sports.io/football/teams/4741.png',
-  'Paphos FC': 'https://media.api-sports.io/football/teams/4741.png',
-  'Paphos': 'https://media.api-sports.io/football/teams/4741.png',
-  'AEK Paphos': 'https://media.api-sports.io/football/teams/4741.png',
-  'Páfos FC': 'https://media.api-sports.io/football/teams/4741.png',
+  // Pafos FC (Cyprus) - using Wikipedia for reliability
+  'Pafos FC': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/39/Pafos_FC_logo.svg/200px-Pafos_FC_logo.svg.png',
+  'Pafos': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/39/Pafos_FC_logo.svg/200px-Pafos_FC_logo.svg.png',
+  'Paphos FC': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/39/Pafos_FC_logo.svg/200px-Pafos_FC_logo.svg.png',
+  'Paphos': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/39/Pafos_FC_logo.svg/200px-Pafos_FC_logo.svg.png',
+  'AEK Paphos': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/39/Pafos_FC_logo.svg/200px-Pafos_FC_logo.svg.png',
+  'Páfos FC': 'https://upload.wikimedia.org/wikipedia/en/thumb/3/39/Pafos_FC_logo.svg/200px-Pafos_FC_logo.svg.png',
   
   // Olympiacos (Greece)
   'Olympiakos': 'https://media.api-sports.io/football/teams/553.png',
