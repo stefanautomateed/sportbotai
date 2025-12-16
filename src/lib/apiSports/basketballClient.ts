@@ -21,11 +21,15 @@ export const BASKETBALL_LEAGUES = {
   NBA: 12,
   // EuroLeague - uses general Basketball API
   EUROLEAGUE: 120,
+  // EuroCup
+  EUROCUP: 202,
   // Other major leagues - all use general Basketball API
   ACB_SPAIN: 117,
   LEGA_ITALY: 90,
   PRO_A_FRANCE: 62,
   BBL_GERMANY: 72,
+  BSL_TURKEY: 79,
+  VTB_RUSSIA: 10,
 } as const;
 
 // ============================================

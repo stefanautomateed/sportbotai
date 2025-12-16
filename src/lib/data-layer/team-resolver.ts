@@ -224,6 +224,291 @@ const EUROLEAGUE_MAPPINGS: Record<string, string> = {
 };
 
 /**
+ * EuroCup Basketball Team Mappings
+ * Many teams overlap with EuroLeague
+ */
+const EUROCUP_MAPPINGS: Record<string, string> = {
+  ...EUROLEAGUE_MAPPINGS,
+  // Additional EuroCup teams
+  'valencia basket': 'Valencia Basket',
+  'valencia': 'Valencia Basket',
+  'joventut badalona': 'Joventut Badalona',
+  'joventut': 'Joventut Badalona',
+  'cedevita olimpija': 'Cedevita Olimpija',
+  'trento': 'Trento',
+  'dolomiti energia trento': 'Trento',
+  'paris basketball': 'Paris Basketball',
+  'paris': 'Paris Basketball',
+  'bourg': 'Bourg-en-Bresse',
+  'jl bourg': 'Bourg-en-Bresse',
+  'gran canaria': 'Gran Canaria',
+  'hapoel jerusalem': 'Hapoel Jerusalem',
+  'jerusalem': 'Hapoel Jerusalem',
+  'besiktas': 'Besiktas',
+  'london lions': 'London Lions',
+  'lions': 'London Lions',
+};
+
+/**
+ * ACB Spain Basketball Team Mappings
+ */
+const ACB_SPAIN_MAPPINGS: Record<string, string> = {
+  'real madrid': 'Real Madrid',
+  'real madrid baloncesto': 'Real Madrid',
+  'barcelona': 'Barcelona',
+  'fc barcelona': 'Barcelona',
+  'baskonia': 'Baskonia',
+  'saski baskonia': 'Baskonia',
+  'td systems baskonia': 'Baskonia',
+  'gran canaria': 'Gran Canaria',
+  'dreamland gran canaria': 'Gran Canaria',
+  'unicaja': 'Unicaja',
+  'unicaja malaga': 'Unicaja',
+  'valencia basket': 'Valencia Basket',
+  'valencia': 'Valencia Basket',
+  'joventut badalona': 'Joventut Badalona',
+  'joventut': 'Joventut Badalona',
+  'la penya': 'Joventut Badalona',
+  'manresa': 'BAXI Manresa',
+  'baxi manresa': 'BAXI Manresa',
+  'tenerife': 'Tenerife',
+  'lenovo tenerife': 'Tenerife',
+  'obradoiro': 'Obradoiro',
+  'monbus obradoiro': 'Obradoiro',
+  'bilbao basket': 'Bilbao Basket',
+  'bilbao': 'Bilbao Basket',
+  'zaragoza': 'Zaragoza',
+  'casademont zaragoza': 'Zaragoza',
+  'murcia': 'UCAM Murcia',
+  'ucam murcia': 'UCAM Murcia',
+  'breogan': 'Breogan',
+  'rio breogan': 'Breogan',
+  'girona': 'Girona',
+  'basquet girona': 'Girona',
+};
+
+/**
+ * Lega Basket Italy Team Mappings
+ */
+const ITALY_LEGA_MAPPINGS: Record<string, string> = {
+  'olimpia milano': 'Olimpia Milano',
+  'ea7 emporio armani milano': 'Olimpia Milano',
+  'armani milano': 'Olimpia Milano',
+  'ax armani exchange milano': 'Olimpia Milano',
+  'milano': 'Olimpia Milano',
+  'virtus bologna': 'Virtus Bologna',
+  'virtus segafredo bologna': 'Virtus Bologna',
+  'bologna': 'Virtus Bologna',
+  'trento': 'Trento',
+  'dolomiti energia trento': 'Trento',
+  'brescia': 'Brescia',
+  'germani brescia': 'Brescia',
+  'venezia': 'Venezia',
+  'reyer venezia': 'Venezia',
+  'umana reyer venezia': 'Venezia',
+  'varese': 'Varese',
+  'openjobmetis varese': 'Varese',
+  'sassari': 'Sassari',
+  'dinamo sassari': 'Sassari',
+  'banco di sardegna sassari': 'Sassari',
+  'tortona': 'Tortona',
+  'bertram tortona': 'Tortona',
+  'napoli': 'Napoli Basket',
+  'napoli basket': 'Napoli Basket',
+  'reggio emilia': 'Reggio Emilia',
+  'unahotels reggio emilia': 'Reggio Emilia',
+  'pesaro': 'Pesaro',
+  'vuelle pesaro': 'Pesaro',
+  'carpegna prosciutto pesaro': 'Pesaro',
+  'treviso': 'Treviso',
+  'nutribullet treviso': 'Treviso',
+  'trieste': 'Trieste',
+  'allianz trieste': 'Trieste',
+  'scafati': 'Scafati',
+  'givova scafati': 'Scafati',
+  'pistoia': 'Pistoia',
+  'estra pistoia': 'Pistoia',
+  'cremona': 'Cremona',
+  'vanoli cremona': 'Cremona',
+};
+
+/**
+ * BBL Germany Basketball Team Mappings
+ */
+const GERMANY_BBL_MAPPINGS: Record<string, string> = {
+  'bayern munich': 'Bayern Munich',
+  'fc bayern munich': 'Bayern Munich',
+  'fc bayern munchen': 'Bayern Munich',
+  'fc bayern munich basketball': 'Bayern Munich',
+  'alba berlin': 'ALBA Berlin',
+  'alba': 'ALBA Berlin',
+  'berlin': 'ALBA Berlin',
+  'bamberg': 'Bamberg',
+  'brose bamberg': 'Bamberg',
+  'frankfurt': 'Frankfurt',
+  'fraport skyliners': 'Frankfurt',
+  'skyliners frankfurt': 'Frankfurt',
+  'ulm': 'Ulm',
+  'ratiopharm ulm': 'Ulm',
+  'bonn': 'Bonn',
+  'telekom baskets bonn': 'Bonn',
+  'baskets bonn': 'Bonn',
+  'ludwigsburg': 'Ludwigsburg',
+  'mhp riesen ludwigsburg': 'Ludwigsburg',
+  'oldenburg': 'Oldenburg',
+  'ewe baskets oldenburg': 'Oldenburg',
+  'baskets oldenburg': 'Oldenburg',
+  'gottingen': 'Gottingen',
+  'bk gottingen': 'Gottingen',
+  'brose': 'Bamberg',
+  'hamburg': 'Hamburg',
+  'hamburg towers': 'Hamburg',
+  'towers': 'Hamburg',
+  'chemnitz': 'Chemnitz',
+  'niners chemnitz': 'Chemnitz',
+  'wurzburg': 'Wurzburg',
+  's.oliver wurzburg': 'Wurzburg',
+  'braunschweig': 'Braunschweig',
+  'lowen braunschweig': 'Braunschweig',
+  'vechta': 'Vechta',
+  'rasta vechta': 'Vechta',
+  'giessen': 'Giessen',
+  'giessen 46ers': 'Giessen',
+  'heidelberg': 'Heidelberg',
+  'mlp academics heidelberg': 'Heidelberg',
+  'rostock': 'Rostock',
+  'rostock seawolves': 'Rostock',
+};
+
+/**
+ * Pro A France Basketball Team Mappings
+ */
+const FRANCE_PRO_A_MAPPINGS: Record<string, string> = {
+  'asvel': 'ASVEL',
+  'ldlc asvel': 'ASVEL',
+  'asvel villeurbanne': 'ASVEL',
+  'lyon-villeurbanne': 'ASVEL',
+  'villeurbanne': 'ASVEL',
+  'paris basketball': 'Paris Basketball',
+  'paris': 'Paris Basketball',
+  'monaco': 'Monaco',
+  'as monaco': 'Monaco',
+  'strasbourg': 'Strasbourg',
+  'sig strasbourg': 'Strasbourg',
+  'le mans': 'Le Mans',
+  'le mans sarthe': 'Le Mans',
+  'msb': 'Le Mans',
+  'limoges': 'Limoges',
+  'limoges csp': 'Limoges',
+  'csp limoges': 'Limoges',
+  'dijon': 'Dijon',
+  'jda dijon': 'Dijon',
+  'boulogne-levallois': 'Boulogne-Levallois',
+  'metropolitans 92': 'Boulogne-Levallois',
+  'levallois': 'Boulogne-Levallois',
+  'bourg': 'Bourg-en-Bresse',
+  'jl bourg': 'Bourg-en-Bresse',
+  'bourg-en-bresse': 'Bourg-en-Bresse',
+  'cholet': 'Cholet',
+  'cholet basket': 'Cholet',
+  'pau-lacq-orthez': 'Pau-Lacq-Orthez',
+  'elan bearnais': 'Pau-Lacq-Orthez',
+  'pau': 'Pau-Lacq-Orthez',
+  'nancy': 'Nancy',
+  'sluc nancy': 'Nancy',
+  'roanne': 'Roanne',
+  'roanne basket': 'Roanne',
+  'gravelines': 'Gravelines-Dunkerque',
+  'bcm gravelines': 'Gravelines-Dunkerque',
+  'nanterre': 'Nanterre',
+  'nanterre 92': 'Nanterre',
+  'orleans': 'Orleans',
+  'orleans loiret': 'Orleans',
+  'antibes': 'Antibes',
+  'olympique antibes': 'Antibes',
+  'chalon': 'Chalon-sur-Saone',
+  'elan chalon': 'Chalon-sur-Saone',
+};
+
+/**
+ * BSL Turkey Basketball Team Mappings
+ */
+const TURKEY_BSL_MAPPINGS: Record<string, string> = {
+  'fenerbahce': 'Fenerbahce',
+  'fenerbahce beko': 'Fenerbahce',
+  'fenerbahce beko istanbul': 'Fenerbahce',
+  'anadolu efes': 'Anadolu Efes',
+  'anadolu efes istanbul': 'Anadolu Efes',
+  'efes': 'Anadolu Efes',
+  'galatasaray': 'Galatasaray',
+  'galatasaray nef': 'Galatasaray',
+  'besiktas': 'Besiktas',
+  'besiktas icrypex': 'Besiktas',
+  'turk telekom': 'Turk Telekom',
+  'turk telekom ankara': 'Turk Telekom',
+  'ankara': 'Turk Telekom',
+  'darussafaka': 'Darussafaka',
+  'bahcesehir': 'Bahcesehir',
+  'bahcesehir college': 'Bahcesehir',
+  'bursaspor': 'Bursaspor',
+  'frutti extra bursaspor': 'Bursaspor',
+  'konyaspor': 'Konyaspor',
+  'ittifak holding konyaspor': 'Konyaspor',
+  'pinar karsiyaka': 'Pinar Karsiyaka',
+  'karsiyaka': 'Pinar Karsiyaka',
+  'tofas': 'Tofas',
+  'tofas bursa': 'Tofas',
+  'manisa': 'Manisa',
+  'yukatel merkezefendi': 'Yukatel Merkezefendi',
+  'merkezefendi': 'Yukatel Merkezefendi',
+  'afyon belediye': 'Afyon Belediye',
+  'afyon': 'Afyon Belediye',
+  'aliaga petkim': 'Aliaga Petkim',
+  'petkimspor': 'Aliaga Petkim',
+};
+
+/**
+ * VTB United League (Russia) Basketball Team Mappings
+ */
+const RUSSIA_VTB_MAPPINGS: Record<string, string> = {
+  'cska moscow': 'CSKA Moscow',
+  'cska': 'CSKA Moscow',
+  'lokomotiv kuban': 'Lokomotiv Kuban',
+  'lokomotiv': 'Lokomotiv Kuban',
+  'unics kazan': 'UNICS Kazan',
+  'unics': 'UNICS Kazan',
+  'kazan': 'UNICS Kazan',
+  'zenit': 'Zenit Saint Petersburg',
+  'zenit st petersburg': 'Zenit Saint Petersburg',
+  'zenit saint petersburg': 'Zenit Saint Petersburg',
+  'khimki': 'Khimki',
+  'khimki moscow': 'Khimki',
+  'nizhny novgorod': 'Nizhny Novgorod',
+  'parma': 'Parma',
+  'parma perm': 'Parma',
+  'astana': 'Astana',
+  'bc astana': 'Astana',
+  'minsk': 'Tsmoki-Minsk',
+  'tsmoki-minsk': 'Tsmoki-Minsk',
+  'tsmoki': 'Tsmoki-Minsk',
+  'kalev': 'Kalev',
+  'kalev/cramo': 'Kalev',
+  'kalev cramo': 'Kalev',
+  'enisey': 'Enisey',
+  'enisey krasnoyarsk': 'Enisey',
+  'krasnoyarsk': 'Enisey',
+  'avtodor': 'Avtodor',
+  'avtodor saratov': 'Avtodor',
+  'saratov': 'Avtodor',
+  'mb': 'MBA Moscow',
+  'mba': 'MBA Moscow',
+  'mba moscow': 'MBA Moscow',
+  'samara': 'Samara',
+  'bc samara': 'Samara',
+  'novosibirsk': 'Novosibirsk',
+};
+
+/**
  * NHL Team Mappings
  */
 const NHL_MAPPINGS: Record<string, string> = {
@@ -611,7 +896,7 @@ const SOCCER_MAPPINGS: Record<string, string> = {
 // TEAM RESOLVER CLASS
 // ============================================================================
 
-type Sport = 'soccer' | 'basketball' | 'basketball_euroleague' | 'hockey' | 'american_football';
+type Sport = 'soccer' | 'basketball' | 'basketball_euroleague' | 'basketball_eurocup' | 'basketball_acb_spain' | 'basketball_italy_lega' | 'basketball_germany_bbl' | 'basketball_france_pro_a' | 'basketball_turkey_bsl' | 'basketball_russia_vtb' | 'hockey' | 'american_football';
 
 /**
  * Cache for successful team lookups
@@ -625,6 +910,13 @@ const resolvedCache = new Map<string, string>();
 const ALL_TEAMS: Record<Sport, string[]> = {
   basketball: Object.values(NBA_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
   basketball_euroleague: Object.values(EUROLEAGUE_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
+  basketball_eurocup: Object.values(EUROCUP_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
+  basketball_acb_spain: Object.values(ACB_SPAIN_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
+  basketball_italy_lega: Object.values(ITALY_LEGA_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
+  basketball_germany_bbl: Object.values(GERMANY_BBL_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
+  basketball_france_pro_a: Object.values(FRANCE_PRO_A_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
+  basketball_turkey_bsl: Object.values(TURKEY_BSL_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
+  basketball_russia_vtb: Object.values(RUSSIA_VTB_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
   hockey: Object.values(NHL_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
   american_football: Object.values(NFL_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
   soccer: Object.values(SOCCER_MAPPINGS).filter((v, i, a) => a.indexOf(v) === i),
@@ -637,6 +929,13 @@ function getMappings(sport: Sport): Record<string, string> {
   switch (sport) {
     case 'basketball': return NBA_MAPPINGS;
     case 'basketball_euroleague': return EUROLEAGUE_MAPPINGS;
+    case 'basketball_eurocup': return EUROCUP_MAPPINGS;
+    case 'basketball_acb_spain': return ACB_SPAIN_MAPPINGS;
+    case 'basketball_italy_lega': return ITALY_LEGA_MAPPINGS;
+    case 'basketball_germany_bbl': return GERMANY_BBL_MAPPINGS;
+    case 'basketball_france_pro_a': return FRANCE_PRO_A_MAPPINGS;
+    case 'basketball_turkey_bsl': return TURKEY_BSL_MAPPINGS;
+    case 'basketball_russia_vtb': return RUSSIA_VTB_MAPPINGS;
     case 'hockey': return NHL_MAPPINGS;
     case 'american_football': return NFL_MAPPINGS;
     case 'soccer': return SOCCER_MAPPINGS;

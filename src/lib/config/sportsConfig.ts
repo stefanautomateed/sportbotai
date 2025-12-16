@@ -37,8 +37,8 @@ export interface SportConfig {
   /** Icon emoji for UI */
   icon: string;
   
-  /** Data source: 'odds-api' or 'football-api' */
-  dataSource: 'odds-api' | 'football-api';
+  /** Data source: 'odds-api', 'football-api', or 'api-sports' */
+  dataSource: 'odds-api' | 'football-api' | 'api-sports';
   
   /** Priority for sorting (lower = higher priority) */
   priority: number;
@@ -174,6 +174,97 @@ export const SPORTS_CONFIG: Record<string, SportConfig> = {
     icon: '🏀',
     dataSource: 'odds-api',
     priority: 11,
+  },
+  'basketball_eurocup': {
+    id: 'basketball_eurocup',
+    oddsApiSportKey: 'basketball_eurocup',
+    displayName: 'EuroCup',
+    category: 'Basketball',
+    hasDraw: false,
+    scoringUnit: 'points',
+    matchTerm: 'game',
+    participantTerm: 'team',
+    icon: '🏀',
+    dataSource: 'api-sports',
+    priority: 12,
+  },
+  'basketball_acb_spain': {
+    id: 'basketball_acb_spain',
+    oddsApiSportKey: 'basketball_spain_liga_acb',
+    displayName: 'ACB Spain',
+    category: 'Basketball',
+    hasDraw: false,
+    scoringUnit: 'points',
+    matchTerm: 'game',
+    participantTerm: 'team',
+    icon: '🏀',
+    dataSource: 'api-sports',
+    priority: 13,
+  },
+  'basketball_italy_lega': {
+    id: 'basketball_italy_lega',
+    oddsApiSportKey: 'basketball_italy_lega_basket',
+    displayName: 'Lega Basket Italy',
+    category: 'Basketball',
+    hasDraw: false,
+    scoringUnit: 'points',
+    matchTerm: 'game',
+    participantTerm: 'team',
+    icon: '🏀',
+    dataSource: 'api-sports',
+    priority: 14,
+  },
+  'basketball_germany_bbl': {
+    id: 'basketball_germany_bbl',
+    oddsApiSportKey: 'basketball_germany_bundesliga',
+    displayName: 'BBL Germany',
+    category: 'Basketball',
+    hasDraw: false,
+    scoringUnit: 'points',
+    matchTerm: 'game',
+    participantTerm: 'team',
+    icon: '🏀',
+    dataSource: 'api-sports',
+    priority: 15,
+  },
+  'basketball_france_pro_a': {
+    id: 'basketball_france_pro_a',
+    oddsApiSportKey: 'basketball_france_pro_a',
+    displayName: 'Pro A France',
+    category: 'Basketball',
+    hasDraw: false,
+    scoringUnit: 'points',
+    matchTerm: 'game',
+    participantTerm: 'team',
+    icon: '🏀',
+    dataSource: 'api-sports',
+    priority: 16,
+  },
+  'basketball_turkey_bsl': {
+    id: 'basketball_turkey_bsl',
+    oddsApiSportKey: 'basketball_turkey_super_league',
+    displayName: 'BSL Turkey',
+    category: 'Basketball',
+    hasDraw: false,
+    scoringUnit: 'points',
+    matchTerm: 'game',
+    participantTerm: 'team',
+    icon: '🏀',
+    dataSource: 'api-sports',
+    priority: 17,
+  },
+  'basketball_russia_vtb': {
+    id: 'basketball_russia_vtb',
+    oddsApiSportKey: 'basketball_vtb_united_league',
+    displayName: 'VTB United League',
+    category: 'Basketball',
+    hasDraw: false,
+    scoringUnit: 'points',
+    matchTerm: 'game',
+    participantTerm: 'team',
+    icon: '🏀',
+    dataSource: 'api-sports',
+    priority: 18,
   },
   
   // ====================

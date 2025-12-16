@@ -81,6 +81,41 @@ export function getLeagueIdForSport(sportKey: string): { api: SupportedSportAPI;
     return { api: 'basketball', leagueId: BASKETBALL_LEAGUES.EUROLEAGUE, season: getCurrentBasketballSeason() };
   }
   
+  // EuroCup
+  if (key.includes('eurocup')) {
+    return { api: 'basketball', leagueId: BASKETBALL_LEAGUES.EUROCUP, season: getCurrentBasketballSeason() };
+  }
+  
+  // ACB Spain
+  if (key.includes('acb') || key.includes('spain_liga')) {
+    return { api: 'basketball', leagueId: BASKETBALL_LEAGUES.ACB_SPAIN, season: getCurrentBasketballSeason() };
+  }
+  
+  // Italy Lega Basket
+  if (key.includes('italy_lega') || key.includes('lega_basket')) {
+    return { api: 'basketball', leagueId: BASKETBALL_LEAGUES.LEGA_ITALY, season: getCurrentBasketballSeason() };
+  }
+  
+  // Germany BBL
+  if (key.includes('germany_bbl') || key.includes('bundesliga') && key.includes('basketball')) {
+    return { api: 'basketball', leagueId: BASKETBALL_LEAGUES.BBL_GERMANY, season: getCurrentBasketballSeason() };
+  }
+  
+  // France Pro A
+  if (key.includes('france_pro') || key.includes('pro_a')) {
+    return { api: 'basketball', leagueId: BASKETBALL_LEAGUES.PRO_A_FRANCE, season: getCurrentBasketballSeason() };
+  }
+  
+  // Turkey BSL
+  if (key.includes('turkey') && key.includes('basketball')) {
+    return { api: 'basketball', leagueId: BASKETBALL_LEAGUES.BSL_TURKEY, season: getCurrentBasketballSeason() };
+  }
+  
+  // VTB United League (Russia)
+  if (key.includes('vtb') || key.includes('russia_vtb')) {
+    return { api: 'basketball', leagueId: BASKETBALL_LEAGUES.VTB_RUSSIA, season: getCurrentBasketballSeason() };
+  }
+  
   // NFL
   if (key.includes('nfl') || key === 'americanfootball_nfl') {
     return { api: 'nfl', leagueId: NFL_LEAGUES.NFL, season: getCurrentNFLSeason() };

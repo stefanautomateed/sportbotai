@@ -1070,6 +1070,64 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'WNBA': 'https://a.espncdn.com/i/teamlogos/leagues/500/wnba.png',
   'basketball_wnba': 'https://a.espncdn.com/i/teamlogos/leagues/500/wnba.png',
   
+  // EuroLeague Basketball
+  'EuroLeague': 'https://media.api-sports.io/basketball/leagues/120.png',
+  'basketball_euroleague': 'https://media.api-sports.io/basketball/leagues/120.png',
+  'Euroleague': 'https://media.api-sports.io/basketball/leagues/120.png',
+  'Turkish Airlines EuroLeague': 'https://media.api-sports.io/basketball/leagues/120.png',
+  
+  // EuroCup Basketball
+  'EuroCup': 'https://media.api-sports.io/basketball/leagues/202.png',
+  'basketball_eurocup': 'https://media.api-sports.io/basketball/leagues/202.png',
+  'Eurocup': 'https://media.api-sports.io/basketball/leagues/202.png',
+  '7DAYS EuroCup': 'https://media.api-sports.io/basketball/leagues/202.png',
+  
+  // ACB Spain
+  'ACB': 'https://media.api-sports.io/basketball/leagues/117.png',
+  'ACB Spain': 'https://media.api-sports.io/basketball/leagues/117.png',
+  'basketball_acb_spain': 'https://media.api-sports.io/basketball/leagues/117.png',
+  'basketball_spain_liga_acb': 'https://media.api-sports.io/basketball/leagues/117.png',
+  'Liga ACB': 'https://media.api-sports.io/basketball/leagues/117.png',
+  'Liga Endesa': 'https://media.api-sports.io/basketball/leagues/117.png',
+  
+  // Lega Basket Italy
+  'Lega Basket': 'https://media.api-sports.io/basketball/leagues/90.png',
+  'Lega Basket Italy': 'https://media.api-sports.io/basketball/leagues/90.png',
+  'basketball_italy_lega': 'https://media.api-sports.io/basketball/leagues/90.png',
+  'basketball_italy_lega_basket': 'https://media.api-sports.io/basketball/leagues/90.png',
+  'Serie A Basketball': 'https://media.api-sports.io/basketball/leagues/90.png',
+  'LBA': 'https://media.api-sports.io/basketball/leagues/90.png',
+  
+  // BBL Germany
+  'BBL': 'https://media.api-sports.io/basketball/leagues/72.png',
+  'BBL Germany': 'https://media.api-sports.io/basketball/leagues/72.png',
+  'basketball_germany_bbl': 'https://media.api-sports.io/basketball/leagues/72.png',
+  'basketball_germany_bundesliga': 'https://media.api-sports.io/basketball/leagues/72.png',
+  'Basketball Bundesliga': 'https://media.api-sports.io/basketball/leagues/72.png',
+  'easyCredit BBL': 'https://media.api-sports.io/basketball/leagues/72.png',
+  
+  // Pro A France
+  'Pro A': 'https://media.api-sports.io/basketball/leagues/62.png',
+  'Pro A France': 'https://media.api-sports.io/basketball/leagues/62.png',
+  'basketball_france_pro_a': 'https://media.api-sports.io/basketball/leagues/62.png',
+  'Betclic Elite': 'https://media.api-sports.io/basketball/leagues/62.png',
+  'LNB Pro A': 'https://media.api-sports.io/basketball/leagues/62.png',
+  
+  // BSL Turkey
+  'BSL': 'https://media.api-sports.io/basketball/leagues/79.png',
+  'BSL Turkey': 'https://media.api-sports.io/basketball/leagues/79.png',
+  'basketball_turkey_bsl': 'https://media.api-sports.io/basketball/leagues/79.png',
+  'basketball_turkey_super_league': 'https://media.api-sports.io/basketball/leagues/79.png',
+  'Turkish Basketball Super League': 'https://media.api-sports.io/basketball/leagues/79.png',
+  'Basketbol Süper Ligi': 'https://media.api-sports.io/basketball/leagues/79.png',
+  
+  // VTB United League (Russia)
+  'VTB': 'https://media.api-sports.io/basketball/leagues/10.png',
+  'VTB United League': 'https://media.api-sports.io/basketball/leagues/10.png',
+  'basketball_russia_vtb': 'https://media.api-sports.io/basketball/leagues/10.png',
+  'basketball_vtb_united_league': 'https://media.api-sports.io/basketball/leagues/10.png',
+  'VTB League': 'https://media.api-sports.io/basketball/leagues/10.png',
+  
   // NHL - All variations
   'NHL': 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',
   'icehockey_nhl': 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',

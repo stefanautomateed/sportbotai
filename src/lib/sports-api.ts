@@ -121,9 +121,25 @@ const SPORT_MAPPING: Record<string, string> = {
   'basketball_euroleague': 'basketball',  // EuroLeague
   'basketball_eurocup': 'basketball',      // EuroCup
   'basketball_acb': 'basketball',          // ACB Spain
+  'basketball_acb_spain': 'basketball',
+  'basketball_spain_liga_acb': 'basketball',
+  'basketball_italy_lega': 'basketball',   // Lega Basket Italy
+  'basketball_italy_lega_basket': 'basketball',
+  'basketball_germany_bbl': 'basketball',  // BBL Germany
+  'basketball_germany_bundesliga': 'basketball',
+  'basketball_france_pro_a': 'basketball', // Pro A France
+  'basketball_turkey_bsl': 'basketball',   // BSL Turkey
+  'basketball_turkey_super_league': 'basketball',
+  'basketball_russia_vtb': 'basketball',   // VTB United League
+  'basketball_vtb_united_league': 'basketball',
   'euroleague': 'basketball',
   'eurocup': 'basketball',
   'acb': 'basketball',
+  'lega': 'basketball',
+  'bbl': 'basketball',
+  'pro_a': 'basketball',
+  'bsl': 'basketball',
+  'vtb': 'basketball',
   
   // American Football
   'americanfootball': 'american_football',

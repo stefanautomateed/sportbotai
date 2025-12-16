@@ -357,6 +357,18 @@ export const POPULAR_SPORTS: Record<string, string> = {
   // Basketball
   'basketball_nba': 'NBA',
   'basketball_euroleague': 'EuroLeague',
+  'basketball_eurocup': 'EuroCup',
+  'basketball_acb_spain': 'ACB Spain',
+  'basketball_spain_liga_acb': 'ACB Spain',
+  'basketball_italy_lega': 'Lega Basket Italy',
+  'basketball_italy_lega_basket': 'Lega Basket Italy',
+  'basketball_germany_bbl': 'BBL Germany',
+  'basketball_germany_bundesliga': 'BBL Germany',
+  'basketball_france_pro_a': 'Pro A France',
+  'basketball_turkey_bsl': 'BSL Turkey',
+  'basketball_turkey_super_league': 'BSL Turkey',
+  'basketball_russia_vtb': 'VTB United League',
+  'basketball_vtb_united_league': 'VTB United League',
   
   // Tennis
   'tennis_atp_aus_open': 'ATP Australian Open',
