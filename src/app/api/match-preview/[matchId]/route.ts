@@ -39,8 +39,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const startTime = Date.now();
   
   try {
+    // ==========================================
+    // CHECK SESSION FIRST - Fast path for anonymous users
+    // ==========================================
+    const session = await getServerSession(authOptions);
+    const isAnonymous = !session?.user;
+    
     const { matchId } = await params;
-    console.log(`[Match-Preview] Starting preview for: ${matchId.substring(0, 50)}...`);
+    console.log(`[Match-Preview] Starting preview for: ${matchId.substring(0, 50)}... (anonymous: ${isAnonymous})`);
 
     // Parse match ID to extract teams
     const matchInfo = parseMatchId(matchId);
@@ -54,31 +60,30 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     console.log(`[Match-Preview] Parsed match: ${matchInfo.homeTeam} vs ${matchInfo.awayTeam} (${matchInfo.sport})`);
-
-    // ==========================================
-    // ANONYMOUS USER CHECK - Serve demo analyses
-    // ==========================================
-    const session = await getServerSession(authOptions);
-    const isAnonymous = !session?.user;
     
     if (isAnonymous) {
+      const demoStartTime = Date.now();
       console.log(`[Match-Preview] Anonymous user - checking for demo match`);
       
       // Try to find a matching demo for this specific matchup
       const matchingDemo = findMatchingDemo(matchInfo.homeTeam, matchInfo.awayTeam, matchInfo.sport);
       
       if (matchingDemo) {
-        console.log(`[Match-Preview] Serving demo: ${matchingDemo.id} (exact match)`);
+        console.log(`[Match-Preview] Serving demo: ${matchingDemo.id} in ${Date.now() - startTime}ms (exact match)`);
         return NextResponse.json({
           ...matchingDemo.data,
           isDemo: true,
           demoId: matchingDemo.id,
+        }, {
+          headers: {
+            'Cache-Control': 'public, max-age=3600', // Cache demo for 1 hour
+          }
         });
       }
       
       // No exact match - serve a random featured demo with registration CTA
       const randomDemo = getRandomFeaturedDemo();
-      console.log(`[Match-Preview] No matching demo, serving featured: ${randomDemo.id}`);
+      console.log(`[Match-Preview] Serving featured demo: ${randomDemo.id} in ${Date.now() - startTime}ms`);
       
       return NextResponse.json({
         ...randomDemo.data,
@@ -90,6 +95,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           sport: matchInfo.sport,
         },
         message: 'Register for free to analyze this exact match!',
+      }, {
+        headers: {
+          'Cache-Control': 'public, max-age=3600', // Cache demo for 1 hour
+        }
       });
     }
 
