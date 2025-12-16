@@ -692,58 +692,109 @@ const SOCCER_TEAM_LOGOS: Record<string, string> = {
   // ============================================
   // UEFA CHAMPIONS LEAGUE / EUROPA LEAGUE TEAMS
   // ============================================
-  'FC Copenhagen': 'https://crests.football-data.org/1878.png',
-  'Copenhagen': 'https://crests.football-data.org/1878.png',
-  'København': 'https://crests.football-data.org/1878.png',
-  'FC Kairat': 'https://crests.football-data.org/1878.png',
-  'Kairat': 'https://crests.football-data.org/1878.png',
-  'Kairat Almaty': 'https://crests.football-data.org/1878.png',
-  'Bodø/Glimt': 'https://crests.football-data.org/7462.png',
-  'Bodo/Glimt': 'https://crests.football-data.org/7462.png',
-  'FK Bodø/Glimt': 'https://crests.football-data.org/7462.png',
-  'Bodo Glimt': 'https://crests.football-data.org/7462.png',
-  'Galatasaray': 'https://crests.football-data.org/610.png',
-  'Galatasaray SK': 'https://crests.football-data.org/610.png',
-  'Galatasaray Istanbul': 'https://crests.football-data.org/610.png',
-  'Qarabağ FK': 'https://crests.football-data.org/1878.png',
-  'Qarabag FK': 'https://crests.football-data.org/1878.png',
-  'Qarabag': 'https://crests.football-data.org/1878.png',
-  'Qarabağ': 'https://crests.football-data.org/1878.png',
-  'Slavia Praha': 'https://crests.football-data.org/1884.png',
-  'Slavia Prague': 'https://crests.football-data.org/1884.png',
-  'SK Slavia Praha': 'https://crests.football-data.org/1884.png',
-  'Slavia': 'https://crests.football-data.org/1884.png',
-  'Pafos FC': 'https://crests.football-data.org/1878.png',
-  'Pafos': 'https://crests.football-data.org/1878.png',
-  'Olympiakos': 'https://crests.football-data.org/1878.png',
-  'Olympiacos': 'https://crests.football-data.org/1878.png',
-  'Olympiacos Piraeus': 'https://crests.football-data.org/1878.png',
-  'Olympiakos Piraeus': 'https://crests.football-data.org/1878.png',
-  'Olympiacos FC': 'https://crests.football-data.org/1878.png',
-  // Additional CL teams
+  // FC Copenhagen (Denmark)
+  'FC Copenhagen': 'https://media.api-sports.io/football/teams/400.png',
+  'Copenhagen': 'https://media.api-sports.io/football/teams/400.png',
+  'København': 'https://media.api-sports.io/football/teams/400.png',
+  'FC København': 'https://media.api-sports.io/football/teams/400.png',
+  
+  // FK Kairat Almaty (Kazakhstan)
+  'FC Kairat': 'https://media.api-sports.io/football/teams/2197.png',
+  'Kairat': 'https://media.api-sports.io/football/teams/2197.png',
+  'Kairat Almaty': 'https://media.api-sports.io/football/teams/2197.png',
+  'FK Kairat': 'https://media.api-sports.io/football/teams/2197.png',
+  
+  // Bodø/Glimt (Norway)
+  'Bodø/Glimt': 'https://media.api-sports.io/football/teams/258.png',
+  'Bodo/Glimt': 'https://media.api-sports.io/football/teams/258.png',
+  'FK Bodø/Glimt': 'https://media.api-sports.io/football/teams/258.png',
+  'Bodo Glimt': 'https://media.api-sports.io/football/teams/258.png',
+  'B. Glimt': 'https://media.api-sports.io/football/teams/258.png',
+  
+  // Galatasaray (Turkey)
+  'Galatasaray': 'https://media.api-sports.io/football/teams/645.png',
+  'Galatasaray SK': 'https://media.api-sports.io/football/teams/645.png',
+  'Galatasaray Istanbul': 'https://media.api-sports.io/football/teams/645.png',
+  
+  // Qarabağ (Azerbaijan)
+  'Qarabağ FK': 'https://media.api-sports.io/football/teams/556.png',
+  'Qarabag FK': 'https://media.api-sports.io/football/teams/556.png',
+  'Qarabag': 'https://media.api-sports.io/football/teams/556.png',
+  'Qarabağ': 'https://media.api-sports.io/football/teams/556.png',
+  
+  // Slavia Praha (Czech Republic)
+  'Slavia Praha': 'https://media.api-sports.io/football/teams/592.png',
+  'Slavia Prague': 'https://media.api-sports.io/football/teams/592.png',
+  'SK Slavia Praha': 'https://media.api-sports.io/football/teams/592.png',
+  'Slavia': 'https://media.api-sports.io/football/teams/592.png',
+  
+  // Pafos FC (Cyprus)
+  'Pafos FC': 'https://media.api-sports.io/football/teams/4741.png',
+  'Pafos': 'https://media.api-sports.io/football/teams/4741.png',
+  
+  // Olympiacos (Greece)
+  'Olympiakos': 'https://media.api-sports.io/football/teams/553.png',
+  'Olympiacos': 'https://media.api-sports.io/football/teams/553.png',
+  'Olympiacos Piraeus': 'https://media.api-sports.io/football/teams/553.png',
+  'Olympiakos Piraeus': 'https://media.api-sports.io/football/teams/553.png',
+  'Olympiacos FC': 'https://media.api-sports.io/football/teams/553.png',
+  
+  // Union Saint-Gilloise (Belgium)
+  'Union SG': 'https://media.api-sports.io/football/teams/260.png',
+  'Union Saint-Gilloise': 'https://media.api-sports.io/football/teams/260.png',
+  'Royale Union SG': 'https://media.api-sports.io/football/teams/260.png',
+  'Union St. Gilloise': 'https://media.api-sports.io/football/teams/260.png',
+  'R. Union SG': 'https://media.api-sports.io/football/teams/260.png',
+  
+  // Slovan Bratislava (Slovakia)
   'Slovan Bratislava': 'https://media.api-sports.io/football/teams/577.png',
   'SK Slovan Bratislava': 'https://media.api-sports.io/football/teams/577.png',
+  'ŠK Slovan Bratislava': 'https://media.api-sports.io/football/teams/577.png',
+  
+  // Dinamo Zagreb (Croatia)
   'Dinamo Zagreb': 'https://media.api-sports.io/football/teams/620.png',
   'GNK Dinamo Zagreb': 'https://media.api-sports.io/football/teams/620.png',
-  'Shakhtar Donetsk': 'https://media.api-sports.io/football/teams/571.png',
-  'Shakhtar': 'https://media.api-sports.io/football/teams/571.png',
-  'FC Shakhtar Donetsk': 'https://media.api-sports.io/football/teams/571.png',
+  
+  // Shakhtar Donetsk (Ukraine)
+  'Shakhtar Donetsk': 'https://media.api-sports.io/football/teams/212.png',
+  'Shakhtar': 'https://media.api-sports.io/football/teams/212.png',
+  'FC Shakhtar Donetsk': 'https://media.api-sports.io/football/teams/212.png',
+  
+  // Club Brugge (Belgium)
   'Club Brugge': 'https://media.api-sports.io/football/teams/569.png',
   'Club Brugge KV': 'https://media.api-sports.io/football/teams/569.png',
   'Brugge': 'https://media.api-sports.io/football/teams/569.png',
+  
+  // Sturm Graz (Austria)
   'Sturm Graz': 'https://media.api-sports.io/football/teams/2269.png',
   'SK Sturm Graz': 'https://media.api-sports.io/football/teams/2269.png',
-  'Red Bull Salzburg': 'https://media.api-sports.io/football/teams/571.png',
-  'RB Salzburg': 'https://media.api-sports.io/football/teams/571.png',
-  'FC Salzburg': 'https://media.api-sports.io/football/teams/571.png',
-  'Salzburg': 'https://media.api-sports.io/football/teams/571.png',
+  
+  // Red Bull Salzburg (Austria)
+  'Red Bull Salzburg': 'https://media.api-sports.io/football/teams/240.png',
+  'RB Salzburg': 'https://media.api-sports.io/football/teams/240.png',
+  'FC Salzburg': 'https://media.api-sports.io/football/teams/240.png',
+  'Salzburg': 'https://media.api-sports.io/football/teams/240.png',
+  'FC Red Bull Salzburg': 'https://media.api-sports.io/football/teams/240.png',
+  
+  // Young Boys (Switzerland)
   'Young Boys': 'https://media.api-sports.io/football/teams/1428.png',
   'BSC Young Boys': 'https://media.api-sports.io/football/teams/1428.png',
   'YB Bern': 'https://media.api-sports.io/football/teams/1428.png',
+  
+  // Crvena Zvezda / Red Star Belgrade (Serbia)
+  'Crvena Zvezda': 'https://media.api-sports.io/football/teams/574.png',
   'Crvena Zvezda Belgrade': 'https://media.api-sports.io/football/teams/574.png',
-  'Red Star Belgrade Football': 'https://media.api-sports.io/football/teams/574.png',
+  'Red Star Belgrade': 'https://media.api-sports.io/football/teams/574.png',
   'FK Crvena Zvezda': 'https://media.api-sports.io/football/teams/574.png',
-  'Girona Football': 'https://media.api-sports.io/football/teams/547.png',
+  
+  // Sparta Praha (Czech Republic)
+  'Sparta Praha': 'https://media.api-sports.io/football/teams/589.png',
+  'Sparta Prague': 'https://media.api-sports.io/football/teams/589.png',
+  'AC Sparta Praha': 'https://media.api-sports.io/football/teams/589.png',
+  
+  // Note: The following UCL teams are already defined in their respective league sections:
+  // - Girona (La Liga), Feyenoord (Eredivisie), Celtic/Rangers (Scottish), 
+  // - Brest/Lille (Ligue 1), Stuttgart (Bundesliga), Bologna (Serie A), Aston Villa (EPL)
   
   // ============================================
   // TURKISH SUPER LIG
