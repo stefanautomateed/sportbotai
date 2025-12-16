@@ -326,7 +326,60 @@ async function fetchDataLayerContext(
 // ============================================
 
 /**
- * Generate contextual follow-up suggestions based on the query and response
+ * Extract team and player names from text using common patterns
+ */
+function extractEntities(text: string): { teams: string[]; players: string[] } {
+  const teams: string[] = [];
+  const players: string[] = [];
+  
+  // Common team patterns (2-4 words starting with capital)
+  const teamPatterns = [
+    /(?:^|[\s,])([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})\s+(?:vs?\.?|against|playing|plays|beat|lost|drew|winning|losing)/gi,
+    /(?:^|[\s,])([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})\s+(?:FC|United|City|Athletic|Rovers|Town|Wanderers|Hotspur)/gi,
+    /(?:match|game|fixture)(?:\s+between)?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:vs?\.?|and)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi,
+  ];
+  
+  // Known team name patterns
+  const knownTeamWords = ['United', 'City', 'FC', 'Real', 'Bayern', 'Inter', 'Milan', 'Barcelona', 'Liverpool', 'Chelsea', 'Arsenal', 'Tottenham', 'Manchester', 'Juventus', 'PSG', 'Dortmund', 'Lakers', 'Celtics', 'Warriors', 'Heat', 'Bucks', 'Nets', 'Knicks'];
+  
+  for (const pattern of teamPatterns) {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      if (match[1]) teams.push(match[1].trim());
+      if (match[2]) teams.push(match[2].trim());
+    }
+  }
+  
+  // Also check for known team keywords
+  for (const word of knownTeamWords) {
+    const regex = new RegExp(`\\b([A-Z][a-z]*\\s+)?${word}(\\s+[A-Z][a-z]*)?\\b`, 'g');
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      teams.push(match[0].trim());
+    }
+  }
+  
+  // Player patterns (typically first + last name, or known player indicator)
+  const playerIndicators = ['scored', 'goal by', 'assist', 'player', 'stats for', 'form of', 'performance of'];
+  for (const indicator of playerIndicators) {
+    const regex = new RegExp(`${indicator}\\s+([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)`, 'gi');
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match[1] && !teams.includes(match[1].trim())) {
+        players.push(match[1].trim());
+      }
+    }
+  }
+  
+  // Deduplicate
+  return {
+    teams: [...new Set(teams)].slice(0, 3),
+    players: [...new Set(players)].slice(0, 2),
+  };
+}
+
+/**
+ * Generate contextual follow-up suggestions based on the query, category, and extracted context
  */
 function generateFollowUps(
   message: string, 
@@ -334,113 +387,144 @@ function generateFollowUps(
   sport: string | undefined
 ): string[] {
   const suggestions: string[] = [];
+  const { teams, players } = extractEntities(message);
   
-  // Extract team/player names from message
-  const nameMatch = message.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/);
-  const extractedName = nameMatch ? nameMatch[1] : null;
+  const team1 = teams[0];
+  const team2 = teams[1];
+  const player = players[0];
   
-  // Category-specific follow-ups
-  switch (category) {
-    case 'STANDINGS':
-      suggestions.push(
-        'Who is the top scorer this season?',
-        'Which team has the best form?',
-        'Any relegation battles to watch?'
-      );
-      break;
-      
-    case 'ROSTER':
-      if (extractedName) {
+  // If we have specific teams/players, generate contextual follow-ups
+  if (team1 && team2) {
+    // Match-specific follow-ups
+    suggestions.push(
+      `Head to head record: ${team1} vs ${team2}?`,
+      `Key players to watch in ${team1} vs ${team2}?`,
+      `Recent form comparison: ${team1} vs ${team2}?`
+    );
+  } else if (team1) {
+    // Single team follow-ups based on category
+    switch (category) {
+      case 'STANDINGS':
         suggestions.push(
-          `What formation does ${extractedName} play?`,
-          `Any injury updates for ${extractedName}?`,
-          `When do ${extractedName} play next?`
+          `${team1} upcoming fixtures?`,
+          `${team1} recent results?`,
+          `${team1} top scorers this season?`
         );
-      }
-      break;
-      
-    case 'STATS':
-      if (extractedName) {
+        break;
+      case 'ROSTER':
+      case 'INJURY':
         suggestions.push(
-          `How does ${extractedName} compare to other players?`,
-          `What's ${extractedName}'s recent form?`,
-          `Career highlights of ${extractedName}?`
+          `${team1} injury updates?`,
+          `${team1} starting lineup prediction?`,
+          `${team1} squad depth analysis?`
         );
-      }
-      break;
-      
-    case 'PLAYER':
-      if (extractedName) {
+        break;
+      case 'FIXTURE':
         suggestions.push(
-          `${extractedName} stats this season?`,
-          `${extractedName} career history?`,
-          `Latest news about ${extractedName}?`
+          `${team1} form going into this match?`,
+          `${team1} key players for this game?`,
+          `${team1} tactics breakdown?`
         );
-      }
-      break;
-      
-    case 'FIXTURE':
-      suggestions.push(
-        'What are the key matchups this week?',
-        'Where can I watch the game?',
-        'Any injury concerns for the match?'
-      );
-      break;
-      
-    case 'RESULT':
-      suggestions.push(
-        'Who were the best performers?',
-        'How does this affect the standings?',
-        'What are the upcoming fixtures?'
-      );
-      break;
-      
-    case 'INJURY':
-      suggestions.push(
-        'When is the expected return?',
-        'Who will replace them?',
-        'How does this affect the team?'
-      );
-      break;
-      
-    case 'TRANSFER':
-      suggestions.push(
-        'What\'s the fee?',
-        'Where are they moving to?',
-        'Any other transfer rumors?'
-      );
-      break;
-      
-    case 'BETTING_ADVICE':
-    case 'PLAYER_PROP':
-      if (extractedName) {
+        break;
+      case 'RESULT':
         suggestions.push(
-          `${extractedName} recent form breakdown`,
-          `Head-to-head stats for this matchup`,
-          `${extractedName} home vs away splits`
+          `${team1} next match?`,
+          `How does this result affect ${team1}'s season?`,
+          `${team1} player ratings from this match?`
         );
-      }
-      break;
-      
-    default:
-      // Sport-specific defaults
-      if (sport === 'football') {
+        break;
+      case 'TRANSFER':
         suggestions.push(
-          'Premier League standings?',
-          'Champions League fixtures?',
-          'Top scorers this season?'
+          `${team1} transfer targets?`,
+          `${team1} transfer budget?`,
+          `Players leaving ${team1}?`
         );
-      } else if (sport === 'basketball') {
+        break;
+      default:
         suggestions.push(
-          'NBA standings?',
-          'Who\'s leading in scoring?',
-          'Tonight\'s NBA games?'
+          `${team1} latest news?`,
+          `${team1} standings position?`,
+          `${team1} recent form?`
         );
-      }
+    }
+  } else if (player) {
+    // Player-specific follow-ups
+    suggestions.push(
+      `${player} season stats breakdown?`,
+      `${player} recent performances?`,
+      `${player} compared to similar players?`
+    );
+  } else {
+    // No entities extracted - use category-based generic suggestions
+    switch (category) {
+      case 'STANDINGS':
+        suggestions.push(
+          'Which team is leading the league?',
+          'Current relegation battle?',
+          'Who has the best goal difference?'
+        );
+        break;
+      case 'FIXTURE':
+        suggestions.push(
+          'Biggest match this weekend?',
+          'Any derby matches coming up?',
+          'Which games have title implications?'
+        );
+        break;
+      case 'TRANSFER':
+        suggestions.push(
+          'Biggest transfer rumors today?',
+          'Any deadline day moves expected?',
+          'Top free agents available?'
+        );
+        break;
+      case 'INJURY':
+        suggestions.push(
+          'Major injuries affecting top teams?',
+          'Return dates for key players?',
+          'Teams with the most injuries?'
+        );
+        break;
+      case 'BETTING_ADVICE':
+      case 'PLAYER_PROP':
+        suggestions.push(
+          'Best value bets this week?',
+          'Under/over trends to watch?',
+          'Which favorites are vulnerable?'
+        );
+        break;
+      default:
+        // Sport-specific defaults when no context
+        if (sport === 'football' || sport === 'soccer') {
+          suggestions.push(
+            'Premier League title race update?',
+            'Champions League latest?',
+            'Top scorers this season?'
+          );
+        } else if (sport === 'basketball') {
+          suggestions.push(
+            'NBA playoff picture?',
+            'MVP race update?',
+            'Tonight\'s NBA games?'
+          );
+        } else if (sport === 'american_football') {
+          suggestions.push(
+            'NFL playoff standings?',
+            'This week\'s best matchups?',
+            'Quarterback rankings?'
+          );
+        } else {
+          suggestions.push(
+            'Latest sports headlines?',
+            'Top matches this week?',
+            'Any breaking news?'
+          );
+        }
+    }
   }
   
-  // Return max 3 suggestions
-  return suggestions.slice(0, 3);
+  // Return max 3 unique suggestions
+  return [...new Set(suggestions)].slice(0, 3);
 }
 
 // ============================================
