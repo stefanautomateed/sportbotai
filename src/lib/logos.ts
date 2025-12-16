@@ -1443,68 +1443,41 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'Major League Soccer': 'https://a.espncdn.com/i/teamlogos/leagues/500/mls.png',
   
   // ============================================
-  // SOCCER/FOOTBALL (API-Sports - most comprehensive)
+  // SOCCER/FOOTBALL (using Transfermarkt CDN for reliable logos)
   // ============================================
   
   // Premier League - All variations
-  'Premier League': 'https://media.api-sports.io/football/leagues/39.png',
-  'EPL': 'https://media.api-sports.io/football/leagues/39.png',
-  'English Premier League': 'https://media.api-sports.io/football/leagues/39.png',
-  'soccer_epl': 'https://media.api-sports.io/football/leagues/39.png',
-  'soccer_england_premier_league': 'https://media.api-sports.io/football/leagues/39.png',
-  'England - Premier League': 'https://media.api-sports.io/football/leagues/39.png',
+  'Premier League': 'https://tmssl.akamaized.net/images/logo/header/gb1.png',
+  'EPL': 'https://tmssl.akamaized.net/images/logo/header/gb1.png',
+  'English Premier League': 'https://tmssl.akamaized.net/images/logo/header/gb1.png',
+  'soccer_epl': 'https://tmssl.akamaized.net/images/logo/header/gb1.png',
+  'soccer_england_premier_league': 'https://tmssl.akamaized.net/images/logo/header/gb1.png',
+  'England - Premier League': 'https://tmssl.akamaized.net/images/logo/header/gb1.png',
   
   // La Liga - All variations
-  'La Liga': 'https://media.api-sports.io/football/leagues/140.png',
-  'LaLiga': 'https://media.api-sports.io/football/leagues/140.png',
-  'La Liga - Spain': 'https://media.api-sports.io/football/leagues/140.png',
-  'soccer_spain_la_liga': 'https://media.api-sports.io/football/leagues/140.png',
-  'Spain - La Liga': 'https://media.api-sports.io/football/leagues/140.png',
-  'La Liga Santander': 'https://media.api-sports.io/football/leagues/140.png',
-  'La Liga 2 - Spain': 'https://media.api-sports.io/football/leagues/141.png',
-  'soccer_spain_segunda_division': 'https://media.api-sports.io/football/leagues/141.png',
+  'La Liga': 'https://tmssl.akamaized.net/images/logo/header/es1.png',
+  'LaLiga': 'https://tmssl.akamaized.net/images/logo/header/es1.png',
+  'La Liga - Spain': 'https://tmssl.akamaized.net/images/logo/header/es1.png',
+  'soccer_spain_la_liga': 'https://tmssl.akamaized.net/images/logo/header/es1.png',
+  'Spain - La Liga': 'https://tmssl.akamaized.net/images/logo/header/es1.png',
+  'La Liga Santander': 'https://tmssl.akamaized.net/images/logo/header/es1.png',
+  'La Liga EA Sports': 'https://tmssl.akamaized.net/images/logo/header/es1.png',
+  'La Liga 2 - Spain': 'https://tmssl.akamaized.net/images/logo/header/es2.png',
+  'soccer_spain_segunda_division': 'https://tmssl.akamaized.net/images/logo/header/es2.png',
   
-  // Serie A - All variations
-  'Serie A': 'https://media.api-sports.io/football/leagues/135.png',
-  'Serie A - Italy': 'https://media.api-sports.io/football/leagues/135.png',
-  'soccer_italy_serie_a': 'https://media.api-sports.io/football/leagues/135.png',
-  'Italy - Serie A': 'https://media.api-sports.io/football/leagues/135.png',
-  'Serie A TIM': 'https://media.api-sports.io/football/leagues/135.png',
-  'Serie B - Italy': 'https://media.api-sports.io/football/leagues/136.png',
-  'soccer_italy_serie_b': 'https://media.api-sports.io/football/leagues/136.png',
+  // Serie A - All variations (using Transfermarkt CDN for reliable logos)
+  'Serie A': 'https://tmssl.akamaized.net/images/logo/header/it1.png',
+  'Serie A - Italy': 'https://tmssl.akamaized.net/images/logo/header/it1.png',
+  'soccer_italy_serie_a': 'https://tmssl.akamaized.net/images/logo/header/it1.png',
+  'Italy - Serie A': 'https://tmssl.akamaized.net/images/logo/header/it1.png',
+  'Serie A TIM': 'https://tmssl.akamaized.net/images/logo/header/it1.png',
+  'Italy Serie A': 'https://tmssl.akamaized.net/images/logo/header/it1.png',
+  'Serie B - Italy': 'https://tmssl.akamaized.net/images/logo/header/it2.png',
+  'soccer_italy_serie_b': 'https://tmssl.akamaized.net/images/logo/header/it2.png',
   
   // Bundesliga - All variations
   'Bundesliga': 'https://media.api-sports.io/football/leagues/78.png',
-  'Bundesliga - Germany': 'https://media.api-sports.io/football/leagues/78.png',
-  'soccer_germany_bundesliga': 'https://media.api-sports.io/football/leagues/78.png',
-  'Germany - Bundesliga': 'https://media.api-sports.io/football/leagues/78.png',
-  '2. Bundesliga': 'https://media.api-sports.io/football/leagues/79.png',
-  'Bundesliga 2': 'https://media.api-sports.io/football/leagues/79.png',
-  'Bundesliga 2 - Germany': 'https://media.api-sports.io/football/leagues/79.png',
-  'soccer_germany_bundesliga2': 'https://media.api-sports.io/football/leagues/79.png',
-  
-  // 3. Liga - Germany
-  '3. Liga': 'https://media.api-sports.io/football/leagues/80.png',
-  '3. Liga - Germany': 'https://media.api-sports.io/football/leagues/80.png',
-  'Germany - 3. Liga': 'https://media.api-sports.io/football/leagues/80.png',
-  'soccer_germany_liga3': 'https://media.api-sports.io/football/leagues/80.png',
-  
-  // Ligue 1 - All variations
-  'Ligue 1': 'https://media.api-sports.io/football/leagues/61.png',
-  'Ligue 1 - France': 'https://media.api-sports.io/football/leagues/61.png',
-  'soccer_france_ligue_one': 'https://media.api-sports.io/football/leagues/61.png',
-  'France - Ligue 1': 'https://media.api-sports.io/football/leagues/61.png',
-  'Ligue 1 Uber Eats': 'https://media.api-sports.io/football/leagues/61.png',
-  
-  // Ligue 2 - France
-  'Ligue 2': 'https://media.api-sports.io/football/leagues/62.png',
-  'Ligue 2 - France': 'https://media.api-sports.io/football/leagues/62.png',
-  'France - Ligue 2': 'https://media.api-sports.io/football/leagues/62.png',
-  'soccer_france_ligue_two': 'https://media.api-sports.io/football/leagues/62.png',
-  
-  // Eredivisie - Netherlands
-  'Eredivisie': 'https://media.api-sports.io/football/leagues/88.png',
-  'Dutch Eredivisie': 'https://media.api-sports.io/football/leagues/88.png',
+  // Bundesliga - All variations\n  'Bundesliga': 'https://tmssl.akamaized.net/images/logo/header/l1.png',\n  'Bundesliga - Germany': 'https://tmssl.akamaized.net/images/logo/header/l1.png',\n  'soccer_germany_bundesliga': 'https://tmssl.akamaized.net/images/logo/header/l1.png',\n  'Germany - Bundesliga': 'https://tmssl.akamaized.net/images/logo/header/l1.png',\n  '2. Bundesliga': 'https://tmssl.akamaized.net/images/logo/header/l2.png',\n  'Bundesliga 2': 'https://tmssl.akamaized.net/images/logo/header/l2.png',\n  'Bundesliga 2 - Germany': 'https://tmssl.akamaized.net/images/logo/header/l2.png',\n  'soccer_germany_bundesliga2': 'https://tmssl.akamaized.net/images/logo/header/l2.png',\n  \n  // 3. Liga - Germany\n  '3. Liga': 'https://tmssl.akamaized.net/images/logo/header/l3.png',\n  '3. Liga - Germany': 'https://tmssl.akamaized.net/images/logo/header/l3.png',\n  'Germany - 3. Liga': 'https://tmssl.akamaized.net/images/logo/header/l3.png',\n  'soccer_germany_liga3': 'https://tmssl.akamaized.net/images/logo/header/l3.png',\n  \n  // Ligue 1 - All variations (using Transfermarkt CDN for reliable logos)\n  'Ligue 1': 'https://tmssl.akamaized.net/images/logo/header/fr1.png',\n  'Ligue 1 - France': 'https://tmssl.akamaized.net/images/logo/header/fr1.png',\n  'soccer_france_ligue_one': 'https://tmssl.akamaized.net/images/logo/header/fr1.png',\n  'France - Ligue 1': 'https://tmssl.akamaized.net/images/logo/header/fr1.png',\n  'Ligue 1 Uber Eats': 'https://tmssl.akamaized.net/images/logo/header/fr1.png',\n  'France Ligue 1': 'https://tmssl.akamaized.net/images/logo/header/fr1.png',\n  \n  // Ligue 2 - France\n  'Ligue 2': 'https://tmssl.akamaized.net/images/logo/header/fr2.png',\n  'Ligue 2 - France': 'https://tmssl.akamaized.net/images/logo/header/fr2.png',\n  'France - Ligue 2': 'https://tmssl.akamaized.net/images/logo/header/fr2.png',\n  'soccer_france_ligue_two': 'https://tmssl.akamaized.net/images/logo/header/fr2.png',\n  \n  // Eredivisie - Netherlands\n  'Eredivisie': 'https://tmssl.akamaized.net/images/logo/header/nl1.png',\n  'Dutch Eredivisie': 'https://tmssl.akamaized.net/images/logo/header/nl1.png',
   'soccer_netherlands_eredivisie': 'https://media.api-sports.io/football/leagues/88.png',
   'Netherlands - Eredivisie': 'https://media.api-sports.io/football/leagues/88.png',
   
@@ -1614,19 +1587,20 @@ const LEAGUE_LOGOS: Record<string, string> = {
   'Super League - Greece': 'https://media.api-sports.io/football/leagues/197.png',
   'soccer_greece_super_league': 'https://media.api-sports.io/football/leagues/197.png',
   
-  // UEFA Competitions
-  'Champions League': 'https://media.api-sports.io/football/leagues/2.png',
-  'UEFA Champions League': 'https://media.api-sports.io/football/leagues/2.png',
-  'soccer_uefa_champs_league': 'https://media.api-sports.io/football/leagues/2.png',
-  'UEFA CL': 'https://media.api-sports.io/football/leagues/2.png',
-  'Europa League': 'https://media.api-sports.io/football/leagues/3.png',
-  'UEFA Europa League': 'https://media.api-sports.io/football/leagues/3.png',
-  'soccer_uefa_europa_league': 'https://media.api-sports.io/football/leagues/3.png',
-  'UEFA EL': 'https://media.api-sports.io/football/leagues/3.png',
-  'Conference League': 'https://media.api-sports.io/football/leagues/848.png',
-  'UEFA Conference League': 'https://media.api-sports.io/football/leagues/848.png',
-  'UEFA Europa Conference League': 'https://media.api-sports.io/football/leagues/848.png',
-  'soccer_uefa_europa_conference_league': 'https://media.api-sports.io/football/leagues/848.png',
+  // UEFA Competitions (using Transfermarkt CDN for reliable logos)
+  'Champions League': 'https://tmssl.akamaized.net/images/logo/header/cl.png',
+  'UEFA Champions League': 'https://tmssl.akamaized.net/images/logo/header/cl.png',
+  'soccer_uefa_champs_league': 'https://tmssl.akamaized.net/images/logo/header/cl.png',
+  'UCL': 'https://tmssl.akamaized.net/images/logo/header/cl.png',
+  'UEFA CL': 'https://tmssl.akamaized.net/images/logo/header/cl.png',
+  'Europa League': 'https://tmssl.akamaized.net/images/logo/header/el.png',
+  'UEFA Europa League': 'https://tmssl.akamaized.net/images/logo/header/el.png',
+  'soccer_uefa_europa_league': 'https://tmssl.akamaized.net/images/logo/header/el.png',
+  'UEFA EL': 'https://tmssl.akamaized.net/images/logo/header/el.png',
+  'Conference League': 'https://tmssl.akamaized.net/images/logo/header/uecl.png',
+  'UEFA Conference League': 'https://tmssl.akamaized.net/images/logo/header/uecl.png',
+  'UEFA Europa Conference League': 'https://tmssl.akamaized.net/images/logo/header/uecl.png',
+  'soccer_uefa_europa_conference_league': 'https://tmssl.akamaized.net/images/logo/header/uecl.png',
   
   // World Cup / International
   'FIFA World Cup': 'https://media.api-sports.io/football/leagues/1.png',
