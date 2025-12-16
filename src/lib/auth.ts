@@ -15,7 +15,7 @@ import { prisma } from './prisma';
 
 // Plan limits
 export const PLAN_LIMITS = {
-  FREE: 3,      // 3 analyses per day
+  FREE: 1,      // 1 analysis per day
   PRO: 30,      // 30 analyses per day
   PREMIUM: -1,  // Unlimited (-1 = no limit)
 } as const;

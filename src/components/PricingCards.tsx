@@ -30,10 +30,10 @@ const plans: PricingPlan[] = [
     name: 'Free',
     price: '€0',
     priceId: '', // Free plan has no Stripe checkout
-    description: 'Try basic features for free',
+    description: 'Try it once for free',
     features: [
-      '3 analyses per day',
-      '5 AI chat messages per day',
+      '1 match analysis',
+      '1 AI chat message',
       'Basic sports (soccer)',
       'Standard AI analysis',
       'Email support',

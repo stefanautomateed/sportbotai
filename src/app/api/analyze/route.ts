@@ -8,7 +8,7 @@
  * 
  * AUTHENTICATION & LIMITS:
  * - Requires authenticated user session
- * - Enforces plan-based usage limits (FREE: 3/day, PRO: 30/day, PREMIUM: unlimited)
+ * - Enforces plan-based usage limits (FREE: 1 trial, PRO: 30/day, PREMIUM: unlimited)
  * 
  * REAL DATA INTEGRATION:
  * - Fetches real team form, H2H, and stats from API-Sports

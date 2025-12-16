@@ -37,7 +37,7 @@ export default function CancelledPage() {
           <h3 className="text-sm font-medium text-text-muted mb-3">What you're missing with Pro:</h3>
           <ul className="space-y-2 text-sm text-text-secondary">
             <li className="flex items-center gap-2">
-              <span className="text-accent">✓</span> 30 analyses per day (vs 3)
+              <span className="text-accent">✓</span> 30 analyses per day (vs 1 trial)
             </li>
             <li className="flex items-center gap-2">
               <span className="text-accent">✓</span> All sports coverage

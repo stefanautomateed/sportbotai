@@ -87,7 +87,7 @@ model VerificationToken {
 // ============================================
 
 enum Plan {
-  FREE      // 3 analyses per day
+  FREE      // 1 analysis trial
   PRO       // 30 analyses per day
   PREMIUM   // Unlimited analyses
 }

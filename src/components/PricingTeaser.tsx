@@ -11,9 +11,9 @@ export default function PricingTeaser() {
     {
       name: 'Free',
       price: '€0',
-      period: '/month',
-      description: 'Try basic analysis',
-      features: ['3 analyses per day', '5 AI chat messages/day', 'Basic sports (soccer)'],
+      period: '',
+      description: 'Try it once',
+      features: ['1 match analysis', '1 AI chat message', 'Basic sports (soccer)'],
       cta: 'Get Started',
       href: '/analyzer',
       highlighted: false,

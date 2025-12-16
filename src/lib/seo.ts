@@ -116,8 +116,8 @@ export const META = {
   },
   
   pricing: {
-    title: 'Pricing Plans – Free & Pro Sports Analytics',
-    description: 'Start free with 3 daily analyses. Upgrade to Pro for unlimited AI match analysis, audio reports, and advanced insights. No hidden fees, cancel anytime.',
+    title: 'Pricing Plans – Free Trial & Pro Sports Analytics',
+    description: 'Try free with 1 analysis. Upgrade to Pro for 30 daily AI match analyses, audio reports, and advanced insights. No hidden fees, cancel anytime.',
     keywords: [
       'sports analytics pricing',
       'AI analysis subscription',
@@ -182,7 +182,7 @@ export function getOrganizationSchema() {
       '@type': 'Offer',
       price: '0',
       priceCurrency: 'EUR',
-      description: 'Free tier with 3 daily analyses',
+      description: 'Free trial with 1 analysis',
     },
     aggregateRating: {
       '@type': 'AggregateRating',
@@ -240,7 +240,7 @@ export function getMatchAnalyzerSchema() {
       '@type': 'Offer',
       price: '0',
       priceCurrency: 'EUR',
-      description: 'Free tier with 3 analyses per day',
+      description: 'Free trial with 1 analysis',
     },
     featureList: [
       'AI-powered match analysis in 60 seconds',
@@ -396,7 +396,7 @@ export function getPricingSchema() {
         name: 'Free Plan',
         price: '0',
         priceCurrency: 'EUR',
-        description: '3 analyses per day, 5 AI chat messages per day',
+        description: '1 match analysis, 1 AI chat message',
         availability: 'https://schema.org/InStock',
       },
       {

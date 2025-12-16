@@ -12,7 +12,7 @@ const ADMIN_EMAILS = [
 ];
 
 const PLAN_LIMITS: Record<string, number> = {
-  FREE: 3,
+  FREE: 1,
   PRO: 30,
   PREMIUM: -1, // Unlimited
 };

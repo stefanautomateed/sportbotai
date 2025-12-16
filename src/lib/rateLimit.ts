@@ -23,10 +23,10 @@ const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_RE
 // ============================================
 
 export const CHAT_RATE_LIMITS = {
-  FREE: { requests: 5, window: '1 d' },       // 5 per day (matches pricing)
+  FREE: { requests: 1, window: '1 d' },       // 1 per day (matches pricing)
   PRO: { requests: 50, window: '1 d' },       // 50 per day (matches pricing)
   PREMIUM: { requests: 1000, window: '1 d' }, // Effectively unlimited (1000/day)
-  ANONYMOUS: { requests: 3, window: '1 d' },  // 3 per day (not logged in)
+  ANONYMOUS: { requests: 1, window: '1 d' },  // 1 per day (not logged in)
 } as const;
 
 // Create tier-specific rate limiters for chat

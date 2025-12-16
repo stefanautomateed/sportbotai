@@ -107,7 +107,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
     },
     {
       title: 'Ready to Start?',
-      subtitle: 'Your first 3 analyses are free',
+      subtitle: 'Try your first analysis free',
       content: (
         <div className="text-center">
           <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center mb-6 border border-accent/30">
@@ -123,7 +123,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
               <svg className="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span>3 free analyses daily</span>
+              <span>1 free trial analysis</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-white/60">
               <svg className="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20">

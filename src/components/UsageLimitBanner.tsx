@@ -74,7 +74,7 @@ export default function UsageLimitBanner({
           <div className="flex-1 min-w-0">
             <h4 className="font-semibold text-red-400 mb-1">Daily Limit Reached</h4>
             <p className="text-sm text-red-300/80 mb-3">
-              You've used all {planLimit} free analyses for today. Upgrade to Pro for 30 analyses per day.
+              You've used your free analysis. Upgrade to Pro for 30 analyses per day.
             </p>
             <Link
               href="/pricing"
@@ -112,7 +112,7 @@ export default function UsageLimitBanner({
             </div>
             <div className="flex items-center justify-between">
               <p className="text-sm text-amber-300/70">
-                Running low? Upgrade for 30/day.
+                Want more? Upgrade for 30/day.
               </p>
               <Link
                 href="/pricing"

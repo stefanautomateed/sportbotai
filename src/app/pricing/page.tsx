@@ -116,7 +116,7 @@ export default function PricingPage() {
           <div className="card">
             <h3 className="font-bold text-white mb-2">What do I get with the Free plan?</h3>
             <p className="text-text-secondary">
-              The Free plan includes 3 analyses per day for soccer. Great for trying out the platform 
+              The Free plan includes 1 match analysis and 1 AI chat message to try out the platform 
               before deciding to upgrade.
             </p>
           </div>
