@@ -185,6 +185,20 @@ export function UserMenu() {
               <span className="w-1.5 h-1.5 bg-accent rounded-full"></span>
               <span>Live data enabled</span>
             </div>
+            
+            {/* Upgrade CTA when limit reached */}
+            {!isUnlimited && remaining === 0 && (
+              <Link
+                href="/pricing"
+                onClick={closeMenu}
+                className="mt-3 flex items-center justify-center gap-2 w-full px-3 py-2 bg-primary hover:bg-primary/80 text-white text-xs font-semibold rounded-lg transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Upgrade to Pro
+              </Link>
+            )}
           </div>
 
           {/* Menu Items */}

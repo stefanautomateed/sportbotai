@@ -8,7 +8,8 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, Sparkles, ExternalLink, X, MessageCircle, Volume2, VolumeX, Square, ThumbsUp, ThumbsDown, Mic, MicOff } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, ExternalLink, X, MessageCircle, Volume2, VolumeX, Square, ThumbsUp, ThumbsDown, Mic, MicOff, Zap } from 'lucide-react';
+import Link from 'next/link';
 
 // ============================================
 // TYPES
@@ -759,10 +760,21 @@ export default function AIDeskChat() {
         )}
       </div>
 
-      {/* Error message */}
+      {/* Error message with upgrade CTA for limit errors */}
       {error && (
-        <div className="px-4 py-2 bg-red-500/10 border-t border-red-500/20">
-          <p className="text-xs text-red-400">{error}</p>
+        <div className="px-4 py-2 sm:py-3 bg-red-500/10 border-t border-red-500/20">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-red-400 flex-1">{error}</p>
+            {(error.toLowerCase().includes('limit') || error.toLowerCase().includes('upgrade')) && (
+              <Link
+                href="/pricing"
+                className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                <Zap className="w-3 h-3" />
+                Upgrade
+              </Link>
+            )}
+          </div>
         </div>
       )}
 
