@@ -45,7 +45,7 @@ export function PremiumBlur({
       
       {/* Overlay with CTA */}
       <div className="absolute inset-0 flex items-center justify-center bg-[#050506]/70 backdrop-blur-sm rounded-xl sm:rounded-2xl">
-        <div className="text-center px-4 sm:px-6 py-6 sm:py-8 max-w-sm mx-4">
+        <div className="text-center px-4 sm:px-6 py-4 sm:py-8 max-w-sm mx-4">
           {/* Lock icon */}
           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-violet-500/20 to-purple-600/10 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 border border-violet-500/20">
             <svg 
@@ -83,7 +83,7 @@ export function PremiumBlur({
           </Link>
           
           {/* What's included */}
-          <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-white/5">
+          <div className="mt-3 sm:mt-5 pt-2 sm:pt-4 border-t border-white/5">
             <div className="flex flex-wrap justify-center gap-2 text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-wider">
               <span className="flex items-center gap-1">
                 <span className="text-violet-400">✓</span> Match Insights

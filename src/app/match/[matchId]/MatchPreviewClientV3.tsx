@@ -269,7 +269,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
         >
           {/* Universal Signals Display - Free with registration */}
           {data.universalSignals && (
-            <div className="mt-8">
+            <div className="mt-5 sm:mt-8">
               <UniversalSignalsDisplay
                 signals={data.universalSignals}
                 homeTeam={data.matchInfo.homeTeam}
@@ -282,7 +282,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
 
           {/* Risk Factors - Free with registration */}
           {riskFactors && riskFactors.length > 0 && (
-            <div className="mt-5 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-5">
+            <div className="mt-4 sm:mt-5 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-4 sm:p-5">
               <h3 className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                 <span className="text-amber-500/80">⚠</span>
                 Risk Factors
@@ -307,7 +307,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
         >
           {/* Match Snapshot - Premium */}
           {snapshot && snapshot.length > 0 && (
-            <div className="mt-6 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-5">
+            <div className="mt-4 sm:mt-6 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-4 sm:p-5">
               <h3 className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <span className="text-violet-400">✦</span>
                 Match Snapshot
@@ -326,7 +326,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
 
           {/* Game Flow - Premium */}
           {gameFlow && (
-            <div className="mt-5 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-5">
+            <div className="mt-4 sm:mt-5 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-4 sm:p-5">
               <h3 className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                 <span className="text-violet-400">✦</span>
                 Game Flow

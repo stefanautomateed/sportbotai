@@ -66,19 +66,19 @@ export default function UsageLimitBanner({
   // Full variant - banner with upgrade CTA
   if (isEmpty) {
     return (
-      <div className={`bg-red-950/50 border border-red-500/30 rounded-xl p-4 ${className}`}>
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-            <Lock className="w-5 h-5 text-red-400" />
+      <div className={`bg-red-950/50 border border-red-500/30 rounded-xl p-3 sm:p-4 ${className}`}>
+        <div className="flex items-start gap-2 sm:gap-3">
+          <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+            <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-red-400 mb-1">Daily Limit Reached</h4>
-            <p className="text-sm text-red-300/80 mb-3">
+            <h4 className="font-semibold text-red-400 text-sm sm:text-base mb-0.5 sm:mb-1">Daily Limit Reached</h4>
+            <p className="text-xs sm:text-sm text-red-300/80 mb-2 sm:mb-3">
               You've used your free analysis. Upgrade to Pro for 30 analyses per day.
             </p>
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors"
             >
               <Zap className="w-4 h-4" />
               Upgrade to Pro
@@ -92,10 +92,10 @@ export default function UsageLimitBanner({
   
   if (isLow) {
     return (
-      <div className={`bg-amber-950/30 border border-amber-500/30 rounded-xl p-4 ${className}`}>
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
-            <AlertCircle className="w-5 h-5 text-amber-400" />
+      <div className={`bg-amber-950/30 border border-amber-500/30 rounded-xl p-3 sm:p-4 ${className}`}>
+        <div className="flex items-start gap-2 sm:gap-3">
+          <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-4 mb-2">
