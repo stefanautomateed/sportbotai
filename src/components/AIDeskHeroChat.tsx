@@ -28,6 +28,10 @@ interface ChatMessage {
   usedRealTimeSearch?: boolean;
   followUps?: string[];
   fromCache?: boolean;
+  isStreaming?: boolean;
+  feedbackGiven?: 'up' | 'down' | null;
+  timestamp: Date;
+}
 
 interface ChatResponse {
   success: boolean;
@@ -35,10 +39,6 @@ interface ChatResponse {
   citations?: string[];
   usedRealTimeSearch?: boolean;
   error?: string;
-}
-  isStreaming?: boolean;
-  feedbackGiven?: 'up' | 'down' | null;
-  timestamp: Date;
 }
 
 // Audio playback states
