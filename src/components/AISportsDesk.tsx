@@ -11,6 +11,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 
+/**
+ * Strip markdown formatting from AI responses
+ */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1')
+    .replace(/(?<!_)_([^_]+)_(?!_)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .trim();
+}
+
 interface AgentPost {
   id: string;
   category: string;
@@ -234,7 +248,7 @@ function AgentPostCard({ post, compact }: { post: AgentPost; compact: boolean })
 
       {/* Content */}
       <p className="text-sm text-white leading-relaxed mb-3">
-        {post.content}
+        {stripMarkdown(post.content)}
       </p>
 
       {/* Citations (if available) */}
@@ -314,7 +328,7 @@ export function StandaloneAgentPost({ post }: { post: AgentPost }) {
 
       {/* Content */}
       <p className="text-white text-lg leading-relaxed mb-4">
-        {post.content}
+        {stripMarkdown(post.content)}
       </p>
 
       {/* Match Reference */}

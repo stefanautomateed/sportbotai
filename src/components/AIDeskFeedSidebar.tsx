@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { ChevronDown, ChevronUp, RefreshCw, ExternalLink, Radio } from 'lucide-react';
+import { ChevronDown, ChevronUp, RefreshCw, Radio } from 'lucide-react';
 
 // Sport emoji mapping for API sport keys
 const sportEmojis: Record<string, string> = {
@@ -26,6 +26,20 @@ function getSportEmoji(sport: string): string {
     if (normalized.includes(key)) return sportEmojis[key];
   }
   return sportEmojis.default;
+}
+
+/**
+ * Strip markdown formatting from AI responses
+ */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1')
+    .replace(/(?<!_)_([^_]+)_(?!_)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .trim();
 }
 
 interface AgentPost {
@@ -173,7 +187,7 @@ export default function AIDeskFeedSidebar({ limit = 8 }: { limit?: number }) {
 
                   {/* Content */}
                   <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">
-                    {post.content}
+                    {stripMarkdown(post.content)}
                   </p>
 
                   {/* Match Reference - Teams */}

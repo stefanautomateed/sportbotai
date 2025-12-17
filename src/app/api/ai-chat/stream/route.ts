@@ -52,6 +52,26 @@ const openai = new OpenAI({
 // ============================================
 
 /**
+ * Strip markdown formatting from AI responses
+ * Removes bold (**text**), headers (##), and other markdown syntax
+ */
+function stripMarkdown(text: string): string {
+  return text
+    // Remove bold/italic markers: **text** or __text__ or *text* or _text_
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    // Remove headers: ## text or ### text
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove bullet points that look like markdown lists
+    .replace(/^\s*[-*]\s+/gm, '• ')
+    // Clean up any double spaces
+    .replace(/  +/g, ' ')
+    .trim();
+}
+
+/**
  * Detect if message is non-English and translate for better search results
  */
 async function translateToEnglish(message: string): Promise<{

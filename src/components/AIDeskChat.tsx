@@ -8,7 +8,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, Sparkles, ExternalLink, X, MessageCircle, Volume2, VolumeX, Square, ThumbsUp, ThumbsDown, Mic, MicOff, Zap } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, X, MessageCircle, Volume2, VolumeX, Square, ThumbsUp, ThumbsDown, Mic, MicOff, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 // ============================================
@@ -28,19 +28,34 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-interface ChatResponse {
-  success: boolean;
-  response: string;
-  citations: string[];
-  usedRealTimeSearch: boolean;
-  error?: string;
-}
-
 // Audio playback states
 type AudioState = 'idle' | 'loading' | 'playing' | 'error';
 
 // Voice input states
 type VoiceState = 'idle' | 'listening' | 'processing' | 'error' | 'unsupported';
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Strip markdown formatting from AI responses
+ * Removes bold (**text**), headers (##), and other markdown syntax
+ */
+function stripMarkdown(text: string): string {
+  return text
+    // Remove bold markers: **text** or __text__
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    // Remove italic markers: *text* or _text_ (single)
+    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1')
+    .replace(/(?<!_)_([^_]+)_(?!_)/g, '$1')
+    // Remove headers: ## text or ### text
+    .replace(/^#{1,6}\s+/gm, '')
+    // Clean up numbered list markers at start: 1. 2. etc
+    .replace(/^\d+\.\s+/gm, '')
+    .trim();
+}
 
 // ============================================
 // SUGGESTED QUESTIONS - Showcasing different categories
@@ -612,7 +627,7 @@ export default function AIDeskChat() {
                         ? 'text-sm'
                         : 'text-[14px] leading-[1.7] tracking-[-0.01em] font-light'
                     }`}>
-                      {msg.content}
+                      {msg.role === 'assistant' ? stripMarkdown(msg.content) : msg.content}
                       {msg.role === 'assistant' && msg.isStreaming && (
                         <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse rounded-sm" />
                       )}
