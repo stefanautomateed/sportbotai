@@ -3,9 +3,11 @@
  * 
  * Main page of the SportBot AI application.
  * Contains all sections for presenting the platform.
+ * 
+ * A/B TEST ACTIVE: Hero section (hero-2024-12)
  */
 
-import Hero from '@/components/Hero';
+import HeroABTest from '@/components/HeroABTest';
 import TrendingSection from '@/components/TrendingSection';
 import HowItWorks from '@/components/HowItWorks';
 import WhyNotTipster from '@/components/WhyNotTipster';
@@ -42,8 +44,8 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(aiDeskSchema) }}
       />
       
-      {/* Hero section - main visual component */}
-      <Hero />
+      {/* Hero section - A/B TEST ACTIVE */}
+      <HeroABTest />
 
       {/* Stats strip - social proof */}
       <StatsStrip />
