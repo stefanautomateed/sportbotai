@@ -20,19 +20,33 @@ interface LiveStatsCounterProps {
 }
 
 export function LiveStatsCounter({ className = '' }: LiveStatsCounterProps) {
-  // Start with a fixed value to avoid hydration mismatch
   const [count, setCount] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Set initial count only on client
     setMounted(true);
-    setCount(12847);
     
-    // Increment randomly every 3-8 seconds to simulate activity
-    const interval = setInterval(() => {
-      setCount(prev => (prev || 12847) + Math.floor(Math.random() * 3) + 1);
-    }, Math.random() * 5000 + 3000);
+    // Fetch real stats from API
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (data.success && data.stats) {
+          setCount(data.stats.analysesToday);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+        setCount(0);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchStats();
+    
+    // Refresh stats every 60 seconds
+    const interval = setInterval(fetchStats, 60000);
     
     return () => clearInterval(interval);
   }, []);
@@ -46,7 +60,7 @@ export function LiveStatsCounter({ className = '' }: LiveStatsCounterProps) {
           <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
         </span>
         <span className="text-white/60 text-sm">
-          <span className="text-white font-semibold tabular-nums">12,849</span> analyses today
+          <span className="text-white font-semibold tabular-nums">–</span> analyses today
         </span>
       </div>
     );
@@ -59,7 +73,9 @@ export function LiveStatsCounter({ className = '' }: LiveStatsCounterProps) {
         <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
       </span>
       <span className="text-white/60 text-sm">
-        <span className="text-white font-semibold tabular-nums">{(count || 12847).toLocaleString()}</span> analyses today
+        <span className="text-white font-semibold tabular-nums">
+          {isLoading ? '–' : (count ?? 0).toLocaleString()}
+        </span> analyses today
       </span>
     </div>
   );
