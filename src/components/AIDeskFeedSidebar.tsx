@@ -105,9 +105,9 @@ export default function AIDeskFeedSidebar({ limit = 8 }: { limit?: number }) {
 
   if (loading) {
     return (
-      <div className="bg-bg-secondary border border-white/10 rounded-xl p-4">
+      <div className="bg-bg-secondary border border-emerald-500/30 ring-1 ring-emerald-500/10 rounded-xl p-4">
         <div className="flex items-center gap-2 mb-4">
-          <Radio className="w-4 h-4 text-primary animate-pulse" />
+          <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
           <span className="text-sm font-medium text-white">Loading feed...</span>
         </div>
         <div className="space-y-3">
@@ -123,16 +123,16 @@ export default function AIDeskFeedSidebar({ limit = 8 }: { limit?: number }) {
   }
 
   return (
-    <div className="bg-bg-secondary border border-white/10 rounded-xl overflow-hidden">
+    <div className="bg-bg-secondary border border-emerald-500/30 ring-1 ring-emerald-500/10 rounded-xl overflow-hidden">
       {/* Header - Collapsible */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Radio className="w-4 h-4 text-green-400" />
+          <Radio className="w-4 h-4 text-emerald-400" />
           <span className="text-sm font-semibold text-white">Live Intel Feed</span>
-          <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-medium rounded">
+          <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-medium rounded border border-emerald-500/30">
             AUTO
           </span>
         </div>
