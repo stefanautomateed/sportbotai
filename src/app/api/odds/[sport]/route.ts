@@ -75,11 +75,15 @@ export async function GET(
       (a, b) => new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime()
     );
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       events: sortedEvents,
       requestsRemaining,
       requestsUsed,
     });
+    
+    // Don't cache odds - they change frequently
+    response.headers.set('Cache-Control', 'no-store, max-age=0');
+    return response;
   } catch (error) {
     console.error('Error fetching odds:', error);
     return NextResponse.json(

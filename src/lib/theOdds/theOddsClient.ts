@@ -237,7 +237,7 @@ class TheOddsApiClient {
     const response = await fetch(
       `${this.baseUrl}/sports/${sportKey}/odds?${params}`,
       {
-        next: { revalidate: 300 }, // Cache for 5 minutes
+        cache: 'no-store', // Don't cache odds - they change frequently
       }
     );
 
@@ -324,7 +324,7 @@ class TheOddsApiClient {
     const response = await fetch(
       `${this.baseUrl}/sports/upcoming/odds?${params}`,
       {
-        next: { revalidate: 300 },
+        cache: 'no-store', // Don't cache odds - they change frequently
       }
     );
 
