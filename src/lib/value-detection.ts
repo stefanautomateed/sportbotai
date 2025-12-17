@@ -53,6 +53,7 @@ export interface MarketIntel {
   valueEdge: ValueEdge;
   lineMovement?: LineMovement;
   summary: string;        // One-line summary
+  conflictExplanation?: string; // Explains when value is on non-favored team
   recommendation: 'strong_value' | 'slight_value' | 'fair_price' | 'overpriced' | 'avoid';
 }
 
@@ -309,10 +310,25 @@ export function analyzeMarket(
     recommendation = 'avoid';
   }
   
+  // Determine model's favored outcome
+  const modelFavored = modelProb.home > modelProb.away ? 'home' : 'away';
+  
   // Build summary
   let summary = '';
+  let conflictExplanation: string | undefined = undefined;
+  
   if (valueEdge.outcome) {
     summary = `Model sees ${valueEdge.label}. Market implies ${impliedHome}% home, we calculate ${modelProb.home}%.`;
+    
+    // Check for conflict: value on non-favored team
+    if (valueEdge.outcome !== modelFavored && valueEdge.strength !== 'none') {
+      const favoredLabel = modelFavored === 'home' ? 'Home' : 'Away';
+      const valueLabel = valueEdge.outcome === 'home' ? 'Home' : valueEdge.outcome === 'away' ? 'Away' : 'Draw';
+      const favoredProb = modelFavored === 'home' ? modelProb.home : modelProb.away;
+      const valueImplied = valueEdge.outcome === 'home' ? impliedHome : valueEdge.outcome === 'away' ? impliedAway : impliedDraw;
+      
+      conflictExplanation = `${favoredLabel} is the stronger team (${favoredProb}% model probability), but the market has overpriced them. ${valueLabel} offers +${valueEdge.edgePercent}% value because the market implies only ${valueImplied}% vs our ${valueEdge.outcome === 'home' ? modelProb.home : valueEdge.outcome === 'away' ? modelProb.away : modelProb.draw}% model estimate. This is a contrarian value play.`;
+    }
   } else {
     summary = `Fair price. Model and market align around ${modelProb.home}% home probability.`;
   }
@@ -328,6 +344,7 @@ export function analyzeMarket(
     valueEdge,
     lineMovement,
     summary,
+    conflictExplanation,
     recommendation,
   };
 }

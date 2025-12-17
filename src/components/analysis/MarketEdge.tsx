@@ -207,6 +207,18 @@ export function RecommendationCard({ marketIntel }: RecommendationCardProps) {
         {marketIntel.summary}
       </p>
       
+      {/* Conflict Explanation - explains when value is on non-favored team */}
+      {marketIntel.conflictExplanation && (
+        <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+          <div className="flex items-start gap-2">
+            <span className="text-amber-400 text-sm">💡</span>
+            <p className="text-amber-200/90 text-sm leading-relaxed">
+              {marketIntel.conflictExplanation}
+            </p>
+          </div>
+        </div>
+      )}
+      
       {marketIntel.impliedProbability.margin && (
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <span>Bookmaker margin:</span>
