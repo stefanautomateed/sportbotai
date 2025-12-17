@@ -3,12 +3,53 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateBatch, seedKeywords, getNextKeyword } from '@/lib/blog';
+import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes max for generation
 
 export async function GET(request: NextRequest) {
   try {
+    // Check for health check mode
+    const { searchParams } = new URL(request.url);
+    const healthCheck = searchParams.get('health') === '1';
+    
+    if (healthCheck) {
+      // Return status of required API keys and database
+      const hasOpenAI = !!process.env.OPENAI_API_KEY;
+      const hasPerplexity = !!process.env.PERPLEXITY_API_KEY;
+      const hasReplicate = !!process.env.REPLICATE_API_TOKEN;
+      const hasBlobToken = !!process.env.BLOB_READ_WRITE_TOKEN;
+      
+      let dbStatus = 'unknown';
+      let keywordCount = 0;
+      let postCount = 0;
+      
+      try {
+        keywordCount = await prisma.blogKeyword.count();
+        postCount = await prisma.blogPost.count();
+        dbStatus = 'connected';
+      } catch (dbError) {
+        dbStatus = `error: ${dbError instanceof Error ? dbError.message : 'unknown'}`;
+      }
+      
+      return NextResponse.json({
+        status: 'ok',
+        env: {
+          openai: hasOpenAI,
+          perplexity: hasPerplexity,
+          replicate: hasReplicate,
+          blobStorage: hasBlobToken,
+        },
+        database: {
+          status: dbStatus,
+          keywords: keywordCount,
+          posts: postCount,
+        },
+        ready: hasOpenAI && hasPerplexity && dbStatus === 'connected',
+      });
+    }
+    
     // Verify cron secret OR Vercel's internal cron header
     const authHeader = request.headers.get('Authorization');
     const vercelCron = request.headers.get('x-vercel-cron'); // Vercel sends this for cron jobs
