@@ -265,7 +265,7 @@ function SteamMoveCard({ alert }: { alert: MarketAlert }) {
 function PremiumGate() {
   return (
     <div className="min-h-screen bg-bg-primary py-12">
-      <div className="container-custom max-w-2xl">
+      <div className="container-custom max-w-2xl mx-auto">
         <div className="bg-gradient-to-br from-bg-card via-bg-card to-purple-500/5 border border-purple-500/30 rounded-2xl p-8 text-center">
           <div className="text-6xl mb-6">🔒</div>
           <h1 className="text-3xl font-bold text-text-primary mb-4">
@@ -277,8 +277,8 @@ function PremiumGate() {
           </p>
           
           <div className="bg-bg-primary/50 rounded-xl p-6 mb-8 text-left">
-            <h3 className="font-semibold text-text-primary mb-4">What you get:</h3>
-            <ul className="space-y-3 text-text-secondary">
+            <h3 className="font-semibold text-text-primary mb-4 text-center">What you get:</h3>
+            <ul className="space-y-3 text-text-secondary max-w-md mx-auto">
               <li className="flex items-center gap-3">
                 <span className="text-purple-400">✓</span>
                 Top 5 matches with highest model edge
