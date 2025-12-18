@@ -307,13 +307,13 @@ export async function GET(request: NextRequest) {
       } as MarketAlertsResponse, { status: 401 });
     }
     
-    // Check premium status
+    // Check premium status - PREMIUM tier only (not PRO)
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: { plan: true },
     });
     
-    const isPremium = user?.plan === 'PRO' || user?.plan === 'PREMIUM';
+    const isPremium = user?.plan === 'PREMIUM';
     
     if (!isPremium) {
       return NextResponse.json({

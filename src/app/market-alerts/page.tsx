@@ -266,44 +266,44 @@ function PremiumGate() {
   return (
     <div className="min-h-screen bg-bg-primary py-12">
       <div className="container-custom max-w-2xl">
-        <div className="bg-gradient-to-br from-bg-card via-bg-card to-accent/5 border border-accent/30 rounded-2xl p-8 text-center">
+        <div className="bg-gradient-to-br from-bg-card via-bg-card to-purple-500/5 border border-purple-500/30 rounded-2xl p-8 text-center">
           <div className="text-6xl mb-6">🔒</div>
           <h1 className="text-3xl font-bold text-text-primary mb-4">
             Market Alerts
           </h1>
           <p className="text-text-secondary text-lg mb-6">
             Real-time odds tracking, steam move detection, and model edge alerts 
-            are exclusive to Pro and Premium subscribers.
+            are exclusive to Premium subscribers.
           </p>
           
           <div className="bg-bg-primary/50 rounded-xl p-6 mb-8 text-left">
             <h3 className="font-semibold text-text-primary mb-4">What you get:</h3>
             <ul className="space-y-3 text-text-secondary">
               <li className="flex items-center gap-3">
-                <span className="text-green-400">✓</span>
+                <span className="text-purple-400">✓</span>
                 Top 5 matches with highest model edge
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-green-400">✓</span>
+                <span className="text-purple-400">✓</span>
                 Steam move detection (sharp money alerts)
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-green-400">✓</span>
+                <span className="text-purple-400">✓</span>
                 Real-time odds movement tracking
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-green-400">✓</span>
+                <span className="text-purple-400">✓</span>
                 Model probability vs market comparison
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-green-400">✓</span>
+                <span className="text-purple-400">✓</span>
                 Automatic refresh every 15 minutes
               </li>
             </ul>
           </div>
           
-          <Link href="/pricing" className="btn-primary text-lg px-8 py-3">
-            Upgrade to Pro
+          <Link href="/pricing" className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-semibold text-lg px-8 py-3 rounded-lg transition-colors">
+            Upgrade to Premium
           </Link>
         </div>
       </div>
@@ -422,8 +422,8 @@ export default function MarketAlertsPage() {
               <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
                 Market Alerts
               </h1>
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/20 text-accent border border-accent/30">
-                PRO
+              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                PREMIUM
               </span>
             </div>
             <p className="text-text-secondary">
@@ -457,55 +457,58 @@ export default function MarketAlertsPage() {
           </div>
         )}
 
-        {/* Top Edge Matches */}
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-2xl">🎯</span>
-            <h2 className="text-xl font-semibold text-text-primary">Top Value Edges</h2>
-            <span className="text-text-muted text-sm">({topEdgeMatches.length})</span>
-          </div>
-          
-          {topEdgeMatches.length === 0 ? (
-            <div className="bg-bg-card border border-divider rounded-xl p-8 text-center">
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-lg font-semibold text-text-primary mb-2">No Value Edges Found</h3>
-              <p className="text-text-secondary">
-                When our model identifies 5%+ edges vs market odds, they&apos;ll appear here.
-              </p>
+        {/* Two Column Layout - Value Edges & Steam Moves Side by Side */}
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Top Edge Matches */}
+          <section className="bg-bg-card/50 border border-divider rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-2xl">🎯</span>
+              <h2 className="text-xl font-semibold text-text-primary">Top Value Edges</h2>
+              <span className="text-text-muted text-sm">({topEdgeMatches.length})</span>
             </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {topEdgeMatches.map(alert => (
-                <EdgeMatchCard key={alert.id} alert={alert} />
-              ))}
-            </div>
-          )}
-        </section>
+            
+            {topEdgeMatches.length === 0 ? (
+              <div className="bg-bg-primary/50 border border-divider rounded-xl p-8 text-center">
+                <div className="text-4xl mb-4">📊</div>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">No Value Edges Found</h3>
+                <p className="text-text-secondary text-sm">
+                  Edges will appear when model finds value.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {topEdgeMatches.map(alert => (
+                  <EdgeMatchCard key={alert.id} alert={alert} />
+                ))}
+              </div>
+            )}
+          </section>
 
-        {/* Steam Moves */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-2xl">⚡</span>
-            <h2 className="text-xl font-semibold text-text-primary">Steam Moves</h2>
-            <span className="text-text-muted text-sm">({steamMoves.length})</span>
-          </div>
-          
-          {steamMoves.length === 0 ? (
-            <div className="bg-bg-card border border-divider rounded-xl p-8 text-center">
-              <div className="text-4xl mb-4">📉</div>
-              <h3 className="text-lg font-semibold text-text-primary mb-2">No Steam Moves Detected</h3>
-              <p className="text-text-secondary">
-                Sharp line movements (3%+ odds changes) will appear here when detected.
-              </p>
+          {/* Steam Moves */}
+          <section className="bg-bg-card/50 border border-amber-500/20 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-2xl">⚡</span>
+              <h2 className="text-xl font-semibold text-text-primary">Steam Moves</h2>
+              <span className="text-text-muted text-sm">({steamMoves.length})</span>
             </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {steamMoves.map(alert => (
-                <SteamMoveCard key={alert.id} alert={alert} />
-              ))}
-            </div>
-          )}
-        </section>
+            
+            {steamMoves.length === 0 ? (
+              <div className="bg-bg-primary/50 border border-divider rounded-xl p-8 text-center">
+                <div className="text-4xl mb-4">📉</div>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">No Steam Moves Detected</h3>
+                <p className="text-text-secondary text-sm">
+                  Sharp money alerts (3%+ odds changes) appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {steamMoves.map(alert => (
+                  <SteamMoveCard key={alert.id} alert={alert} />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
 
         {/* Disclaimer */}
         <div className="mt-12 p-4 bg-bg-card border border-divider rounded-lg">

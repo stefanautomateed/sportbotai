@@ -71,7 +71,7 @@ export default function Header() {
             >
               <span className="text-base">📊</span>
               Alerts
-              <span className="text-[10px] font-semibold bg-accent/20 text-accent px-1.5 py-0.5 rounded">PRO</span>
+              <span className="text-[10px] font-semibold bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded">PREMIUM</span>
             </Link>
             <Link 
               href="/pricing" 
@@ -168,7 +168,7 @@ export default function Header() {
               >
                 <span className="text-lg">📊</span>
                 Market Alerts
-                <span className="text-[10px] font-semibold bg-accent/20 text-accent px-1.5 py-0.5 rounded ml-auto">PRO</span>
+                <span className="text-[10px] font-semibold bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded ml-auto">PREMIUM</span>
               </Link>
               <Link
                 href="/account"
