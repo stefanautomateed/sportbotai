@@ -113,17 +113,37 @@ function marketEdgeToPrediction(
 }
 
 /**
- * Get match result from football-data.org API
+ * Get match result from multiple sports APIs
  */
-async function getMatchResult(homeTeam: string, awayTeam: string, matchDate: Date): Promise<MatchResult | null> {
-  try {
-    // Try API-Football first
-    const apiKey = process.env.API_FOOTBALL_KEY;
-    if (!apiKey) return null;
+async function getMatchResult(homeTeam: string, awayTeam: string, matchDate: Date, league?: string | null): Promise<MatchResult | null> {
+  const apiKey = process.env.API_FOOTBALL_KEY;
+  if (!apiKey) return null;
+  
+  const dateStr = matchDate.toISOString().split('T')[0];
+  const searchHome = homeTeam.toLowerCase();
+  const searchAway = awayTeam.toLowerCase();
+  
+  // Detect sport from league or team names
+  const isNBA = league?.includes('NBA') || 
+    ['lakers', 'celtics', 'bulls', 'heat', 'warriors', 'nuggets', 'suns', 'bucks', 'nets', 'knicks', 'clippers', 'mavs', 'mavericks', 'rockets', 'spurs', 'jazz', 'thunder', 'grizzlies', 'pelicans', 'timberwolves', 'blazers', 'kings', 'magic', 'hawks', 'hornets', 'pistons', 'pacers', 'cavaliers', '76ers', 'raptors', 'wizards'].some(t => searchHome.includes(t) || searchAway.includes(t));
+  
+  const isNHL = league?.includes('NHL') || 
+    ['bruins', 'rangers', 'penguins', 'capitals', 'flyers', 'devils', 'islanders', 'canadiens', 'senators', 'maple leafs', 'lightning', 'panthers', 'hurricanes', 'predators', 'blue jackets', 'red wings', 'blackhawks', 'wild', 'blues', 'jets', 'avalanche', 'stars', 'coyotes', 'ducks', 'kings', 'sharks', 'kraken', 'golden knights', 'flames', 'oilers', 'canucks'].some(t => searchHome.includes(t) || searchAway.includes(t));
 
-    // Search for the match
-    const dateStr = matchDate.toISOString().split('T')[0];
+  try {
+    // Try NBA API
+    if (isNBA) {
+      const nbaResult = await fetchSportResult('basketball', 12, dateStr, searchHome, searchAway, apiKey);
+      if (nbaResult) return nbaResult;
+    }
     
+    // Try NHL API
+    if (isNHL) {
+      const nhlResult = await fetchSportResult('hockey', 57, dateStr, searchHome, searchAway, apiKey);
+      if (nhlResult) return nhlResult;
+    }
+    
+    // Try Football API (default)
     const response = await fetch(
       `https://v3.football.api-sports.io/fixtures?date=${dateStr}&status=FT`,
       {
@@ -143,8 +163,6 @@ async function getMatchResult(homeTeam: string, awayTeam: string, matchDate: Dat
     for (const fixture of fixtures) {
       const home = fixture.teams?.home?.name?.toLowerCase() || '';
       const away = fixture.teams?.away?.name?.toLowerCase() || '';
-      const searchHome = homeTeam.toLowerCase();
-      const searchAway = awayTeam.toLowerCase();
 
       // Check for match (fuzzy matching)
       if (
@@ -164,6 +182,66 @@ async function getMatchResult(homeTeam: string, awayTeam: string, matchDate: Dat
     return null;
   } catch (error) {
     console.error('[Track-Predictions] Failed to get match result:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch result from API-Sports for a specific sport
+ */
+async function fetchSportResult(
+  sport: 'basketball' | 'hockey',
+  leagueId: number,
+  dateStr: string,
+  searchHome: string,
+  searchAway: string,
+  apiKey: string
+): Promise<MatchResult | null> {
+  try {
+    const baseUrl = sport === 'basketball' 
+      ? 'https://v1.basketball.api-sports.io' 
+      : 'https://v1.hockey.api-sports.io';
+    
+    const response = await fetch(
+      `${baseUrl}/games?date=${dateStr}&league=${leagueId}&season=2024-2025`,
+      {
+        headers: {
+          'x-rapidapi-key': apiKey,
+          'x-rapidapi-host': baseUrl.replace('https://', ''),
+        },
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const games = data.response || [];
+
+    for (const game of games) {
+      const home = game.teams?.home?.name?.toLowerCase() || '';
+      const away = game.teams?.away?.name?.toLowerCase() || '';
+      const status = game.status?.short || '';
+
+      // Only count finished games
+      if (!['FT', 'AOT', 'AP'].includes(status)) continue;
+
+      if (
+        (home.includes(searchHome) || searchHome.includes(home)) &&
+        (away.includes(searchAway) || searchAway.includes(away))
+      ) {
+        return {
+          homeTeam: game.teams.home.name,
+          awayTeam: game.teams.away.name,
+          homeScore: game.scores?.home?.total ?? game.scores?.home?.points ?? 0,
+          awayScore: game.scores?.away?.total ?? game.scores?.away?.points ?? 0,
+          completed: true,
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`[Track-Predictions] Failed to fetch ${sport} result:`, error);
     return null;
   }
 }
@@ -403,8 +481,8 @@ export async function GET(request: NextRequest) {
       
       if (!homeTeam || !awayTeam) continue;
 
-      // Get match result
-      const result = await getMatchResult(homeTeam, awayTeam, prediction.matchDate);
+      // Get match result (pass league for sport detection)
+      const result = await getMatchResult(homeTeam, awayTeam, prediction.matchDate, prediction.league);
 
       if (result && result.completed && prediction.predictedScenario) {
         const evaluation = evaluatePrediction(
