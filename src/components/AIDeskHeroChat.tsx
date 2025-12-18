@@ -726,13 +726,21 @@ export default function AIDeskHeroChat() {
         <div className="px-6 py-3 bg-red-500/10 border-t border-red-500/20">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-red-400">{error}</p>
-            {/* Show Upgrade button for rate limit errors */}
-            {error.toLowerCase().includes('rate limit') && (
+            {/* Show Upgrade button for rate limit errors based on current plan */}
+            {error.toLowerCase().includes('rate limit') && userPlan === 'FREE' && (
               <Link
                 href="/pricing#pro"
                 className="flex-shrink-0 px-4 py-1.5 bg-gradient-to-r from-primary to-accent text-white text-xs font-semibold rounded-lg hover:from-primary/90 hover:to-accent/90 transition-all"
               >
                 Upgrade to Pro
+              </Link>
+            )}
+            {error.toLowerCase().includes('rate limit') && userPlan === 'PRO' && (
+              <Link
+                href="/pricing#premium"
+                className="flex-shrink-0 px-4 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-semibold rounded-lg hover:from-yellow-400 hover:to-orange-400 transition-all"
+              >
+                Upgrade to Premium
               </Link>
             )}
           </div>

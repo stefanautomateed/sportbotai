@@ -787,13 +787,22 @@ export default function AIDeskChat() {
         <div className="px-4 py-2 sm:py-3 bg-red-500/10 border-t border-red-500/20">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs text-red-400 flex-1">{error}</p>
-            {error.toLowerCase().includes('limit') && isFreePlan && (
+            {error.toLowerCase().includes('limit') && userPlan === 'FREE' && (
               <Link
                 href="/pricing#pro"
                 className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-accent hover:bg-accent/80 text-black text-xs font-medium rounded-lg transition-colors"
               >
                 <Zap className="w-3 h-3" />
                 Upgrade to Pro
+              </Link>
+            )}
+            {error.toLowerCase().includes('limit') && userPlan === 'PRO' && (
+              <Link
+                href="/pricing#premium"
+                className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                <Zap className="w-3 h-3" />
+                Upgrade to Premium
               </Link>
             )}
           </div>
