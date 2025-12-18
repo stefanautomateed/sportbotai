@@ -81,7 +81,8 @@ async function translateToEnglish(message: string): Promise<{
 }> {
   const hasNonAscii = /[^\x00-\x7F]/.test(message);
   const hasCyrillic = /[\u0400-\u04FF]/.test(message);
-  const hasCommonNonEnglish = /\b(je|da|li|sta|šta|što|kako|koliko|gdje|gde|kada|zašto|porque|qué|cómo|cuándo|dónde|wie|was|wann|wo|warum|où|quand|pourquoi|comment|combien)\b/i.test(message);
+  // Note: removed 'was', 'wo', 'match' as they are also common English words
+  const hasCommonNonEnglish = /\b(je|da|li|sta|šta|što|kako|koliko|gdje|gde|kada|zašto|porque|qué|cómo|cuándo|dónde|wie|wann|warum|où|quand|pourquoi|comment|combien)\b/i.test(message);
   
   if (!hasNonAscii && !hasCyrillic && !hasCommonNonEnglish) {
     return { originalLanguage: 'en', englishQuery: message, needsTranslation: false };
@@ -106,11 +107,13 @@ async function translateToEnglish(message: string): Promise<{
     let originalLanguage = 'unknown';
     if (hasCyrillic || /\b(je|da|li|koliko|postigao|utakmic)\b/i.test(message)) {
       originalLanguage = 'sr';
-    } else if (/\b(porque|qué|cómo|goles)\b/i.test(message)) {
+    } else if (/\b(porque|qué|cómo|goles|cuántos)\b/i.test(message)) {
       originalLanguage = 'es';
-    } else if (/\b(wie|was|wann|wo|spiel)\b/i.test(message)) {
+    } else if (/\b(wie|wann|warum|spiel|spielen|mannschaft|gegen)\b/i.test(message)) {
+      // Note: removed "was" and "wo" as they conflict with English words
       originalLanguage = 'de';
-    } else if (/\b(où|quand|pourquoi|match)\b/i.test(message)) {
+    } else if (/\b(où|quand|pourquoi|combien|joueur|équipe)\b/i.test(message)) {
+      // Note: removed "match" as it's also English
       originalLanguage = 'fr';
     }
     
