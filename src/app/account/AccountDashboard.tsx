@@ -139,20 +139,25 @@ export default function AccountDashboard({ user, recentAnalyses }: Props) {
             <div className="mb-4">
               <div className="flex items-end justify-between mb-2">
                 <span className="text-3xl font-bold text-white">
-                  {limit === -1 ? '∞' : remaining}
+                  {limit === -1 ? '∞' : `${used} / ${limit}`}
                 </span>
                 <span className="text-text-muted text-sm">
-                  {limit === -1 ? 'unlimited' : `of ${limit} remaining`}
+                  {limit === -1 ? 'unlimited' : `used today`}
                 </span>
               </div>
               
               {limit !== -1 && (
-                <div className="h-2 bg-bg rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all ${usagePercent > 80 ? 'bg-danger' : usagePercent > 50 ? 'bg-warning' : 'bg-accent'}`}
-                    style={{ width: `${Math.min(usagePercent, 100)}%` }}
-                  />
-                </div>
+                <>
+                  <div className="h-2 bg-bg rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all ${usagePercent > 80 ? 'bg-danger' : usagePercent > 50 ? 'bg-warning' : 'bg-accent'}`}
+                      style={{ width: `${Math.min(usagePercent, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-text-muted mt-2">
+                    {remaining > 0 ? `${remaining} ${remaining === 1 ? 'analysis' : 'analyses'} remaining` : 'Limit reached – resets at midnight'}
+                  </p>
+                </>
               )}
             </div>
             

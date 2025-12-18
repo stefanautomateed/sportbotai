@@ -138,7 +138,8 @@ export default function UsageLimitBanner({
           </div>
           <div>
             <p className="text-sm text-gray-300">
-              <span className="font-semibold text-white">{analysesRemaining}</span> of {planLimit} analyses left today
+              <span className="font-semibold text-white">{used}/{planLimit}</span> used today
+              <span className="text-gray-500 ml-2">• {analysesRemaining} left</span>
             </p>
           </div>
         </div>
