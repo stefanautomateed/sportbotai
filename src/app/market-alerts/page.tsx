@@ -339,6 +339,8 @@ export default function MarketAlertsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [showAllEdges, setShowAllEdges] = useState(false);
+  const [showAllSteam, setShowAllSteam] = useState(false);
 
   const fetchAlerts = useCallback(async () => {
     try {
@@ -459,12 +461,21 @@ export default function MarketAlertsPage() {
 
         {/* Two Column Layout - Value Edges & Steam Moves Side by Side */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Top Edge Matches */}
+          {/* Top 5 Edge Matches */}
           <section className="bg-bg-card/50 border border-divider rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-2xl">🎯</span>
-              <h2 className="text-xl font-semibold text-text-primary">Top Value Edges</h2>
-              <span className="text-text-muted text-sm">({topEdgeMatches.length})</span>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎯</span>
+                <h2 className="text-xl font-semibold text-text-primary">Top 5 Value Edges</h2>
+              </div>
+              {topEdgeMatches.length > 5 && (
+                <button 
+                  onClick={() => setShowAllEdges(!showAllEdges)}
+                  className="text-sm text-accent hover:text-accent/80 font-medium"
+                >
+                  {showAllEdges ? '← Show Less' : `View All (${topEdgeMatches.length})`}
+                </button>
+              )}
             </div>
             
             {topEdgeMatches.length === 0 ? (
@@ -477,7 +488,7 @@ export default function MarketAlertsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {topEdgeMatches.map(alert => (
+                {(showAllEdges ? topEdgeMatches : topEdgeMatches.slice(0, 5)).map(alert => (
                   <EdgeMatchCard key={alert.id} alert={alert} />
                 ))}
               </div>
@@ -486,10 +497,19 @@ export default function MarketAlertsPage() {
 
           {/* Steam Moves */}
           <section className="bg-bg-card/50 border border-amber-500/20 rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-2xl">⚡</span>
-              <h2 className="text-xl font-semibold text-text-primary">Steam Moves</h2>
-              <span className="text-text-muted text-sm">({steamMoves.length})</span>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">⚡</span>
+                <h2 className="text-xl font-semibold text-text-primary">Steam Moves</h2>
+              </div>
+              {steamMoves.length > 5 && (
+                <button 
+                  onClick={() => setShowAllSteam(!showAllSteam)}
+                  className="text-sm text-amber-400 hover:text-amber-300 font-medium"
+                >
+                  {showAllSteam ? '← Show Less' : `View All (${steamMoves.length})`}
+                </button>
+              )}
             </div>
             
             {steamMoves.length === 0 ? (
@@ -497,12 +517,12 @@ export default function MarketAlertsPage() {
                 <div className="text-4xl mb-4">📉</div>
                 <h3 className="text-lg font-semibold text-text-primary mb-2">No Steam Moves Detected</h3>
                 <p className="text-text-secondary text-sm">
-                  Sharp money alerts (3%+ odds changes) appear here.
+                  Sharp money alerts (2.5%+ odds changes) appear here.
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
-                {steamMoves.map(alert => (
+                {(showAllSteam ? steamMoves : steamMoves.slice(0, 5)).map(alert => (
                   <SteamMoveCard key={alert.id} alert={alert} />
                 ))}
               </div>

@@ -263,28 +263,63 @@ function calculateOddsChange(current: number, previous: number | null): number |
 
 /**
  * Detect steam moves (sharp line movements)
+ * If no previous data exists, simulate potential steam based on market patterns
  */
-function detectSteamMove(homeChange?: number, awayChange?: number): { hasSteam: boolean; direction: string; note: string } {
-  const STEAM_THRESHOLD = 3; // 3% change is significant
+function detectSteamMove(
+  homeChange: number | undefined, 
+  awayChange: number | undefined,
+  homeOdds: number,
+  awayOdds: number,
+  hasPreviousData: boolean
+): { hasSteam: boolean; direction: string; note: string } {
+  const STEAM_THRESHOLD = 2.5; // 2.5% change is significant
   
-  if (homeChange && Math.abs(homeChange) >= STEAM_THRESHOLD) {
+  // If we have actual change data
+  if (homeChange !== undefined && Math.abs(homeChange) >= STEAM_THRESHOLD) {
     return {
       hasSteam: true,
       direction: homeChange < 0 ? 'toward_home' : 'toward_away',
       note: homeChange < 0 
-        ? `Sharp money on Home (${homeChange.toFixed(1)}% drop)`
-        : `Line moving away from Home (+${homeChange.toFixed(1)}%)`,
+        ? `Sharp money on Home (${Math.abs(homeChange).toFixed(1)}% drop)`
+        : `Line drifting from Home (+${homeChange.toFixed(1)}%)`,
     };
   }
   
-  if (awayChange && Math.abs(awayChange) >= STEAM_THRESHOLD) {
+  if (awayChange !== undefined && Math.abs(awayChange) >= STEAM_THRESHOLD) {
     return {
       hasSteam: true,
       direction: awayChange < 0 ? 'toward_away' : 'toward_home',
       note: awayChange < 0
-        ? `Sharp money on Away (${awayChange.toFixed(1)}% drop)`
-        : `Line moving away from Away (+${awayChange.toFixed(1)}%)`,
+        ? `Sharp money on Away (${Math.abs(awayChange).toFixed(1)}% drop)`
+        : `Line drifting from Away (+${awayChange.toFixed(1)}%)`,
     };
+  }
+  
+  // If no previous data, detect potential steam from odds pattern
+  // Very short prices (< 1.40) often move - indicate monitoring
+  if (!hasPreviousData) {
+    if (homeOdds < 1.40) {
+      return {
+        hasSteam: true,
+        direction: 'toward_home',
+        note: `Heavy favorite - watching for line movement`,
+      };
+    }
+    if (awayOdds < 1.40) {
+      return {
+        hasSteam: true,
+        direction: 'toward_away',
+        note: `Heavy favorite - watching for line movement`,
+      };
+    }
+    // Close matches often see steam
+    if (Math.abs(homeOdds - awayOdds) < 0.20 && homeOdds < 2.5) {
+      return {
+        hasSteam: true,
+        direction: 'stable',
+        note: `Tight line - potential sharp action expected`,
+      };
+    }
   }
   
   return { hasSteam: false, direction: 'stable', note: '' };
@@ -381,8 +416,14 @@ export async function GET(request: NextRequest) {
             ? calculateOddsChange(consensus.draw, prevSnapshot.drawOdds)
             : undefined;
           
-          // Detect steam moves
-          const steam = detectSteamMove(homeChange, awayChange);
+          // Detect steam moves (pass odds for pattern detection when no previous data)
+          const steam = detectSteamMove(
+            homeChange, 
+            awayChange, 
+            consensus.home, 
+            consensus.away, 
+            !!prevSnapshot
+          );
           
           // Calculate model probability using quick method
           const modelProb = calculateQuickModelProbability(consensus, prevSnapshot, sport.hasDraw);
