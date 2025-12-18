@@ -1,6 +1,7 @@
 /**
- * Quick script to upgrade a user to PREMIUM
- * Run with: npx ts-node scripts/upgrade-user.ts
+ * Upgrade a SPECIFIC user to a plan
+ * Run with: npx ts-node scripts/upgrade-user.ts <email> <plan>
+ * Example: npx ts-node scripts/upgrade-user.ts user@example.com PREMIUM
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -8,41 +9,44 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // List all users
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      plan: true,
-      analysisCount: true,
-    },
+  const email = process.argv[2];
+  const plan = process.argv[3] || 'PREMIUM';
+
+  if (!email) {
+    console.error('❌ ERROR: You must provide an email address!');
+    console.log('Usage: npx ts-node scripts/upgrade-user.ts <email> <plan>');
+    console.log('Example: npx ts-node scripts/upgrade-user.ts user@example.com PREMIUM');
+    process.exit(1);
+  }
+
+  // Find the specific user
+  const user = await prisma.user.findUnique({
+    where: { email },
   });
 
-  console.log('Current users:');
-  console.table(users);
+  if (!user) {
+    console.error(`❌ User with email "${email}" not found!`);
+    
+    // List all users for reference
+    const allUsers = await prisma.user.findMany({
+      select: { email: true, plan: true },
+    });
+    console.log('\nExisting users:');
+    console.table(allUsers);
+    process.exit(1);
+  }
 
-  // Upgrade ALL users to PREMIUM for testing
-  const result = await prisma.user.updateMany({
+  console.log(`Found user: ${user.email} (current plan: ${user.plan})`);
+
+  // Upgrade ONLY this specific user
+  const updated = await prisma.user.update({
+    where: { email },
     data: {
-      plan: 'PREMIUM',
-      analysisCount: 0, // Reset count
+      plan: plan as 'FREE' | 'PRO' | 'PREMIUM',
     },
   });
 
-  console.log(`\nUpgraded ${result.count} user(s) to PREMIUM`);
-
-  // Show updated users
-  const updatedUsers = await prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      plan: true,
-      analysisCount: true,
-    },
-  });
-
-  console.log('\nUpdated users:');
-  console.table(updatedUsers);
+  console.log(`✅ Successfully upgraded ${updated.email} to ${updated.plan}`);
 }
 
 main()

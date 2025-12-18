@@ -203,9 +203,18 @@ function SteamMoveCard({ alert }: { alert: MarketAlert }) {
   
   const sportEmoji = sportEmojis[alert.sport] || '🎯';
   
-  const direction = alert.changeDirection;
-  const directionLabel = direction === 'toward_home' ? 'Sharp money on Home' :
-                        direction === 'toward_away' ? 'Sharp money on Away' : 'Stable';
+  // Calculate previous odds from change percentage
+  // If change is -5%, current is 2.0, then prev = 2.0 / (1 - 0.05) = 2.105
+  const homePrevOdds = alert.homeChange && Math.abs(alert.homeChange) > 0.1 
+    ? alert.homeOdds / (1 + alert.homeChange / 100) 
+    : null;
+  const awayPrevOdds = alert.awayChange && Math.abs(alert.awayChange) > 0.1
+    ? alert.awayOdds / (1 + alert.awayChange / 100)
+    : null;
+  
+  // Determine which team has the significant move
+  const homeHasMove = homePrevOdds !== null;
+  const awayHasMove = awayPrevOdds !== null;
   
   return (
     <div className="bg-bg-card border border-amber-500/30 rounded-xl p-5">
@@ -220,39 +229,50 @@ function SteamMoveCard({ alert }: { alert: MarketAlert }) {
         </span>
       </div>
       
-      {/* Teams */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
+      {/* Teams - Clean format: "Team 3.6 → 3.2" for moved, just "Team 2.1" for stable */}
+      <div className="mb-4 space-y-3">
+        {/* Home Team */}
+        <div className="flex items-center justify-between">
           <span className="font-semibold text-text-primary">{alert.homeTeam}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-text-secondary font-mono">{alert.homeOdds.toFixed(2)}</span>
-            {alert.homeChange && (
-              <span className={`text-sm font-mono ${alert.homeChange < 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {alert.homeChange > 0 ? '+' : ''}{alert.homeChange.toFixed(1)}%
+          {homeHasMove ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-text-muted font-mono text-sm line-through">{homePrevOdds!.toFixed(2)}</span>
+              <span className="text-text-muted">→</span>
+              <span className={`font-mono font-semibold ${alert.homeChange! < 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {alert.homeOdds.toFixed(2)}
               </span>
-            )}
-          </div>
+            </div>
+          ) : (
+            <span className="text-text-secondary font-mono">{alert.homeOdds.toFixed(2)}</span>
+          )}
         </div>
+        
+        {/* Away Team */}
         <div className="flex items-center justify-between">
           <span className="font-semibold text-text-primary">{alert.awayTeam}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-text-secondary font-mono">{alert.awayOdds.toFixed(2)}</span>
-            {alert.awayChange && (
-              <span className={`text-sm font-mono ${alert.awayChange < 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {alert.awayChange > 0 ? '+' : ''}{alert.awayChange.toFixed(1)}%
+          {awayHasMove ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-text-muted font-mono text-sm line-through">{awayPrevOdds!.toFixed(2)}</span>
+              <span className="text-text-muted">→</span>
+              <span className={`font-mono font-semibold ${alert.awayChange! < 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {alert.awayOdds.toFixed(2)}
               </span>
-            )}
-          </div>
+            </div>
+          ) : (
+            <span className="text-text-secondary font-mono">{alert.awayOdds.toFixed(2)}</span>
+          )}
         </div>
       </div>
       
       {/* Steam Note */}
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">📈</span>
-          <span className="text-amber-400 text-sm font-medium">{alert.alertNote || directionLabel}</span>
+      {alert.alertNote && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📈</span>
+            <span className="text-amber-400 text-sm font-medium">{alert.alertNote}</span>
+          </div>
         </div>
-      </div>
+      )}
       
       {/* Match Time */}
       <div className="text-text-muted text-sm text-center">
