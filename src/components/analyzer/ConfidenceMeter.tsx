@@ -39,8 +39,8 @@ function calculateConfidenceScore(result: AnalyzeResponse): {
     factors.push({ name: 'Data Quality', impact: 'neutral', detail: 'Standard data quality' });
   }
 
-  // Factor 2: Form Data Source (+/- 10 points)
-  const formSource = result.momentumAndForm.formDataSource;
+  // Factor 2: Form Data Source (+/- 10 points) - with null safety
+  const formSource = result.momentumAndForm?.formDataSource;
   if (formSource === 'API_FOOTBALL' || formSource === 'API_SPORTS') {
     score += 10;
     factors.push({ name: 'Form Data', impact: 'positive', detail: 'Real-time form data' });
@@ -51,9 +51,9 @@ function calculateConfidenceScore(result: AnalyzeResponse): {
 
   // Factor 3: Probability Spread (+/- 10 points)
   const probs = result.probabilities;
-  const homeProb = probs.homeWin ?? 0;
-  const awayProb = probs.awayWin ?? 0;
-  const drawProb = probs.draw ?? 0;
+  const homeProb = probs?.homeWin ?? 0;
+  const awayProb = probs?.awayWin ?? 0;
+  const drawProb = probs?.draw ?? 0;
   const maxProb = Math.max(homeProb, awayProb, drawProb);
   
   if (maxProb >= 60) {
@@ -64,29 +64,31 @@ function calculateConfidenceScore(result: AnalyzeResponse): {
     factors.push({ name: 'Tight Match', impact: 'negative', detail: 'No clear favorite' });
   }
 
-  // Factor 4: H2H Data (+5 points if available)
-  const h2h = result.momentumAndForm.h2hSummary;
+  // Factor 4: H2H Data (+5 points if available) - with null safety
+  const h2h = result.momentumAndForm?.h2hSummary;
   if (h2h && h2h.totalMatches >= 3) {
     score += 5;
     factors.push({ name: 'H2H History', impact: 'positive', detail: `${h2h.totalMatches} previous meetings` });
   }
 
-  // Factor 5: Market Stability (+/- 10 points)
-  const markets = result.marketStability.markets;
-  const stabilities = [markets.main_1x2.stability, markets.over_under.stability, markets.btts.stability];
-  const highStabilityCount = stabilities.filter(s => s === 'HIGH').length;
-  const lowStabilityCount = stabilities.filter(s => s === 'LOW').length;
-  
-  if (highStabilityCount >= 2) {
-    score += 10;
-    factors.push({ name: 'Market Stability', impact: 'positive', detail: 'Stable betting markets' });
-  } else if (lowStabilityCount >= 2) {
-    score -= 10;
-    factors.push({ name: 'Market Volatility', impact: 'negative', detail: 'Volatile betting markets' });
+  // Factor 5: Market Stability (+/- 10 points) - with null safety
+  const markets = result.marketStability?.markets;
+  if (markets) {
+    const stabilities = [markets.main_1x2?.stability, markets.over_under?.stability, markets.btts?.stability].filter(Boolean);
+    const highStabilityCount = stabilities.filter(s => s === 'HIGH').length;
+    const lowStabilityCount = stabilities.filter(s => s === 'LOW').length;
+    
+    if (highStabilityCount >= 2) {
+      score += 10;
+      factors.push({ name: 'Market Stability', impact: 'positive', detail: 'Stable betting markets' });
+    } else if (lowStabilityCount >= 2) {
+      score -= 10;
+      factors.push({ name: 'Market Volatility', impact: 'negative', detail: 'Volatile betting markets' });
+    }
   }
 
-  // Factor 6: Risk Level (+/- 5 points)
-  const riskLevel = result.riskAnalysis.overallRiskLevel;
+  // Factor 6: Risk Level (+/- 5 points) - with null safety
+  const riskLevel = result.riskAnalysis?.overallRiskLevel;
   if (riskLevel === 'LOW') {
     score += 5;
   } else if (riskLevel === 'HIGH') {

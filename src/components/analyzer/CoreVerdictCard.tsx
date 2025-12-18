@@ -59,10 +59,10 @@ export default function CoreVerdictCard({ result }: CoreVerdictCardProps) {
   };
   
   const verdict = getVerdict();
-  const risk = riskConfig[riskAnalysis.overallRiskLevel];
+  const risk = riskConfig[riskAnalysis?.overallRiskLevel ?? 'MEDIUM'];
   
-  // Best value flag
-  const valueFlagValues = Object.values(valueAnalysis.valueFlags);
+  // Best value flag - with null safety for older analyses
+  const valueFlagValues = valueAnalysis?.valueFlags ? Object.values(valueAnalysis.valueFlags) : [];
   const bestValueFlag = valueFlagValues.includes('HIGH') ? 'HIGH' 
     : valueFlagValues.includes('MEDIUM') ? 'MEDIUM'
     : valueFlagValues.includes('LOW') ? 'LOW' : 'NONE';

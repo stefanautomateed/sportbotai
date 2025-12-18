@@ -39,10 +39,10 @@ const valueConfig: Record<ValueFlag, { label: string; color: string; bgClass: st
 export default function QuickGlanceCard({ result }: QuickGlanceCardProps) {
   const { matchInfo, probabilities, riskAnalysis, valueAnalysis, upsetPotential, tacticalAnalysis } = result;
   
-  const risk = riskConfig[riskAnalysis.overallRiskLevel];
+  const risk = riskConfig[riskAnalysis?.overallRiskLevel ?? 'MEDIUM'];
   
-  // Determine best value flag for display
-  const valueFlagValues = Object.values(valueAnalysis.valueFlags);
+  // Determine best value flag for display - with null safety for older analyses
+  const valueFlagValues = valueAnalysis?.valueFlags ? Object.values(valueAnalysis.valueFlags) : [];
   const bestValueFlag = valueFlagValues.includes('HIGH') ? 'HIGH' 
     : valueFlagValues.includes('MEDIUM') ? 'MEDIUM'
     : valueFlagValues.includes('LOW') ? 'LOW' 

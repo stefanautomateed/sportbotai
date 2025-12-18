@@ -204,9 +204,9 @@ export default function AnalysisAccordion({ result }: AnalysisAccordionProps) {
             <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">Implied Probabilities (from odds)</h4>
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {[
-                { label: 'Home Win', value: valueAnalysis.impliedProbabilities.homeWin, flag: valueAnalysis.valueFlags.homeWin },
-                { label: 'Draw', value: valueAnalysis.impliedProbabilities.draw, flag: valueAnalysis.valueFlags.draw },
-                { label: 'Away Win', value: valueAnalysis.impliedProbabilities.awayWin, flag: valueAnalysis.valueFlags.awayWin },
+                { label: 'Home Win', value: valueAnalysis?.impliedProbabilities?.homeWin ?? null, flag: valueAnalysis?.valueFlags?.homeWin ?? 'NONE' },
+                { label: 'Draw', value: valueAnalysis?.impliedProbabilities?.draw ?? null, flag: valueAnalysis?.valueFlags?.draw ?? 'NONE' },
+                { label: 'Away Win', value: valueAnalysis?.impliedProbabilities?.awayWin ?? null, flag: valueAnalysis?.valueFlags?.awayWin ?? 'NONE' },
               ].map((item) => {
                 const flagStyle = valueFlagConfig[item.flag];
                 return (

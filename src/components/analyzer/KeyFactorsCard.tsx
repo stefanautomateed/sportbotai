@@ -105,9 +105,9 @@ export default function KeyFactorsCard({ result }: KeyFactorsCardProps) {
     });
   }
   
-  // Add high-value indicator if present
-  if (valueAnalysis.bestValueSide !== 'NONE') {
-    const valueFlags = Object.values(valueAnalysis.valueFlags);
+  // Add high-value indicator if present - with null safety for older analyses
+  if (valueAnalysis?.bestValueSide && valueAnalysis.bestValueSide !== 'NONE') {
+    const valueFlags = valueAnalysis?.valueFlags ? Object.values(valueAnalysis.valueFlags) : [];
     if (valueFlags.includes('HIGH') || valueFlags.includes('MEDIUM')) {
       const bestSide = valueAnalysis.bestValueSide === 'HOME' ? result.matchInfo.homeTeam :
                        valueAnalysis.bestValueSide === 'AWAY' ? result.matchInfo.awayTeam : 'Draw';
