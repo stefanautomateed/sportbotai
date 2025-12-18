@@ -565,13 +565,56 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.bestEdge.percent - a.bestEdge.percent)
       .slice(0, 5);
     
-    const steamMoves = allAlerts
-      .filter(a => a.hasSteamMove)
-      .sort((a, b) => {
-        const aChange = Math.max(Math.abs(a.homeChange || 0), Math.abs(a.awayChange || 0));
-        const bChange = Math.max(Math.abs(b.homeChange || 0), Math.abs(b.awayChange || 0));
-        return bChange - aChange;
-      });
+    // Steam moves - top 5 by highest change (or pattern interest score)
+    // Calculate a "steam score" for each match to rank them
+    const steamMoves = [...allAlerts]
+      .map(a => {
+        // Calculate steam score based on actual changes OR market patterns
+        let steamScore = 0;
+        let steamNote = a.alertNote || '';
+        
+        // Actual odds changes are highest priority
+        const homeChg = a.homeChange || 0;
+        const awayChg = a.awayChange || 0;
+        const maxChange = Math.max(Math.abs(homeChg), Math.abs(awayChg));
+        steamScore += maxChange * 10; // Weight actual changes heavily
+        
+        // Generate note based on changes
+        if (maxChange >= 2.5) {
+          if (Math.abs(homeChg) > Math.abs(awayChg)) {
+            steamNote = homeChg < 0 
+              ? `Sharp money on ${a.homeTeam} (${Math.abs(homeChg).toFixed(1)}% drop)`
+              : `Line drifting from ${a.homeTeam} (+${homeChg.toFixed(1)}%)`;
+          } else {
+            steamNote = awayChg < 0
+              ? `Sharp money on ${a.awayTeam} (${Math.abs(awayChg).toFixed(1)}% drop)`
+              : `Line drifting from ${a.awayTeam} (+${awayChg.toFixed(1)}%)`;
+          }
+        } else {
+          // Tight lines (close matches) are interesting
+          const oddsGap = Math.abs(a.homeOdds - a.awayOdds);
+          if (oddsGap < 0.20) {
+            steamScore += 3;
+            steamNote = steamNote || `Tight line (${a.homeOdds.toFixed(2)} vs ${a.awayOdds.toFixed(2)}) - watch for movement`;
+          } else if (oddsGap < 0.40) {
+            steamScore += 1.5;
+            steamNote = steamNote || `Close matchup - potential sharp action`;
+          }
+          
+          // Heavy favorites often see late steam
+          if (a.homeOdds < 1.40) {
+            steamScore += 2;
+            steamNote = steamNote || `Heavy home favorite @ ${a.homeOdds.toFixed(2)} - monitoring for drift`;
+          } else if (a.awayOdds < 1.40) {
+            steamScore += 2;
+            steamNote = steamNote || `Heavy away favorite @ ${a.awayOdds.toFixed(2)} - monitoring for drift`;
+          }
+        }
+        
+        return { ...a, steamScore, alertNote: steamNote || 'Tracking line movement' };
+      })
+      .sort((a, b) => b.steamScore - a.steamScore)
+      .slice(0, 5);
     
     return NextResponse.json({
       success: true,
