@@ -214,26 +214,28 @@ export default function AdminDashboard({
           )}
         </div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
-            Overview
-          </TabButton>
-          <TabButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')}>
-            Chat Analytics
-          </TabButton>
-          <TabButton active={activeTab === 'agent'} onClick={() => setActiveTab('agent')}>
-            Agent Insights
-          </TabButton>
-          <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')}>
-            Users
-          </TabButton>
-          <TabButton active={activeTab === 'analyses'} onClick={() => setActiveTab('analyses')}>
-            Analyses
-          </TabButton>
-          <TabButton active={activeTab === 'predictions'} onClick={() => setActiveTab('predictions')}>
-            Predictions
-          </TabButton>
+        {/* Tabs - Horizontal scroll on mobile */}
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-6">
+          <div className="flex gap-2 min-w-max pb-2">
+            <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
+              📊 Overview
+            </TabButton>
+            <TabButton active={activeTab === 'predictions'} onClick={() => setActiveTab('predictions')}>
+              🎯 Predictions
+            </TabButton>
+            <TabButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')}>
+              💬 Chat
+            </TabButton>
+            <TabButton active={activeTab === 'agent'} onClick={() => setActiveTab('agent')}>
+              🤖 Agent
+            </TabButton>
+            <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')}>
+              👥 Users
+            </TabButton>
+            <TabButton active={activeTab === 'analyses'} onClick={() => setActiveTab('analyses')}>
+              📈 Analyses
+            </TabButton>
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -450,72 +452,124 @@ export default function AdminDashboard({
 
         {activeTab === 'users' && (
           <div className="card overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-bg-tertiary">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Plan</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Analyses</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Joined</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-primary">
-                {recentUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-bg-tertiary/50">
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-text-primary">{user.name || 'Anonymous'}</div>
-                        <div className="text-xs text-text-muted">{user.email}</div>
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-border-primary">
+              {recentUsers.map((user) => (
+                <div key={user.id} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                        <span className="text-sm font-bold text-bg-primary">
+                          {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                        </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <PlanBadge plan={user.plan} />
-                    </td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">
-                      {user._count.analyses}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">
-                      {formatDate(new Date(user.createdAt))}
-                    </td>
+                      <div>
+                        <div className="font-medium text-text-primary">{user.name || 'Anonymous'}</div>
+                        <div className="text-xs text-text-muted truncate max-w-[180px]">{user.email}</div>
+                      </div>
+                    </div>
+                    <PlanBadge plan={user.plan} />
+                  </div>
+                  <div className="flex justify-between text-sm text-text-secondary pl-13">
+                    <span>{user._count.analyses} analyses</span>
+                    <span>{formatDate(new Date(user.createdAt))}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-bg-tertiary">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Plan</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Analyses</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Joined</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border-primary">
+                  {recentUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-bg-tertiary/50">
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="text-sm font-medium text-text-primary">{user.name || 'Anonymous'}</div>
+                          <div className="text-xs text-text-muted">{user.email}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <PlanBadge plan={user.plan} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-text-secondary">
+                        {user._count.analyses}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-text-secondary">
+                        {formatDate(new Date(user.createdAt))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {activeTab === 'analyses' && (
           <div className="card overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-bg-tertiary">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Match</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Sport</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Time</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-primary">
-                {recentAnalyses.map((analysis) => (
-                  <tr key={analysis.id} className="hover:bg-bg-tertiary/50">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-text-primary">
-                        {analysis.homeTeam} vs {analysis.awayTeam}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-text-secondary capitalize">{analysis.sport}</span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">
-                      {analysis.user.name || analysis.user.email}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-border-primary">
+              {recentAnalyses.map((analysis) => (
+                <div key={analysis.id} className="p-4 space-y-2">
+                  <div className="font-medium text-text-primary">
+                    {analysis.homeTeam} vs {analysis.awayTeam}
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-text-secondary capitalize px-2 py-0.5 bg-bg-tertiary rounded">
+                      {analysis.sport}
+                    </span>
+                    <span className="text-text-muted">
                       {formatTimeAgo(new Date(analysis.createdAt))}
-                    </td>
+                    </span>
+                  </div>
+                  <div className="text-xs text-text-muted">
+                    by {analysis.user.name || analysis.user.email}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-bg-tertiary">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Match</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Sport</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Time</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border-primary">
+                  {recentAnalyses.map((analysis) => (
+                    <tr key={analysis.id} className="hover:bg-bg-tertiary/50">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-text-primary">
+                          {analysis.homeTeam} vs {analysis.awayTeam}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-text-secondary capitalize">{analysis.sport}</span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-text-secondary">
+                        {analysis.user.name || analysis.user.email}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-text-secondary">
+                        {formatTimeAgo(new Date(analysis.createdAt))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -646,12 +700,60 @@ export default function AdminDashboard({
               </div>
             )}
 
-            {/* Recent Predictions Table */}
+            {/* Recent Predictions */}
             <div className="card overflow-hidden">
-              <div className="px-6 py-4 border-b border-border-primary">
+              <div className="px-4 sm:px-6 py-4 border-b border-border-primary">
                 <h3 className="text-lg font-semibold text-text-primary">Recent Predictions</h3>
               </div>
-              <div className="overflow-x-auto">
+              
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-border-primary">
+                {predictionStats.recentPredictions.map((pred) => (
+                  <div key={pred.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-text-primary truncate">{pred.matchRef}</div>
+                        <div className="text-xs text-text-muted">{pred.league || 'Unknown'} • {formatDate(new Date(pred.matchDate))}</div>
+                      </div>
+                      {pred.wasAccurate === null ? (
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-gray-500/20 text-gray-400 whitespace-nowrap">⏳ Pending</span>
+                      ) : pred.wasAccurate ? (
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-green-500/20 text-green-400 whitespace-nowrap">✓ Correct</span>
+                      ) : (
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-400 whitespace-nowrap">✗ Wrong</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <div className="text-xs text-text-muted">Predicted</div>
+                        <div className="text-text-primary">{pred.predictedScenario || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-text-muted">Actual</div>
+                        <div className="text-text-primary">
+                          {pred.actualResult || '-'}
+                          {pred.actualScore && <span className="text-text-muted ml-1">({pred.actualScore})</span>}
+                        </div>
+                      </div>
+                    </div>
+                    {pred.confidenceLevel && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-text-muted">Confidence:</span>
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          pred.confidenceLevel >= 7 ? 'bg-green-500/20 text-green-400' :
+                          pred.confidenceLevel >= 4 ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {pred.confidenceLevel}/10
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-bg-tertiary">
                     <tr>
