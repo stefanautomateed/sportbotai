@@ -14,6 +14,8 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import { Send, Bot, User, Loader2, Sparkles, Trash2, Volume2, VolumeX, Square, ThumbsUp, ThumbsDown, Mic, MicOff } from 'lucide-react';
 
 // ============================================
@@ -97,6 +99,10 @@ function getRandomQuestions(count: number) {
 // ============================================
 
 export default function AIDeskHeroChat() {
+  const { data: session } = useSession();
+  const userPlan = (session?.user as any)?.plan || 'FREE';
+  const isFreePlan = userPlan === 'FREE';
+  
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -718,7 +724,18 @@ export default function AIDeskHeroChat() {
       {/* Error message */}
       {error && (
         <div className="px-6 py-3 bg-red-500/10 border-t border-red-500/20">
-          <p className="text-sm text-red-400">{error}</p>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm text-red-400">{error}</p>
+            {/* Show Upgrade button for rate limit errors if user is on free plan */}
+            {error.toLowerCase().includes('rate limit') && isFreePlan && (
+              <Link
+                href="/pricing#pro"
+                className="flex-shrink-0 px-4 py-1.5 bg-gradient-to-r from-primary to-accent text-white text-xs font-semibold rounded-lg hover:from-primary/90 hover:to-accent/90 transition-all"
+              >
+                Upgrade to Pro
+              </Link>
+            )}
+          </div>
         </div>
       )}
 

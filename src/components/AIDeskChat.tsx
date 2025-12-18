@@ -8,6 +8,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { Send, Bot, User, Loader2, Sparkles, X, MessageCircle, Volume2, VolumeX, Square, ThumbsUp, ThumbsDown, Mic, MicOff, Zap } from 'lucide-react';
 import Link from 'next/link';
 
@@ -95,6 +96,10 @@ function getRandomQuestions(count: number): string[] {
 // ============================================
 
 export default function AIDeskChat() {
+  const { data: session } = useSession();
+  const userPlan = (session?.user as any)?.plan || 'FREE';
+  const isFreePlan = userPlan === 'FREE';
+  
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -782,7 +787,7 @@ export default function AIDeskChat() {
         <div className="px-4 py-2 sm:py-3 bg-red-500/10 border-t border-red-500/20">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs text-red-400 flex-1">{error}</p>
-            {(error.toLowerCase().includes('limit') || error.toLowerCase().includes('upgrade')) && (
+            {error.toLowerCase().includes('limit') && isFreePlan && (
               <Link
                 href="/pricing#pro"
                 className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-accent hover:bg-accent/80 text-black text-xs font-medium rounded-lg transition-colors"
