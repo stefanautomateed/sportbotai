@@ -287,87 +287,83 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
             />
           )}
 
-          {/* Upgrade Card */}
-          <div className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-red-500/10 border border-amber-500/20">
-            <div className="text-center">
-              {/* Icon */}
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
-                <svg className="w-8 h-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-
-              {/* Usage Counter */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-4">
-                <span className="text-zinc-400 text-sm">Daily Credits:</span>
-                <span className="text-white font-semibold">{usageLimit.usage.remaining}/{usageLimit.usage.limit}</span>
-                <span className="text-red-400 text-xs">(used)</span>
-              </div>
-
-              {/* Title & Message */}
-              <h2 className="text-xl font-semibold text-white mb-2">
-                {usageLimit.plan === 'FREE' ? 'Upgrade to Pro' : 'Upgrade to Premium'}
-              </h2>
-              <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto">
-                {usageLimit.message}
-              </p>
-
-              {/* Plan Benefits */}
-              <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/10 text-left max-w-sm mx-auto">
-                <h4 className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-3">
-                  {usageLimit.plan === 'FREE' ? 'Pro Plan Benefits' : 'Premium Benefits'}
-                </h4>
-                <ul className="space-y-2 text-sm">
-                  {usageLimit.plan === 'FREE' ? (
-                    <>
-                      <li className="flex items-center gap-2 text-zinc-300">
-                        <span className="text-green-400">✓</span>
-                        30 analyses per day
-                      </li>
-                      <li className="flex items-center gap-2 text-zinc-300">
-                        <span className="text-green-400">✓</span>
-                        Market Intel & Value Detection
-                      </li>
-                      <li className="flex items-center gap-2 text-zinc-300">
-                        <span className="text-green-400">✓</span>
-                        Early access to new features
-                      </li>
-                    </>
-                  ) : (
-                    <>
-                      <li className="flex items-center gap-2 text-zinc-300">
-                        <span className="text-green-400">✓</span>
-                        Unlimited analyses
-                      </li>
-                      <li className="flex items-center gap-2 text-zinc-300">
-                        <span className="text-green-400">✓</span>
-                        Priority AI processing
-                      </li>
-                      <li className="flex items-center gap-2 text-zinc-300">
-                        <span className="text-green-400">✓</span>
-                        Analysis history access
-                      </li>
-                    </>
-                  )}
-                </ul>
-              </div>
-
-              {/* CTA Button */}
-              <Link 
-                href="/pricing"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-semibold rounded-xl transition-all shadow-lg shadow-amber-500/20"
-              >
-                <span>{usageLimit.plan === 'FREE' ? 'Upgrade to Pro - €9.99/mo' : 'Upgrade to Premium - €19.99/mo'}</span>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </Link>
-
-              {/* Secondary link */}
-              <p className="mt-4 text-zinc-500 text-xs">
-                Your credits reset daily at midnight UTC
-              </p>
+          {/* Upgrade Card - Matches PremiumGate style */}
+          <div className="mt-8 bg-gradient-to-br from-bg-card via-bg-card to-purple-500/5 border border-purple-500/30 rounded-2xl p-8 text-center">
+            <div className="text-6xl mb-6">🔒</div>
+            
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+              {usageLimit.plan === 'FREE' ? 'Upgrade to Pro' : 'Upgrade to Premium'}
+            </h1>
+            
+            {/* Usage Counter */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-4">
+              <span className="text-zinc-400 text-sm">Daily Credits:</span>
+              <span className="text-white font-semibold">{usageLimit.usage.remaining}/{usageLimit.usage.limit}</span>
+              <span className="text-red-400 text-xs">(used)</span>
             </div>
+            
+            <p className="text-zinc-400 text-lg mb-6">
+              {usageLimit.message}
+            </p>
+
+            {/* Plan Benefits */}
+            <div className="bg-[#0A0D10]/50 rounded-xl p-6 mb-8 text-left max-w-md mx-auto">
+              <h3 className="font-semibold text-white mb-4 text-center">What you get:</h3>
+              <ul className="space-y-3 text-zinc-300">
+                {usageLimit.plan === 'FREE' ? (
+                  <>
+                    <li className="flex items-center gap-3">
+                      <span className="text-purple-400">✓</span>
+                      30 analyses per day
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="text-purple-400">✓</span>
+                      Market Intel & Value Detection
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="text-purple-400">✓</span>
+                      Early access to new features
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="text-purple-400">✓</span>
+                      Priority customer support
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li className="flex items-center gap-3">
+                      <span className="text-purple-400">✓</span>
+                      Unlimited analyses
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="text-purple-400">✓</span>
+                      Priority AI processing
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="text-purple-400">✓</span>
+                      Full analysis history access
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="text-purple-400">✓</span>
+                      Market Alerts & Steam Moves
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+
+            {/* CTA Button */}
+            <Link 
+              href="/pricing" 
+              className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-semibold text-lg px-8 py-3 rounded-lg transition-colors"
+            >
+              {usageLimit.plan === 'FREE' ? 'Upgrade to Pro' : 'Upgrade to Premium'}
+            </Link>
+
+            {/* Secondary info */}
+            <p className="mt-4 text-zinc-500 text-sm">
+              Your credits reset daily at midnight UTC
+            </p>
           </div>
         </div>
       </div>
