@@ -58,8 +58,9 @@ export default function AccountDashboard({ user, recentAnalyses }: Props) {
 
   const planColors = PLAN_COLORS[user.plan] || PLAN_COLORS.FREE;
   const limit = PLAN_LIMITS[user.plan] ?? 3;
-  const remaining = limit === -1 ? Infinity : Math.max(0, limit - user.analysisCount);
-  const usagePercent = limit === -1 ? 0 : (user.analysisCount / limit) * 100;
+  const used = user.analysisCount;
+  const remaining = limit === -1 ? Infinity : Math.max(0, limit - used);
+  const usagePercent = limit === -1 ? 0 : (used / limit) * 100;
 
   const handleManageSubscription = async () => {
     if (!user.stripeCustomerId) {

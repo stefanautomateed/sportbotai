@@ -633,12 +633,13 @@ export async function POST(request: NextRequest) {
       const cacheTTL = hasRealTimeIntel ? 1800 : CACHE_TTL.ANALYSIS; // 30 min if real-time, else 1 hour
       await cacheSet(cacheKey, analysis, cacheTTL);
       console.log(`[Cache] Analysis cached for ${hasRealTimeIntel ? '30 min (real-time)' : '1 hour'}`);
+      
+      // ========================================
+      // INCREMENT USAGE COUNT (only for NEW analyses, not cached)
+      // ========================================
+      await incrementAnalysisCount(userId);
+      console.log('[Usage] Incremented analysis count for new analysis');
     }
-    
-    // ========================================
-    // INCREMENT USAGE COUNT (only on success)
-    // ========================================
-    await incrementAnalysisCount(userId);
 
     // ========================================
     // SAVE TO ANALYSIS HISTORY
