@@ -1,10 +1,13 @@
 /**
- * Market Alerts Page
+ * Market Alerts Page - Premium Feature
  * 
- * Premium-only feature showing:
- * - Top 5 matches with highest model edge
- * - Steam moves and sharp money detection
- * - Real-time odds tracking
+ * Redesigned with:
+ * - Clear visual hierarchy (Decision → Context → Metadata)
+ * - Edge strength indicators with confidence bars
+ * - Steam move direction clarity with icons
+ * - Market summary brain (sticky insight bar)
+ * - Refined color palette (3-level greens/ambers)
+ * - Premium micro-interactions
  */
 
 'use client';
@@ -69,54 +72,174 @@ interface MarketAlertsResponse {
 }
 
 // ============================================
-// SPORT & LEAGUE CONFIG
+// LEAGUE CONFIG
 // ============================================
 
 interface LeagueConfig {
-  countryFlag?: string;   // Flag emoji for national leagues
-  isInternational: boolean; // If true, no country flag shown
+  countryFlag?: string;
+  isInternational: boolean;
 }
 
 const leagueConfig: Record<string, LeagueConfig> = {
-  // Soccer - National Leagues
   soccer_epl: { countryFlag: '🇬🇧', isInternational: false },
   soccer_spain_la_liga: { countryFlag: '🇪🇸', isInternational: false },
   soccer_germany_bundesliga: { countryFlag: '🇩🇪', isInternational: false },
   soccer_italy_serie_a: { countryFlag: '🇮🇹', isInternational: false },
   soccer_france_ligue_one: { countryFlag: '🇫🇷', isInternational: false },
-  // US Sports - National (but no country flag needed, they're iconic)
   basketball_nba: { isInternational: false },
   icehockey_nhl: { isInternational: false },
   americanfootball_nfl: { isInternational: false },
-  // International Competitions
   basketball_euroleague: { isInternational: true },
 };
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+function getEdgeStrength(percent: number): { level: 'strong' | 'moderate' | 'slight'; bars: number; label: string } {
+  if (percent >= 8) return { level: 'strong', bars: 5, label: 'Strong Edge' };
+  if (percent >= 5) return { level: 'moderate', bars: 4, label: 'Good Edge' };
+  if (percent >= 3) return { level: 'slight', bars: 3, label: 'Slight Edge' };
+  return { level: 'slight', bars: 2, label: 'Marginal' };
+}
+
+function getConfidenceLevel(alertLevel: 'HIGH' | 'MEDIUM' | 'LOW' | null): { label: string; color: string } {
+  switch (alertLevel) {
+    case 'HIGH': return { label: 'High', color: 'text-emerald-400' };
+    case 'MEDIUM': return { label: 'Medium', color: 'text-amber-400' };
+    case 'LOW': return { label: 'Low', color: 'text-blue-400' };
+    default: return { label: 'N/A', color: 'text-text-muted' };
+  }
+}
+
+function getSteamSignal(alert: MarketAlert): { icon: string; label: string; intensity: 'hot' | 'warm' | 'cooling' } {
+  const homeChange = Math.abs(alert.homeChange || 0);
+  const awayChange = Math.abs(alert.awayChange || 0);
+  const maxChange = Math.max(homeChange, awayChange);
+  
+  // Determine direction
+  const direction = alert.changeDirection;
+  const team = direction === 'toward_home' ? alert.homeTeam : 
+               direction === 'toward_away' ? alert.awayTeam : null;
+  
+  if (maxChange >= 5) {
+    return { icon: '🔥', label: team ? `Heavy money on ${team}` : 'Major line movement', intensity: 'hot' };
+  } else if (maxChange >= 3) {
+    return { icon: '⚡', label: team ? `Sharp action on ${team}` : 'Sharp money detected', intensity: 'warm' };
+  } else {
+    return { icon: '📊', label: team ? `Money trickling on ${team}` : 'Slight movement', intensity: 'cooling' };
+  }
+}
 
 // ============================================
 // COMPONENTS
 // ============================================
 
-function AlertBadge({ level }: { level: 'HIGH' | 'MEDIUM' | 'LOW' | null }) {
-  if (!level) return null;
-  
-  const styles = {
-    HIGH: 'bg-green-500/20 text-green-400 border-green-500/30',
-    MEDIUM: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    LOW: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+/**
+ * Market Summary Brain - Sticky top insight bar
+ */
+function MarketSummary({ 
+  edgeCount, 
+  steamCount, 
+  matchesScanned,
+  lastRefresh 
+}: { 
+  edgeCount: number; 
+  steamCount: number;
+  matchesScanned: number;
+  lastRefresh: Date | null;
+}) {
+  const getMarketState = () => {
+    if (edgeCount >= 3) return { text: 'Multiple opportunities detected', color: 'text-emerald-400' };
+    if (steamCount >= 2) return { text: 'Active sharp money movement', color: 'text-amber-400' };
+    if (edgeCount > 0 || steamCount > 0) return { text: 'Light edge activity', color: 'text-blue-400' };
+    return { text: 'Markets appear efficient', color: 'text-text-muted' };
   };
   
+  const state = getMarketState();
+  
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${styles[level]}`}>
-      {level}
-    </span>
+    <div className="bg-gradient-to-r from-bg-card via-bg-card to-bg-card/80 border border-divider rounded-xl p-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Market State */}
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+            <span className="text-xl">🧠</span>
+          </div>
+          <div>
+            <div className="text-xs text-text-muted uppercase tracking-wider mb-0.5">Market Intelligence</div>
+            <div className={`font-semibold ${state.color}`}>{state.text}</div>
+          </div>
+        </div>
+        
+        {/* Quick Stats */}
+        <div className="flex items-center gap-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-emerald-400">{edgeCount}</div>
+            <div className="text-xs text-text-muted">Value Edges</div>
+          </div>
+          <div className="w-px h-8 bg-divider"></div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-amber-400">{steamCount}</div>
+            <div className="text-xs text-text-muted">Steam Moves</div>
+          </div>
+          <div className="w-px h-8 bg-divider hidden sm:block"></div>
+          <div className="text-center hidden sm:block">
+            <div className="text-sm text-text-secondary">{matchesScanned}</div>
+            <div className="text-xs text-text-muted">Scanned</div>
+          </div>
+        </div>
+        
+        {/* Last Updated - Subtle */}
+        {lastRefresh && (
+          <div className="text-xs text-text-muted/60 sm:text-right">
+            Updated {lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
 /**
- * League Header with logo and optional country flag
- * - National leagues: Flag + League Logo
- * - International competitions: Just League Logo
- * - US Sports: Just League Logo (iconic enough)
+ * Edge Strength Bar - Visual indicator
+ */
+function EdgeStrengthBar({ percent, alertLevel }: { percent: number; alertLevel: 'HIGH' | 'MEDIUM' | 'LOW' | null }) {
+  const { bars, label } = getEdgeStrength(percent);
+  const confidence = getConfidenceLevel(alertLevel);
+  
+  // Color based on edge strength
+  const barColor = percent >= 8 ? 'bg-emerald-400' : 
+                   percent >= 5 ? 'bg-emerald-500/80' : 
+                   'bg-emerald-600/60';
+  
+  return (
+    <div className="bg-bg-primary/80 rounded-lg p-3 space-y-2">
+      {/* Edge Strength */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-text-muted uppercase tracking-wider">Edge Strength</span>
+        <span className="text-xs font-medium text-emerald-400">{label}</span>
+      </div>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map(i => (
+          <div 
+            key={i} 
+            className={`h-1.5 flex-1 rounded-full transition-all ${i <= bars ? barColor : 'bg-text-muted/20'}`}
+          />
+        ))}
+      </div>
+      
+      {/* Confidence */}
+      <div className="flex items-center justify-between pt-1">
+        <span className="text-xs text-text-muted uppercase tracking-wider">Confidence</span>
+        <span className={`text-xs font-medium ${confidence.color}`}>{confidence.label}</span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * League Header - Faded for context level
  */
 function LeagueHeader({ sport, sportTitle }: { sport: string; sportTitle: string }) {
   const config = leagueConfig[sport] || { isInternational: false };
@@ -124,35 +247,33 @@ function LeagueHeader({ sport, sportTitle }: { sport: string; sportTitle: string
   const [imgError, setImgError] = useState(false);
   
   return (
-    <div className="flex items-center gap-2">
-      {/* Country Flag (for national leagues) */}
+    <div className="flex items-center gap-2 opacity-70">
       {config.countryFlag && !config.isInternational && (
-        <span className="text-lg">{config.countryFlag}</span>
+        <span className="text-sm">{config.countryFlag}</span>
       )}
-      
-      {/* League Logo */}
       {!imgError ? (
         <Image
           src={leagueLogo}
           alt={sportTitle}
-          width={20}
-          height={20}
-          className="w-5 h-5 object-contain"
+          width={16}
+          height={16}
+          className="w-4 h-4 object-contain opacity-80"
           onError={() => setImgError(true)}
           unoptimized
         />
       ) : (
-        <span className="w-5 h-5 rounded-full bg-bg-primary flex items-center justify-center text-xs">
+        <span className="w-4 h-4 rounded-full bg-bg-primary/50 flex items-center justify-center text-[10px]">
           {sportTitle.charAt(0)}
         </span>
       )}
-      
-      {/* League Name */}
-      <span className="text-text-secondary text-sm font-medium">{sportTitle}</span>
+      <span className="text-text-muted text-xs font-medium">{sportTitle}</span>
     </div>
   );
 }
 
+/**
+ * Edge Match Card - Redesigned with visual hierarchy
+ */
 function EdgeMatchCard({ alert }: { alert: MarketAlert }) {
   const matchTime = new Date(alert.matchDate).toLocaleString('en-US', {
     weekday: 'short',
@@ -162,82 +283,87 @@ function EdgeMatchCard({ alert }: { alert: MarketAlert }) {
     minute: '2-digit',
   });
   
-  // Determine which outcome has edge
   const edgeOutcome = alert.bestEdge.outcome;
   const edgePercent = alert.bestEdge.percent;
+  const edgeTeam = edgeOutcome === 'home' ? alert.homeTeam : 
+                   edgeOutcome === 'away' ? alert.awayTeam : 'Draw';
+  
+  // Edge color based on strength
+  const edgeColor = edgePercent >= 8 ? 'text-emerald-300' : 
+                    edgePercent >= 5 ? 'text-emerald-400' : 
+                    'text-emerald-500';
   
   return (
-    <div className="bg-bg-card border border-divider rounded-xl p-5 hover:border-accent/30 transition-all group">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="group bg-bg-card border border-divider rounded-xl p-5 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300">
+      {/* Level 3: Context (faded) */}
+      <div className="flex items-center justify-between mb-3">
         <LeagueHeader sport={alert.sport} sportTitle={alert.sportTitle} />
-        <AlertBadge level={alert.alertLevel} />
+        <span className="text-text-muted/50 text-xs">{matchTime}</span>
       </div>
       
-      {/* Teams */}
-      <div className="mb-4">
+      {/* Level 1: Decision Driver - BIG EDGE */}
+      <div className="bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 rounded-xl p-4 mb-4 group-hover:border-emerald-500/30 transition-colors">
         <div className="flex items-center justify-between mb-2">
-          <span className={`font-semibold ${edgeOutcome === 'home' ? 'text-green-400' : 'text-text-primary'}`}>
-            {alert.homeTeam}
-            {edgeOutcome === 'home' && <span className="ml-2 text-green-400 text-sm">← EDGE</span>}
+          <div>
+            <span className="text-xs text-emerald-400/70 uppercase tracking-wider">Edge Detected</span>
+            <div className="font-bold text-text-primary text-lg">{edgeTeam}</div>
+          </div>
+          <div className="text-right">
+            <div className={`text-3xl font-black ${edgeColor} group-hover:scale-105 transition-transform`}>
+              +{edgePercent.toFixed(1)}%
+            </div>
+          </div>
+        </div>
+        
+        {/* Odds Display */}
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-text-muted">Odds:</span>
+          <span className="font-mono text-text-secondary">
+            {edgeOutcome === 'home' ? alert.homeOdds.toFixed(2) : 
+             edgeOutcome === 'away' ? alert.awayOdds.toFixed(2) : 
+             alert.drawOdds?.toFixed(2)}
           </span>
-          <span className="text-text-secondary font-mono">{alert.homeOdds.toFixed(2)}</span>
+          <span className="text-text-muted mx-1">→</span>
+          <span className="text-text-muted">Model:</span>
+          <span className="font-mono text-emerald-400">
+            {edgeOutcome === 'home' ? alert.modelHomeProb : 
+             edgeOutcome === 'away' ? alert.modelAwayProb : 
+             alert.modelDrawProb}%
+          </span>
+        </div>
+      </div>
+      
+      {/* Level 2: Match Context */}
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center justify-between">
+          <span className={`font-medium ${edgeOutcome === 'home' ? 'text-emerald-400' : 'text-text-primary'}`}>
+            {alert.homeTeam}
+          </span>
+          <span className="font-mono text-text-secondary text-sm">{alert.homeOdds.toFixed(2)}</span>
         </div>
         {alert.drawOdds && (
-          <div className="flex items-center justify-between mb-2">
-            <span className={`text-sm ${edgeOutcome === 'draw' ? 'text-green-400' : 'text-text-muted'}`}>
-              Draw
-              {edgeOutcome === 'draw' && <span className="ml-2 text-green-400 text-xs">← EDGE</span>}
-            </span>
-            <span className="text-text-muted font-mono text-sm">{alert.drawOdds.toFixed(2)}</span>
+          <div className="flex items-center justify-between">
+            <span className={`text-sm ${edgeOutcome === 'draw' ? 'text-emerald-400' : 'text-text-muted'}`}>Draw</span>
+            <span className="font-mono text-text-muted text-xs">{alert.drawOdds.toFixed(2)}</span>
           </div>
         )}
         <div className="flex items-center justify-between">
-          <span className={`font-semibold ${edgeOutcome === 'away' ? 'text-green-400' : 'text-text-primary'}`}>
+          <span className={`font-medium ${edgeOutcome === 'away' ? 'text-emerald-400' : 'text-text-primary'}`}>
             {alert.awayTeam}
-            {edgeOutcome === 'away' && <span className="ml-2 text-green-400 text-sm">← EDGE</span>}
           </span>
-          <span className="text-text-secondary font-mono">{alert.awayOdds.toFixed(2)}</span>
+          <span className="font-mono text-text-secondary text-sm">{alert.awayOdds.toFixed(2)}</span>
         </div>
       </div>
       
-      {/* Edge Display */}
-      <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-3">
-        <div className="flex items-center justify-between">
-          <span className="text-green-400 font-semibold">Model Edge</span>
-          <span className="text-green-400 font-bold text-lg">+{edgePercent.toFixed(1)}%</span>
-        </div>
-        <div className="text-text-muted text-sm mt-1">
-          on {edgeOutcome.charAt(0).toUpperCase() + edgeOutcome.slice(1)}
-        </div>
-      </div>
-      
-      {/* Model Probabilities */}
-      <div className="grid grid-cols-3 gap-2 text-center text-sm mb-3">
-        <div className="bg-bg-primary/50 rounded-lg p-2">
-          <div className="text-text-muted text-xs mb-1">Home</div>
-          <div className="font-semibold text-text-primary">{alert.modelHomeProb}%</div>
-        </div>
-        {alert.modelDrawProb !== undefined && (
-          <div className="bg-bg-primary/50 rounded-lg p-2">
-            <div className="text-text-muted text-xs mb-1">Draw</div>
-            <div className="font-semibold text-text-primary">{alert.modelDrawProb}%</div>
-          </div>
-        )}
-        <div className="bg-bg-primary/50 rounded-lg p-2">
-          <div className="text-text-muted text-xs mb-1">Away</div>
-          <div className="font-semibold text-text-primary">{alert.modelAwayProb}%</div>
-        </div>
-      </div>
-      
-      {/* Match Time */}
-      <div className="text-text-muted text-sm text-center">
-        {matchTime}
-      </div>
+      {/* Edge Strength Indicator */}
+      <EdgeStrengthBar percent={edgePercent} alertLevel={alert.alertLevel} />
     </div>
   );
 }
 
+/**
+ * Steam Move Card - Redesigned with direction clarity
+ */
 function SteamMoveCard({ alert }: { alert: MarketAlert }) {
   const matchTime = new Date(alert.matchDate).toLocaleString('en-US', {
     weekday: 'short',
@@ -247,78 +373,136 @@ function SteamMoveCard({ alert }: { alert: MarketAlert }) {
     minute: '2-digit',
   });
   
-  // Calculate previous odds from change percentage
-  // If change is -5%, current is 2.0, then prev = 2.0 / (1 - 0.05) = 2.105
+  // Calculate previous odds
   const homePrevOdds = alert.homeChange && Math.abs(alert.homeChange) > 0.1 
-    ? alert.homeOdds / (1 + alert.homeChange / 100) 
-    : null;
+    ? alert.homeOdds / (1 + alert.homeChange / 100) : null;
   const awayPrevOdds = alert.awayChange && Math.abs(alert.awayChange) > 0.1
-    ? alert.awayOdds / (1 + alert.awayChange / 100)
-    : null;
+    ? alert.awayOdds / (1 + alert.awayChange / 100) : null;
   
-  // Determine which team has the significant move
   const homeHasMove = homePrevOdds !== null;
   const awayHasMove = awayPrevOdds !== null;
   
+  // Steam signal
+  const signal = getSteamSignal(alert);
+  
+  // Intensity colors
+  const intensityColors = {
+    hot: 'from-orange-500/20 via-amber-500/10 to-transparent border-orange-500/30',
+    warm: 'from-amber-500/15 via-amber-500/5 to-transparent border-amber-500/25',
+    cooling: 'from-amber-500/10 to-transparent border-amber-500/20',
+  };
+  
+  const badgeColors = {
+    hot: 'bg-orange-500/20 text-orange-400 border-orange-500/40 animate-pulse',
+    warm: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    cooling: 'bg-amber-500/15 text-amber-500/80 border-amber-500/20',
+  };
+  
   return (
-    <div className="bg-bg-card border border-amber-500/30 rounded-xl p-5">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="group bg-bg-card border border-amber-500/20 rounded-xl p-5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
+      {/* Level 3: Context (faded) */}
+      <div className="flex items-center justify-between mb-3">
         <LeagueHeader sport={alert.sport} sportTitle={alert.sportTitle} />
-        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-          ⚡ STEAM
-        </span>
+        <span className="text-text-muted/50 text-xs">{matchTime}</span>
       </div>
       
-      {/* Teams - Clean format: "Team 3.6 → 3.2" for moved, just "Team 2.1" for stable */}
-      <div className="mb-4 space-y-3">
-        {/* Home Team */}
+      {/* Level 1: Decision Driver - Steam Signal */}
+      <div className={`bg-gradient-to-r ${intensityColors[signal.intensity]} border rounded-xl p-4 mb-4`}>
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-text-primary">{alert.homeTeam}</span>
-          {homeHasMove ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-text-muted font-mono text-sm line-through">{homePrevOdds!.toFixed(2)}</span>
-              <span className="text-text-muted">→</span>
-              <span className={`font-mono font-semibold ${alert.homeChange! < 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {alert.homeOdds.toFixed(2)}
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{signal.icon}</span>
+            <div>
+              <span className={`font-bold text-lg ${signal.intensity === 'hot' ? 'text-orange-400' : 'text-amber-400'}`}>
+                {signal.label}
               </span>
             </div>
+          </div>
+          <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${badgeColors[signal.intensity]}`}>
+            STEAM
+          </span>
+        </div>
+      </div>
+      
+      {/* Level 2: Odds Movement - OPEN / NOW / Δ format */}
+      <div className="space-y-3 mb-4">
+        {/* Home Team */}
+        <div className="flex items-center justify-between">
+          <span className={`font-medium ${homeHasMove ? 'text-text-primary' : 'text-text-secondary'}`}>
+            {alert.homeTeam}
+          </span>
+          {homeHasMove ? (
+            <div className="flex items-center gap-3 font-mono text-sm">
+              <div className="text-right">
+                <div className="text-text-muted/60 text-[10px] uppercase">Open</div>
+                <div className="text-text-muted">{homePrevOdds!.toFixed(2)}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-text-muted/60 text-[10px] uppercase">Now</div>
+                <div className={`font-semibold ${alert.homeChange! < 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {alert.homeOdds.toFixed(2)}
+                </div>
+              </div>
+              <div className="text-right min-w-[50px]">
+                <div className="text-text-muted/60 text-[10px] uppercase">Δ</div>
+                <div className={`font-semibold ${alert.homeChange! < 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {alert.homeChange! > 0 ? '+' : ''}{alert.homeChange!.toFixed(1)}%
+                </div>
+              </div>
+            </div>
           ) : (
-            <span className="text-text-secondary font-mono">{alert.homeOdds.toFixed(2)}</span>
+            <span className="font-mono text-text-muted text-sm">{alert.homeOdds.toFixed(2)}</span>
           )}
         </div>
         
         {/* Away Team */}
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-text-primary">{alert.awayTeam}</span>
+          <span className={`font-medium ${awayHasMove ? 'text-text-primary' : 'text-text-secondary'}`}>
+            {alert.awayTeam}
+          </span>
           {awayHasMove ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-text-muted font-mono text-sm line-through">{awayPrevOdds!.toFixed(2)}</span>
-              <span className="text-text-muted">→</span>
-              <span className={`font-mono font-semibold ${alert.awayChange! < 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {alert.awayOdds.toFixed(2)}
-              </span>
+            <div className="flex items-center gap-3 font-mono text-sm">
+              <div className="text-right">
+                <div className="text-text-muted/60 text-[10px] uppercase">Open</div>
+                <div className="text-text-muted">{awayPrevOdds!.toFixed(2)}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-text-muted/60 text-[10px] uppercase">Now</div>
+                <div className={`font-semibold ${alert.awayChange! < 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {alert.awayOdds.toFixed(2)}
+                </div>
+              </div>
+              <div className="text-right min-w-[50px]">
+                <div className="text-text-muted/60 text-[10px] uppercase">Δ</div>
+                <div className={`font-semibold ${alert.awayChange! < 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {alert.awayChange! > 0 ? '+' : ''}{alert.awayChange!.toFixed(1)}%
+                </div>
+              </div>
             </div>
           ) : (
-            <span className="text-text-secondary font-mono">{alert.awayOdds.toFixed(2)}</span>
+            <span className="font-mono text-text-muted text-sm">{alert.awayOdds.toFixed(2)}</span>
           )}
         </div>
       </div>
       
-      {/* Steam Note */}
+      {/* Alert Note if present */}
       {alert.alertNote && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">📈</span>
-            <span className="text-amber-400 text-sm font-medium">{alert.alertNote}</span>
-          </div>
+        <div className="text-xs text-amber-400/80 bg-amber-500/10 rounded-lg px-3 py-2">
+          💡 {alert.alertNote}
         </div>
       )}
-      
-      {/* Match Time */}
-      <div className="text-text-muted text-sm text-center">
-        {matchTime}
-      </div>
+    </div>
+  );
+}
+
+/**
+ * Steam Legend - Icon guide at top of steam section
+ */
+function SteamLegend() {
+  return (
+    <div className="flex items-center gap-4 text-xs text-text-muted mb-4 flex-wrap">
+      <span className="flex items-center gap-1"><span>🔥</span> Heavy Money</span>
+      <span className="flex items-center gap-1"><span>⚡</span> Sharp Action</span>
+      <span className="flex items-center gap-1"><span>📊</span> Slight Move</span>
     </div>
   );
 }
@@ -329,9 +513,7 @@ function PremiumGate() {
       <div className="container-custom max-w-2xl mx-auto">
         <div className="bg-gradient-to-br from-bg-card via-bg-card to-purple-500/5 border border-purple-500/30 rounded-2xl p-8 text-center">
           <div className="text-6xl mb-6">🔒</div>
-          <h1 className="text-3xl font-bold text-text-primary mb-4">
-            Market Alerts
-          </h1>
+          <h1 className="text-3xl font-bold text-text-primary mb-4">Market Alerts</h1>
           <p className="text-text-secondary text-lg mb-6">
             Real-time odds tracking, steam move detection, and model edge alerts 
             are exclusive to Premium subscribers.
@@ -354,11 +536,11 @@ function PremiumGate() {
               </li>
               <li className="flex items-center gap-3">
                 <span className="text-purple-400">✓</span>
-                Model probability vs market comparison
+                Edge strength & confidence indicators
               </li>
               <li className="flex items-center gap-3">
                 <span className="text-purple-400">✓</span>
-                Automatic refresh every 15 minutes
+                Market intelligence summary
               </li>
             </ul>
           </div>
@@ -377,11 +559,20 @@ function LoadingState() {
     <div className="min-h-screen bg-bg-primary py-12">
       <div className="container-custom">
         <div className="animate-pulse space-y-6">
-          <div className="h-10 bg-bg-card rounded-lg w-64"></div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="h-64 bg-bg-card rounded-xl"></div>
-            ))}
+          <div className="h-20 bg-bg-card rounded-xl"></div>
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <div className="h-8 bg-bg-card rounded w-48"></div>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-72 bg-bg-card rounded-xl"></div>
+              ))}
+            </div>
+            <div className="space-y-4">
+              <div className="h-8 bg-bg-card rounded w-40"></div>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-52 bg-bg-card rounded-xl"></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -412,9 +603,7 @@ export default function MarketAlertsPage() {
       setData(json);
       setLastRefresh(new Date());
       
-      if (!json.success && res.status === 403) {
-        // Premium gate will be shown
-      } else if (!json.success) {
+      if (!json.success && res.status !== 403) {
         setError(json.error || 'Failed to fetch alerts');
       }
     } catch (err) {
@@ -451,7 +640,6 @@ export default function MarketAlertsPage() {
     return <LoadingState />;
   }
 
-  // Show premium gate for non-premium users
   if (data && !data.isPremium) {
     return <PremiumGate />;
   }
@@ -464,9 +652,7 @@ export default function MarketAlertsPage() {
             <div className="text-4xl mb-4">⚠️</div>
             <h2 className="text-xl font-semibold text-text-primary mb-2">Something went wrong</h2>
             <p className="text-text-secondary mb-4">{error}</p>
-            <button onClick={fetchAlerts} className="btn-primary">
-              Try Again
-            </button>
+            <button onClick={fetchAlerts} className="btn-primary">Try Again</button>
           </div>
         </div>
       </div>
@@ -476,76 +662,66 @@ export default function MarketAlertsPage() {
   const { topEdgeMatches = [], steamMoves = [], recentUpdates } = data?.data || {};
 
   return (
-    <div className="min-h-screen bg-bg-primary py-8 sm:py-12">
+    <div className="min-h-screen bg-bg-primary py-8 sm:py-10">
       <div className="container-custom">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
-                Market Alerts
-              </h1>
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                PREMIUM
-              </span>
-            </div>
-            <p className="text-text-secondary">
-              Real-time odds tracking and model edge detection
-            </p>
+        {/* Header - Compact */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+              Market Alerts
+            </h1>
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30">
+              PREMIUM
+            </span>
           </div>
           
-          <div className="flex items-center gap-4">
-            {recentUpdates && (
-              <div className="text-text-muted text-sm">
-                {recentUpdates.matchesScanned} matches scanned • {recentUpdates.alertsGenerated} alerts
-              </div>
-            )}
-            <button 
-              onClick={fetchAlerts} 
-              disabled={loading}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </button>
-          </div>
+          <button 
+            onClick={fetchAlerts} 
+            disabled={loading}
+            className="btn-secondary flex items-center gap-2 text-sm"
+          >
+            <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
         </div>
 
-        {/* Last Updated */}
-        {lastRefresh && (
-          <div className="text-text-muted text-sm mb-6">
-            Last updated: {lastRefresh.toLocaleTimeString()}
-          </div>
-        )}
+        {/* Market Summary Brain */}
+        <MarketSummary 
+          edgeCount={topEdgeMatches.length} 
+          steamCount={steamMoves.length}
+          matchesScanned={recentUpdates?.matchesScanned || 0}
+          lastRefresh={lastRefresh}
+        />
 
-        {/* Two Column Layout - Value Edges & Steam Moves Side by Side */}
+        {/* Two Column Layout */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Top 5 Edge Matches */}
-          <section className="bg-bg-card/50 border border-divider rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
+          {/* Value Edges */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">🎯</span>
-                <h2 className="text-xl font-semibold text-text-primary">Top 5 Value Edges</h2>
+                <span className="text-xl">🎯</span>
+                <h2 className="text-lg font-semibold text-text-primary">Value Edges</h2>
+                <span className="text-xs text-text-muted bg-bg-card px-2 py-0.5 rounded-full">
+                  Top {Math.min(5, topEdgeMatches.length)}
+                </span>
               </div>
               {topEdgeMatches.length > 5 && (
                 <button 
                   onClick={() => setShowAllEdges(!showAllEdges)}
-                  className="text-sm text-accent hover:text-accent/80 font-medium"
+                  className="text-xs text-emerald-400 hover:text-emerald-300 font-medium"
                 >
-                  {showAllEdges ? '← Show Less' : `View All (${topEdgeMatches.length})`}
+                  {showAllEdges ? '← Less' : `All ${topEdgeMatches.length}`}
                 </button>
               )}
             </div>
             
             {topEdgeMatches.length === 0 ? (
-              <div className="bg-bg-primary/50 border border-divider rounded-xl p-8 text-center">
-                <div className="text-4xl mb-4">📊</div>
-                <h3 className="text-lg font-semibold text-text-primary mb-2">No Value Edges Found</h3>
-                <p className="text-text-secondary text-sm">
-                  Edges will appear when model finds value.
-                </p>
+              <div className="bg-bg-card/50 border border-divider rounded-xl p-8 text-center">
+                <div className="text-3xl mb-3 opacity-50">📊</div>
+                <h3 className="font-semibold text-text-primary mb-1">No Edges Detected</h3>
+                <p className="text-text-muted text-sm">Markets appear efficient right now</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -557,29 +733,33 @@ export default function MarketAlertsPage() {
           </section>
 
           {/* Steam Moves */}
-          <section className="bg-bg-card/50 border border-amber-500/20 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
+          <section>
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">⚡</span>
-                <h2 className="text-xl font-semibold text-text-primary">Steam Moves</h2>
+                <span className="text-xl">⚡</span>
+                <h2 className="text-lg font-semibold text-text-primary">Steam Moves</h2>
+                <span className="text-xs text-text-muted bg-bg-card px-2 py-0.5 rounded-full">
+                  {steamMoves.length} active
+                </span>
               </div>
               {steamMoves.length > 5 && (
                 <button 
                   onClick={() => setShowAllSteam(!showAllSteam)}
-                  className="text-sm text-amber-400 hover:text-amber-300 font-medium"
+                  className="text-xs text-amber-400 hover:text-amber-300 font-medium"
                 >
-                  {showAllSteam ? '← Show Less' : `View All (${steamMoves.length})`}
+                  {showAllSteam ? '← Less' : `All ${steamMoves.length}`}
                 </button>
               )}
             </div>
             
+            {/* Steam Legend */}
+            <SteamLegend />
+            
             {steamMoves.length === 0 ? (
-              <div className="bg-bg-primary/50 border border-divider rounded-xl p-8 text-center">
-                <div className="text-4xl mb-4">📉</div>
-                <h3 className="text-lg font-semibold text-text-primary mb-2">No Steam Moves Detected</h3>
-                <p className="text-text-secondary text-sm">
-                  Sharp money alerts (2.5%+ odds changes) appear here.
-                </p>
+              <div className="bg-bg-card/50 border border-divider rounded-xl p-8 text-center">
+                <div className="text-3xl mb-3 opacity-50">📉</div>
+                <h3 className="font-semibold text-text-primary mb-1">No Steam Detected</h3>
+                <p className="text-text-muted text-sm">Sharp money alerts appear here</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -591,11 +771,10 @@ export default function MarketAlertsPage() {
           </section>
         </div>
 
-        {/* Disclaimer */}
-        <div className="mt-12 p-4 bg-bg-card border border-divider rounded-lg">
-          <p className="text-text-muted text-sm text-center">
-            ⚠️ Market alerts are for educational purposes only. Model edges represent statistical 
-            analysis, not guaranteed outcomes. Always gamble responsibly. 18+
+        {/* Disclaimer - Very subtle */}
+        <div className="mt-12 text-center">
+          <p className="text-text-muted/50 text-xs">
+            ⚠️ Educational purposes only. Model edges are statistical analysis, not guaranteed outcomes. 18+
           </p>
         </div>
       </div>
