@@ -212,28 +212,40 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const awayFormCounts = countForm(awayFormStr);
 
     // Calculate stats - use actual played count from API if available, otherwise form count
+    // Type assertion needed because enrichedData can come from different sources
+    const homeStatsRaw = enrichedData.homeStats as { 
+      goalsScored?: number; goalsConceded?: number; played?: number; 
+      wins?: number; draws?: number; losses?: number;
+      averageScored?: number; averageConceded?: number;
+    } | null;
+    const awayStatsRaw = enrichedData.awayStats as { 
+      goalsScored?: number; goalsConceded?: number; played?: number; 
+      wins?: number; draws?: number; losses?: number;
+      averageScored?: number; averageConceded?: number;
+    } | null;
+
     const homeStats = {
-      goalsScored: enrichedData.homeStats?.goalsScored || 0,
-      goalsConceded: enrichedData.homeStats?.goalsConceded || 0,
-      played: enrichedData.homeStats?.played || homeFormCounts.played,
-      wins: enrichedData.homeStats?.wins || homeFormCounts.wins,
-      draws: enrichedData.homeStats?.draws ?? homeFormCounts.draws,
-      losses: enrichedData.homeStats?.losses || homeFormCounts.losses,
+      goalsScored: homeStatsRaw?.goalsScored || 0,
+      goalsConceded: homeStatsRaw?.goalsConceded || 0,
+      played: homeStatsRaw?.played || homeFormCounts.played,
+      wins: homeStatsRaw?.wins || homeFormCounts.wins,
+      draws: homeStatsRaw?.draws ?? homeFormCounts.draws,
+      losses: homeStatsRaw?.losses || homeFormCounts.losses,
       // Pre-calculated averages from API (more accurate)
-      averageScored: enrichedData.homeStats?.averageScored,
-      averageConceded: enrichedData.homeStats?.averageConceded,
+      averageScored: homeStatsRaw?.averageScored,
+      averageConceded: homeStatsRaw?.averageConceded,
     };
 
     const awayStats = {
-      goalsScored: enrichedData.awayStats?.goalsScored || 0,
-      goalsConceded: enrichedData.awayStats?.goalsConceded || 0,
-      played: enrichedData.awayStats?.played || awayFormCounts.played,
-      wins: enrichedData.awayStats?.wins || awayFormCounts.wins,
-      draws: enrichedData.awayStats?.draws ?? awayFormCounts.draws,
-      losses: enrichedData.awayStats?.losses || awayFormCounts.losses,
+      goalsScored: awayStatsRaw?.goalsScored || 0,
+      goalsConceded: awayStatsRaw?.goalsConceded || 0,
+      played: awayStatsRaw?.played || awayFormCounts.played,
+      wins: awayStatsRaw?.wins || awayFormCounts.wins,
+      draws: awayStatsRaw?.draws ?? awayFormCounts.draws,
+      losses: awayStatsRaw?.losses || awayFormCounts.losses,
       // Pre-calculated averages from API (more accurate)
-      averageScored: enrichedData.awayStats?.averageScored,
-      averageConceded: enrichedData.awayStats?.averageConceded,
+      averageScored: awayStatsRaw?.averageScored,
+      averageConceded: awayStatsRaw?.averageConceded,
     };
 
     // H2H summary
