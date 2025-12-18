@@ -56,11 +56,18 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        // Case-insensitive email lookup
+        const user = await prisma.user.findFirst({
+          where: { 
+            email: { 
+              equals: credentials.email.toLowerCase().trim(),
+              mode: 'insensitive' 
+            } 
+          },
         });
 
         if (!user || !user.password) {
+          // User doesn't exist or was created via OAuth (no password)
           return null;
         }
 
