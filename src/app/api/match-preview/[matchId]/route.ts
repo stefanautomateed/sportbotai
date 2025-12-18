@@ -120,14 +120,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       console.log(`[Match-Preview] User ${session.user.email} has exceeded daily limit (${usageCheck.limit})`);
       return NextResponse.json(
         { 
+          usageLimitReached: true,
           error: 'Daily analysis limit reached',
           message: usageCheck.plan === 'FREE' 
             ? 'You\'ve used your free daily analysis. Upgrade to Pro for 30 analyses/day!'
             : usageCheck.plan === 'PRO'
             ? 'You\'ve reached your Pro limit (30/day). Upgrade to Premium for unlimited!'
             : 'Daily limit reached. Please try again tomorrow.',
-          limit: usageCheck.limit,
+          usage: {
+            remaining: usageCheck.remaining,
+            limit: usageCheck.limit,
+            used: usageCheck.limit - usageCheck.remaining,
+          },
           plan: usageCheck.plan,
+          matchInfo: matchInfo, // Include match info for display
         },
         { status: 429 }
       );

@@ -132,11 +132,31 @@ interface MatchPreviewData {
   message?: string;
 }
 
+// Usage limit data from 429 response
+interface UsageLimitData {
+  usageLimitReached: boolean;
+  message: string;
+  usage: {
+    remaining: number;
+    limit: number;
+    used: number;
+  };
+  plan: string;
+  matchInfo?: {
+    homeTeam: string;
+    awayTeam: string;
+    league: string;
+    sport: string;
+    kickoff: string;
+  };
+}
+
 export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps) {
   const { data: session } = useSession();
   const [data, setData] = useState<MatchPreviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [usageLimit, setUsageLimit] = useState<UsageLimitData | null>(null);
   
   // Parse matchId immediately to show header while loading
   const parsedMatch = useMemo(() => parseMatchIdClient(matchId), [matchId]);
@@ -151,6 +171,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
       try {
         setLoading(true);
         setError(null);
+        setUsageLimit(null);
         
         // Add cache-busting timestamp to force fresh fetch (no browser cache)
         const response = await fetch(`/api/match-preview/${matchId}?_t=${Date.now()}`, {
@@ -158,11 +179,18 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
           cache: 'no-store', // Don't use browser cache
         });
         
-        if (!response.ok) {
-          throw new Error('Failed to load match preview');
+        const result = await response.json();
+        
+        // Handle 429 (usage limit reached) specifically
+        if (response.status === 429 && result.usageLimitReached) {
+          setUsageLimit(result as UsageLimitData);
+          return;
         }
         
-        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to load match preview');
+        }
+        
         setData(result);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -227,6 +255,123 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
   // Fallback skeleton if we can't parse matchId
   if (loading) {
     return <PremiumSkeleton />;
+  }
+
+  // Usage limit reached - show upgrade card with match info
+  if (usageLimit) {
+    const matchForHeader = usageLimit.matchInfo || parsedMatch;
+    return (
+      <div className="min-h-screen bg-[#050506]">
+        <div className="fixed inset-0 bg-gradient-to-b from-white/[0.01] via-transparent to-transparent pointer-events-none" />
+        
+        <div className="relative max-w-2xl mx-auto px-4 py-6 sm:py-10">
+          {/* Back navigation */}
+          <Link 
+            href="/matches"
+            className="inline-flex items-center gap-2 text-zinc-600 hover:text-zinc-400 transition-colors mb-8"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="text-sm">All Matches</span>
+          </Link>
+
+          {/* Show match header */}
+          {matchForHeader && (
+            <PremiumMatchHeader 
+              homeTeam={matchForHeader.homeTeam}
+              awayTeam={matchForHeader.awayTeam}
+              league={matchForHeader.league}
+              sport={matchForHeader.sport}
+              kickoff={matchForHeader.kickoff}
+            />
+          )}
+
+          {/* Upgrade Card */}
+          <div className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-red-500/10 border border-amber-500/20">
+            <div className="text-center">
+              {/* Icon */}
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
+                <svg className="w-8 h-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+
+              {/* Usage Counter */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-4">
+                <span className="text-zinc-400 text-sm">Daily Credits:</span>
+                <span className="text-white font-semibold">{usageLimit.usage.remaining}/{usageLimit.usage.limit}</span>
+                <span className="text-red-400 text-xs">(used)</span>
+              </div>
+
+              {/* Title & Message */}
+              <h2 className="text-xl font-semibold text-white mb-2">
+                {usageLimit.plan === 'FREE' ? 'Upgrade to Pro' : 'Upgrade to Premium'}
+              </h2>
+              <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto">
+                {usageLimit.message}
+              </p>
+
+              {/* Plan Benefits */}
+              <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/10 text-left max-w-sm mx-auto">
+                <h4 className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                  {usageLimit.plan === 'FREE' ? 'Pro Plan Benefits' : 'Premium Benefits'}
+                </h4>
+                <ul className="space-y-2 text-sm">
+                  {usageLimit.plan === 'FREE' ? (
+                    <>
+                      <li className="flex items-center gap-2 text-zinc-300">
+                        <span className="text-green-400">✓</span>
+                        30 analyses per day
+                      </li>
+                      <li className="flex items-center gap-2 text-zinc-300">
+                        <span className="text-green-400">✓</span>
+                        Market Intel & Value Detection
+                      </li>
+                      <li className="flex items-center gap-2 text-zinc-300">
+                        <span className="text-green-400">✓</span>
+                        Early access to new features
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li className="flex items-center gap-2 text-zinc-300">
+                        <span className="text-green-400">✓</span>
+                        Unlimited analyses
+                      </li>
+                      <li className="flex items-center gap-2 text-zinc-300">
+                        <span className="text-green-400">✓</span>
+                        Priority AI processing
+                      </li>
+                      <li className="flex items-center gap-2 text-zinc-300">
+                        <span className="text-green-400">✓</span>
+                        Analysis history access
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              {/* CTA Button */}
+              <Link 
+                href="/pricing"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-semibold rounded-xl transition-all shadow-lg shadow-amber-500/20"
+              >
+                <span>{usageLimit.plan === 'FREE' ? 'Upgrade to Pro - €9.99/mo' : 'Upgrade to Premium - €19.99/mo'}</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+
+              {/* Secondary link */}
+              <p className="mt-4 text-zinc-500 text-xs">
+                Your credits reset daily at midnight UTC
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error || !data || !data.matchInfo) {
