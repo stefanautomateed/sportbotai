@@ -20,8 +20,29 @@ const PLAN_LIMITS: Record<string, number> = {
 export function UserMenu() {
   const { data: session, status, update } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [usageData, setUsageData] = useState<{ remaining: number; limit: number; plan: string } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Fetch fresh usage data when menu opens
+  useEffect(() => {
+    if (isOpen && session) {
+      fetch('/api/usage')
+        .then(res => res.json())
+        .then(data => {
+          if (data.remaining !== undefined) {
+            setUsageData({
+              remaining: data.remaining,
+              limit: data.limit,
+              plan: data.plan || session.user?.plan || 'FREE',
+            });
+          }
+        })
+        .catch(() => {
+          // Fallback to session data on error
+        });
+    }
+  }, [isOpen, session]);
 
   // Toggle menu - simple and direct
   const toggleMenu = useCallback(() => {
@@ -102,10 +123,10 @@ export function UserMenu() {
     .toUpperCase()
     .slice(0, 2) || session.user?.email?.[0].toUpperCase() || 'U';
 
-  const plan = session.user?.plan || 'FREE';
-  const limit = PLAN_LIMITS[plan] ?? 3;
-  const used = session.user?.analysisCount || 0;
-  const remaining = limit === -1 ? Infinity : Math.max(0, limit - used);
+  // Use fresh usageData if available, otherwise fall back to session data
+  const plan = usageData?.plan || session.user?.plan || 'FREE';
+  const limit = usageData?.limit ?? PLAN_LIMITS[plan] ?? 1;
+  const remaining = usageData?.remaining ?? (limit === -1 ? Infinity : Math.max(0, limit - (session.user?.analysisCount || 0)));
   const isUnlimited = limit === -1;
 
   return (
