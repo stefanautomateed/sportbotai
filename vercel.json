@@ -30,6 +30,10 @@
     {
       "path": "/api/cron/track-predictions",
       "schedule": "0 */2 * * *"
+    },
+    {
+      "path": "/api/cron/poll-odds",
+      "schedule": "*/30 * * * *"
     }
   ]
 }
