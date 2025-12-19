@@ -70,7 +70,9 @@ interface MarketAlertsResponse {
   success: boolean;
   data?: {
     topEdgeMatches: MarketAlert[];
+    allMatches: MarketAlert[];  // All matches sorted by edge
     steamMoves: MarketAlert[];
+    allSteamMoves: MarketAlert[];  // All steam moves
     recentUpdates: {
       lastFetch: string;
       matchesScanned: number;
@@ -628,12 +630,11 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // Sort alerts - always show top 5 by edge (even if edge < 5%)
-    const topEdgeMatches = [...allAlerts]
-      .sort((a, b) => b.bestEdge.percent - a.bestEdge.percent)
-      .slice(0, 5);
+    // Sort ALL alerts by edge (highest to lowest)
+    const allEdgesSorted = [...allAlerts]
+      .sort((a, b) => b.bestEdge.percent - a.bestEdge.percent);
     
-    // Steam moves - top 5 by highest change (or pattern interest score)
+    // Steam moves - sorted by steam score
     // Calculate a "steam score" for each match to rank them
     const steamMoves = [...allAlerts]
       .map(a => {
@@ -681,14 +682,15 @@ export async function GET(request: NextRequest) {
         
         return { ...a, steamScore, alertNote: steamNote || 'Tracking line movement' };
       })
-      .sort((a, b) => b.steamScore - a.steamScore)
-      .slice(0, 5);
+      .sort((a, b) => b.steamScore - a.steamScore);
     
     return NextResponse.json({
       success: true,
       data: {
-        topEdgeMatches,
-        steamMoves,
+        topEdgeMatches: allEdgesSorted.slice(0, 5),  // Top 5 for highlight
+        allMatches: allEdgesSorted,  // All matches sorted by edge
+        steamMoves: steamMoves.slice(0, 5),  // Top 5 steam
+        allSteamMoves: steamMoves,  // All steam moves
         recentUpdates: {
           lastFetch: new Date().toISOString(),
           matchesScanned: totalMatches,

@@ -60,7 +60,9 @@ interface MarketAlertsResponse {
   success: boolean;
   data?: {
     topEdgeMatches: MarketAlert[];
+    allMatches: MarketAlert[];  // All matches sorted by edge
     steamMoves: MarketAlert[];
+    allSteamMoves: MarketAlert[];  // All steam moves
     recentUpdates: {
       lastFetch: string;
       matchesScanned: number;
@@ -596,7 +598,10 @@ export default function MarketAlertsPage() {
     );
   }
 
-  const { topEdgeMatches = [], steamMoves = [], recentUpdates } = data?.data || {};
+  const { topEdgeMatches = [], allMatches = [], steamMoves = [], allSteamMoves = [], recentUpdates } = data?.data || {};
+  
+  // Remaining matches (after top 5)
+  const remainingMatches = allMatches.slice(5);
 
   return (
     <div className="min-h-screen bg-bg-primary py-8 sm:py-10">
@@ -639,19 +644,11 @@ export default function MarketAlertsPage() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-base">🎯</span>
-                <h2 className="text-base font-semibold text-text-primary">Value Edges</h2>
+                <h2 className="text-base font-semibold text-text-primary">Top Value Edges</h2>
                 <span className="text-[10px] text-text-muted bg-bg-card px-1.5 py-0.5 rounded">
-                  {topEdgeMatches.length}
+                  Top 5
                 </span>
               </div>
-              {topEdgeMatches.length > 5 && (
-                <button 
-                  onClick={() => setShowAllEdges(!showAllEdges)}
-                  className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium"
-                >
-                  {showAllEdges ? '← Less' : `All ${topEdgeMatches.length}`}
-                </button>
-              )}
             </div>
             
             {topEdgeMatches.length === 0 ? (
@@ -662,9 +659,45 @@ export default function MarketAlertsPage() {
               </div>
             ) : (
               <div className="space-y-2.5">
-                {(showAllEdges ? topEdgeMatches : topEdgeMatches.slice(0, 5)).map(alert => (
+                {topEdgeMatches.map(alert => (
                   <EdgeMatchCard key={alert.id} alert={alert} />
                 ))}
+              </div>
+            )}
+            
+            {/* Expandable: All Other Matches */}
+            {remainingMatches.length > 0 && (
+              <div className="mt-4">
+                <button 
+                  onClick={() => setShowAllEdges(!showAllEdges)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 bg-bg-card/50 hover:bg-bg-card border border-divider rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">📋</span>
+                    <span className="text-sm text-text-secondary">
+                      All Other Matches
+                    </span>
+                    <span className="text-[10px] text-text-muted bg-bg-primary px-1.5 py-0.5 rounded">
+                      {remainingMatches.length}
+                    </span>
+                  </div>
+                  <svg 
+                    className={`w-4 h-4 text-text-muted transition-transform ${showAllEdges ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {showAllEdges && (
+                  <div className="mt-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                    {remainingMatches.map(alert => (
+                      <EdgeMatchCard key={alert.id} alert={alert} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -676,17 +709,9 @@ export default function MarketAlertsPage() {
                 <span className="text-base">⚡</span>
                 <h2 className="text-base font-semibold text-text-primary">Steam Moves</h2>
                 <span className="text-[10px] text-text-muted bg-bg-card px-1.5 py-0.5 rounded">
-                  {steamMoves.length}
+                  Top 5
                 </span>
               </div>
-              {steamMoves.length > 5 && (
-                <button 
-                  onClick={() => setShowAllSteam(!showAllSteam)}
-                  className="text-[10px] text-amber-400 hover:text-amber-300 font-medium"
-                >
-                  {showAllSteam ? '← Less' : `All ${steamMoves.length}`}
-                </button>
-              )}
             </div>
             
             {/* Steam Legend - inline */}
@@ -700,9 +725,45 @@ export default function MarketAlertsPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {(showAllSteam ? steamMoves : steamMoves.slice(0, 5)).map(alert => (
+                {steamMoves.map(alert => (
                   <SteamMoveCard key={alert.id} alert={alert} />
                 ))}
+              </div>
+            )}
+            
+            {/* Expandable: All Other Steam Moves */}
+            {allSteamMoves.length > 5 && (
+              <div className="mt-4">
+                <button 
+                  onClick={() => setShowAllSteam(!showAllSteam)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 bg-bg-card/50 hover:bg-bg-card border border-divider rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">📊</span>
+                    <span className="text-sm text-text-secondary">
+                      All Other Steam Moves
+                    </span>
+                    <span className="text-[10px] text-text-muted bg-bg-primary px-1.5 py-0.5 rounded">
+                      {allSteamMoves.length - 5}
+                    </span>
+                  </div>
+                  <svg 
+                    className={`w-4 h-4 text-text-muted transition-transform ${showAllSteam ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {showAllSteam && (
+                  <div className="mt-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                    {allSteamMoves.slice(5).map(alert => (
+                      <SteamMoveCard key={alert.id} alert={alert} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </section>
