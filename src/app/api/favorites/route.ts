@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+// Force dynamic rendering (uses headers/session)
+export const dynamic = 'force-dynamic'
+
 // GET /api/favorites - Get user's favorite teams
 export async function GET() {
   try {

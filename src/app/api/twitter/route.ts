@@ -12,6 +12,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getTwitterClient, formatForTwitter } from '@/lib/twitter-client';
+
+// Force dynamic rendering (uses headers/session)
+export const dynamic = 'force-dynamic';
 import { SportBotScheduler } from '@/lib/sportbot-scheduler';
 import { prisma } from '@/lib/prisma';
 import { CallType } from '@prisma/client';

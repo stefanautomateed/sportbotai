@@ -17,6 +17,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions, canUserAnalyze, incrementAnalysisCount } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+
+// Force dynamic rendering (uses headers/session)
+export const dynamic = 'force-dynamic';
 import { getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
 import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
 import { normalizeToUniversalSignals, formatSignalsForAI, getSignalSummary, type RawMatchInput } from '@/lib/universal-signals';

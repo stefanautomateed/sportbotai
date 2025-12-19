@@ -26,6 +26,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import OpenAI from 'openai';
+
+// Force dynamic rendering (uses cookies/auth)
+export const dynamic = 'force-dynamic';
 import {
   AnalyzeRequest,
   AnalyzeResponse,
