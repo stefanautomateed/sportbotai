@@ -157,17 +157,47 @@ function detectQueryCategory(message: string): QueryCategory {
 }
 
 function needsSearch(message: string): boolean {
-  // Static knowledge that GPT knows
+  // Static knowledge that GPT knows well - no need for real-time search
   const gptOnlyPatterns = [
+    // Rules and basic knowledge
     /what (is|are) (offside|a foul|the rules|handball)/i,
     /rules of (football|soccer|basketball)/i,
     /how many players/i,
+    
+    // Greetings and meta
     /^(hello|hi|hey|thanks|thank you|bye|ok)[\s!?.]*$/i,
     /^(who are you|what can you do|help)[\s!?.]*$/i,
+    
+    // Player biography & team affiliation (stable data, 10-11 month seasons)
+    // "where does X play", "which team does X play for", "who is X"
+    /where does .+ play/i,
+    /which (team|club) does .+ play/i,
+    /what (team|club) does .+ play/i,
+    /who (is|plays for) .+ (player|goalkeeper|striker|midfielder|defender)/i,
+    /^who is [A-Z][a-z]+ [A-Z][a-z]+\??$/i,  // "Who is Erling Haaland?"
+    /tell me about .+ (player|career|biography)/i,
+    /(biography|bio|profile) of/i,
+    /what position does .+ play/i,
+    /what nationality is/i,
+    /how old is .+ (player)?/i,
+    /when was .+ born/i,
+    /where was .+ born/i,
+    /how tall is/i,
+    /what number does .+ wear/i,
+    
+    // Historical facts (won't change)
+    /who won .+ (in|back in) \d{4}/i,
+    /who won the \d{4}/i,
+    /(world cup|champions league|euro) winner(s)? (in )?\d{4}/i,
+    /all.?time .+ (scorer|record|leader)/i,
+    /most .+ in history/i,
   ];
   
   for (const pattern of gptOnlyPatterns) {
-    if (pattern.test(message)) return false;
+    if (pattern.test(message)) {
+      console.log('[AI-Chat] Skipping search - GPT can handle:', message.slice(0, 50));
+      return false;
+    }
   }
   
   return true;
