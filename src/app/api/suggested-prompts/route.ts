@@ -131,7 +131,7 @@ async function getUpcomingMatchPrompts(): Promise<string[]> {
 }
 
 /**
- * Get trending sports topics from Perplexity
+ * Get trending sports topics from Perplexity - generates dynamic, real-time questions
  */
 async function getTrendingTopics(): Promise<string[]> {
   try {
@@ -143,53 +143,52 @@ async function getTrendingTopics(): Promise<string[]> {
     }
 
     const today = new Date().toLocaleDateString('en-US', { 
+      weekday: 'long',
       month: 'long', 
       day: 'numeric', 
       year: 'numeric' 
     });
 
     const result = await perplexity.search(
-      `What are the top 5 trending sports stories today ${today}? Focus on: injuries, transfers, big matches, player performances. List just the topics briefly.`,
-      { recency: 'day', maxTokens: 500 }
+      `Generate 5 specific sports questions a fan might ask today (${today}). 
+      
+      Mix these categories:
+      1. Recent injury news (who got injured this week?)
+      2. Current standings/form (who's top of the league? who's on a winning streak?)
+      3. Upcoming fixtures (what big games are this weekend?)
+      4. Transfer rumors (January window news)
+      5. Player stats (who's the top scorer? who has most assists?)
+      
+      Format: Return ONLY 5 short questions, one per line. No numbering. No explanations.
+      Example format:
+      What's the latest on Salah's contract situation?
+      Who leads the Premier League golden boot race?
+      Is Bellingham injured for the next match?`,
+      { recency: 'day', maxTokens: 400 }
     );
 
     if (!result.success || !result.content) {
+      console.log('[Suggested Prompts] Perplexity returned no content');
       return [];
     }
 
-    // Parse the response into question prompts
-    const topics = result.content
+    // Parse the response - each line should be a question
+    const questions = result.content
       .split('\n')
-      .filter(line => line.trim().length > 10)
-      .slice(0, 5)
-      .map(topic => {
-        // Convert topic to a question
-        const cleaned = topic.replace(/^\d+\.\s*/, '').replace(/[-*•]\s*/, '').trim();
-        
-        // If it mentions a player injury
-        if (/injur|out|miss/i.test(cleaned)) {
-          const playerMatch = cleaned.match(/([A-Z][a-z]+\s+[A-Z][a-z]+)/);
-          if (playerMatch) {
-            return `What's the latest on ${playerMatch[1]}'s injury?`;
-          }
-        }
-        
-        // If it mentions a match/game
-        if (/vs\.?|versus|against|beat|defeated/i.test(cleaned)) {
-          return `Tell me about ${cleaned}`;
-        }
-        
-        // If it mentions a transfer
-        if (/transfer|sign|deal|move/i.test(cleaned)) {
-          return `Latest news on ${cleaned}`;
-        }
-        
-        // Generic question
-        return `What's happening with ${cleaned}?`;
-      });
+      .map(line => line.trim())
+      .filter(line => {
+        // Must be a question (ends with ?) or be substantial
+        return line.length > 15 && line.length < 100 && !line.startsWith('#');
+      })
+      .map(line => {
+        // Clean up any numbering or bullets
+        return line.replace(/^\d+[\.\)]\s*/, '').replace(/^[-*•]\s*/, '').trim();
+      })
+      .filter(line => line.length > 10)
+      .slice(0, 5);
 
-    console.log('[Suggested Prompts] Trending topics:', topics);
-    return topics;
+    console.log('[Suggested Prompts] Got dynamic questions from Perplexity:', questions);
+    return questions;
   } catch (error) {
     console.error('[Suggested Prompts] Error getting trending topics:', error);
     return [];
@@ -210,7 +209,8 @@ function shuffleArray<T>(array: T[]): T[] {
 
 /**
  * Build the final prompts list
- * Structure: 1 match analysis + diverse sports questions
+ * Structure: 1 match analysis + 5 dynamic sports questions from Perplexity
+ * Only fall back to static if Perplexity fails
  */
 async function buildPrompts(): Promise<string[]> {
   const prompts: string[] = [];
@@ -219,47 +219,41 @@ async function buildPrompts(): Promise<string[]> {
   const upcomingMatches = await getUpcomingMatchPrompts();
   if (upcomingMatches.length > 0) {
     prompts.push(upcomingMatches[0]); // Only add the first one
+  } else {
+    // Fallback match prompt if no live matches
+    prompts.push("Analyze Real Madrid vs Barcelona");
   }
-  console.log(`[Suggested Prompts] Got ${upcomingMatches.length > 0 ? 1 : 0} match prompt`);
+  console.log(`[Suggested Prompts] Match prompt: ${prompts[0]}`);
 
-  // 2. Try to get trending topics from Perplexity (diverse sports news)
-  const trending = await getTrendingTopics();
-  console.log(`[Suggested Prompts] Got ${trending.length} trending topics`);
+  // 2. Get dynamic questions from Perplexity (priority - these are real-time)
+  const dynamicQuestions = await getTrendingTopics();
+  console.log(`[Suggested Prompts] Got ${dynamicQuestions.length} dynamic questions from Perplexity`);
   
-  // 3. Add trending topics (up to 2)
-  const usableTrending = trending.slice(0, 2);
-  prompts.push(...usableTrending);
-
-  // 4. Fill remaining with rotating static prompts
-  // Mix from different categories
-  const allStatic = [
-    ...shuffleArray(STATIC_PROMPTS.general).slice(0, 3),
-    ...shuffleArray(STATIC_PROMPTS.seasonal).slice(0, 2),
-    ...shuffleArray(STATIC_PROMPTS.news).slice(0, 2),
-  ];
-  
-  const shuffledStatic = shuffleArray(allStatic);
-  
-  // Add unique static prompts
-  for (const prompt of shuffledStatic) {
-    if (prompts.length >= 10) break;
-    if (!prompts.includes(prompt)) {
-      prompts.push(prompt);
-    }
+  // 3. Add ALL dynamic questions (up to 5) - these are the real-time prompts
+  if (dynamicQuestions.length > 0) {
+    prompts.push(...dynamicQuestions.slice(0, 5));
   }
 
-  // If still need more, add any remaining general prompts
-  if (prompts.length < 10) {
-    for (const prompt of STATIC_PROMPTS.general) {
-      if (prompts.length >= 10) break;
+  // 4. ONLY if we don't have enough dynamic questions, fill with static
+  if (prompts.length < 6) {
+    console.log(`[Suggested Prompts] Only ${prompts.length} prompts, filling with static fallbacks`);
+    
+    const allStatic = shuffleArray([
+      ...STATIC_PROMPTS.general,
+      ...STATIC_PROMPTS.seasonal,
+      ...STATIC_PROMPTS.news,
+    ]);
+    
+    for (const prompt of allStatic) {
+      if (prompts.length >= 6) break;
       if (!prompts.includes(prompt)) {
         prompts.push(prompt);
       }
     }
   }
 
-  console.log(`[Suggested Prompts] Final prompts (${prompts.length}):`, prompts.slice(0, 4));
-  return prompts.slice(0, 10);
+  console.log(`[Suggested Prompts] Final prompts (${prompts.length}):`, prompts);
+  return prompts.slice(0, 6); // Return 6 prompts max
 }
 
 // ============================================
