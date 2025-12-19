@@ -9,8 +9,8 @@
  * 
  * This enables REAL steam move detection vs only seeing changes when user visits.
  * 
- * Schedule: Every 30 minutes (*/30 * * * *)
- * Quota usage: ~5-10 API calls per run (1 per sport with eu+us regions)
+ * Schedule: Every 30 minutes
+ * Quota usage: 5-10 API calls per run (1 per sport with eu+us regions)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
