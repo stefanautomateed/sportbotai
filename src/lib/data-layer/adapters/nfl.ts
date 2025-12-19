@@ -169,17 +169,27 @@ export class NFLAdapter extends BaseSportAdapter {
       return this.error('INVALID_QUERY', 'Team name or ID required');
     }
     
-    const season = this.getCurrentSeason();
+    let season = this.getCurrentSeason();
     const leagueId = LEAGUE_IDS.NFL;
     console.log(`[NFL] Using season=${season}, leagueId=${leagueId}`);
     
     // Try by ID first
     if (query.id) {
-      const result = await this.apiProvider.getNFLTeams({
+      let result = await this.apiProvider.getNFLTeams({
         id: parseInt(query.id),
         league: leagueId,
         season,
       });
+      
+      // Fallback to previous season if no results
+      if ((!result.success || !result.data || result.data.length === 0) && season > 2020) {
+        console.log(`[NFL] No team by ID in ${season}, trying ${season - 1}`);
+        result = await this.apiProvider.getNFLTeams({
+          id: parseInt(query.id),
+          league: leagueId,
+          season: season - 1,
+        });
+      }
       
       if (result.success && result.data && result.data.length > 0) {
         return this.success(this.transformTeam(result.data[0]));
@@ -192,10 +202,20 @@ export class NFLAdapter extends BaseSportAdapter {
       console.log(`[NFL] Searching for "${query.name}" with variations:`, searchVariations);
       
       // Get all teams once for efficient matching
-      const allTeams = await this.apiProvider.getNFLTeams({
+      let allTeams = await this.apiProvider.getNFLTeams({
         league: leagueId,
         season,
       });
+      
+      // Fallback to previous season if no teams found
+      if ((!allTeams.success || !allTeams.data || allTeams.data.length === 0) && season > 2020) {
+        console.log(`[NFL] No teams in ${season}, trying ${season - 1}`);
+        season = season - 1;
+        allTeams = await this.apiProvider.getNFLTeams({
+          league: leagueId,
+          season,
+        });
+      }
       
       console.log(`[NFL] All teams fetch: success=${allTeams.success}, count=${allTeams.data?.length || 0}`);
       
@@ -294,13 +314,23 @@ export class NFLAdapter extends BaseSportAdapter {
    * Get team statistics from standings (NFL API doesn't have /teams/statistics)
    */
   async getTeamStats(query: StatsQuery): Promise<DataLayerResponse<NormalizedTeamStats>> {
-    const season = query.season ? parseInt(query.season) : this.getCurrentSeason();
+    let season = query.season ? parseInt(query.season) : this.getCurrentSeason();
     const leagueId = LEAGUE_IDS.NFL;
     
-    const standingsResult = await this.apiProvider.getNFLStandings({
+    let standingsResult = await this.apiProvider.getNFLStandings({
       league: leagueId,
       season,
     });
+    
+    // Fallback to previous season if no standings found
+    if ((!standingsResult.success || !standingsResult.data || standingsResult.data.length === 0) && season > 2020) {
+      console.log(`[NFL] No standings in ${season}, trying ${season - 1}`);
+      season = season - 1;
+      standingsResult = await this.apiProvider.getNFLStandings({
+        league: leagueId,
+        season,
+      });
+    }
     
     if (standingsResult.success && standingsResult.data) {
       const allStandings = standingsResult.data.flat();
@@ -417,11 +447,23 @@ export class NFLAdapter extends BaseSportAdapter {
     const team2Id = team2Result.data.externalId;
     const h2hString = `${team1Id}-${team2Id}`;
     
-    const result = await this.apiProvider.getNFLGames({
+    let season = this.getCurrentSeason();
+    let result = await this.apiProvider.getNFLGames({
       h2h: h2hString,
       league: LEAGUE_IDS.NFL,
-      season: this.getCurrentSeason(),
+      season,
     });
+    
+    // Fallback to previous season if no H2H found
+    if ((!result.success || !result.data || result.data.length === 0) && season > 2020) {
+      console.log(`[NFL H2H] No games in ${season}, trying ${season - 1}`);
+      season = season - 1;
+      result = await this.apiProvider.getNFLGames({
+        h2h: h2hString,
+        league: LEAGUE_IDS.NFL,
+        season,
+      });
+    }
     
     if (!result.success || !result.data) {
       return this.error('FETCH_ERROR', result.error || 'Failed to fetch H2H');
