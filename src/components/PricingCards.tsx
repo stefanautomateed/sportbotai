@@ -216,23 +216,23 @@ export default function PricingCards() {
                 </h3>
 
                 {/* Billing Toggle */}
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <span className={`text-sm ${yearly ? 'text-gray-500' : 'text-white font-medium'}`}>Monthly</span>
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <span className={`text-sm transition-colors ${!yearly ? 'text-white font-semibold' : 'text-gray-500'}`}>Monthly</span>
                   <button
                     onClick={() => toggleBilling(plan.id)}
-                    className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
+                    className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
                       yearly 
                         ? plan.highlighted ? 'bg-primary' : isPremium ? 'bg-slate-400' : 'bg-accent'
                         : 'bg-gray-600'
                     }`}
                   >
                     <span
-                      className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                        yearly ? 'translate-x-8' : 'translate-x-1'
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200 ${
+                        yearly ? 'translate-x-6' : 'translate-x-0'
                       }`}
                     />
                   </button>
-                  <span className={`text-sm ${yearly ? 'text-white font-medium' : 'text-gray-500'}`}>Yearly</span>
+                  <span className={`text-sm transition-colors ${yearly ? 'text-white font-semibold' : 'text-gray-500'}`}>Yearly</span>
                 </div>
 
                 {/* Price */}
