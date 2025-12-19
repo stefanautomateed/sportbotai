@@ -1561,6 +1561,79 @@ async function getNFLH2H(homeTeamId: number, awayTeamId: number, baseUrl: string
 }
 
 // ============================================
+// NFL INJURIES
+// ============================================
+
+interface NFLPlayerInjury {
+  player: string;
+  position: string;
+  reason: 'injury' | 'suspension' | 'doubtful';
+  details: string;
+}
+
+/**
+ * Get NFL team injuries
+ */
+async function getNFLTeamInjuries(teamId: number, baseUrl: string): Promise<NFLPlayerInjury[]> {
+  const cacheKey = `nfl:injuries:${teamId}`;
+  const cached = getCached<NFLPlayerInjury[]>(cacheKey);
+  if (cached) return cached;
+
+  const response = await apiRequest<any>(baseUrl, `/injuries?team=${teamId}`);
+  
+  if (!response?.response || response.response.length === 0) {
+    setCache(cacheKey, []);
+    return [];
+  }
+
+  const injuries: NFLPlayerInjury[] = response.response
+    .slice(0, 10) // Limit to 10 injuries per team
+    .map((item: any) => ({
+      player: item.player?.name || 'Unknown',
+      position: item.player?.position || 'Unknown',
+      reason: item.status?.toLowerCase()?.includes('suspend') 
+        ? 'suspension' as const
+        : item.status?.toLowerCase()?.includes('doubt')
+        ? 'doubtful' as const
+        : 'injury' as const,
+      details: item.status || 'Out',
+    }));
+
+  console.log(`[NFL] Found ${injuries.length} injuries for team ${teamId}`);
+  setCache(cacheKey, injuries);
+  return injuries;
+}
+
+/**
+ * Get NFL match injuries for both teams
+ * Exported for use in match-preview route
+ */
+export async function getNFLMatchInjuries(
+  homeTeam: string,
+  awayTeam: string
+): Promise<{ home: NFLPlayerInjury[]; away: NFLPlayerInjury[] }> {
+  const baseUrl = API_BASES.american_football;
+  
+  const [homeTeamId, awayTeamId] = await Promise.all([
+    findNFLTeam(homeTeam, baseUrl),
+    findNFLTeam(awayTeam, baseUrl),
+  ]);
+
+  if (!homeTeamId && !awayTeamId) {
+    console.log(`[NFL] No team IDs found for ${homeTeam} / ${awayTeam}`);
+    return { home: [], away: [] };
+  }
+
+  const [homeInjuries, awayInjuries] = await Promise.all([
+    homeTeamId ? getNFLTeamInjuries(homeTeamId, baseUrl) : Promise.resolve([]),
+    awayTeamId ? getNFLTeamInjuries(awayTeamId, baseUrl) : Promise.resolve([]),
+  ]);
+
+  console.log(`[NFL] Injuries fetched - Home: ${homeInjuries.length}, Away: ${awayInjuries.length}`);
+  return { home: homeInjuries, away: awayInjuries };
+}
+
+// ============================================
 // MLB (BASEBALL) FUNCTIONS
 // ============================================
 // MAIN EXPORT FUNCTION

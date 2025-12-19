@@ -21,6 +21,7 @@ import { prisma } from '@/lib/prisma';
 // Force dynamic rendering (uses headers/session)
 export const dynamic = 'force-dynamic';
 import { getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
+import { getNFLMatchInjuries } from '@/lib/sports-api';
 import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
 import { normalizeToUniversalSignals, formatSignalsForAI, getSignalSummary, type RawMatchInput } from '@/lib/universal-signals';
 import { analyzeMarket, type MarketIntel, type OddsData } from '@/lib/value-detection';
@@ -341,6 +342,23 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       } catch (soccerExtrasError) {
         console.error(`[Match-Preview] Soccer extras error (non-fatal):`, soccerExtrasError);
         // Continue with empty extras - core data from DataLayer is more important
+      }
+    }
+
+    // NFL-specific: fetch injuries
+    const isNFL = ['americanfootball', 'americanfootball_nfl', 'nfl', 'ncaaf']
+      .includes(matchInfo.sport.toLowerCase());
+    
+    if (isNFL) {
+      console.log(`[Match-Preview] Fetching NFL injuries...`);
+      try {
+        injuries = await getNFLMatchInjuries(
+          matchInfo.homeTeam,
+          matchInfo.awayTeam
+        );
+        console.log(`[Match-Preview] NFL injuries fetched - Home: ${injuries.home.length}, Away: ${injuries.away.length}`);
+      } catch (nflError) {
+        console.error(`[Match-Preview] NFL injuries error (non-fatal):`, nflError);
       }
     }
 
