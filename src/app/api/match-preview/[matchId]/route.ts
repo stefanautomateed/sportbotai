@@ -206,7 +206,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     
     const kickoffTime = matchInfo.kickoff ? new Date(matchInfo.kickoff).getTime() : 0;
     const minutesUntilKickoff = kickoffTime ? (kickoffTime - Date.now()) / 60000 : Infinity;
-    const shouldSkipCache = minutesUntilKickoff < 30; // Skip cache if match starts within 30 min
+    // Only skip cache for matches 0-30 min before kickoff (for fresh last-minute data)
+    // Live matches (negative minutes) should STILL use cache to show pre-match analysis
+    const isLive = minutesUntilKickoff < 0;
+    const isAboutToStart = minutesUntilKickoff >= 0 && minutesUntilKickoff < 30;
+    const shouldSkipCache = isAboutToStart; // Only skip for matches about to start, NOT for live matches
+    
+    if (isLive) {
+      console.log(`[Match-Preview] Match is LIVE (${Math.abs(Math.round(minutesUntilKickoff))} min into game) - checking cache for pre-match analysis`);
+    }
     
     if (!shouldSkipCache) {
       const cachedPreview = await cacheGet<any>(cacheKey);
@@ -294,8 +302,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         });
       }
       console.log(`[Match-Preview] Cache MISS for key: ${cacheKey}`);
-    } else {
-      console.log(`[Match-Preview] Skipping cache - match starts in ${Math.round(minutesUntilKickoff)} min`);
+    } else if (isAboutToStart) {
+      console.log(`[Match-Preview] Skipping cache - match starts in ${Math.round(minutesUntilKickoff)} min (about to start, generating fresh)`);
     }
 
     // Fetch enriched data based on sport type
