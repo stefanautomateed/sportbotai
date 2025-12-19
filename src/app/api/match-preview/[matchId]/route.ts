@@ -677,6 +677,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         battleType: 'top-scorers' as const,
       } : null,
       referee: referee,
+      // Injuries data for expandable availability section
+      injuries: {
+        home: injuries.home.map(i => ({
+          player: i.player,
+          position: i.position || 'Unknown',
+          reason: i.reason || 'injury',
+          details: i.details || 'Out',
+        })),
+        away: injuries.away.map(i => ({
+          player: i.player,
+          position: i.position || 'Unknown',
+          reason: i.reason || 'injury',
+          details: i.details || 'Out',
+        })),
+      },
       // Premium Edge Features
       marketIntel: marketIntel,
       odds: odds,
@@ -1260,6 +1275,8 @@ async function generateAIAnalysis(data: {
     },
     homeInjuries: data.injuries?.home || [],
     awayInjuries: data.injuries?.away || [],
+    homeInjuryDetails: data.enrichedContext?.injuryDetails?.home || [],
+    awayInjuryDetails: data.enrichedContext?.injuryDetails?.away || [],
   };
   
   // Generate Universal Signals (the core of the system)

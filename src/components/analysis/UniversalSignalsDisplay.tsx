@@ -8,6 +8,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import { UniversalSignals } from '@/lib/universal-signals';
 import {
   FormDots,
@@ -135,27 +136,131 @@ export default function UniversalSignalsDisplay({
           </div>
         </div>
 
-        {/* Availability */}
-        <div className="p-4 rounded-xl bg-[#0a0a0b] border border-white/[0.04]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">🏥</span>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Availability Impact</span>
-            </div>
-            <AvailabilityDots level={display.availability.level} />
-          </div>
-          {display.availability.note && (
-            <p className="text-xs text-zinc-500 mt-2">
-              {display.availability.note}
-            </p>
-          )}
-        </div>
+        {/* Availability - Expandable */}
+        <ExpandableAvailability
+          display={display}
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+        />
       </div>
 
       {/* Minimal disclaimer */}
       <p className="text-[9px] text-zinc-700 text-center">
         Signals calculated from recent performance. Not betting advice.
       </p>
+    </div>
+  );
+}
+
+/**
+ * Expandable Availability Section
+ */
+function ExpandableAvailability({
+  display,
+  homeTeam,
+  awayTeam,
+}: {
+  display: UniversalSignals['display'];
+  homeTeam: string;
+  awayTeam: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const homeInjuries = display.availability.homeInjuries || [];
+  const awayInjuries = display.availability.awayInjuries || [];
+  const hasInjuries = homeInjuries.length > 0 || awayInjuries.length > 0;
+
+  return (
+    <div className="p-4 rounded-xl bg-[#0a0a0b] border border-white/[0.04]">
+      <button
+        onClick={() => hasInjuries && setExpanded(!expanded)}
+        className={`w-full flex items-center justify-between ${hasInjuries ? 'cursor-pointer' : 'cursor-default'}`}
+        disabled={!hasInjuries}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-sm">🏥</span>
+          <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Availability Impact</span>
+          {hasInjuries && (
+            <span className="text-[9px] text-zinc-600">
+              ({homeInjuries.length + awayInjuries.length} players)
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <AvailabilityDots level={display.availability.level} />
+          {hasInjuries && (
+            <svg
+              className={`w-4 h-4 text-zinc-500 transition-transform ${expanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          )}
+        </div>
+      </button>
+      
+      {display.availability.note && !expanded && (
+        <p className="text-xs text-zinc-500 mt-2">
+          {display.availability.note}
+        </p>
+      )}
+
+      {expanded && hasInjuries && (
+        <div className="mt-3 pt-3 border-t border-white/[0.04] space-y-3">
+          {/* Home Team Injuries */}
+          {homeInjuries.length > 0 && (
+            <div>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
+                {homeTeam}
+              </p>
+              <div className="space-y-1.5">
+                {homeInjuries.map((injury, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs">
+                    <span className="text-white">{injury.player}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                      injury.reason === 'suspension' ? 'bg-red-500/20 text-red-400' :
+                      injury.reason === 'doubtful' ? 'bg-amber-500/20 text-amber-400' :
+                      'bg-zinc-500/20 text-zinc-400'
+                    }`}>
+                      {injury.details || injury.reason || 'Out'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Away Team Injuries */}
+          {awayInjuries.length > 0 && (
+            <div>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
+                {awayTeam}
+              </p>
+              <div className="space-y-1.5">
+                {awayInjuries.map((injury, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs">
+                    <span className="text-white">{injury.player}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                      injury.reason === 'suspension' ? 'bg-red-500/20 text-red-400' :
+                      injury.reason === 'doubtful' ? 'bg-amber-500/20 text-amber-400' :
+                      'bg-zinc-500/20 text-zinc-400'
+                    }`}>
+                      {injury.details || injury.reason || 'Out'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!hasInjuries && (
+        <p className="text-[10px] text-zinc-600 mt-2">
+          No injuries reported • Full squads expected
+        </p>
+      )}
     </div>
   );
 }
@@ -198,6 +303,15 @@ export function SignalPills({ signals }: { signals: UniversalSignals }) {
   const edgeDirection = display?.edge?.direction || 'even';
   const tempoLevel = display?.tempo?.level || 'medium';
   
+  // Convert clarity score to user-friendly label
+  const getDataQualityLabel = (score: number): { label: string; color: 'emerald' | 'amber' | 'zinc' } => {
+    if (score >= 75) return { label: 'Rich', color: 'emerald' };
+    if (score >= 50) return { label: 'Standard', color: 'zinc' };
+    return { label: 'Limited', color: 'amber' };
+  };
+  
+  const dataQuality = getDataQualityLabel(signals.clarity_score);
+  
   return (
     <div className="flex flex-wrap gap-2">
       <Pill 
@@ -212,8 +326,8 @@ export function SignalPills({ signals }: { signals: UniversalSignals }) {
       />
       <Pill 
         label="Data" 
-        value={`${signals.clarity_score}%`}
-        color={confidence === 'high' ? 'emerald' : confidence === 'medium' ? 'amber' : 'zinc'}
+        value={dataQuality.label}
+        color={dataQuality.color}
       />
     </div>
   );

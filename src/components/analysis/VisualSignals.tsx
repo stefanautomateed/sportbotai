@@ -279,40 +279,41 @@ export function TempoIndicator({ level }: TempoIndicatorProps) {
 interface VerdictBadgeProps {
   favored: string;
   confidence: 'high' | 'medium' | 'low';
-  clarityScore: number;
+  clarityScore?: number; // Optional - no longer displayed
 }
 
-export function VerdictBadge({ favored, confidence, clarityScore }: VerdictBadgeProps) {
+export function VerdictBadge({ favored, confidence }: VerdictBadgeProps) {
   const colors = {
     high: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/30 text-emerald-400',
     medium: 'from-amber-500/20 to-amber-500/5 border-amber-500/30 text-amber-400',
     low: 'from-zinc-500/20 to-zinc-500/5 border-zinc-500/30 text-zinc-400',
   };
 
+  const confidenceLabels = {
+    high: 'Strong Signal',
+    medium: 'Moderate Signal',
+    low: 'Weak Signal',
+  };
+
   return (
-    <div className="space-y-2">
-      <div className={`
-        relative overflow-hidden rounded-2xl p-6
-        bg-gradient-to-br ${colors[confidence].split(' ').slice(0, 2).join(' ')}
-        border ${colors[confidence].split(' ')[2]}
-      `}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">
-              Analysis Points To
-            </p>
-            <p className="text-xl font-semibold text-white">
-              {favored || 'No Clear Edge'}
-            </p>
-          </div>
-          <div className="text-center">
-            <ConfidenceRing score={clarityScore} confidence={confidence} size={72} />
-          </div>
+    <div className={`
+      relative overflow-hidden rounded-2xl p-6
+      bg-gradient-to-br ${colors[confidence].split(' ').slice(0, 2).join(' ')}
+      border ${colors[confidence].split(' ')[2]}
+    `}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">
+            Analysis Points To
+          </p>
+          <p className="text-xl font-semibold text-white">
+            {favored || 'No Clear Edge'}
+          </p>
+        </div>
+        <div className={`text-right ${colors[confidence].split(' ')[3]}`}>
+          <p className="text-sm font-medium">{confidenceLabels[confidence]}</p>
         </div>
       </div>
-      <p className="text-[10px] text-zinc-600 text-center">
-        Data % = How complete our stats are · Not a prediction
-      </p>
     </div>
   );
 }

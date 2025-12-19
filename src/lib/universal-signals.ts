@@ -52,6 +52,8 @@ export interface UniversalSignals {
       level: 'low' | 'medium' | 'high' | 'critical';
       note: string | null;
       label: string;
+      homeInjuries?: Array<{ player: string; position?: string; reason?: string; details?: string }>;
+      awayInjuries?: Array<{ player: string; position?: string; reason?: string; details?: string }>;
     };
   };
   
@@ -100,6 +102,10 @@ export interface RawMatchInput {
   awayInjuries?: string[];
   homeKeyOut?: string[];   // Key players definitely out
   awayKeyOut?: string[];
+  
+  // Rich injury data (when available)
+  homeInjuryDetails?: Array<{ player: string; position?: string; reason?: string; details?: string }>;
+  awayInjuryDetails?: Array<{ player: string; position?: string; reason?: string; details?: string }>;
 }
 
 // ============================================
@@ -476,6 +482,8 @@ export function normalizeToUniversalSignals(input: RawMatchInput): UniversalSign
         level: availability.level,
         note: availability.note,
         label: availability.note ? `${availabilityLabel} – ${availability.note}` : availabilityLabel,
+        homeInjuries: input.homeInjuryDetails || (input.homeInjuries?.map(p => ({ player: p })) ?? []),
+        awayInjuries: input.awayInjuryDetails || (input.awayInjuries?.map(p => ({ player: p })) ?? []),
       },
     },
     
