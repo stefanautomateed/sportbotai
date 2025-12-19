@@ -9,7 +9,7 @@
 
 import { useState, useEffect } from 'react';
 import { MatchData } from '@/types';
-import { LeagueGroup, getSportIcon, getLeagueCountryFlag } from './utils';
+import { LeagueGroup, getLeagueCountryFlag } from './utils';
 import MatchList from './MatchList';
 import LeagueLogo from '@/components/ui/LeagueLogo';
 
@@ -98,7 +98,7 @@ export default function LeagueAccordion({
 
   return (
     <div className="space-y-2">
-      {leagues.map((league, index) => {
+      {leagues.map((league) => {
         const isExpanded = expandedLeagues.has(league.leagueKey);
         const matchCount = league.matches.length;
         const hasSelectedMatch = league.matches.some(m => m.matchId === selectedMatchId);

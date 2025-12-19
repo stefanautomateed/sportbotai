@@ -192,7 +192,7 @@ export default function PremiumMatchHeader({
                   </span>
                   <span className="text-red-400 text-xs font-bold uppercase">Live</span>
                   {liveScore?.status.elapsed && (
-                    <span className="text-red-300 text-xs font-mono">{liveScore.status.elapsed}'</span>
+                    <span className="text-red-300 text-xs font-mono">{liveScore.status.elapsed}&apos;</span>
                   )}
                 </span>
               </div>
@@ -279,7 +279,7 @@ export default function PremiumMatchHeader({
             <div className="flex flex-col gap-1.5">
               {liveScore.events.slice(-3).map((event, idx) => (
                 <div key={idx} className="flex items-center justify-center gap-2 text-xs">
-                  <span className="text-zinc-600 font-mono w-6">{event.time}'</span>
+                  <span className="text-zinc-600 font-mono w-6">{event.time}&apos;</span>
                   <span className={event.type === 'Goal' ? 'text-green-400' : event.type === 'Card' ? 'text-yellow-400' : 'text-zinc-500'}>
                     {event.type === 'Goal' ? '⚽' : event.type === 'Card' ? '🟨' : '↔️'}
                   </span>

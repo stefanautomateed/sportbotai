@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import React from 'react';
 
 interface FighterFlagProps {
   fighterName: string;

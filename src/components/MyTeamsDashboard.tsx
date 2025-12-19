@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useFavorites } from '@/lib/FavoritesContext'
-import { Heart, Trash2, Bell, BellOff, Calendar, Trophy, ChevronRight, Star, Users, Loader2 } from 'lucide-react'
+import { Heart, Trash2, Calendar, Trophy, ChevronRight, Star, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -18,7 +18,7 @@ interface UpcomingMatch {
 }
 
 export default function MyTeamsDashboard() {
-  const { data: session, status: authStatus } = useSession()
+  const { status: authStatus } = useSession()
   const { favorites, isLoading, removeFavoriteById, maxTeams, error } = useFavorites()
   const [upcomingMatches, setUpcomingMatches] = useState<UpcomingMatch[]>([])
   const [loadingMatches, setLoadingMatches] = useState(false)

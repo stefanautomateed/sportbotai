@@ -6,7 +6,6 @@
  */
 
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { META } from '@/lib/seo';
 
 export const metadata: Metadata = {

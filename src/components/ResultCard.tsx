@@ -282,7 +282,7 @@ export default function ResultCard({ result }: ResultCardProps) {
 
         <div className="p-3 bg-primary-50 rounded-lg border border-primary-200">
           <p className="text-sm text-primary-800 font-medium italic">
-            "{result.tacticalAnalysis.expertConclusionOneLiner}"
+            &ldquo;{result.tacticalAnalysis.expertConclusionOneLiner}&rdquo;
           </p>
         </div>
       </div>

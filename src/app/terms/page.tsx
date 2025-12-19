@@ -33,7 +33,7 @@ export default function TermsPage() {
           <div className="card mb-8">
             <h2 className="text-xl font-bold text-white mb-4">1. Acceptance of Terms</h2>
             <p className="text-text-secondary leading-relaxed mb-4">
-              By using the SportBot AI platform ("Service"), you accept these Terms of Use in full. 
+              By using the SportBot AI platform (&ldquo;Service&rdquo;), you accept these Terms of Use in full. 
               If you do not agree with any part of these terms, you may not use our Service.
             </p>
             <p className="text-text-secondary leading-relaxed">

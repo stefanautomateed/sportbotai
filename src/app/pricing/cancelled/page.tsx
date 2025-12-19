@@ -34,7 +34,7 @@ export default function CancelledPage() {
 
         {/* Benefits reminder */}
         <div className="bg-bg-card rounded-xl border border-divider p-6 mb-8 text-left">
-          <h3 className="text-sm font-medium text-text-muted mb-3">What you're missing with Pro:</h3>
+          <h3 className="text-sm font-medium text-text-muted mb-3">What you&apos;re missing with Pro:</h3>
           <ul className="space-y-2 text-sm text-text-secondary">
             <li className="flex items-center gap-2">
               <span className="text-accent">✓</span> 30 analyses per day (vs 1 trial)

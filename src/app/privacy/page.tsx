@@ -33,7 +33,7 @@ export default function PrivacyPage() {
           <div className="card mb-8">
             <h2 className="text-xl font-bold text-white mb-4">1. Introduction</h2>
             <p className="text-text-secondary leading-relaxed mb-4">
-              SportBot AI ("we", "us", "our") respects the privacy of its users. 
+              SportBot AI (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) respects the privacy of its users. 
               This Privacy Policy explains how we collect, use, store 
               and protect your data when you use our platform.
             </p>

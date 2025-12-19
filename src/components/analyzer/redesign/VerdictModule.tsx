@@ -121,7 +121,7 @@ export default function VerdictModule({ result }: VerdictModuleProps) {
           {tacticalAnalysis.expertConclusionOneLiner && (
             <div className="pt-6 border-t border-white/[0.06]">
               <p className="text-base sm:text-lg text-white/70 leading-relaxed">
-                "{tacticalAnalysis.expertConclusionOneLiner}"
+                &ldquo;{tacticalAnalysis.expertConclusionOneLiner}&rdquo;
               </p>
             </div>
           )}

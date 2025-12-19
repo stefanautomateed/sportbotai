@@ -12,13 +12,11 @@ import Link from 'next/link';
 import { 
   ArrowLeft, 
   TrendingUp, 
-  TrendingDown,
   Trophy,
   Target,
   Shield,
   Calendar,
   MapPin,
-  Users,
   ChevronRight,
   Loader2
 } from 'lucide-react';
@@ -46,7 +44,7 @@ export default function TeamProfilePage({ params }: PageProps) {
         } else {
           setError(data.error || 'Failed to load team profile');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to fetch team data');
       } finally {
         setLoading(false);

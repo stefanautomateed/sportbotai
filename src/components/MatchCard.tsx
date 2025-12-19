@@ -32,7 +32,6 @@ interface MatchCardProps {
 }
 
 export default function MatchCard({
-  matchId,
   homeTeam,
   awayTeam,
   league,

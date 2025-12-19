@@ -23,10 +23,7 @@ interface MultiSportAnalyzerFormProps {
   onLoading: (loading: boolean) => void;
 }
 
-interface SportGroup {
-  group: string;
-  sports: SportConfig[];
-}
+// SportGroup type used by getSportsGroupedByCategory
 
 // ============================================
 // COMPONENT
@@ -201,7 +198,7 @@ export default function MultiSportAnalyzerForm({
       ? formData.get('sport') as string 
       : selectedSportConfig?.displayName || 'Soccer';
     
-    const sportKey = manualMode 
+    const _sportKey = manualMode 
       ? (formData.get('sport') as string)?.toLowerCase() 
       : selectedSportKey;
 

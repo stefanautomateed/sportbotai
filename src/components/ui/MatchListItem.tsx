@@ -27,7 +27,6 @@ interface MatchListItemProps {
 }
 
 export default function MatchListItem({
-  matchId,
   homeTeam,
   awayTeam,
   league,

@@ -718,7 +718,7 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
         {data.headlines && data.headlines.length > 0 && (
           <div className="mt-6 p-5 rounded-2xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/[0.06]">
             <p className="text-base text-white font-medium leading-relaxed">
-              "{data.headlines[0].text}"
+              &ldquo;{data.headlines[0].text}&rdquo;
             </p>
             <p className="text-[10px] text-zinc-600 mt-2 uppercase tracking-wider">
               — SportBot Analysis

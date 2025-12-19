@@ -26,7 +26,7 @@ import MatchSearchBar from './MatchSearchBar';
 import LeagueAccordion from './LeagueAccordion';
 import MatchPreview from './MatchPreview';
 import { TrendingMatches } from './TrendingMatches';
-import { groupMatchesByLeague, filterLeagueGroupsBySearch, LeagueGroup } from './utils';
+import { groupMatchesByLeague, filterLeagueGroupsBySearch } from './utils';
 import { getTrendingMatches, TrendingMatch } from './trending';
 import { USAGE_UPDATED_EVENT } from '@/components/auth/UserMenu';
 
@@ -46,7 +46,7 @@ interface MatchSelectorProps {
 }
 
 export default function MatchSelector({ onResult, onLoading }: MatchSelectorProps) {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   
   // API state
   const [apiConfigured, setApiConfigured] = useState(true);
@@ -370,7 +370,8 @@ export default function MatchSelector({ onResult, onLoading }: MatchSelectorProp
 
   // Compute if analyze button should be disabled
   const canAnalyze = usageInfo?.canAnalyze ?? false;
-  const isAuthenticated = usageInfo?.authenticated ?? false;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _isAuthenticated = usageInfo?.authenticated ?? false;
 
   return (
     <div className="space-y-6">
@@ -386,7 +387,7 @@ export default function MatchSelector({ onResult, onLoading }: MatchSelectorProp
             <div className="flex-1">
               <h4 className="font-semibold text-red-400 mb-1">Daily Limit Reached</h4>
               <p className="text-sm text-red-300/80 mb-3">
-                You've used your {usageInfo.limit} {usageInfo.plan === 'FREE' ? 'free' : ''} analysis{usageInfo.limit !== 1 ? 'es' : ''} for today.
+                You&apos;ve used your {usageInfo.limit} {usageInfo.plan === 'FREE' ? 'free' : ''} analysis{usageInfo.limit !== 1 ? 'es' : ''} for today.
                 {usageInfo.plan === 'FREE' && ' Upgrade for 30 analyses per day.'}
               </p>
               <Link

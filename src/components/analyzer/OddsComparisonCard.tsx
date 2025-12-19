@@ -192,7 +192,7 @@ export default function OddsComparisonCard({ oddsComparison, homeTeam, awayTeam 
           <span className="text-sm">ℹ️</span>
           <p className="text-xs text-warning/80 leading-relaxed">
             This comparison is for educational purposes. Differences between AI and market 
-            estimates don't indicate which outcome is "better" — they show where our model 
+            estimates don&apos;t indicate which outcome is &ldquo;better&rdquo; — they show where our model 
             disagrees with bookmaker pricing. Always form your own conclusions.
           </p>
         </div>

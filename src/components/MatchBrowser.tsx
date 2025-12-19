@@ -267,7 +267,7 @@ export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">Connection Issue</h3>
             <p className="text-gray-400 mb-6 max-w-sm mx-auto">
-              We couldn't load matches from {currentLeague.name}. This might be a temporary issue.
+              We couldn&apos;t load matches from {currentLeague.name}. This might be a temporary issue.
             </p>
             <button 
               onClick={() => setSelectedLeague(selectedLeague)} 

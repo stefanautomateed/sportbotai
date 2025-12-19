@@ -11,8 +11,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { 
   SPORTS_CONFIG, 
   SportConfig, 
-  getSportsGroupedByCategory,
-  getSportCategories 
+  getSportsGroupedByCategory 
 } from '@/lib/config/sportsConfig';
 
 interface MultiSportSelectorProps {

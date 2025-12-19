@@ -102,7 +102,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   console.log('[Stripe Webhook] Checkout completed:', session.id);
   
   const customerEmail = session.customer_email || session.metadata?.userEmail;
-  const userId = session.metadata?.userId;
   const planName = session.metadata?.planName?.toUpperCase() || 'PRO';
   
   if (!customerEmail) {
@@ -112,7 +111,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   try {
     // Update user's plan in database
-    const user = await prisma.user.update({
+    await prisma.user.update({
       where: { email: customerEmail },
       data: {
         plan: planName as 'FREE' | 'PRO' | 'PREMIUM',

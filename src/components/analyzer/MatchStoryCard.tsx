@@ -88,7 +88,7 @@ export default function MatchStoryCard({ result }: MatchStoryCardProps) {
         
         {/* Main Narrative */}
         <p className="text-sm sm:text-base text-text-secondary leading-relaxed mb-4">
-          "{story}"
+          &ldquo;{story}&rdquo;
         </p>
         
         {/* Key Storylines */}

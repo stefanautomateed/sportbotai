@@ -260,7 +260,7 @@ export default function LiveScoreWidget({
           <div className="space-y-1">
             {match.events.slice(-3).map((event, idx) => (
               <div key={idx} className="flex items-center gap-2 text-xs">
-                <span className="text-text-muted w-6">{event.time}'</span>
+                <span className="text-text-muted w-6">{event.time}&apos;</span>
                 <span className={event.type === 'Goal' ? 'text-green-400' : event.type === 'Card' ? 'text-yellow-400' : 'text-text-secondary'}>
                   {event.type === 'Goal' ? '⚽' : event.type === 'Card' ? '🟨' : '↔️'}
                 </span>

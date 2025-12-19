@@ -5,7 +5,6 @@
  */
 
 import { MatchData } from '@/types';
-import { SportConfig } from '@/lib/config/sportsConfig';
 
 /**
  * Group matches by their league

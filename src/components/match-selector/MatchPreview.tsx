@@ -11,7 +11,6 @@
 
 import { MatchData } from '@/types';
 import { SportConfig } from '@/lib/config/sportsConfig';
-import { formatMatchDate } from './utils';
 import MatchCountdown from '@/components/analyzer/MatchCountdown';
 import QuickAnalyzeButton from '@/components/analyzer/QuickAnalyzeButton';
 import TeamLogo from '@/components/ui/TeamLogo';
