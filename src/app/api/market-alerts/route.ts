@@ -19,6 +19,7 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 import { theOddsClient, OddsApiEvent } from '@/lib/theOdds';
 import { oddsToImpliedProb } from '@/lib/value-detection';
+import { cacheGet, CACHE_KEYS } from '@/lib/cache';
 
 // ============================================
 // TYPES
@@ -451,23 +452,62 @@ export async function GET(request: NextRequest) {
             !!prevSnapshot
           );
           
-          // Calculate model probability using quick method
-          const modelProb = calculateQuickModelProbability(consensus, prevSnapshot, sport.hasDraw);
+          // Try to get cached AI analysis (pre-analyzed daily)
+          const matchDate = new Date(event.commence_time).toISOString().split('T')[0];
+          const cacheKey = CACHE_KEYS.matchPreview(event.home_team, event.away_team, sport.key, matchDate);
+          const cachedAnalysis = await cacheGet<{
+            marketIntel?: {
+              modelProbability?: { home: number; away: number; draw?: number };
+              valueEdge?: { outcome: string; edgePercent: number; label: string; strength: string };
+            };
+          }>(cacheKey);
           
-          // Calculate specific edges (remove margin from implied first)
-          const homeImpliedRaw = oddsToImpliedProb(consensus.home);
-          const awayImpliedRaw = oddsToImpliedProb(consensus.away);
-          const drawImpliedRaw = consensus.draw ? oddsToImpliedProb(consensus.draw) : 0;
-          const totalImplied = homeImpliedRaw + awayImpliedRaw + drawImpliedRaw;
-          const marginAdj = (totalImplied - 100) / (sport.hasDraw ? 3 : 2);
+          // Use cached AI edges if available, otherwise fall back to quick model
+          let modelHomeProb: number;
+          let modelAwayProb: number;
+          let modelDrawProb: number | undefined;
+          let homeEdge: number;
+          let awayEdge: number;
+          let drawEdge: number | undefined;
+          let valueEdgeLabel: string | undefined;
           
-          const homeImplied = homeImpliedRaw - marginAdj;
-          const awayImplied = awayImpliedRaw - marginAdj;
-          const drawImplied = sport.hasDraw ? drawImpliedRaw - marginAdj : undefined;
-          
-          const homeEdge = modelProb.home - homeImplied;
-          const awayEdge = modelProb.away - awayImplied;
-          const drawEdge = modelProb.draw && drawImplied ? modelProb.draw - drawImplied : undefined;
+          if (cachedAnalysis?.marketIntel?.modelProbability) {
+            // Use AI model probabilities from cache
+            const aiProbs = cachedAnalysis.marketIntel.modelProbability;
+            modelHomeProb = aiProbs.home;
+            modelAwayProb = aiProbs.away;
+            modelDrawProb = aiProbs.draw;
+            
+            // Calculate edges using AI probabilities
+            const homeImplied = oddsToImpliedProb(consensus.home);
+            const awayImplied = oddsToImpliedProb(consensus.away);
+            const drawImplied = consensus.draw ? oddsToImpliedProb(consensus.draw) : 0;
+            
+            homeEdge = modelHomeProb - homeImplied;
+            awayEdge = modelAwayProb - awayImplied;
+            drawEdge = modelDrawProb ? modelDrawProb - drawImplied : undefined;
+            
+            // Use cached value edge label if available
+            valueEdgeLabel = cachedAnalysis.marketIntel.valueEdge?.label;
+            
+            console.log(`[Market Alerts] Using cached AI for ${event.home_team} vs ${event.away_team}: ${cachedAnalysis.marketIntel.valueEdge?.edgePercent || 0}%`);
+          } else {
+            // Fallback to quick model (should rarely happen if pre-analyze runs daily)
+            const modelProb = calculateQuickModelProbability(consensus, prevSnapshot, sport.hasDraw);
+            modelHomeProb = modelProb.home;
+            modelAwayProb = modelProb.away;
+            modelDrawProb = modelProb.draw;
+            
+            const homeImplied = oddsToImpliedProb(consensus.home);
+            const awayImplied = oddsToImpliedProb(consensus.away);
+            const drawImplied = consensus.draw ? oddsToImpliedProb(consensus.draw) : 0;
+            
+            homeEdge = modelHomeProb - homeImplied;
+            awayEdge = modelAwayProb - awayImplied;
+            drawEdge = modelDrawProb ? modelDrawProb - drawImplied : undefined;
+            
+            console.log(`[Market Alerts] No cache for ${event.home_team} vs ${event.away_team}, using quick model`);
+          }
           
           // Determine best edge
           const edges: Array<{ outcome: 'home' | 'away' | 'draw'; percent: number }> = [
@@ -506,16 +546,16 @@ export async function GET(request: NextRequest) {
             drawChange,
             changeDirection: steam.direction as 'toward_home' | 'toward_away' | 'stable',
             
-            modelHomeProb: modelProb.home,
-            modelAwayProb: modelProb.away,
-            modelDrawProb: modelProb.draw,
+            modelHomeProb,
+            modelAwayProb,
+            modelDrawProb,
             homeEdge,
             awayEdge,
             drawEdge,
             bestEdge: {
               outcome: bestEdge.outcome,
               percent: Math.round(bestEdge.percent * 10) / 10,
-              label: `${bestEdge.outcome.charAt(0).toUpperCase() + bestEdge.outcome.slice(1)} +${bestEdge.percent.toFixed(1)}%`,
+              label: valueEdgeLabel || `${bestEdge.outcome.charAt(0).toUpperCase() + bestEdge.outcome.slice(1)} +${bestEdge.percent.toFixed(1)}%`,
             },
             
             hasSteamMove: steam.hasSteam,
@@ -526,62 +566,8 @@ export async function GET(request: NextRequest) {
           
           allAlerts.push(alert);
           
-          // Update snapshot in database
-          // IMPORTANT: Don't overwrite AI-calculated edges if they exist and are higher
-          // Check if this match has been analyzed with full AI model
-          const existingSnapshot = await prisma.oddsSnapshot.findUnique({
-            where: {
-              matchRef_sport_bookmaker: {
-                matchRef,
-                sport: sport.key,
-                bookmaker: 'consensus',
-              },
-            },
-          });
-          
-          // If existing snapshot has higher edges (from AI analysis), preserve them
-          const hasAIEdge = existingSnapshot && (
-            (existingSnapshot.homeEdge ?? 0) > homeEdge + 2 ||
-            (existingSnapshot.awayEdge ?? 0) > awayEdge + 2 ||
-            (existingSnapshot.drawEdge ?? 0) > (drawEdge ?? 0) + 2
-          );
-          
-          // If AI-calculated edge exists and is significantly higher, use it for the alert
-          if (hasAIEdge && existingSnapshot) {
-            const aiHomeEdge = existingSnapshot.homeEdge ?? 0;
-            const aiAwayEdge = existingSnapshot.awayEdge ?? 0;
-            const aiDrawEdge = existingSnapshot.drawEdge ?? 0;
-            
-            // Recalculate best edge from AI values
-            const aiEdges: Array<{ outcome: 'home' | 'away' | 'draw'; percent: number }> = [
-              { outcome: 'home', percent: aiHomeEdge },
-              { outcome: 'away', percent: aiAwayEdge },
-            ];
-            if (aiDrawEdge > 0) {
-              aiEdges.push({ outcome: 'draw', percent: aiDrawEdge });
-            }
-            const aiBestEdge = aiEdges.reduce((best, curr) => 
-              curr.percent > best.percent ? curr : best
-            , aiEdges[0]);
-            
-            // Update the alert with AI edge values
-            alert.homeEdge = aiHomeEdge;
-            alert.awayEdge = aiAwayEdge;
-            alert.drawEdge = aiDrawEdge || undefined;
-            alert.bestEdge = {
-              outcome: aiBestEdge.outcome,
-              percent: Math.round(aiBestEdge.percent * 10) / 10,
-              label: existingSnapshot.alertNote || `${aiBestEdge.outcome.charAt(0).toUpperCase() + aiBestEdge.outcome.slice(1)} +${aiBestEdge.percent.toFixed(1)}%`,
-            };
-            alert.hasValueEdge = aiBestEdge.percent >= 5;
-            alert.alertLevel = aiBestEdge.percent >= 10 ? 'HIGH' : 
-                              aiBestEdge.percent >= 5 ? 'MEDIUM' : 
-                              steam.hasSteam ? 'LOW' : null;
-            alert.alertNote = existingSnapshot.alertNote || alert.alertNote;
-            
-            console.log(`[Market Alerts] Preserving AI edge for ${matchRef}: ${aiBestEdge.percent.toFixed(1)}% (vs quick model ${bestEdge.percent.toFixed(1)}%)`);
-          }
-          
+          // Update snapshot in database with current odds (for steam move tracking)
+          // Note: We now read AI edges from cache, so just update odds tracking here
           await prisma.oddsSnapshot.upsert({
             where: {
               matchRef_sport_bookmaker: {
@@ -600,16 +586,17 @@ export async function GET(request: NextRequest) {
               homeOdds: consensus.home,
               awayOdds: consensus.away,
               drawOdds: consensus.draw,
-              modelHomeProb: modelProb.home,
-              modelAwayProb: modelProb.away,
-              modelDrawProb: modelProb.draw,
+              modelHomeProb: modelHomeProb,
+              modelAwayProb: modelAwayProb,
+              modelDrawProb: modelDrawProb,
               homeEdge,
               awayEdge,
               drawEdge,
               hasSteamMove: steam.hasSteam,
               hasValueEdge,
               alertLevel,
-              alertNote: alert.alertNote,
+              alertNote: valueEdgeLabel || alert.alertNote,
+              bookmaker: 'consensus',
             },
             update: {
               prevHomeOdds: prevSnapshot?.homeOdds,
@@ -621,18 +608,15 @@ export async function GET(request: NextRequest) {
               homeChange,
               awayChange,
               drawChange,
-              // Only update model/edge values if we don't have AI edge
-              ...(hasAIEdge ? {} : {
-                modelHomeProb: modelProb.home,
-                modelAwayProb: modelProb.away,
-                modelDrawProb: modelProb.draw,
-                homeEdge,
-                awayEdge,
-                drawEdge,
-                hasValueEdge,
-                alertLevel,
-                alertNote: alert.alertNote,
-              }),
+              modelHomeProb: modelHomeProb,
+              modelAwayProb: modelAwayProb,
+              modelDrawProb: modelDrawProb,
+              homeEdge,
+              awayEdge,
+              drawEdge,
+              hasValueEdge,
+              alertLevel,
+              alertNote: valueEdgeLabel || alert.alertNote,
               hasSteamMove: steam.hasSteam,
               updatedAt: new Date(),
             },
