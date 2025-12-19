@@ -650,7 +650,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               prediction: predictedScenario,
               reasoning: aiAnalysis?.story?.narrative?.substring(0, 500) || `Analysis: ${matchRef}`,
               conviction: confidence === 'strong' ? 8 : confidence === 'moderate' ? 6 : 4,
-              odds: marketIntel?.marketOdds?.home || null,
+              odds: odds?.homeOdds || null,
               impliedProb: marketIntel?.impliedProbability?.home || null,
               source: 'MATCH_ANALYSIS',
               outcome: 'PENDING',
