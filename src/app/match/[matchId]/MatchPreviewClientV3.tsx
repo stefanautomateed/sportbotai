@@ -421,10 +421,11 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
   // Determine if user has access to premium content
   // Logic: If user got a 200 response with real data (not demo), they have access
   // This includes: PRO/PREMIUM users, OR FREE users who used their 1 credit
-  const hasPremiumAccess = 
+  const hasPremiumAccess = Boolean(
     session?.user?.plan === 'PRO' || 
     session?.user?.plan === 'PREMIUM' ||
-    (session && !isDemo); // FREE user with valid session who got real data = used their credit
+    (session && !isDemo) // FREE user with valid session who got real data = used their credit
+  );
 
   return (
     <div className="min-h-screen bg-[#050506]">
