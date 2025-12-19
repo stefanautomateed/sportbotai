@@ -440,16 +440,11 @@ export async function GET(request: NextRequest) {
             },
           });
           
-          // Link the agent post to the prediction
-          await prisma.agentPost.update({
-            where: { id: post.id },
-            data: { predictionId: newPrediction.id },
-          });
-          
           results.newPredictions++;
           console.log(`[Track-Predictions] Created prediction for ${post.matchRef}`);
         } catch (error) {
-          results.errors.push(`Failed to create prediction for ${post.matchRef}`);
+          console.error(`[Track-Predictions] Error creating prediction:`, error);
+          results.errors.push(`Failed to create prediction for ${post.matchRef}: ${error instanceof Error ? error.message : 'Unknown'}`);
         }
       }
     }
@@ -524,7 +519,8 @@ export async function GET(request: NextRequest) {
           results.newAnalysisPredictions++;
           console.log(`[Track-Predictions] Created analysis prediction for ${matchRef}`);
         } catch (error) {
-          results.errors.push(`Failed to create analysis prediction for ${matchRef}`);
+          console.error(`[Track-Predictions] Error creating analysis prediction:`, error);
+          results.errors.push(`Failed to create analysis prediction for ${matchRef}: ${error instanceof Error ? error.message : 'Unknown'}`);
         }
       }
     }
@@ -578,7 +574,8 @@ export async function GET(request: NextRequest) {
           results.updatedOutcomes++;
           console.log(`[Track-Predictions] Updated outcome for ${pred.matchName}: ${evaluation.wasAccurate ? 'HIT' : 'MISS'}`);
         } catch (error) {
-          results.errors.push(`Failed to update outcome for ${pred.matchName}`);
+          console.error(`[Track-Predictions] Error updating outcome:`, error);
+          results.errors.push(`Failed to update outcome for ${pred.matchName}: ${error instanceof Error ? error.message : 'Unknown'}`);
         }
       }
     }
