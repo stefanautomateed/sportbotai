@@ -163,6 +163,21 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
   // Parse matchId immediately to show header while loading
   const parsedMatch = useMemo(() => parseMatchIdClient(matchId), [matchId]);
 
+  // Check if match is too far in the future (>48 hours)
+  const matchTiming = useMemo(() => {
+    if (!parsedMatch?.kickoff) return null;
+    const kickoffDate = new Date(parsedMatch.kickoff);
+    const now = new Date();
+    const hoursUntilKickoff = (kickoffDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const daysUntilKickoff = Math.ceil(hoursUntilKickoff / 24);
+    return {
+      hoursUntilKickoff,
+      daysUntilKickoff,
+      isTooFarAway: hoursUntilKickoff > 48,
+      kickoffDate,
+    };
+  }, [parsedMatch]);
+
   // Scroll to top on mount to prevent unwanted scroll position
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -262,6 +277,102 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
   // Fallback skeleton if we can't parse matchId
   if (loading) {
     return <PremiumSkeleton />;
+  }
+
+  // Match is too far in the future - show friendly message
+  if (matchTiming?.isTooFarAway && parsedMatch) {
+    return (
+      <div className="min-h-screen bg-[#050506]">
+        <div className="fixed inset-0 bg-gradient-to-b from-white/[0.01] via-transparent to-transparent pointer-events-none" />
+        
+        <div className="relative max-w-2xl mx-auto px-4 py-6 sm:py-10">
+          {/* Back navigation */}
+          <Link 
+            href="/matches"
+            className="inline-flex items-center gap-2 text-zinc-600 hover:text-zinc-400 transition-colors mb-8"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="text-sm">All Matches</span>
+          </Link>
+
+          {/* Match header */}
+          <PremiumMatchHeader 
+            homeTeam={parsedMatch.homeTeam}
+            awayTeam={parsedMatch.awayTeam}
+            league={parsedMatch.league}
+            sport={parsedMatch.sport}
+            kickoff={parsedMatch.kickoff}
+          />
+
+          {/* Too far away message */}
+          <div className="mt-8 p-6 bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Analysis Available Soon
+                </h3>
+                <p className="text-zinc-400 text-sm leading-relaxed mb-4">
+                  This match is <span className="text-amber-400 font-medium">{matchTiming.daysUntilKickoff} days away</span>. 
+                  Our AI analysis becomes available <span className="text-white font-medium">48 hours before kickoff</span> when 
+                  we have the most accurate team news, form data, and market intelligence.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex items-center gap-2 text-zinc-500 text-sm">
+                    <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Available: {new Date(matchTiming.kickoffDate.getTime() - 48 * 60 * 60 * 1000).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Why we wait explanation */}
+          <div className="mt-6 p-5 bg-white/[0.02] border border-white/5 rounded-xl">
+            <h4 className="text-sm font-medium text-zinc-300 mb-3">Why do we wait?</h4>
+            <ul className="space-y-2 text-sm text-zinc-500">
+              <li className="flex items-start gap-2">
+                <span className="text-green-400 mt-0.5">✓</span>
+                <span>Latest injury & lineup updates closer to match day</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-400 mt-0.5">✓</span>
+                <span>Most recent form from mid-week fixtures</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-400 mt-0.5">✓</span>
+                <span>Accurate market odds & sharp money movements</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-400 mt-0.5">✓</span>
+                <span>Manager press conference insights</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* CTA to browse other matches */}
+          <div className="mt-6 text-center">
+            <Link 
+              href="/matches"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white transition-colors"
+            >
+              <span>Browse matches happening soon</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Usage limit reached - show upgrade card with match info
