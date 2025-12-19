@@ -1006,6 +1006,12 @@ function routeQuery(message: string, category: QueryCategory): RoutingDecision {
       confidence: 85,
       reason: 'Need current form for analysis'
     },
+    MATCH_ANALYSIS: {
+      source: 'REALTIME',
+      recency: 'day',
+      confidence: 95,
+      reason: 'Match analysis requires current form and odds data'
+    },
     GENERAL: {
       source: 'REALTIME', // Default to searching for safety
       recency: 'week',
