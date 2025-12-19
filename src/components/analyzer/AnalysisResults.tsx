@@ -169,11 +169,10 @@ export default function AnalysisResults({ result }: AnalysisResultsProps) {
       <SectionDivider label="Key Insights" icon="📊" variant="primary" />
       
       <section className="space-y-4 lg:space-y-6">
-        {/* Row 1: Confidence + Sport Insights */}
+        {/* Row 1: Data Quality (if good) + Sport Insights */}
         <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
-          <div className="bg-[#0A0D10] rounded-2xl p-1">
-            <ConfidenceMeter result={result} />
-          </div>
+          {/* ConfidenceMeter only renders when data quality is good (≥65) */}
+          <ConfidenceMeter result={result} />
           <div className="bg-[#0A0D10] rounded-2xl p-1">
             <SportInsightsCard result={result} />
           </div>

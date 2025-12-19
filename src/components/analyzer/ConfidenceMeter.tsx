@@ -150,104 +150,61 @@ function getConfidenceLevel(score: number): {
 
 export default function ConfidenceMeter({ result }: ConfidenceMeterProps) {
   const { score, factors } = calculateConfidenceScore(result);
+  
+  // Only show the component when we have good data (score >= 65)
+  // Don't highlight negatives - just hide the whole thing
+  if (score < 65) {
+    return null;
+  }
+  
   const level = getConfidenceLevel(score);
   
-  // Calculate arc for the meter (180 degrees = full)
-  const arcPercentage = (score / 100) * 180;
-  
-  // Positive and negative factors
+  // Positive factors only (we don't show negatives anymore)
   const positiveFactors = factors.filter(f => f.impact === 'positive');
-  const negativeFactors = factors.filter(f => f.impact === 'negative');
 
   return (
     <div className="bg-bg-card rounded-card border border-divider overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-divider">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <span className="text-sm">🎯</span>
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <span className="text-sm">📊</span>
           </div>
           <div>
-            <h3 className="text-sm sm:text-base font-semibold text-text-primary">AI Confidence</h3>
-            <p className="text-[10px] sm:text-xs text-text-muted">Analysis reliability score</p>
+            <h3 className="text-sm sm:text-base font-semibold text-text-primary">Data Quality</h3>
+            <p className="text-[10px] sm:text-xs text-text-muted">Analysis data coverage</p>
           </div>
         </div>
       </div>
 
       <div className="p-4 sm:p-5">
-        {/* Confidence Meter Visual */}
+        {/* Simple Badge Display */}
         <div className="flex flex-col items-center mb-4">
-          {/* Arc Meter */}
-          <div className="relative w-40 h-20 sm:w-48 sm:h-24">
-            {/* Background Arc */}
-            <svg className="w-full h-full" viewBox="0 0 120 60">
-              {/* Background track */}
-              <path
-                d="M 10 55 A 50 50 0 0 1 110 55"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="8"
-                className="text-bg-tertiary"
-                strokeLinecap="round"
-              />
-              {/* Filled arc */}
-              <path
-                d="M 10 55 A 50 50 0 0 1 110 55"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="8"
-                className={level.color}
-                strokeLinecap="round"
-                strokeDasharray={`${(arcPercentage / 180) * 157} 157`}
-                style={{
-                  transition: 'stroke-dasharray 1s ease-out',
-                }}
-              />
+          <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20`}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
-            
-            {/* Score Display */}
-            <div className="absolute inset-0 flex flex-col items-center justify-end pb-0">
-              <span className={`text-2xl sm:text-3xl font-bold ${level.color}`}>{score}%</span>
+            {level.label}
+          </span>
+          <p className="text-xs text-text-muted mt-3 text-center">{level.description}</p>
+        </div>
+
+        {/* Positive Factors Only */}
+        {positiveFactors.length > 0 && (
+          <div className="border-t border-divider pt-4 mt-4">
+            <div className="flex flex-wrap gap-2 justify-center">
+              {positiveFactors.slice(0, 4).map((factor, i) => (
+                <span 
+                  key={i} 
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/5 border border-emerald-500/20 rounded-lg text-[10px] sm:text-xs text-emerald-400"
+                >
+                  <span className="text-emerald-400">✓</span>
+                  {factor.detail}
+                </span>
+              ))}
             </div>
           </div>
-
-          {/* Confidence Level Label */}
-          <div className="text-center mt-2">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${level.bgColor}/20 ${level.color}`}>
-              {level.label} Confidence
-            </span>
-            <p className="text-[10px] sm:text-xs text-text-muted mt-2">{level.description}</p>
-          </div>
-        </div>
-
-        {/* Factors Grid */}
-        <div className="border-t border-divider pt-4 mt-4">
-          <p className="text-[10px] sm:text-xs font-medium text-text-muted mb-3">Confidence Factors</p>
-          
-          <div className="grid grid-cols-2 gap-2">
-            {/* Positive Factors */}
-            {positiveFactors.slice(0, 2).map((factor, i) => (
-              <div key={i} className="flex items-center gap-2 bg-success/5 border border-success/20 rounded-lg p-2">
-                <span className="text-success text-xs">✓</span>
-                <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs font-medium text-text-primary truncate">{factor.name}</p>
-                  <p className="text-[9px] sm:text-[10px] text-text-muted truncate">{factor.detail}</p>
-                </div>
-              </div>
-            ))}
-            
-            {/* Negative Factors */}
-            {negativeFactors.slice(0, 2).map((factor, i) => (
-              <div key={i} className="flex items-center gap-2 bg-danger/5 border border-danger/20 rounded-lg p-2">
-                <span className="text-danger text-xs">!</span>
-                <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs font-medium text-text-primary truncate">{factor.name}</p>
-                  <p className="text-[9px] sm:text-[10px] text-text-muted truncate">{factor.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
