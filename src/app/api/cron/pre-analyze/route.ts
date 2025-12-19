@@ -210,18 +210,15 @@ Base probabilities on form, signals, and market odds. Be analytical, not promoti
     
     const aiResponse = JSON.parse(completion.choices[0]?.message?.content || '{}');
     
-    // Build market intel
+    // Build market intel using signals and odds
     const oddsData: OddsData = {
       homeOdds: odds.home,
       awayOdds: odds.away,
       drawOdds: odds.draw,
     };
     
-    const marketIntel = analyzeMarket(oddsData, {
-      homeWinProb: aiResponse.probabilities?.home || 0.33,
-      drawProb: aiResponse.probabilities?.draw || (odds.draw ? 0.25 : 0),
-      awayWinProb: aiResponse.probabilities?.away || 0.33,
-    });
+    const hasDraw = !!odds.draw;
+    const marketIntel = analyzeMarket(signals, oddsData, hasDraw);
     
     return {
       story: {
