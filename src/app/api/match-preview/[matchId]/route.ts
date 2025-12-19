@@ -217,38 +217,59 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     } else {
       // Use football API for soccer
-      [enrichedData, injuries, goalTimingData, keyPlayers, referee, fixtureInfo] = await Promise.all([
-        getEnrichedMatchData(
-          matchInfo.homeTeam,
-          matchInfo.awayTeam,
-          matchInfo.league
-        ),
-        getMatchInjuries(
-          matchInfo.homeTeam,
-          matchInfo.awayTeam,
-          matchInfo.league
-        ),
-        getMatchGoalTiming(
-          matchInfo.homeTeam,
-          matchInfo.awayTeam,
-          matchInfo.league
-        ),
-        getMatchKeyPlayers(
-          matchInfo.homeTeam,
-          matchInfo.awayTeam,
-          matchInfo.league
-        ),
-        getFixtureReferee(
-          matchInfo.homeTeam,
-          matchInfo.awayTeam,
-          matchInfo.league
-        ),
-        getMatchFixtureInfo(
-          matchInfo.homeTeam,
-          matchInfo.awayTeam,
-          matchInfo.league
-        ),
-      ]);
+      try {
+        [enrichedData, injuries, goalTimingData, keyPlayers, referee, fixtureInfo] = await Promise.all([
+          getEnrichedMatchData(
+            matchInfo.homeTeam,
+            matchInfo.awayTeam,
+            matchInfo.league
+          ),
+          getMatchInjuries(
+            matchInfo.homeTeam,
+            matchInfo.awayTeam,
+            matchInfo.league
+          ),
+          getMatchGoalTiming(
+            matchInfo.homeTeam,
+            matchInfo.awayTeam,
+            matchInfo.league
+          ),
+          getMatchKeyPlayers(
+            matchInfo.homeTeam,
+            matchInfo.awayTeam,
+            matchInfo.league
+          ),
+          getFixtureReferee(
+            matchInfo.homeTeam,
+            matchInfo.awayTeam,
+            matchInfo.league
+          ),
+          getMatchFixtureInfo(
+            matchInfo.homeTeam,
+            matchInfo.awayTeam,
+            matchInfo.league
+          ),
+        ]);
+        console.log(`[Match-Preview] Soccer data fetched in ${Date.now() - startTime}ms:`, {
+          dataSource: enrichedData?.dataSource,
+          homeFormGames: enrichedData?.homeForm?.length || 0,
+          awayFormGames: enrichedData?.awayForm?.length || 0,
+          h2hGames: enrichedData?.headToHead?.length || 0,
+        });
+      } catch (soccerError) {
+        console.error(`[Match-Preview] Soccer API error:`, soccerError);
+        // Use fallback empty data - same as non-soccer path
+        enrichedData = {
+          sport: matchInfo.sport,
+          homeForm: null,
+          awayForm: null,
+          headToHead: null,
+          h2hSummary: null,
+          homeStats: null,
+          awayStats: null,
+          dataSource: 'UNAVAILABLE',
+        };
+      }
     }
 
     // Use venue from fixture info if available, fallback to matchInfo
