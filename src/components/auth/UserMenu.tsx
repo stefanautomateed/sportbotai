@@ -27,53 +27,10 @@ export function UserMenu() {
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Fetch fresh usage data on mount and when session changes
-  useEffect(() => {
+  // Helper to fetch fresh usage data
+  const fetchUsageData = useCallback(() => {
     if (session) {
-      fetch('/api/usage')
-        .then(res => res.json())
-        .then(data => {
-          if (data.remaining !== undefined) {
-            setUsageData({
-              remaining: data.remaining,
-              limit: data.limit,
-              plan: data.plan || session.user?.plan || 'FREE',
-            });
-          }
-        })
-        .catch(() => {
-          // Fallback to session data on error
-        });
-    }
-  }, [session]);
-
-  // Listen for usage update events (dispatched after analysis)
-  useEffect(() => {
-    const handleUsageUpdate = () => {
-      if (session) {
-        fetch('/api/usage')
-          .then(res => res.json())
-          .then(data => {
-            if (data.remaining !== undefined) {
-              setUsageData({
-                remaining: data.remaining,
-                limit: data.limit,
-                plan: data.plan || session.user?.plan || 'FREE',
-              });
-            }
-          })
-          .catch(() => {});
-      }
-    };
-
-    window.addEventListener(USAGE_UPDATED_EVENT, handleUsageUpdate);
-    return () => window.removeEventListener(USAGE_UPDATED_EVENT, handleUsageUpdate);
-  }, [session]);
-  
-  // Refetch when menu opens to get latest data
-  useEffect(() => {
-    if (isOpen && session) {
-      fetch('/api/usage')
+      fetch('/api/usage', { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
           if (data.remaining !== undefined) {
@@ -86,7 +43,43 @@ export function UserMenu() {
         })
         .catch(() => {});
     }
-  }, [isOpen, session]);
+  }, [session]);
+
+  // Fetch fresh usage data on mount and when session changes
+  useEffect(() => {
+    fetchUsageData();
+  }, [fetchUsageData]);
+
+  // Listen for usage update events (dispatched after analysis)
+  useEffect(() => {
+    window.addEventListener(USAGE_UPDATED_EVENT, fetchUsageData);
+    return () => window.removeEventListener(USAGE_UPDATED_EVENT, fetchUsageData);
+  }, [fetchUsageData]);
+
+  // Also refetch when window gains focus (user switches tabs back)
+  useEffect(() => {
+    const handleFocus = () => fetchUsageData();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUsageData();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchUsageData]);
+  
+  // Refetch when menu opens to get latest data
+  useEffect(() => {
+    if (isOpen) {
+      fetchUsageData();
+    }
+  }, [isOpen, fetchUsageData]);
 
   // Toggle menu - simple and direct
   const toggleMenu = useCallback(() => {
