@@ -117,7 +117,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // CHECK USER USAGE LIMITS
     // ==========================================
     const userId = session.user.id;
+    console.log(`[Match-Preview] Checking usage for user ${userId} (${session.user.email})`);
     const usageCheck = await canUserAnalyze(userId);
+    console.log(`[Match-Preview] Usage check result:`, JSON.stringify(usageCheck));
     
     if (!usageCheck.allowed) {
       console.log(`[Match-Preview] User ${session.user.email} has exceeded daily limit (${usageCheck.limit})`);
