@@ -20,6 +20,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 const PRICE_IDS: Record<string, string> = {
   pro: process.env.STRIPE_PRO_PRICE_ID || '',
   premium: process.env.STRIPE_PREMIUM_PRICE_ID || '',
+  'premium-yearly': process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID || '',
 };
 
 /**

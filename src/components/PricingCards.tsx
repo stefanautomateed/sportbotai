@@ -28,7 +28,7 @@ const plans: PricingPlan[] = [
   {
     id: 'free',
     name: 'Free',
-    price: '€0',
+    price: '$0',
     priceId: '', // Free plan has no Stripe checkout
     description: 'Try it once for free',
     features: [
@@ -43,7 +43,7 @@ const plans: PricingPlan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '€9.99',
+    price: '$19.99',
     priceId: 'pro', // Will be resolved to actual Price ID server-side
     description: 'For serious analysts',
     features: [
@@ -62,18 +62,35 @@ const plans: PricingPlan[] = [
   {
     id: 'premium',
     name: 'Premium',
-    price: '€79/year',
+    price: '$49.99',
     priceId: 'premium', // Will be resolved to actual Price ID server-side
-    description: 'Best deal - 6 weeks free',
+    description: 'Unlimited everything + Alerts',
     features: [
       'Unlimited analyses',
       'Unlimited AI chat',
       'All sports + eSports',
+      'Market Alerts feature',
       'Premium AI model',
-      'Advanced pattern detection',
-      'API access',
       'Priority support 24/7',
       'Analysis history (unlimited)',
+      'My Teams favorites',
+    ],
+    buttonText: 'Go Premium',
+  },
+  {
+    id: 'premium-yearly',
+    name: 'Premium Yearly',
+    price: '$290',
+    priceId: 'premium-yearly', // Will be resolved to actual Price ID server-side
+    description: 'Best value - Save $310/year',
+    features: [
+      'Everything in Premium',
+      'Unlimited analyses',
+      'Unlimited AI chat',
+      'Market Alerts feature',
+      'Premium AI model',
+      'Priority support 24/7',
+      'Billed annually',
     ],
     buttonText: 'Get Annual Plan',
   },
@@ -138,14 +155,14 @@ export default function PricingCards() {
   return (
     <div className="relative">
       {/* Horizontal scroll container on mobile */}
-      <div className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto overflow-x-auto pb-4 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+      <div className="flex lg:grid lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 max-w-7xl mx-auto overflow-x-auto pb-4 lg:pb-0 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0">
         {plans.map((plan) => (
           <div
             key={plan.id}
             id={plan.id}
-            className={`flex-shrink-0 w-[85vw] xs:w-[75vw] sm:w-[320px] md:w-auto snap-center bg-bg-card rounded-card p-5 sm:p-6 relative ${
+            className={`flex-shrink-0 w-[80vw] xs:w-[70vw] sm:w-[280px] lg:w-auto snap-center bg-bg-card rounded-card p-4 sm:p-5 relative ${
               plan.highlighted
-                ? 'border-2 border-primary shadow-glow-primary md:scale-105'
+                ? 'border-2 border-primary shadow-glow-primary lg:scale-105'
                 : 'border border-divider'
             }`}
           >
@@ -163,7 +180,7 @@ export default function PricingCards() {
                 <span className={`text-3xl sm:text-4xl font-bold ${plan.highlighted ? 'text-primary' : 'text-white'}`}>
                   {plan.price}
                 </span>
-                <span className="text-gray-400 text-sm">/monthly</span>
+                <span className="text-gray-400 text-sm">{plan.id === 'premium-yearly' ? '/year' : plan.id === 'free' ? '' : '/month'}</span>
               </div>
               <p className="text-gray-400 text-xs sm:text-sm">{plan.description}</p>
             </div>
