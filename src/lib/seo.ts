@@ -32,8 +32,8 @@ export const SITE_CONFIG = {
 
 export const META = {
   home: {
-    title: 'SportBot AI – AI-Powered Sports Analytics & Match Intelligence',
-    description: 'Transform sports data into actionable insights. AI probability models, value detection, risk analysis for Soccer, NBA, NFL, Tennis & more. Understand any match in 60 seconds.',
+    title: 'SportBot AI – Free AI-Powered Sports Match Analysis',
+    description: 'Free AI-powered sports match analysis. Get probability estimates, value detection, and risk assessment for any match in 60 seconds. Soccer, NBA, NFL, Tennis & more.',
     keywords: [
       'sports analytics',
       'AI sports analysis',
@@ -47,6 +47,8 @@ export const META = {
       'tennis analytics',
       'sports data platform',
       'match intelligence',
+      'free sports analysis',
+      'AI match prediction',
     ],
   },
   
