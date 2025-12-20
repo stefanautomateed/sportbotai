@@ -949,11 +949,31 @@ export async function GET(request: NextRequest) {
             // 7-10: Strong edge (7%+ edge)
             const conviction = Math.min(10, Math.max(1, Math.round(2 + edge * 1.2)));
             
-            // Minimum edge threshold: only predict when edge > 3%
-            const MIN_EDGE_THRESHOLD = 3;
+            // Data quality check - require minimum form data
+            const homeFormLength = homeFormStr.replace(/-/g, '').length;
+            const awayFormLength = awayFormStr.replace(/-/g, '').length;
+            const hasMinimumFormData = homeFormLength >= 3 && awayFormLength >= 3;
             
-            // Only create predictions for matches with meaningful positive edge
-            if (edge > MIN_EDGE_THRESHOLD) {
+            // Minimum edge threshold based on league performance
+            // Underperforming leagues need higher edge to compensate
+            const LEAGUE_EDGE_THRESHOLDS: Record<string, number> = {
+              'La Liga': 6,        // 0% accuracy - need very high edge
+              'Bundesliga': 5,     // 33% accuracy - need higher edge
+              'Serie A': 4,        // 50% accuracy - slightly higher
+              'Premier League': 3, // 64% accuracy - standard
+              'NBA': 3,            // 63% accuracy - standard
+              'NHL': 4,            // 50% accuracy - slightly higher
+              'NFL': 3,            // Good sample pending
+              'Ligue 1': 4,        // No data yet - cautious
+            };
+            const minEdgeThreshold = LEAGUE_EDGE_THRESHOLDS[sport.league] || 5; // Default 5% for unknown leagues
+            
+            // Only create predictions when:
+            // 1. We have minimum form data (quality gate)
+            // 2. Edge exceeds league-specific threshold
+            if (!hasMinimumFormData) {
+              console.log(`[Pre-Analyze] Skipped: ${matchRef} (insufficient form data: ${homeFormLength}/${awayFormLength})`);
+            } else if (edge > minEdgeThreshold) {
               const predictionId = `pre_${sport.key}_${event.id}_${Date.now()}`;
               
               // Store prediction as "Home Win", "Away Win", or "Draw" for validation compatibility
@@ -993,7 +1013,7 @@ export async function GET(request: NextRequest) {
               stats.predictionsCreated++;
               console.log(`[Pre-Analyze] Prediction: ${matchRef} → ${predictionText} (edge: ${edge.toFixed(1)}%, conv: ${conviction})`);
             } else {
-              console.log(`[Pre-Analyze] Skipped: ${matchRef} (edge: ${edge.toFixed(1)}% < ${MIN_EDGE_THRESHOLD}%)`);
+              console.log(`[Pre-Analyze] Skipped: ${matchRef} (edge: ${edge.toFixed(1)}% < ${minEdgeThreshold}% for ${sport.league})`);
             }
           } catch (predError) {
             console.error(`[Pre-Analyze] Prediction creation failed:`, predError);

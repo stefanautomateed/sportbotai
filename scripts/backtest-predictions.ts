@@ -250,7 +250,7 @@ async function main() {
     byDay.get(day)!.push(p);
   }
   
-  for (const [day, preds] of byDay.entries()) {
+  for (const [day, preds] of Array.from(byDay.entries())) {
     if (preds.length < 3) continue;
     const result = calcResult(preds);
     console.log(`  ${dayNames[day]}: ${result.accuracy}% (${result.hits}/${result.total})`);
