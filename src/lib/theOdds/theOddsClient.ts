@@ -217,7 +217,7 @@ class TheOddsApiClient {
     const apiKey = this.getApiKey();
     
     const {
-      regions = ['eu', 'us'],
+      regions = ['eu', 'us', 'uk', 'au'],
       markets = ['h2h', 'totals'],
       oddsFormat = 'decimal',
       bookmakers,
@@ -269,7 +269,7 @@ class TheOddsApiClient {
     const apiKey = this.getApiKey();
     
     const {
-      regions = ['eu', 'us'],
+      regions = ['eu', 'us', 'uk', 'au'],
       markets = ['h2h', 'totals'],
       oddsFormat = 'decimal',
     } = options;
@@ -309,7 +309,7 @@ class TheOddsApiClient {
     const apiKey = this.getApiKey();
     
     const {
-      regions = ['eu', 'us'],
+      regions = ['eu', 'us', 'uk', 'au'],
       markets = ['h2h'],
       oddsFormat = 'decimal',
     } = options;

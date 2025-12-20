@@ -36,7 +36,7 @@ export async function GET(
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
-    const regions = searchParams.get('regions')?.split(',') || ['eu', 'us'];
+    const regions = searchParams.get('regions')?.split(',') || ['eu', 'us', 'uk', 'au'];
     const markets = searchParams.get('markets')?.split(',') || ['h2h'];
     const bookmakers = searchParams.get('bookmakers')?.split(',');
 
