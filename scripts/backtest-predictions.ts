@@ -176,7 +176,7 @@ async function main() {
   console.log('\n\n🏆 BY SPORT');
   console.log('-'.repeat(40));
   
-  const sports = [...new Set(predictions.map(p => p.sport))];
+  const sports = Array.from(new Set(predictions.map(p => p.sport)));
   const sportStats = sports.map(sport => {
     const matching = predictions.filter(p => p.sport === sport);
     return { sport, result: calcResult(matching) };
@@ -192,7 +192,7 @@ async function main() {
   console.log('\n\n🏟️ BY LEAGUE');
   console.log('-'.repeat(40));
   
-  const leagues = [...new Set(predictions.map(p => p.league))];
+  const leagues = Array.from(new Set(predictions.map(p => p.league)));
   const leagueStats: LeagueStats[] = leagues.map(league => {
     const matching = predictions.filter(p => p.league === league);
     const homeMatching = matching.filter(p => p.prediction.toLowerCase().includes('home'));
