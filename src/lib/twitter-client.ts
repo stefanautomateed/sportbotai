@@ -307,9 +307,29 @@ export function formatForTwitter(
   
   const availableLength = maxLength - hashtagString.length;
   
-  // Trim content if needed
+  // Trim content if needed - find a good break point
   if (tweet.length > availableLength) {
-    tweet = tweet.substring(0, availableLength - 3) + '...';
+    // Try to cut at sentence end first (. ! ?)
+    let cutPoint = tweet.lastIndexOf('. ', availableLength - 1);
+    if (cutPoint === -1) cutPoint = tweet.lastIndexOf('! ', availableLength - 1);
+    if (cutPoint === -1) cutPoint = tweet.lastIndexOf('? ', availableLength - 1);
+    
+    // If no sentence break, try to cut at word boundary
+    if (cutPoint === -1 || cutPoint < availableLength / 2) {
+      cutPoint = tweet.lastIndexOf(' ', availableLength - 1);
+    }
+    
+    // If still no good break, just cut at limit
+    if (cutPoint === -1 || cutPoint < availableLength / 2) {
+      cutPoint = availableLength - 1;
+    }
+    
+    tweet = tweet.substring(0, cutPoint + 1).trim();
+    
+    // Only add ... if we didn't end on sentence punctuation
+    if (!/[.!?]$/.test(tweet)) {
+      tweet = tweet + '.';
+    }
   }
   
   return tweet + hashtagString;
@@ -332,9 +352,19 @@ export function splitIntoThread(content: string, maxTweetLength: number = 270): 
       if (currentTweet) {
         tweets.push(currentTweet);
       }
-      currentTweet = sentence.length <= maxTweetLength 
-        ? sentence 
-        : sentence.substring(0, maxTweetLength - 3) + '...';
+      // If sentence is too long, cut at word boundary
+      if (sentence.length > maxTweetLength) {
+        let cutPoint = sentence.lastIndexOf(' ', maxTweetLength - 1);
+        if (cutPoint === -1 || cutPoint < maxTweetLength / 2) {
+          cutPoint = maxTweetLength - 1;
+        }
+        currentTweet = sentence.substring(0, cutPoint + 1).trim();
+        if (!/[.!?]$/.test(currentTweet)) {
+          currentTweet = currentTweet + '.';
+        }
+      } else {
+        currentTweet = sentence;
+      }
     }
   }
 
