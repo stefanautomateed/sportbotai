@@ -18,12 +18,18 @@ interface MatchResult {
 
 async function fetchNBAResult(searchHome: string, searchAway: string, dateStr: string): Promise<MatchResult | null> {
   try {
-    // Use 2024 date since API has real-world data
-    const apiDate = dateStr.replace('2025', '2024');
-    console.log(`  NBA API date: ${apiDate}`);
+    // NBA season calculation: Oct-Jun spans two years
+    // Dec 2025 = 2025-2026 season (started Oct 2025)
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    // Season starts in October
+    const season = month >= 10 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+    
+    console.log(`  NBA API date: ${dateStr}, season: ${season}`);
     
     const response = await fetch(
-      `https://v1.basketball.api-sports.io/games?date=${apiDate}&league=12&season=2024-2025`,
+      `https://v1.basketball.api-sports.io/games?date=${dateStr}&league=12&season=${season}`,
       {
         headers: {
           'x-rapidapi-key': API_KEY,
@@ -66,12 +72,17 @@ async function fetchNBAResult(searchHome: string, searchAway: string, dateStr: s
 
 async function fetchNHLResult(searchHome: string, searchAway: string, dateStr: string): Promise<MatchResult | null> {
   try {
-    // Use 2024 date since API has real-world data
-    const apiDate = dateStr.replace('2025', '2024');
-    console.log(`  NHL API date: ${apiDate}`);
+    // NHL season: Oct-Jun, uses just the starting year (e.g., "2025" for 2025-2026 season)
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    // Season starts in October
+    const season = month >= 10 ? year : year - 1;
+    
+    console.log(`  NHL API date: ${dateStr}, season: ${season}`);
     
     const response = await fetch(
-      `https://v1.hockey.api-sports.io/games?date=${apiDate}&league=57&season=2024`,
+      `https://v1.hockey.api-sports.io/games?date=${dateStr}&league=57&season=${season}`,
       {
         headers: {
           'x-rapidapi-key': API_KEY,
@@ -112,6 +123,63 @@ async function fetchNHLResult(searchHome: string, searchAway: string, dateStr: s
   }
 }
 
+async function fetchFootballResult(searchHome: string, searchAway: string, dateStr: string): Promise<MatchResult | null> {
+  try {
+    // Football uses season=2025 for 2025-26 season (Aug 2025 - May 2026)
+    // or season=2024 for 2024-25 season (Aug 2024 - May 2025)
+    const date = new Date(dateStr);
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    // Season starts in August, so Jan-Jul = previous year's season
+    const season = month >= 8 ? year : year - 1;
+    
+    console.log(`  Football API date: ${dateStr}, season: ${season}`);
+    
+    // Try to find the fixture by date with FT status
+    const response = await fetch(
+      `https://v3.football.api-sports.io/fixtures?date=${dateStr}&status=FT`,
+      {
+        headers: {
+          'x-rapidapi-key': API_KEY,
+          'x-rapidapi-host': 'v3.football.api-sports.io',
+        },
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const fixtures = data.response || [];
+    console.log(`  Found ${fixtures.length} finished fixtures`);
+
+    for (const fixture of fixtures) {
+      const home = fixture.teams?.home?.name?.toLowerCase() || '';
+      const away = fixture.teams?.away?.name?.toLowerCase() || '';
+
+      // Fuzzy match team names
+      if (
+        (home.includes(searchHome) || searchHome.includes(home) || 
+         home.split(' ').some((w: string) => searchHome.includes(w) && w.length > 3)) &&
+        (away.includes(searchAway) || searchAway.includes(away) ||
+         away.split(' ').some((w: string) => searchAway.includes(w) && w.length > 3))
+      ) {
+        console.log(`  Matched: ${fixture.teams.home.name} vs ${fixture.teams.away.name}`);
+        return {
+          homeTeam: fixture.teams.home.name,
+          awayTeam: fixture.teams.away.name,
+          homeScore: fixture.goals?.home ?? 0,
+          awayScore: fixture.goals?.away ?? 0,
+          completed: true,
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Football fetch error:', error);
+    return null;
+  }
+}
+
 function evaluatePrediction(predictedScenario: string, homeScore: number, awayScore: number) {
   const predicted = predictedScenario.toLowerCase();
   const actualResult = homeScore > awayScore ? 'Home Win' : awayScore > homeScore ? 'Away Win' : 'Draw';
@@ -147,12 +215,16 @@ async function updatePredictionResults() {
     const searchHome = homeTeam.toLowerCase();
     const searchAway = awayTeam.toLowerCase();
     const dateStr = prediction.kickoff.toISOString().split('T')[0];
+    const sportLower = prediction.sport?.toLowerCase() || '';
     
-    console.log(`\nChecking: ${prediction.matchName} (${dateStr})`);
+    console.log(`\nChecking: ${prediction.matchName} (${dateStr}) - Sport: ${prediction.sport}`);
     
-    // Detect sport
-    const isNBA = ['bulls', 'cavaliers', 'timberwolves', 'grizzlies', 'heat', 'pistons', 'celtics', 'lakers', 'warriors', 'nuggets', 'suns', 'bucks', 'nets', 'knicks'].some(t => searchHome.includes(t) || searchAway.includes(t));
-    const isNHL = ['predators', 'hurricanes', 'panthers', 'kings', 'red wings', 'mammoth', 'bruins', 'rangers', 'penguins'].some(t => searchHome.includes(t) || searchAway.includes(t));
+    // Detect sport from sport field or team names
+    const isNBA = sportLower.includes('basketball') || sportLower.includes('nba') || 
+      ['bulls', 'cavaliers', 'timberwolves', 'grizzlies', 'heat', 'pistons', 'celtics', 'lakers', 'warriors', 'nuggets', 'suns', 'bucks', 'nets', 'knicks', 'clippers', 'mavs', 'mavericks', 'rockets', 'spurs', 'jazz', 'thunder', 'pelicans', 'blazers', '76ers', 'raptors', 'wizards', 'hawks', 'hornets', 'pacers', 'magic'].some(t => searchHome.includes(t) || searchAway.includes(t));
+    const isNHL = sportLower.includes('hockey') || sportLower.includes('nhl') || 
+      ['predators', 'hurricanes', 'panthers', 'kings', 'red wings', 'bruins', 'rangers', 'penguins', 'capitals', 'flyers', 'devils', 'islanders', 'canadiens', 'senators', 'maple leafs', 'lightning', 'blue jackets', 'blackhawks', 'wild', 'blues', 'jets', 'avalanche', 'stars', 'ducks', 'sharks', 'kraken', 'golden knights', 'flames', 'oilers', 'canucks', 'coyotes'].some(t => searchHome.includes(t) || searchAway.includes(t));
+    const isFootball = sportLower.includes('soccer') || sportLower.includes('epl') || sportLower.includes('la_liga') || sportLower.includes('serie_a') || sportLower.includes('bundesliga') || sportLower.includes('ligue_1');
     
     let result: MatchResult | null = null;
     
@@ -162,18 +234,36 @@ async function updatePredictionResults() {
     } else if (isNHL) {
       console.log('  -> Checking NHL API...');
       result = await fetchNHLResult(searchHome, searchAway, dateStr);
+    } else {
+      // Default to football/soccer
+      console.log('  -> Checking Football API...');
+      result = await fetchFootballResult(searchHome, searchAway, dateStr);
     }
     
     if (result && result.completed) {
       const homeWon = result.homeScore > result.awayScore;
-      const predictedHome = prediction.prediction?.toLowerCase().includes(homeTeam.split(' ').pop()?.toLowerCase() || '');
-      const predictedAway = prediction.prediction?.toLowerCase().includes(awayTeam.split(' ').pop()?.toLowerCase() || '');
+      const isDraw = result.homeScore === result.awayScore;
+      const predLower = prediction.prediction?.toLowerCase() || '';
       
+      // Evaluate the prediction
       let wasAccurate = false;
-      if (predictedHome && homeWon) wasAccurate = true;
-      if (predictedAway && !homeWon) wasAccurate = true;
+      const homeKeyword = homeTeam.split(' ').pop()?.toLowerCase() || '';
+      const awayKeyword = awayTeam.split(' ').pop()?.toLowerCase() || '';
       
-      const actualResult = homeWon ? `${homeTeam} Win` : `${awayTeam} Win`;
+      // Check for "Home Win" style predictions
+      if (predLower.includes('home win') || predLower.includes('home victory') || predLower === 'home') {
+        wasAccurate = homeWon;
+      } else if (predLower.includes('away win') || predLower.includes('away victory') || predLower === 'away') {
+        wasAccurate = !homeWon && !isDraw;
+      } else if (predLower.includes('draw')) {
+        wasAccurate = isDraw;
+      } else if (predLower.includes(homeKeyword) && homeKeyword.length > 2) {
+        wasAccurate = homeWon;
+      } else if (predLower.includes(awayKeyword) && awayKeyword.length > 2) {
+        wasAccurate = !homeWon && !isDraw;
+      }
+      
+      const actualResult = homeWon ? 'Home Win' : isDraw ? 'Draw' : 'Away Win';
       
       await prisma.prediction.update({
         where: { id: prediction.id },
@@ -185,11 +275,14 @@ async function updatePredictionResults() {
         },
       });
       
-      console.log(`  ✅ Updated: ${result.homeScore}-${result.awayScore} -> ${wasAccurate ? 'CORRECT' : 'WRONG'}`);
+      console.log(`  ✅ Updated: ${result.homeScore}-${result.awayScore} (${actualResult}) -> ${wasAccurate ? 'HIT' : 'MISS'}`);
       updated++;
     } else {
       console.log('  ⏳ No result found yet');
     }
+    
+    // Rate limiting - don't hammer the API
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
   
   console.log(`\n📊 Summary: Updated ${updated} predictions`);
