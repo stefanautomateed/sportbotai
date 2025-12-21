@@ -78,6 +78,26 @@ import { getPerplexityClient, type ResearchResult } from '@/lib/perplexity';
 import * as Sentry from '@sentry/nextjs';
 
 // ============================================
+// ACCURACY-CORE PIPELINE INTEGRATION
+// Uses computed probabilities instead of LLM guesses
+// ============================================
+import { 
+  runAccuracyPipeline, 
+  type PipelineInput, 
+  type PipelineResult,
+} from '@/lib/accuracy-core';
+import { 
+  analyzeMarket,
+  type OddsData,
+  type MarketIntel,
+} from '@/lib/value-detection';
+import {
+  normalizeToUniversalSignals,
+  type RawMatchInput,
+  type UniversalSignals,
+} from '@/lib/universal-signals';
+
+// ============================================
 // OPENAI CLIENT (LAZY INIT)
 // ============================================
 
@@ -92,6 +112,180 @@ function getOpenAIClient(): OpenAI | null {
     });
   }
   return openaiClient;
+}
+
+// ============================================
+// COMPUTED PROBABILITIES (Data-2 Layer)
+// Uses accuracy-core pipeline + form weighting
+// ============================================
+
+interface ComputedProbabilities {
+  homeWin: number;
+  draw: number | null;
+  awayWin: number;
+  strengthEdge: {
+    direction: 'home' | 'away' | 'even';
+    percentage: number;
+  };
+  marketIntel: MarketIntel | null;
+  confidence: 'high' | 'medium' | 'low';
+  dataQuality: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+/**
+ * Compute probabilities using Data-2 layer (mathematical models)
+ * This replaces LLM probability guessing with computed values
+ * 
+ * Uses normalizeToUniversalSignals() to build proper signals,
+ * then analyzeMarket() to get computed probabilities with form weighting.
+ */
+function computeProbabilities(
+  enrichedData: MultiSportEnrichedData | null,
+  odds: { home: number; away: number; draw?: number | null },
+  sport: string,
+  homeTeam: string,
+  awayTeam: string
+): ComputedProbabilities | null {
+  // Need minimum data to compute
+  if (!enrichedData?.homeStats || !enrichedData?.awayStats) {
+    console.log('[Pipeline] Insufficient stats data for computed probabilities');
+    return null;
+  }
+  
+  if (!odds.home || !odds.away) {
+    console.log('[Pipeline] Insufficient odds data for computed probabilities');
+    return null;
+  }
+
+  // Extract form string from form matches
+  const extractFormString = (matches: FormMatch[] | null | undefined): string => {
+    if (!matches?.length) return '';
+    return matches.slice(0, 5).map(m => m.result).join('');
+  };
+
+  const homeForm = extractFormString(enrichedData.homeForm);
+  const awayForm = extractFormString(enrichedData.awayForm);
+  
+  console.log('[Pipeline] Form data:', { homeForm, awayForm });
+
+  // Calculate derived stats from TeamStats
+  const homeStats = enrichedData.homeStats;
+  const awayStats = enrichedData.awayStats;
+  
+  // Derive wins/losses from form if not available
+  const countWins = (form: string) => (form.match(/W/g) || []).length;
+  const countLosses = (form: string) => (form.match(/L/g) || []).length;
+  const countDraws = (form: string) => (form.match(/D/g) || []).length;
+
+  // Build RawMatchInput for universal signals
+  const rawInput: RawMatchInput = {
+    sport,
+    homeTeam,
+    awayTeam,
+    homeForm,
+    awayForm,
+    homeStats: {
+      played: homeStats.wins !== undefined && homeStats.losses !== undefined 
+        ? (homeStats.wins + homeStats.losses) 
+        : homeForm.length || 5,
+      wins: homeStats.wins ?? countWins(homeForm),
+      draws: 0, // Not always available
+      losses: homeStats.losses ?? countLosses(homeForm),
+      scored: homeStats.goalsScored,
+      conceded: homeStats.goalsConceded,
+    },
+    awayStats: {
+      played: awayStats.wins !== undefined && awayStats.losses !== undefined 
+        ? (awayStats.wins + awayStats.losses) 
+        : awayForm.length || 5,
+      wins: awayStats.wins ?? countWins(awayForm),
+      draws: 0, // Not always available
+      losses: awayStats.losses ?? countLosses(awayForm),
+      scored: awayStats.goalsScored,
+      conceded: awayStats.goalsConceded,
+    },
+    h2h: {
+      total: enrichedData.headToHead?.length || 0,
+      homeWins: enrichedData.headToHead?.filter(m => m.homeScore > m.awayScore).length || 0,
+      awayWins: enrichedData.headToHead?.filter(m => m.awayScore > m.homeScore).length || 0,
+      draws: enrichedData.headToHead?.filter(m => m.homeScore === m.awayScore).length || 0,
+    },
+  };
+
+  // Compute universal signals (this applies 40% form weighting)
+  let signals: UniversalSignals;
+  try {
+    signals = normalizeToUniversalSignals(rawInput);
+    console.log('[Pipeline] Universal signals computed:', {
+      form: signals.form,
+      strengthEdge: signals.strength_edge,
+      confidence: signals.confidence,
+    });
+  } catch (error) {
+    console.error('[Pipeline] Failed to compute universal signals:', error);
+    return null;
+  }
+
+  // Detect sport type for draw handling
+  const hasDraw = sport.toLowerCase().includes('soccer') || 
+                  sport.toLowerCase() === 'football' ||
+                  sport.toLowerCase().includes('football');
+
+  // Build odds data for market analysis (convert null to undefined)
+  const oddsData: OddsData = {
+    homeOdds: odds.home,
+    awayOdds: odds.away,
+    drawOdds: hasDraw && odds.draw ? odds.draw : undefined,
+  };
+
+  // Run market analysis (uses signals with form weighting)
+  let marketIntel: MarketIntel | null = null;
+  try {
+    marketIntel = analyzeMarket(signals, oddsData, hasDraw);
+    console.log('[Pipeline] Market intel:', {
+      modelProb: marketIntel.modelProbability,
+      valueEdge: marketIntel.valueEdge,
+      recommendation: marketIntel.recommendation,
+    });
+  } catch (error) {
+    console.error('[Pipeline] Failed to analyze market:', error);
+    return null;
+  }
+
+  // Extract computed probabilities
+  const homeProb = marketIntel.modelProbability.home;
+  const awayProb = marketIntel.modelProbability.away;
+  const drawProb = hasDraw ? marketIntel.modelProbability.draw || null : null;
+
+  // Extract strength edge from signals
+  const strengthEdge = {
+    direction: signals.display.edge.direction,
+    percentage: signals.display.edge.percentage,
+  };
+
+  // Determine data quality
+  const hasFormData = homeForm.length > 0 && awayForm.length > 0;
+  const hasH2H = (enrichedData.headToHead?.length || 0) > 0;
+  const dataQuality: 'HIGH' | 'MEDIUM' | 'LOW' = 
+    hasFormData && hasH2H ? 'HIGH' :
+    hasFormData ? 'MEDIUM' : 'LOW';
+
+  console.log('[Pipeline] Computed probabilities:', { 
+    homeProb, drawProb, awayProb, 
+    dataQuality, 
+    confidence: signals.confidence,
+    edge: strengthEdge,
+  });
+
+  return {
+    homeWin: homeProb,
+    draw: drawProb,
+    awayWin: awayProb,
+    strengthEdge,
+    marketIntel,
+    confidence: signals.confidence,
+    dataQuality,
+  };
 }
 
 // ============================================
@@ -689,9 +883,33 @@ export async function POST(request: NextRequest) {
         console.log('[Cache] Fresh analysis with real-time intel');
       }
       
-      // Call OpenAI API with sport-aware prompt, enriched data, match context, and real-time intel
+      // ========================================
+      // COMPUTE PROBABILITIES (Data-2 Layer)
+      // Uses mathematical models instead of LLM guessing
+      // ========================================
+      const computedProbs = computeProbabilities(
+        enrichedData,
+        normalizedRequest.matchData.odds || { home: 0, away: 0 },
+        normalizedRequest.matchData.sport || 'soccer',
+        normalizedRequest.matchData.homeTeam,
+        normalizedRequest.matchData.awayTeam
+      );
+      
+      if (computedProbs) {
+        console.log('[Pipeline] Computed probabilities ready:', {
+          home: computedProbs.homeWin,
+          draw: computedProbs.draw,
+          away: computedProbs.awayWin,
+          edge: computedProbs.strengthEdge,
+          confidence: computedProbs.confidence,
+        });
+      } else {
+        console.log('[Pipeline] No computed probabilities (insufficient data), LLM will estimate');
+      }
+      
+      // Call OpenAI API with sport-aware prompt, enriched data, match context, real-time intel, and computed probabilities
       console.log('[OpenAI] Generating fresh analysis...');
-      analysis = await callOpenAI(openai, normalizedRequest, enrichedData, matchContext, realTimeIntel);
+      analysis = await callOpenAI(openai, normalizedRequest, enrichedData, matchContext, realTimeIntel, computedProbs);
       
       // Cache the analysis for future requests (shorter TTL if real-time intel used)
       const cacheTTL = hasRealTimeIntel ? 1800 : CACHE_TTL.ANALYSIS; // 30 min if real-time, else 1 hour
@@ -1210,7 +1428,8 @@ async function callOpenAI(
   request: AnalyzeRequest,
   enrichedData?: MultiSportEnrichedData | null,
   matchContext?: MatchContext | null,
-  realTimeIntel?: ResearchResult | null
+  realTimeIntel?: ResearchResult | null,
+  computedProbs?: ComputedProbabilities | null
 ): Promise<AnalyzeResponse> {
   // Build base user prompt
   let userPrompt = buildUserPrompt(
@@ -1244,6 +1463,37 @@ async function callOpenAI(
     }
   }
 
+  // CRITICAL: Inject computed probabilities as READ-ONLY values
+  // This ensures LLM uses our mathematically computed probabilities
+  // instead of guessing its own
+  if (computedProbs) {
+    userPrompt += `
+
+=== PRE-COMPUTED PROBABILITIES (READ-ONLY - USE THESE EXACT VALUES) ===
+The following probabilities have been computed using mathematical models
+including form analysis (40% weight), win rates, goal difference, H2H, 
+and market odds. YOU MUST USE THESE EXACT VALUES in your response.
+
+HOME WIN: ${computedProbs.homeWin}%
+${computedProbs.draw !== null ? `DRAW: ${computedProbs.draw}%` : 'DRAW: null (sport has no draws)'}
+AWAY WIN: ${computedProbs.awayWin}%
+
+STRENGTH EDGE: ${computedProbs.strengthEdge.direction === 'even' ? 'Even match' : `${computedProbs.strengthEdge.direction.toUpperCase()} +${computedProbs.strengthEdge.percentage}%`}
+DATA QUALITY: ${computedProbs.dataQuality}
+CONFIDENCE: ${computedProbs.confidence}
+${computedProbs.marketIntel ? `VALUE ANALYSIS: ${computedProbs.marketIntel.summary}` : ''}
+
+IMPORTANT: Copy these exact probability values to your probabilities object.
+Do NOT recalculate or adjust them. They are based on comprehensive data analysis.
+`;
+    console.log('[OpenAI] Injected computed probabilities:', {
+      home: computedProbs.homeWin,
+      draw: computedProbs.draw,
+      away: computedProbs.awayWin,
+      edge: computedProbs.strengthEdge,
+    });
+  }
+
   // Build sport-aware system prompt
   const sportAwareSystemPrompt = buildSystemPrompt(
     request.matchData.sport,
@@ -1271,7 +1521,7 @@ async function callOpenAI(
   
   try {
     const parsed = JSON.parse(content);
-    return validateAndSanitizeResponse(parsed, request, enrichedData);
+    return validateAndSanitizeResponse(parsed, request, enrichedData, computedProbs);
   } catch (parseError) {
     console.error('Failed to parse OpenAI response:', content);
     return generateFallbackAnalysis(request, enrichedData);
@@ -1454,7 +1704,8 @@ function buildExplanationDetailed(largest: { outcome: string; difference: number
 function validateAndSanitizeResponse(
   raw: any,
   request: AnalyzeRequest,
-  enrichedData?: MultiSportEnrichedData | null
+  enrichedData?: MultiSportEnrichedData | null,
+  computedProbs?: ComputedProbabilities | null
 ): AnalyzeResponse {
   const now = new Date().toISOString();
   const sport = request.matchData.sport?.toLowerCase() || 'soccer';
@@ -1478,15 +1729,40 @@ function validateAndSanitizeResponse(
     formDataSource = 'AI_ESTIMATE';
   }
   
-  // Determine data quality based on real data availability
+  // Determine data quality - prefer pipeline-computed value
   let dataQuality: DataQuality;
-  if (hasRealFormData && hasRealStats) {
+  if (computedProbs) {
+    dataQuality = computedProbs.dataQuality;
+  } else if (hasRealFormData && hasRealStats) {
     dataQuality = 'HIGH';
   } else if (hasRealFormData || hasRealStats || hasH2H) {
     dataQuality = 'MEDIUM';
   } else {
     // Fall back to AI response or default
     dataQuality = validateDataQuality(raw.matchInfo?.dataQuality);
+  }
+  
+  // USE COMPUTED PROBABILITIES if available (Data-2 layer overrides LLM guesses)
+  const finalProbabilities = computedProbs ? {
+    homeWin: computedProbs.homeWin,
+    draw: computedProbs.draw,
+    awayWin: computedProbs.awayWin,
+    over: clampNullable(raw.probabilities?.over, 0, 100),
+    under: clampNullable(raw.probabilities?.under, 0, 100),
+  } : normalizeProbabilities({
+    homeWin: clampNullable(raw.probabilities?.homeWin, 0, 100),
+    draw: clampNullable(raw.probabilities?.draw, 0, 100),
+    awayWin: clampNullable(raw.probabilities?.awayWin, 0, 100),
+    over: clampNullable(raw.probabilities?.over, 0, 100),
+    under: clampNullable(raw.probabilities?.under, 0, 100),
+  });
+
+  // Log when pipeline probabilities are used
+  if (computedProbs) {
+    console.log('[Pipeline] Using computed probabilities instead of LLM output:', {
+      computed: { home: computedProbs.homeWin, draw: computedProbs.draw, away: computedProbs.awayWin },
+      llmRaw: { home: raw.probabilities?.homeWin, draw: raw.probabilities?.draw, away: raw.probabilities?.awayWin },
+    });
   }
   
   return {
@@ -1502,14 +1778,8 @@ function validateAndSanitizeResponse(
       dataQuality: dataQuality,
     },
     
-    // Normalize probabilities to ensure they sum to ~100%
-    probabilities: normalizeProbabilities({
-      homeWin: clampNullable(raw.probabilities?.homeWin, 0, 100),
-      draw: clampNullable(raw.probabilities?.draw, 0, 100),
-      awayWin: clampNullable(raw.probabilities?.awayWin, 0, 100),
-      over: clampNullable(raw.probabilities?.over, 0, 100),
-      under: clampNullable(raw.probabilities?.under, 0, 100),
-    }),
+    // Use pipeline-computed probabilities when available
+    probabilities: finalProbabilities,
     
     // NEW: Neutral odds comparison (educational, not recommendations)
     oddsComparison: buildOddsComparison(raw, request),
@@ -1521,7 +1791,11 @@ function validateAndSanitizeResponse(
         draw: clampNullable(raw.oddsComparison?.marketImplied?.draw ?? raw.valueAnalysis?.impliedProbabilities?.draw, 0, 100),
         awayWin: clampNullable(raw.oddsComparison?.marketImplied?.awayWin ?? raw.valueAnalysis?.impliedProbabilities?.awayWin, 0, 100),
       },
-      aiProbabilities: normalizeThreeWayProbabilities({
+      aiProbabilities: computedProbs ? {
+        homeWin: computedProbs.homeWin,
+        draw: computedProbs.draw,
+        awayWin: computedProbs.awayWin,
+      } : normalizeThreeWayProbabilities({
         homeWin: clampNullable(raw.oddsComparison?.aiEstimate?.homeWin ?? raw.probabilities?.homeWin, 0, 100),
         draw: clampNullable(raw.oddsComparison?.aiEstimate?.draw ?? raw.probabilities?.draw, 0, 100),
         awayWin: clampNullable(raw.oddsComparison?.aiEstimate?.awayWin ?? raw.probabilities?.awayWin, 0, 100),
