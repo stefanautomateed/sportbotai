@@ -729,6 +729,11 @@ REQUIREMENTS:
 4. Target 1800-2200 words for better SEO
 5. Use HTML formatting (h2, h3, p, ul, li, strong, em) PLUS the styled boxes above
 6. Include 2-3 internal links to related blog posts naturally within content
+   - IMPORTANT: Use SHORT anchor text (2-3 words max), NOT full titles
+   - Example: "our <a href="/blog/liverpool-analysis">Liverpool analysis</a> showed..."
+   - Example: "similar to the <a href="/blog/epl-predictions">EPL predictions</a> we covered..."
+   - BAD: "<a href="/blog/some-slug">Liverpool vs Manchester United Match Preview and Prediction 2025</a>"
+   - GOOD: "<a href="/blog/some-slug">Liverpool preview</a>" or "<a href="/blog/some-slug">our analysis</a>"
 7. Replace all [PLACEHOLDER] values with actual data from the analysis
 
 CRITICAL RULES:

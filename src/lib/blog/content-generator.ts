@@ -136,8 +136,11 @@ CRITICAL WRITING GUIDELINES:
 
 4. INTERNAL LINKING:
    - Add 3-5 internal links using ONLY the existing blog URLs provided above
-   - Use natural anchor text within sentences
-   - Example: <a href="/blog/understanding-expected-goals-xg-football">learn more about xG</a>
+   - Use SHORT anchor text (2-3 words max), NOT full blog titles
+   - Example: "as we explored in our <a href="/blog/understanding-expected-goals-xg-football">xG analysis</a>"
+   - Example: "check out our <a href="/blog/some-slug">EPL predictions</a> for more"
+   - BAD: "<a href="/blog/some-slug">Understanding Expected Goals (xG) in Football: A Complete Guide</a>"
+   - GOOD: "<a href="/blog/some-slug">xG analysis</a>" or "<a href="/blog/some-slug">our guide</a>"
    - DO NOT make up URLs - only use exact slugs from the list above
    - If no relevant existing posts, link to: /blog, /matches, /pricing, /ai-desk
 
