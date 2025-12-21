@@ -17,7 +17,6 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useFavorites } from '@/lib/FavoritesContext'
 import Link from 'next/link'
-import Image from 'next/image'
 import TeamLogo from '@/components/ui/TeamLogo'
 
 interface UpcomingMatch {
@@ -287,19 +286,12 @@ export default function MyTeamsDashboard() {
                     }`}
                   >
                     <div className="flex items-center gap-4 min-w-0">
-                      {team.teamLogo ? (
-                        <Image
-                          src={team.teamLogo}
-                          alt={team.teamName}
-                          width={40}
-                          height={40}
-                          className="rounded-xl object-contain bg-white p-1"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-bg rounded-xl flex items-center justify-center border border-divider">
-                          <span className="text-lg">🏆</span>
-                        </div>
-                      )}
+                      <TeamLogo 
+                        teamName={team.teamName} 
+                        sport={team.sportKey || team.sport || 'soccer'} 
+                        size="lg" 
+                        className="rounded-xl"
+                      />
                       <div className="min-w-0">
                         <p className="font-medium text-text-primary truncate">{team.teamName}</p>
                         <p className="text-sm text-text-muted truncate">
