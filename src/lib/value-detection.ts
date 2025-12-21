@@ -40,6 +40,12 @@ export interface LineMovement {
   magnitude: 'sharp' | 'moderate' | 'slight';
   interpretation: string;  // "Sharp money on Home"
   suspicious: boolean;     // Unusual movement
+  // Reverse Line Movement (RLM) detection
+  isReverse?: boolean;     // Line moves opposite to public betting
+  rlmExplanation?: string; // "Public on Home but line moving to Away = Sharp money"
+  // Steam move classification
+  isSteamMove?: boolean;   // Rapid, significant movement (sharp action)
+  steamDirection?: 'home' | 'away' | null;
 }
 
 export interface MarketIntel {
@@ -346,6 +352,20 @@ export function calculateMargin(homeOdds: number, awayOdds: number, drawOdds?: n
 // ============================================
 
 /**
+ * Steam Move Adjustment
+ * 
+ * Sharp line movements indicate professional money.
+ * When we detect steam, we adjust our model to respect the market signal.
+ * 
+ * Research shows steam moves hit at ~55-58% rate - worth incorporating.
+ */
+export interface SteamMoveInput {
+  detected: boolean;
+  direction: 'home' | 'away' | null;
+  magnitude: 'sharp' | 'moderate' | 'slight';
+}
+
+/**
  * Calculate model probability from Universal Signals
  * 
  * This is our proprietary model based on:
@@ -355,6 +375,7 @@ export function calculateMargin(homeOdds: number, awayOdds: number, drawOdds?: n
  * - Home advantage
  * - Injury impact
  * - League-specific calibration (draw rates, home advantage)
+ * - Steam move signals (sharp money)
  * 
  * CRITICAL: The strength edge now includes 40% form weighting.
  * We apply additional form adjustments here for extreme cases.
@@ -362,11 +383,11 @@ export function calculateMargin(homeOdds: number, awayOdds: number, drawOdds?: n
 export function calculateModelProbability(
   signals: UniversalSignals,
   hasDraw: boolean = true,
-  league?: string
+  league?: string,
+  steamMove?: SteamMoveInput
 ): ModelProbability {
   // Get league-specific calibration data
   const leagueProfile = getLeagueProfile(league);
-  const defaultProfile = LEAGUE_CALIBRATION['default'];
   
   // Start with LEAGUE-CALIBRATED base probabilities instead of hard-coded values
   // This adjusts for leagues like Serie A (more draws) vs Bundesliga (fewer draws)
@@ -432,7 +453,26 @@ export function calculateModelProbability(
     awayBase -= 1;
   }
   
-  // 5. Normalize to 100%
+  // 5. Apply Steam Move Signal (sharp money)
+  // Steam moves indicate professional bettors see value
+  // Sharp moves: +5% boost, Moderate: +3%, Slight: +1.5%
+  if (steamMove?.detected && steamMove.direction) {
+    const steamBoost = 
+      steamMove.magnitude === 'sharp' ? 5 :
+      steamMove.magnitude === 'moderate' ? 3 : 1.5;
+    
+    if (steamMove.direction === 'home') {
+      homeBase += steamBoost;
+      awayBase -= steamBoost * 0.6;
+      if (hasDraw) drawBase -= steamBoost * 0.4;
+    } else if (steamMove.direction === 'away') {
+      awayBase += steamBoost;
+      homeBase -= steamBoost * 0.6;
+      if (hasDraw) drawBase -= steamBoost * 0.4;
+    }
+  }
+  
+  // 6. Normalize to 100%
   const total = homeBase + awayBase + drawBase;
   const home = Math.max(5, Math.min(90, Math.round((homeBase / total) * 100)));
   const away = Math.max(5, Math.min(90, Math.round((awayBase / total) * 100)));
@@ -540,8 +580,9 @@ export function analyzeMarket(
   previousOdds?: OddsData,
   league?: string
 ): MarketIntel {
-  // Calculate model probability with league-specific calibration
-  const modelProb = calculateModelProbability(signals, hasDraw, league);
+  // Calculate initial model probability with league-specific calibration
+  // This will be recalculated if we detect steam moves
+  const modelProbInitial = calculateModelProbability(signals, hasDraw, league);
   
   // Calculate implied probabilities (raw, before quality adjustment)
   const impliedHome = oddsToImpliedProb(odds.homeOdds);
@@ -549,11 +590,10 @@ export function analyzeMarket(
   const impliedDraw = odds.drawOdds ? oddsToImpliedProb(odds.drawOdds) : undefined;
   const margin = calculateMargin(odds.homeOdds, odds.awayOdds, odds.drawOdds);
   
-  // Detect value (uses bookmaker quality weighting internally)
-  const valueEdge = detectValue(modelProb, odds, hasDraw);
-  
   // Analyze line movement if we have previous odds
   let lineMovement: LineMovement | undefined;
+  let steamMoveInput: SteamMoveInput | undefined;
+  
   if (previousOdds) {
     const homeDiff = previousOdds.homeOdds - odds.homeOdds;
     const magnitude = Math.abs(homeDiff);
@@ -566,6 +606,41 @@ export function analyzeMarket(
     if (magnitude > 0.15) magLabel = 'sharp';
     else if (magnitude > 0.08) magLabel = 'moderate';
     
+    // Detect Steam Move (sharp, rapid line movement)
+    // A true steam move is sharp magnitude + significant odds shift
+    const isSteamMove = magLabel === 'sharp' || (magLabel === 'moderate' && magnitude > 0.1);
+    const steamDirection = direction === 'toward_home' ? 'home' as const : 
+                          direction === 'toward_away' ? 'away' as const : null;
+    
+    // Build steam move input for probability calculation
+    if (isSteamMove && steamDirection) {
+      steamMoveInput = {
+        detected: true,
+        direction: steamDirection,
+        magnitude: magLabel,
+      };
+    }
+    
+    // Reverse Line Movement Detection
+    // RLM = line moves opposite to where public money should push it
+    // We infer "public side" from model favored team (favorites get public action)
+    // If our model strongly favors one team but line moves other way = RLM
+    const modelStronglyFavors = modelProbInitial.home > modelProbInitial.away ? 
+      (modelProbInitial.home - modelProbInitial.away > 10 ? 'home' : null) :
+      (modelProbInitial.away - modelProbInitial.home > 10 ? 'away' : null);
+    
+    const isReverse = modelStronglyFavors !== null && 
+      direction !== 'stable' &&
+      ((modelStronglyFavors === 'home' && direction === 'toward_away') ||
+       (modelStronglyFavors === 'away' && direction === 'toward_home'));
+    
+    let rlmExplanation: string | undefined;
+    if (isReverse) {
+      const publicSide = modelStronglyFavors === 'home' ? 'Home' : 'Away';
+      const sharpSide = modelStronglyFavors === 'home' ? 'Away' : 'Home';
+      rlmExplanation = `Reverse Line Movement: Public likely on ${publicSide} (favorite) but line moving toward ${sharpSide}. This indicates sharp money opposing the public.`;
+    }
+    
     lineMovement = {
       direction,
       magnitude: magLabel,
@@ -575,8 +650,22 @@ export function analyzeMarket(
           ? 'Money coming for Away'
           : 'Line stable',
       suspicious: magnitude > 0.2,
+      isReverse,
+      rlmExplanation,
+      isSteamMove,
+      steamDirection,
     };
   }
+  
+  // Re-calculate model probability WITH steam move input
+  // This ensures our probabilities factor in sharp money signals
+  const modelProb = steamMoveInput 
+    ? calculateModelProbability(signals, hasDraw, league, steamMoveInput)
+    : modelProbInitial;
+  
+  // Detect value (uses bookmaker quality weighting internally)
+  // This uses the final model probability (with steam adjustments if any)
+  const valueEdge = detectValue(modelProb, odds, hasDraw);
   
   // Determine recommendation
   let recommendation: MarketIntel['recommendation'] = 'fair_price';
