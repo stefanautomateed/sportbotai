@@ -22,6 +22,7 @@ const ADMIN_EMAILS = [
   'admin@sportbotai.com',
   'gogani92@gmail.com',
   'streamentor@gmail.com',
+  'stefan@automateed.com',
 ];
 
 // GET - Batch generate previews for upcoming matches
