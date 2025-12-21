@@ -904,7 +904,7 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
         focusKeyword: content.focusKeyword,
         featuredImage,
         imageAlt,
-        category: content.category,
+        category: content.category || 'Match Previews',
         tags: content.tags,
         status: 'PUBLISHED',
         publishedAt: new Date(),
