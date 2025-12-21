@@ -37,15 +37,20 @@ const LEAGUE_MAPPINGS: Record<string, number> = {
   'premier league': LEAGUE_IDS.PREMIER_LEAGUE,
   'epl': LEAGUE_IDS.PREMIER_LEAGUE,
   'english premier league': LEAGUE_IDS.PREMIER_LEAGUE,
+  'soccer_epl': LEAGUE_IDS.PREMIER_LEAGUE,
   'la liga': LEAGUE_IDS.LA_LIGA,
   'laliga': LEAGUE_IDS.LA_LIGA,
   'spanish league': LEAGUE_IDS.LA_LIGA,
+  'soccer_spain_la_liga': LEAGUE_IDS.LA_LIGA,
   'bundesliga': LEAGUE_IDS.BUNDESLIGA,
   'german league': LEAGUE_IDS.BUNDESLIGA,
+  'soccer_germany_bundesliga': LEAGUE_IDS.BUNDESLIGA,
   'serie a': LEAGUE_IDS.SERIE_A,
   'italian league': LEAGUE_IDS.SERIE_A,
+  'soccer_italy_serie_a': LEAGUE_IDS.SERIE_A,
   'ligue 1': LEAGUE_IDS.LIGUE_1,
   'french league': LEAGUE_IDS.LIGUE_1,
+  'soccer_france_ligue_one': LEAGUE_IDS.LIGUE_1,
   'mls': LEAGUE_IDS.MLS,
   'major league soccer': LEAGUE_IDS.MLS,
   'champions league': LEAGUE_IDS.CHAMPIONS_LEAGUE,
@@ -98,6 +103,7 @@ export class SoccerAdapter extends BaseSportAdapter {
   
   /**
    * Find a soccer team with improved matching
+   * API-Sports requires league parameter, so we try major leagues if not specified
    */
   async findTeam(query: TeamQuery): Promise<DataLayerResponse<NormalizedTeam>> {
     if (!query.name && !query.id) {
@@ -106,6 +112,17 @@ export class SoccerAdapter extends BaseSportAdapter {
     
     const season = this.getCurrentSeason();
     const leagueId = this.resolveLeagueId(query.league);
+    
+    // Major leagues to try if no league specified (ordered by popularity)
+    const majorLeagues = [
+      LEAGUE_IDS.PREMIER_LEAGUE,    // 39 - EPL
+      LEAGUE_IDS.LA_LIGA,           // 140 - Spain
+      LEAGUE_IDS.BUNDESLIGA,        // 78 - Germany
+      LEAGUE_IDS.SERIE_A,           // 135 - Italy
+      LEAGUE_IDS.LIGUE_1,           // 61 - France
+      LEAGUE_IDS.CHAMPIONS_LEAGUE,  // 2 - UCL
+      LEAGUE_IDS.MLS,               // 253 - USA
+    ];
     
     // Try by ID first
     if (query.id) {
@@ -122,58 +139,68 @@ export class SoccerAdapter extends BaseSportAdapter {
     // Search by name with variations
     if (query.name) {
       const searchVariations = getSearchVariations(query.name, 'soccer');
-      console.log(`[Soccer] Searching for "${query.name}" with variations:`, searchVariations);
+      console.log(`[Soccer] Searching for "${query.name}" with variations:`, searchVariations, `league: ${leagueId || 'auto-detect'}`);
       
-      // Try each variation
-      for (const searchName of searchVariations) {
-        const params: { name?: string; search?: string; league?: number; season?: number } = {
-          season,
-        };
-        
-        // Try exact name first
-        params.name = searchName;
-        if (leagueId) {
-          params.league = leagueId;
-        }
-        
-        const result = await this.apiProvider.getSoccerTeams(params);
-        
-        if (result.success && result.data && result.data.length > 0) {
-          console.log(`[Soccer] Found team: "${query.name}" → "${result.data[0].team.name}"`);
-          return this.success(this.transformTeam(result.data[0]));
-        }
-        
-        // Try search parameter (more lenient)
-        delete params.name;
-        params.search = searchName;
-        
-        const searchResult = await this.apiProvider.getSoccerTeams(params);
-        
-        if (searchResult.success && searchResult.data && searchResult.data.length > 0) {
-          // Find best match from results
-          const lowerSearch = searchName.toLowerCase();
-          const exactMatch = searchResult.data.find(t => 
-            t.team.name.toLowerCase() === lowerSearch
-          );
+      // If league is specified, only try that league
+      const leaguesToTry = leagueId ? [leagueId] : majorLeagues;
+      
+      // Try each league
+      for (const tryLeague of leaguesToTry) {
+        // Try each name variation
+        for (const searchName of searchVariations) {
+          const params: { name?: string; search?: string; league: number; season: number } = {
+            season,
+            league: tryLeague,
+          };
           
-          if (exactMatch) {
-            console.log(`[Soccer] Found exact match: "${query.name}" → "${exactMatch.team.name}"`);
-            return this.success(this.transformTeam(exactMatch));
+          // Try exact name first
+          params.name = searchName;
+          
+          const result = await this.apiProvider.getSoccerTeams(params);
+          
+          if (result.success && result.data && result.data.length > 0) {
+            console.log(`[Soccer] Found team: "${query.name}" → "${result.data[0].team.name}" in league ${tryLeague}`);
+            return this.success(this.transformTeam(result.data[0]));
           }
           
-          // Return first result if no exact match
-          console.log(`[Soccer] Found via search: "${query.name}" → "${searchResult.data[0].team.name}"`);
-          return this.success(this.transformTeam(searchResult.data[0]));
+          // Try search parameter (more lenient)
+          delete params.name;
+          (params as any).search = searchName;
+          
+          const searchResult = await this.apiProvider.getSoccerTeams(params);
+          
+          if (searchResult.success && searchResult.data && searchResult.data.length > 0) {
+            // Find best match from results
+            const lowerSearch = searchName.toLowerCase();
+            const exactMatch = searchResult.data.find(t => 
+              t.team.name.toLowerCase() === lowerSearch
+            );
+            
+            if (exactMatch) {
+              console.log(`[Soccer] Found exact match: "${query.name}" → "${exactMatch.team.name}" in league ${tryLeague}`);
+              return this.success(this.transformTeam(exactMatch));
+            }
+            
+            // Return first result if no exact match
+            console.log(`[Soccer] Found via search: "${query.name}" → "${searchResult.data[0].team.name}" in league ${tryLeague}`);
+            return this.success(this.transformTeam(searchResult.data[0]));
+          }
+        }
+        
+        // Only try first league variation if we found nothing - avoid too many API calls
+        if (!leagueId && leaguesToTry.indexOf(tryLeague) >= 2) {
+          console.log(`[Soccer] Stopping league search after checking ${leaguesToTry.indexOf(tryLeague) + 1} leagues`);
+          break;
         }
       }
       
-      // Final fallback: try resolved name directly
+      // Final fallback: try resolved name directly with Premier League
       const resolvedName = resolveTeamName(query.name, 'soccer');
       if (resolvedName !== query.name) {
         const finalResult = await this.apiProvider.getSoccerTeams({
           search: resolvedName,
           season,
-          ...(leagueId && { league: leagueId }),
+          league: LEAGUE_IDS.PREMIER_LEAGUE,
         });
         
         if (finalResult.success && finalResult.data && finalResult.data.length > 0) {
