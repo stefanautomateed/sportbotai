@@ -321,9 +321,11 @@ function computeProbabilities(
   };
 
   // Run market analysis (uses signals with form weighting)
+  // Pass sport as league for calibration (extract league from sport key)
+  const leagueFromSport = sport.includes('_') ? sport.split('_').slice(-1)[0] : sport;
   let marketIntel: MarketIntel | null = null;
   try {
-    marketIntel = analyzeMarket(signals, oddsData, hasDraw);
+    marketIntel = analyzeMarket(signals, oddsData, hasDraw, undefined, leagueFromSport);
     console.log('[Pipeline] Market intel:', {
       modelProb: marketIntel.modelProbability,
       valueEdge: marketIntel.valueEdge,

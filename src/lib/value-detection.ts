@@ -182,6 +182,151 @@ export function adjustForBookmakerQuality(
   return Math.round(adjusted * 10) / 10;
 }
 
+// ============================================
+// LEAGUE CALIBRATION DATA
+// ============================================
+
+/**
+ * Real league statistics from 2025 season (API-Football data)
+ * Updated: December 2025 with 150+ matches per league
+ * 
+ * Used to adjust model probabilities based on actual league patterns.
+ * Default "baseline" represents average across all leagues.
+ */
+export interface LeagueProfile {
+  goalsPerGame: number;
+  drawRate: number;
+  homeWinRate: number;
+  awayWinRate: number;
+}
+
+export const LEAGUE_CALIBRATION: Record<string, LeagueProfile> = {
+  // Baseline (average of top 5 leagues) - used when league unknown
+  'default': {
+    goalsPerGame: 2.75,
+    drawRate: 0.240,
+    homeWinRate: 0.462,
+    awayWinRate: 0.298,
+  },
+  
+  // Premier League - Balanced, high scoring
+  'premier_league': {
+    goalsPerGame: 2.84,
+    drawRate: 0.219,
+    homeWinRate: 0.479,
+    awayWinRate: 0.302,
+  },
+  'soccer_epl': {
+    goalsPerGame: 2.84,
+    drawRate: 0.219,
+    homeWinRate: 0.479,
+    awayWinRate: 0.302,
+  },
+  
+  // La Liga - More draws, fewer goals, tactical
+  'la_liga': {
+    goalsPerGame: 2.55,
+    drawRate: 0.253,
+    homeWinRate: 0.476,
+    awayWinRate: 0.271,
+  },
+  'soccer_spain_la_liga': {
+    goalsPerGame: 2.55,
+    drawRate: 0.253,
+    homeWinRate: 0.476,
+    awayWinRate: 0.271,
+  },
+  
+  // Bundesliga - Highest scoring, away-friendly
+  'bundesliga': {
+    goalsPerGame: 3.16,
+    drawRate: 0.222,
+    homeWinRate: 0.444,
+    awayWinRate: 0.333,
+  },
+  'soccer_germany_bundesliga': {
+    goalsPerGame: 3.16,
+    drawRate: 0.222,
+    homeWinRate: 0.444,
+    awayWinRate: 0.333,
+  },
+  
+  // Serie A - Most draws, lowest scoring, weakest home edge
+  'serie_a': {
+    goalsPerGame: 2.34,
+    drawRate: 0.288,
+    homeWinRate: 0.397,
+    awayWinRate: 0.314,
+  },
+  'soccer_italy_serie_a': {
+    goalsPerGame: 2.34,
+    drawRate: 0.288,
+    homeWinRate: 0.397,
+    awayWinRate: 0.314,
+  },
+  
+  // Ligue 1 - Strongest home advantage
+  'ligue_1': {
+    goalsPerGame: 2.85,
+    drawRate: 0.215,
+    homeWinRate: 0.514,
+    awayWinRate: 0.271,
+  },
+  'soccer_france_ligue_one': {
+    goalsPerGame: 2.85,
+    drawRate: 0.215,
+    homeWinRate: 0.514,
+    awayWinRate: 0.271,
+  },
+};
+
+/**
+ * Get league profile for calibration
+ * Handles various input formats: 'epl', 'premier_league', 'soccer_epl', etc.
+ */
+export function getLeagueProfile(league?: string): LeagueProfile {
+  if (!league) return LEAGUE_CALIBRATION['default'];
+  
+  const normalized = league.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  
+  // Alias mapping for common variations
+  const aliases: Record<string, string> = {
+    'epl': 'soccer_epl',
+    'premier_league': 'soccer_epl',
+    'england': 'soccer_epl',
+    'la_liga': 'soccer_spain_la_liga',
+    'laliga': 'soccer_spain_la_liga',
+    'spain': 'soccer_spain_la_liga',
+    'bundesliga': 'soccer_germany_bundesliga',
+    'germany': 'soccer_germany_bundesliga',
+    'serie_a': 'soccer_italy_serie_a',
+    'seriea': 'soccer_italy_serie_a',
+    'italy': 'soccer_italy_serie_a',
+    'ligue_1': 'soccer_france_ligue_one',
+    'ligue1': 'soccer_france_ligue_one',
+    'france': 'soccer_france_ligue_one',
+  };
+  
+  // Check alias first
+  if (aliases[normalized]) {
+    return LEAGUE_CALIBRATION[aliases[normalized]];
+  }
+  
+  // Try exact match
+  if (LEAGUE_CALIBRATION[normalized]) {
+    return LEAGUE_CALIBRATION[normalized];
+  }
+  
+  // Try partial matches
+  for (const key of Object.keys(LEAGUE_CALIBRATION)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return LEAGUE_CALIBRATION[key];
+    }
+  }
+  
+  return LEAGUE_CALIBRATION['default'];
+}
+
 /**
  * Calculate bookmaker margin from odds
  */
@@ -209,18 +354,38 @@ export function calculateMargin(homeOdds: number, awayOdds: number, drawOdds?: n
  * - Efficiency patterns
  * - Home advantage
  * - Injury impact
+ * - League-specific calibration (draw rates, home advantage)
  * 
  * CRITICAL: The strength edge now includes 40% form weighting.
  * We apply additional form adjustments here for extreme cases.
  */
 export function calculateModelProbability(
   signals: UniversalSignals,
-  hasDraw: boolean = true
+  hasDraw: boolean = true,
+  league?: string
 ): ModelProbability {
-  // Start with base probabilities
-  let homeBase = hasDraw ? 40 : 50;  // Base home probability
-  let awayBase = hasDraw ? 30 : 50;  // Base away probability
-  let drawBase = hasDraw ? 30 : 0;   // Base draw probability
+  // Get league-specific calibration data
+  const leagueProfile = getLeagueProfile(league);
+  const defaultProfile = LEAGUE_CALIBRATION['default'];
+  
+  // Start with LEAGUE-CALIBRATED base probabilities instead of hard-coded values
+  // This adjusts for leagues like Serie A (more draws) vs Bundesliga (fewer draws)
+  let homeBase: number;
+  let awayBase: number;
+  let drawBase: number;
+  
+  if (hasDraw) {
+    // Use real league data as baseline (converted to percentage points)
+    homeBase = leagueProfile.homeWinRate * 100;
+    awayBase = leagueProfile.awayWinRate * 100;
+    drawBase = leagueProfile.drawRate * 100;
+  } else {
+    // 2-way market (no draw)
+    const totalDecisive = leagueProfile.homeWinRate + leagueProfile.awayWinRate;
+    homeBase = (leagueProfile.homeWinRate / totalDecisive) * 100;
+    awayBase = (leagueProfile.awayWinRate / totalDecisive) * 100;
+    drawBase = 0;
+  }
   
   // 1. Apply Strength Edge (biggest factor - now includes form heavily)
   const edgeDir = signals.display?.edge?.direction || 'even';
@@ -365,15 +530,18 @@ export function detectValue(
 
 /**
  * Generate complete market intelligence
+ * 
+ * @param league - Optional league key (e.g., 'epl', 'laliga') for calibration
  */
 export function analyzeMarket(
   signals: UniversalSignals,
   odds: OddsData,
   hasDraw: boolean = true,
-  previousOdds?: OddsData
+  previousOdds?: OddsData,
+  league?: string
 ): MarketIntel {
-  // Calculate model probability
-  const modelProb = calculateModelProbability(signals, hasDraw);
+  // Calculate model probability with league-specific calibration
+  const modelProb = calculateModelProbability(signals, hasDraw, league);
   
   // Calculate implied probabilities (raw, before quality adjustment)
   const impliedHome = oddsToImpliedProb(odds.homeOdds);

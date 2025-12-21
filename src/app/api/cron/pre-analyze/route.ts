@@ -654,7 +654,9 @@ ${!hasDraw ? 'NO DRAWS in this sport. Pick a winner.' : ''}`;
       drawOdds: odds.draw,
     };
     
-    const marketIntel = analyzeMarket(signals, oddsData, hasDraw);
+    // Pass league for calibration (convert display name to key)
+    const leagueKey = league.toLowerCase().replace(/\s+/g, '_');
+    const marketIntel = analyzeMarket(signals, oddsData, hasDraw, undefined, leagueKey);
     
     // Map confidence to API format
     const mapConfidence = (conf: string | number): 'strong' | 'moderate' | 'slight' => {

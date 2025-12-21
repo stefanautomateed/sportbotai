@@ -661,10 +661,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (odds && aiAnalysis?.universalSignals) {
       try {
         const sportConfig = getSportConfig(matchInfo.sport);
+        // Pass league for calibration (convert to key format)
+        const leagueKey = matchInfo.league?.toLowerCase().replace(/\s+/g, '_') || matchInfo.sport;
         marketIntel = analyzeMarket(
           aiAnalysis.universalSignals,
           odds,
-          sportConfig.hasDraw
+          sportConfig.hasDraw,
+          undefined,
+          leagueKey
         );
         console.log(`[Match-Preview] Market intel: ${marketIntel.recommendation}, edge: ${marketIntel.valueEdge?.edgePercent || 0}%`);
       } catch (miError) {
