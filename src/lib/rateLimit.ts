@@ -26,6 +26,7 @@ export const CHAT_RATE_LIMITS = {
   FREE: { requests: 1, window: '1 d' },       // 1 per day (matches pricing)
   PRO: { requests: 50, window: '1 d' },       // 50 per day (matches pricing)
   PREMIUM: { requests: 1000, window: '1 d' }, // Effectively unlimited (1000/day)
+  ADMIN: { requests: 1000, window: '1 d' },   // Unlimited for admins
   ANONYMOUS: { requests: 1, window: '1 d' },  // 1 per day (not logged in)
 } as const;
 
@@ -55,6 +56,15 @@ export const chatRateLimiters = {
         limiter: Ratelimit.slidingWindow(CHAT_RATE_LIMITS.PREMIUM.requests, CHAT_RATE_LIMITS.PREMIUM.window),
         analytics: true,
         prefix: 'ratelimit:chat:premium',
+      })
+    : null,
+    
+  ADMIN: redis
+    ? new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(CHAT_RATE_LIMITS.ADMIN.requests, CHAT_RATE_LIMITS.ADMIN.window),
+        analytics: true,
+        prefix: 'ratelimit:chat:admin',
       })
     : null,
     
