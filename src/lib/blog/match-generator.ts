@@ -364,6 +364,70 @@ const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || 'sportbot-interna
 
 async function fetchMatchAnalysis(match: MatchInfo): Promise<MatchAnalysisData | null> {
   try {
+    // First, check if we have a cached prediction from pre-analyze
+    const existingPrediction = await prisma.prediction.findFirst({
+      where: {
+        matchId: match.matchId,
+        outcome: 'PENDING',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existingPrediction) {
+      console.log(`[Match Analysis] Using cached prediction for ${match.homeTeam} vs ${match.awayTeam}`);
+      
+      // Parse prediction to determine probabilities
+      const isHomeWin = existingPrediction.prediction.includes('Home Win');
+      const isAwayWin = existingPrediction.prediction.includes('Away Win');
+      const isDraw = existingPrediction.prediction.includes('Draw');
+      
+      // Calculate estimated probabilities based on conviction
+      const baseProb = 33.33;
+      const convictionBoost = existingPrediction.conviction * 3; // 1-5 conviction = 3-15% boost
+      
+      let homeProb = baseProb;
+      let drawProb = baseProb;
+      let awayProb = baseProb;
+      
+      if (isHomeWin) {
+        homeProb = Math.min(75, baseProb + convictionBoost);
+        drawProb = (100 - homeProb) * 0.35;
+        awayProb = 100 - homeProb - drawProb;
+      } else if (isAwayWin) {
+        awayProb = Math.min(75, baseProb + convictionBoost);
+        drawProb = (100 - awayProb) * 0.35;
+        homeProb = 100 - awayProb - drawProb;
+      } else if (isDraw) {
+        drawProb = Math.min(45, baseProb + convictionBoost);
+        homeProb = (100 - drawProb) / 2;
+        awayProb = (100 - drawProb) / 2;
+      }
+      
+      return {
+        probabilities: {
+          homeWin: homeProb,
+          draw: drawProb,
+          awayWin: awayProb,
+        },
+        recommendation: existingPrediction.prediction,
+        confidenceLevel: existingPrediction.conviction >= 4 ? 'HIGH' : existingPrediction.conviction >= 3 ? 'MEDIUM' : 'LOW',
+        keyFactors: [existingPrediction.reasoning],
+        riskLevel: existingPrediction.conviction <= 2 ? 'HIGH' : existingPrediction.conviction <= 3 ? 'MEDIUM' : 'LOW',
+        valueAssessment: existingPrediction.odds 
+          ? `Odds of ${existingPrediction.odds.toFixed(2)} offer potential value based on our analysis.`
+          : 'Value assessment pending odds data.',
+        homeForm: { wins: 0, draws: 0, losses: 0, trend: 'stable' as const },
+        awayForm: { wins: 0, draws: 0, losses: 0, trend: 'stable' as const },
+        headToHead: { homeWins: 0, draws: 0, awayWins: 0, summary: 'No historical data available' },
+        injuries: { home: [], away: [] },
+        narrative: existingPrediction.reasoning,
+        marketInsights: existingPrediction.odds 
+          ? [`Current odds: ${existingPrediction.odds.toFixed(2)}`, `Implied probability: ${(existingPrediction.impliedProb || 0).toFixed(1)}%`]
+          : [],
+      };
+    }
+
+    // No cached prediction - fall back to API call
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.sportbotai.com');
     

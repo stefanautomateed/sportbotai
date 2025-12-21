@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { theOddsClient, OddsApiEvent } from '@/lib/theOdds';
+import { generateMatchPreview } from '@/lib/blog/match-generator';
 import { cacheSet, CACHE_TTL, CACHE_KEYS } from '@/lib/cache';
 import { analyzeMarket, type MarketIntel, type OddsData, oddsToImpliedProb } from '@/lib/value-detection';
 import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
@@ -1130,6 +1131,23 @@ export async function GET(request: NextRequest) {
               
               stats.predictionsCreated++;
               console.log(`[Pre-Analyze] Prediction: ${matchRef} → ${predictionText} (edge: ${edge.toFixed(1)}%, conv: ${conviction})`);
+              
+              // Generate blog post for this match (async, don't await to not slow down cron)
+              generateMatchPreview({
+                matchId: event.id,
+                homeTeam: event.home_team,
+                awayTeam: event.away_team,
+                sport: sport.title,
+                sportKey: sport.key,
+                league: sport.league,
+                commenceTime: event.commence_time,
+              }).then(result => {
+                if (result.success) {
+                  console.log(`[Pre-Analyze] Blog created: ${result.slug}`);
+                }
+              }).catch(err => {
+                console.log(`[Pre-Analyze] Blog skipped: ${err.message}`);
+              });
             } else {
               console.log(`[Pre-Analyze] Skipped: ${matchRef} (edge: ${edge.toFixed(1)}% < ${minEdgeThreshold}% for ${sport.league})`);
             }
