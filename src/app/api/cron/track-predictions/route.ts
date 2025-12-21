@@ -462,11 +462,23 @@ export async function GET(request: NextRequest) {
       if (prediction) {
         try {
           const matchName = post.matchRef || `${post.homeTeam} vs ${post.awayTeam}`;
+          
+          // Detect sport from league name
+          const leagueLower = (post.league || '').toLowerCase();
+          let sport = 'soccer';
+          if (leagueLower.includes('nba') || leagueLower.includes('basketball')) {
+            sport = 'basketball_nba';
+          } else if (leagueLower.includes('nfl') || leagueLower.includes('football')) {
+            sport = 'americanfootball_nfl';
+          } else if (leagueLower.includes('nhl') || leagueLower.includes('hockey')) {
+            sport = 'icehockey_nhl';
+          }
+          
           const newPrediction = await prisma.prediction.create({
             data: {
               matchId: matchName.replace(/\s+/g, '_').toLowerCase(),
               matchName,
-              sport: 'soccer', // Default, can be improved
+              sport,
               league: post.league || 'Unknown',
               kickoff: new Date(), // Will be updated when we get actual match time
               type: 'MATCH_RESULT',
@@ -479,7 +491,7 @@ export async function GET(request: NextRequest) {
           });
           
           results.newPredictions++;
-          console.log(`[Track-Predictions] Created prediction for ${post.matchRef}`);
+          console.log(`[Track-Predictions] Created prediction for ${post.matchRef} (${sport})`);
         } catch (error) {
           console.error(`[Track-Predictions] Error creating prediction:`, error);
           results.errors.push(`Failed to create prediction for ${post.matchRef}: ${error instanceof Error ? error.message : 'Unknown'}`);

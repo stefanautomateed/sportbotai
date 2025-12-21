@@ -1095,7 +1095,9 @@ export async function GET(request: NextRequest) {
             if (!hasMinimumFormData) {
               console.log(`[Pre-Analyze] Skipped: ${matchRef} (insufficient form data: ${homeFormLength}/${awayFormLength})`);
             } else if (edge > minEdgeThreshold) {
-              const predictionId = `pre_${sport.key}_${event.id}_${Date.now()}`;
+              // Use deterministic ID to prevent duplicates (based on event + date, not timestamp)
+              const matchDateStr = matchDate.toISOString().split('T')[0];
+              const predictionId = `pre_${sport.key}_${event.id}_${matchDateStr}`;
               
               // Store prediction as "Home Win", "Away Win", or "Draw" for validation compatibility
               const predictionText = predictedOutcome === 'home' ? `Home Win - ${event.home_team}` :
