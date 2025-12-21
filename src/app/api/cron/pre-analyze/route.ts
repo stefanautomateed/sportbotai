@@ -578,15 +578,27 @@ async function runQuickAnalysis(
       enrichedData.h2hSummary || enrichedData.h2h
     );
     
+    // Determine edge direction for AI alignment
+    const edgeDirection = signals.display?.edge?.direction || 'even';
+    const edgeTeam = edgeDirection === 'home' ? homeTeam : edgeDirection === 'away' ? awayTeam : 'Neither';
+    const edgePercentage = signals.display?.edge?.percentage || 0;
+    
     // Build AIXBT-style prompt - sharp, opinionated, data-backed
-    const prompt = `${homeTeam} vs ${awayTeam} | ${league}
+    const prompt = `${homeTeam} (HOME) vs ${awayTeam} (AWAY) | ${league}
+
+⚠️ VENUE: ${homeTeam} is playing at HOME. ${awayTeam} is the AWAY team traveling.
 
 MARKET: ${odds.home} / ${odds.away}${odds.draw ? ` / ${odds.draw}` : ''}
 FORM: ${homeTeam} ${homeFormStr} | ${awayTeam} ${awayFormStr}${splitsContext ? `\nSPLITS: ${splitsContext}` : ''}${h2hContext ? `\n${h2hContext}` : ''}
 SIGNALS: ${signalsSummary}
+COMPUTED EDGE: ${edgeTeam} ${edgePercentage > 0 ? `+${edgePercentage}%` : '(even)'}
 ${injuryContext}${restContext ? `\nREST FACTOR: ${restContext}` : ''}${refereeContext ? `\n${refereeContext}` : ''}
 ${leagueHint ? `\n${leagueHint}\n` : ''}
 Be AIXBT. Sharp takes. Back them with numbers FROM THE DATA ABOVE ONLY.
+
+IMPORTANT: Your analysis MUST align with the COMPUTED EDGE above.
+- If COMPUTED EDGE shows "${homeTeam}" → your snapshot should favor ${homeTeam}
+- If COMPUTED EDGE shows "${awayTeam}" → your snapshot should favor ${awayTeam}
 
 JSON output:
 {
@@ -594,17 +606,18 @@ JSON output:
   "favored": ${favoredOptions},
   "confidence": "high" | "medium" | "low",
   "snapshot": [
-    "THE EDGE: [team] because [stat]. Not close.",
-    "MARKET MISS: [what odds undervalue]. The data screams [X].",
+    "THE EDGE: [use team NAME not home/away] because [stat]. Not close.",
+    "MARKET MISS: [what odds undervalue - remember ${homeTeam} is HOME, ${awayTeam} is AWAY]. The data screams [X].",
     "THE PATTERN: [H2H/streak with numbers]. This isn't random.",
     "THE RISK: [caveat based on form/market data${injuryInfo ? '/injuries' : ''}${restContext ? '/fatigue' : ''}]. Don't ignore this."
   ],
-  "gameFlow": "Sharp take on how this plays out. Cite the numbers.",
+  "gameFlow": "Sharp take on how this plays out. Cite the numbers. Remember: ${homeTeam} is at HOME.",
   "riskFactors": ["Risk based on form/market/H2H${injuryInfo ? '/injury' : ''}${restContext ? '/rest' : ''} data only", "Secondary if relevant"]
 }
 
 CRITICAL RULES:
 - ONLY use data provided above. Do NOT invent injuries, suspensions, or lineup info not shown above.
+- ${homeTeam} is HOME, ${awayTeam} is AWAY. NEVER say "${awayTeam} has home advantage".
 - riskFactors must be based on form patterns, market odds, H2H${injuryInfo ? ', or listed injuries' : ''} - NOT made-up info.
 ${injuryInfo ? '- FACTOR IN INJURIES: The listed injuries are real and current. Use them in your analysis.' : '- If you don\'t have injury data, don\'t mention injuries.'}
 - AVOID HOME BIAS: Modern football home advantage is only ~5%. Don't favor home teams without strong statistical evidence.
@@ -612,8 +625,8 @@ ${injuryInfo ? '- FACTOR IN INJURIES: The listed injuries are real and current. 
 - BE CONTRARIAN: Your accuracy is better on away picks. Look harder for away value.
 
 SNAPSHOT VIBE:
-- First bullet: State your pick. Be confident. Give the stat.
-- Second bullet: What's the market sleeping on? Find the gap.
+- First bullet: State your pick (should align with COMPUTED EDGE: ${edgeTeam}). Give the stat.
+- Second bullet: What's the market sleeping on? If home edge, talk about ${homeTeam}'s home form. If away edge, talk about ${awayTeam}'s away form.
 - Third bullet: Pattern recognition. H2H, streaks, momentum.
 - Fourth bullet: What could wreck this thesis? Use form/momentum risks, not imagined injuries.
 

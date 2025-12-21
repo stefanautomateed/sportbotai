@@ -1401,14 +1401,34 @@ ALWAYS:
 - Lead with the strongest statistical edge
 - Be the analyst who spots what others miss
 - Short, punchy observations - no walls of text
-- If confidence is low, state WHY clearly`;
+- If confidence is low, state WHY clearly
 
-  const userPrompt = `${data.homeTeam} vs ${data.awayTeam} | ${data.league}
+CRITICAL - HOME/AWAY RULES:
+- The FIRST team listed is ALWAYS the HOME team playing AT HOME
+- The SECOND team listed is ALWAYS the AWAY team playing ON THE ROAD
+- When signals show "Home +X%" → that refers to the FIRST team listed
+- When signals show "Away +X%" → that refers to the SECOND team listed
+- NEVER say an away team has "home advantage" - they are playing AWAY`;
 
-SIGNALS: ${getSignalSummary(universalSignals)}
+  // Determine which team has the computed edge for AI alignment
+  const edgeDirection = universalSignals.display?.edge?.direction || 'even';
+  const edgeTeam = edgeDirection === 'home' ? data.homeTeam : edgeDirection === 'away' ? data.awayTeam : 'Neither';
+  const edgePercentage = universalSignals.display?.edge?.percentage || 0;
+
+  const userPrompt = `${data.homeTeam} (HOME) vs ${data.awayTeam} (AWAY) | ${data.league}
+
+⚠️ VENUE: ${data.homeTeam} is playing at HOME. ${data.awayTeam} is the AWAY team traveling.
+
+COMPUTED SIGNALS: ${getSignalSummary(universalSignals)}
+COMPUTED EDGE: ${edgeTeam} ${edgePercentage > 0 ? `+${edgePercentage}%` : '(even)'}
 CLARITY: ${universalSignals.clarity_score}% | CONFIDENCE: ${universalSignals.confidence.toUpperCase()}
 
 Be AIXBT. Sharp takes. Back them with numbers. Find the edge.
+
+IMPORTANT: Your analysis MUST align with the computed signals above.
+- If COMPUTED EDGE shows "${data.homeTeam}" → your snapshot should favor ${data.homeTeam} (unless you have strong contrarian data)
+- If COMPUTED EDGE shows "${data.awayTeam}" → your snapshot should favor ${data.awayTeam}
+- If edge is "even" or small (<3%) → acknowledge uncertainty
 
 JSON:
 {
@@ -1416,24 +1436,25 @@ JSON:
     "favored": ${favoredOptions},
     "confidence": "${universalSignals.confidence}",
     "snapshot": [
-      "THE EDGE: [team] because [stat]. Not close.",
-      "MARKET MISS: [what odds undervalue]. The data screams [X].",
+      "THE EDGE: [team name] because [stat]. Not close.",
+      "MARKET MISS: [what odds undervalue - use correct home/away context]. The data screams [X].",
       "THE PATTERN: [H2H/streak]. This isn't random.",
       "THE RISK: [caveat]. Don't ignore this."
     ],
-    "gameFlow": "Sharp take on how this unfolds. Cite the numbers.",
+    "gameFlow": "Sharp take on how this unfolds. Cite the numbers. Remember: ${data.homeTeam} is at HOME.",
     "riskFactors": ["Primary risk", "Secondary if relevant"]
   },
   "headline": "One punchy line with a stat. Make it quotable."
 }
 
 SNAPSHOT VIBE:
-- First bullet: State your pick. Be confident. Give the stat that matters.
-- Second bullet: What's the market sleeping on? Find the gap.
+- First bullet: State your pick (should align with COMPUTED EDGE: ${edgeTeam}). Give the stat that matters.
+- Second bullet: What's the market sleeping on? If home edge, talk about ${data.homeTeam}'s home form. If away edge, talk about ${data.awayTeam}'s away form.
 - Third bullet: Pattern recognition. H2H, streaks, momentum. Numbers.
 - Fourth bullet: What could wreck this thesis? Be honest.
 
 NO GENERIC TAKES. "Clinical finishing" = banned. "Capitalize on weaknesses" = banned.
+NEVER say "${data.awayTeam} has home advantage" - they are AWAY.
 If you can't find an edge, say "No clear edge here."
 ${!sportConfig.hasDraw ? 'NO DRAWS in this sport. Pick a winner.' : 'Draw is valid if form + H2H support it.'}`;
 
