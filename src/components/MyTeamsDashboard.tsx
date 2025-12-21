@@ -18,6 +18,7 @@ import { useSession } from 'next-auth/react'
 import { useFavorites } from '@/lib/FavoritesContext'
 import Link from 'next/link'
 import Image from 'next/image'
+import TeamLogo from '@/components/ui/TeamLogo'
 
 interface UpcomingMatch {
   id: string
@@ -56,27 +57,67 @@ export default function MyTeamsDashboard() {
           }
         }
         
+        // Also check sport field if sportKey is missing
+        for (const f of favorites) {
+          if (f.sport && !seen.has(f.sport)) {
+            seen.add(f.sport)
+            sportKeys.push(f.sport)
+          }
+        }
+
+        console.log('[MyTeams] Fetching events for sports:', sportKeys)
+        console.log('[MyTeams] Favorites:', favorites.map(f => ({ name: f.teamName, sport: f.sport, sportKey: f.sportKey })))
+        
         // Fetch events for each sport
         const matchPromises = sportKeys.map(async (sportKey) => {
           const response = await fetch(`/api/events/${sportKey}`)
-          if (!response.ok) return []
+          if (!response.ok) {
+            console.log(`[MyTeams] Failed to fetch ${sportKey}:`, response.status)
+            return []
+          }
           const data = await response.json()
-          return (data.events || []).map((event: UpcomingMatch) => ({
-            ...event,
+          console.log(`[MyTeams] Got ${data.events?.length || 0} events for ${sportKey}`)
+          
+          // Map API response (home_team/away_team) to our format (homeTeam/awayTeam)
+          return (data.events || []).map((event: {
+            id: string;
+            home_team: string;
+            away_team: string;
+            commence_time: string;
+            sport_title?: string;
+          }) => ({
+            id: event.id,
+            homeTeam: event.home_team,
+            awayTeam: event.away_team,
+            commenceTime: event.commence_time,
             sport: sportKey,
-            sportTitle: data.sportTitle
+            sportTitle: event.sport_title || data.sportTitle
           }))
         })
 
         const allMatches = (await Promise.all(matchPromises)).flat()
+        console.log('[MyTeams] Total matches fetched:', allMatches.length)
 
         // Filter to only include matches with favorited teams
-        const teamSlugs = favorites.map(f => f.teamSlug)
+        // Use normalized name matching for better results
+        const favoriteNames = favorites.map(f => normalizeName(f.teamName))
+        
         const relevantMatches = allMatches.filter(match => {
-          const homeSlug = generateSlug(match.homeTeam)
-          const awaySlug = generateSlug(match.awayTeam)
-          return teamSlugs.includes(homeSlug) || teamSlugs.includes(awaySlug)
+          const homeNorm = normalizeName(match.homeTeam)
+          const awayNorm = normalizeName(match.awayTeam)
+          
+          // Check if any favorite team matches
+          const isMatch = favoriteNames.some(favName => 
+            homeNorm.includes(favName) || 
+            favName.includes(homeNorm) ||
+            awayNorm.includes(favName) || 
+            favName.includes(awayNorm)
+          )
+          
+          return isMatch
         })
+
+        console.log('[MyTeams] Relevant matches:', relevantMatches.length, relevantMatches.map(m => `${m.homeTeam} vs ${m.awayTeam}`))
 
         // Sort by date
         relevantMatches.sort((a, b) => 
@@ -320,8 +361,10 @@ export default function MyTeamsDashboard() {
                         href={`/match/${match.id}?sport=${match.sport}`}
                         className="flex items-center gap-4 px-5 py-4 hover:bg-bg-hover transition-colors group"
                       >
-                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <span className="text-lg">⚽</span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <TeamLogo teamName={match.homeTeam} sport={match.sport} size="md" className="rounded-lg" />
+                          <span className="text-text-muted text-xs font-medium">vs</span>
+                          <TeamLogo teamName={match.awayTeam} sport={match.sport} size="md" className="rounded-lg" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-text-primary truncate group-hover:text-primary transition-colors">
@@ -421,6 +464,14 @@ function generateSlug(teamName: string): string {
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
+}
+
+function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
 }
 
 function formatMatchDate(dateStr: string): string {
