@@ -116,8 +116,8 @@ export async function generateBlogPost(config: BlogGenerationConfig): Promise<Bl
         imageIndex++;
       }
       
-      // Limit to 3 inline images to control costs
-      if (imageIndex >= 3) break;
+      // Limit to 4 inline images to control costs
+      if (imageIndex >= 4) break;
     }
 
     // Step 8: Save to database

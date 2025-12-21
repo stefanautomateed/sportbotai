@@ -130,9 +130,14 @@ CRITICAL WRITING GUIDELINES:
 
 3. HTML FORMATTING:
    - Use: <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>, <blockquote>
-   - Add <figure> with <img> placeholders for 2-3 inline images: 
-     <figure><img src="[IMAGE:description of what image should show]" alt="descriptive alt text" /><figcaption>Caption here</figcaption></figure>
-   - One image after intro, one mid-article, one before conclusion
+   - **MANDATORY: Include EXACTLY 4 inline images** using this format:
+     <figure><img src="[IMAGE:descriptive prompt for image generation]" alt="descriptive alt text" /><figcaption>Caption here</figcaption></figure>
+   - Image 1: After the introduction paragraph
+   - Image 2: After the second major section
+   - Image 3: Mid-article, breaking up a long section
+   - Image 4: Before the conclusion
+   - Each image description should be specific (e.g., "[IMAGE:Premier League stadium with fans celebrating a goal]")
+   - DO NOT skip images - all 4 are required for visual engagement
 
 4. INTERNAL LINKING:
    - Add 3-5 internal links using ONLY the existing blog URLs provided above
