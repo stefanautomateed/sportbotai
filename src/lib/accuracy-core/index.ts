@@ -11,6 +11,34 @@
  * 5. Prediction Logging
  * 
  * The output is a clean PipelineOutput that the LLM receives READ-ONLY.
+ * 
+ * ============================================
+ * LAYER SEPARATION RULES (READ THIS FIRST)
+ * ============================================
+ * 
+ * Data-0 (Infrastructure): Logging, metrics, backtesting
+ *   → prediction-logging.ts
+ * 
+ * Data-1 (Normalization): ONLY converts, cleans, normalizes, standardizes raw inputs
+ *   → market-probabilities.ts (vig removal, implied probs, raw volatility stats, raw quality flags)
+ *   → NO modeling, NO edge calculation, NO interpretation allowed here
+ * 
+ * Data-2 (Modeling): Consumes ONLY normalized Data-1 outputs
+ *   → prediction-models.ts (Poisson, Elo)
+ *   → calibration.ts (Platt scaling, isotonic regression)
+ * 
+ * Data-2.5 (Validation/Gating): Interprets model outputs into quality levels
+ *   → edge-quality.ts (interprets raw flags → HIGH/MEDIUM/LOW)
+ * 
+ * Data-3 (LLM): Receives READ-ONLY outputs, generates narrative ONLY
+ *   → llm-integration.ts
+ * 
+ * KEY RULE: "Anything that converts, cleans, normalizes, or standardizes 
+ * raw inputs belongs strictly to Data-1. No modeling, no edge, no 
+ * interpretation is allowed in that layer."
+ * 
+ * This separation is why AIXBT-style systems feel "real".
+ * ============================================
  */
 
 import {
