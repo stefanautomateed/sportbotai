@@ -117,26 +117,29 @@ export default function AccountDashboard({ user }: Props) {
     <div className="min-h-screen bg-bg">
       {/* Header */}
       <section className="bg-bg-card border-b border-divider">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center gap-4">
-            {user.image ? (
-              <Image
-                src={user.image}
-                alt={user.name || 'User'}
-                width={64}
-                height={64}
-                className="w-16 h-16 rounded-full border-2 border-divider"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <span className="text-xl font-bold text-bg">{userInitials}</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {/* Mobile: Stack vertically, Desktop: Horizontal */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              {user.image ? (
+                <Image
+                  src={user.image}
+                  alt={user.name || 'User'}
+                  width={64}
+                  height={64}
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-divider flex-shrink-0"
+                />
+              ) : (
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg sm:text-xl font-bold text-bg">{userInitials}</span>
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{user.name || 'User'}</h1>
+                <p className="text-text-secondary text-sm sm:text-base truncate">{user.email}</p>
               </div>
-            )}
-            <div>
-              <h1 className="text-2xl font-bold text-white">{user.name || 'User'}</h1>
-              <p className="text-text-secondary">{user.email}</p>
             </div>
-            <div className="ml-auto">
+            <div className="sm:ml-auto sm:flex-shrink-0">
               <ProBadge variant="default" showUpgrade={user.plan === 'FREE'} />
             </div>
           </div>
@@ -144,8 +147,8 @@ export default function AccountDashboard({ user }: Props) {
       </section>
 
       {/* Main Content */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           
           {/* Usage Card */}
           <div className="bg-bg-card rounded-xl border border-divider p-6">
@@ -257,7 +260,7 @@ export default function AccountDashboard({ user }: Props) {
         </div>
 
         {/* Quick Links */}
-        <div className="mt-8 space-y-3">
+        <div className="mt-6 sm:mt-8 space-y-3">
           <Link 
             href="/history"
             className="flex items-center justify-between p-4 bg-bg-card rounded-xl border border-divider hover:border-primary/30 transition-colors group"
@@ -300,10 +303,10 @@ export default function AccountDashboard({ user }: Props) {
         </div>
 
         {/* Feedback Section */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Help Us Improve</h2>
+        <div className="mt-6 sm:mt-8">
+          <h2 className="text-lg font-semibold text-white mb-3 sm:mb-4">Help Us Improve</h2>
           
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
             {/* Suggest a Feature */}
             <button
               onClick={() => setFeedbackModal({ isOpen: true, type: 'feature' })}
@@ -345,8 +348,8 @@ export default function AccountDashboard({ user }: Props) {
         </div>
 
         {/* Account Settings */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Account Settings</h2>
+        <div className="mt-6 sm:mt-8">
+          <h2 className="text-lg font-semibold text-white mb-3 sm:mb-4">Account Settings</h2>
           
           <div className="bg-bg-card rounded-xl border border-divider divide-y divide-divider">
             {/* Member Since */}
@@ -366,14 +369,14 @@ export default function AccountDashboard({ user }: Props) {
             </div>
 
             {/* Email */}
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-4 p-4">
+              <div className="flex items-center gap-3 flex-shrink-0">
                 <svg className="w-5 h-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 <span className="text-text-secondary">Email</span>
               </div>
-              <span className="text-white">{user.email}</span>
+              <span className="text-white text-sm sm:text-base truncate">{user.email}</span>
             </div>
 
             {/* Sign Out */}
@@ -392,11 +395,11 @@ export default function AccountDashboard({ user }: Props) {
         </div>
 
         {/* Danger Zone */}
-        <div className="mt-8">
+        <div className="mt-6 sm:mt-8">
           <h2 className="text-lg font-semibold text-white mb-4">Danger Zone</h2>
           
-          <div className="bg-bg-card rounded-xl border border-danger/30 p-6">
-            <div className="flex items-start justify-between">
+          <div className="bg-bg-card rounded-xl border border-danger/30 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
                 <h3 className="text-white font-medium">Delete Account</h3>
                 <p className="text-text-muted text-sm mt-1">
@@ -405,7 +408,7 @@ export default function AccountDashboard({ user }: Props) {
               </div>
               <Link
                 href="/account/delete"
-                className="px-4 py-2 text-sm font-medium text-danger border border-danger/30 rounded-lg hover:bg-danger/10 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-danger border border-danger/30 rounded-lg hover:bg-danger/10 transition-colors text-center sm:text-left flex-shrink-0"
               >
                 Delete Account
               </Link>
