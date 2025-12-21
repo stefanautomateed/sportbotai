@@ -775,6 +775,47 @@ ${internalLinksInfo}
   </div>
 </div>
 
+6. CTA BOX - INLINE (use after Form Analysis section):
+<div style="background: linear-gradient(135deg, #10b981/20 0%, #0ea5e9/20 100%); border: 1px solid #10b981/50; border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center;">
+  <p style="color: #10b981; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">🤖 Want Real-Time AI Analysis?</p>
+  <p style="color: #94a3b8; font-size: 14px; margin: 0 0 16px 0;">Get live probability updates, injury alerts, and deeper insights with SportBot AI</p>
+  <a href="/match/${match.matchId}" style="display: inline-block; background: #10b981; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">View Live Analysis →</a>
+</div>
+
+7. CTA BOX - AFTER H2H SECTION:
+<div style="background: #1e293b; border-radius: 12px; padding: 20px; margin: 24px 0; border-left: 4px solid #0ea5e9;">
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+    <span style="font-size: 24px;">📊</span>
+    <p style="color: #fff; font-size: 16px; font-weight: 600; margin: 0;">Unlock Advanced Stats</p>
+  </div>
+  <p style="color: #94a3b8; font-size: 14px; margin: 0 0 16px 0;">Our AI analyzes 50+ data points including xG, defensive pressure, set-piece efficiency, and more.</p>
+  <a href="/match/${match.matchId}" style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Explore full analysis →</a>
+</div>
+
+8. CTA BOX - AFTER TACTICAL ANALYSIS:
+<div style="background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; padding: 24px; margin: 24px 0; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+  <div style="flex: 1; min-width: 200px;">
+    <p style="color: #fff; font-size: 18px; font-weight: 600; margin: 0 0 8px 0;">🎯 Get Match-Specific Insights</p>
+    <p style="color: #94a3b8; font-size: 14px; margin: 0;">Ask our AI any question about this match - lineups, injuries, or tactical matchups.</p>
+  </div>
+  <a href="/" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%); color: #fff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; white-space: nowrap;">Try SportBot AI Free →</a>
+</div>
+
+9. CTA BOX - MINI (sprinkle 1-2 throughout):
+<p style="background: #10b981/10; border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 14px; color: #94a3b8;">
+  💡 <strong style="color: #10b981;">Pro tip:</strong> <a href="/match/${match.matchId}" style="color: #10b981; text-decoration: none;">View our live analysis</a> for real-time probability updates as the match approaches.
+</p>
+
+10. CTA BOX - END OF ARTICLE:
+<div style="background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%); border-radius: 16px; padding: 32px; margin: 32px 0; text-align: center;">
+  <h3 style="color: #fff; font-size: 24px; font-weight: bold; margin: 0 0 12px 0;">Ready for Deeper Analysis?</h3>
+  <p style="color: #fff/90; font-size: 16px; margin: 0 0 20px 0; max-width: 500px; margin-left: auto; margin-right: auto;">Join thousands of sports fans using AI-powered insights to understand matches better.</p>
+  <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+    <a href="/match/${match.matchId}" style="display: inline-block; background: #fff; color: #10b981; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">Analyze This Match</a>
+    <a href="/pricing" style="display: inline-block; background: transparent; color: #fff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; border: 2px solid #fff;">View Plans</a>
+  </div>
+</div>
+
 === END HTML ELEMENTS ===
 
 REQUIREMENTS:
@@ -782,15 +823,16 @@ REQUIREMENTS:
 2. Engaging intro paragraph with match context, include primary keyword
 3. Sections to include (use H2 headings):
    - Match Overview (use the MATCH INFO BOX above after intro paragraph)
-   - ${match.homeTeam} Form Analysis 
+   - ${match.homeTeam} Form Analysis (add CTA BOX #6 after this section)
    - ${match.awayTeam} Form Analysis
    - Form Comparison (use FORM COMPARISON TABLE)
-   - Head-to-Head Record (use HEAD-TO-HEAD BOX)
+   - Head-to-Head Record (use HEAD-TO-HEAD BOX, add CTA BOX #7 after)
    - Key Players to Watch (use KEY PLAYERS BOXES)
-   - Tactical Analysis
+   - Tactical Analysis (add CTA BOX #8 after this section)
    - SportBot AI Prediction (use PREDICTION BOX with actual percentages)
    - Value Assessment
    - Responsible Gambling Notice (MANDATORY)
+   - (add CTA BOX #10 at the very end)
 4. Target 1800-2200 words for better SEO
 5. Use HTML formatting (h2, h3, p, ul, li, strong, em) PLUS the styled boxes above
 6. Include 2-3 internal links to related blog posts naturally within content
@@ -800,6 +842,12 @@ REQUIREMENTS:
    - BAD: "<a href="/blog/some-slug">Liverpool vs Manchester United Match Preview and Prediction 2025</a>"
    - GOOD: "<a href="/blog/some-slug">Liverpool preview</a>" or "<a href="/blog/some-slug">our analysis</a>"
 7. Replace all [PLACEHOLDER] values with actual data from the analysis
+8. MANDATORY: Include AT LEAST 4 CTA BOXES throughout the article:
+   - CTA BOX #6: After Form Analysis section
+   - CTA BOX #7: After Head-to-Head section
+   - CTA BOX #8: After Tactical Analysis section  
+   - CTA BOX #9: Sprinkle 1-2 mini CTAs within paragraphs
+   - CTA BOX #10: As the final element before the article ends
 
 CRITICAL RULES:
 - This is EDUCATIONAL ANALYSIS, not betting tips
@@ -809,6 +857,8 @@ CRITICAL RULES:
 - Include responsible gambling disclaimer with link to /responsible-gambling
 - Naturally weave in the SEO keywords without keyword stuffing
 - MUST use the styled HTML boxes provided above for visual appeal
+- MUST include ALL CTA BOXES as specified - these are essential for user conversion
+- CTAs should feel natural, not spammy - they offer genuine value (deeper analysis)
 
 Return JSON:
 {
