@@ -2,6 +2,7 @@
 // Called by Vercel Cron or external scheduler
 
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { generateBatch, seedKeywords, getNextKeyword } from '@/lib/blog';
 import { prisma } from '@/lib/prisma';
 
@@ -92,6 +93,12 @@ export async function GET(request: NextRequest) {
       console.error('[Blog Cron] Failures:', failed.map(f => f.error));
     }
 
+    // Revalidate blog pages so new posts appear immediately
+    if (successful > 0) {
+      revalidatePath('/blog');
+      console.log('[Blog Cron] Revalidated /blog cache');
+    }
+
     return NextResponse.json({
       success: true,
       generated: successful,
@@ -131,6 +138,13 @@ export async function POST(request: NextRequest) {
     const count = Math.min(body.count || 1, 5); // Max 5 at a time
 
     const results = await generateBatch(count);
+
+    // Revalidate blog pages so new posts appear immediately
+    const successful = results.filter(r => r.success).length;
+    if (successful > 0) {
+      revalidatePath('/blog');
+      console.log('[Blog Generate] Revalidated /blog cache');
+    }
 
     return NextResponse.json({
       success: true,

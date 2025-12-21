@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 60; // Revalidate every minute (also triggered on-demand after new posts)
 
 interface BlogPageProps {
   searchParams: Promise<{

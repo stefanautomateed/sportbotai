@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/auth';
 import { 
   generateMatchPreview, 
@@ -50,6 +51,12 @@ export async function GET(request: NextRequest) {
     console.log(`[Match Preview API] Generating previews for sportKey: ${sportKey || 'default'}, limit: ${limit}`);
 
     const result = await generatePreviewsForUpcomingMatches(sportKey, Math.min(limit, 10));
+
+    // Revalidate blog pages so new posts appear immediately
+    if (result.generated > 0) {
+      revalidatePath('/blog');
+      console.log('[Match Preview API] Revalidated /blog cache');
+    }
 
     return NextResponse.json({
       success: true,
@@ -116,6 +123,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (result.success) {
+      // Revalidate blog pages so new posts appear immediately
+      revalidatePath('/blog');
+      revalidatePath(`/blog/${result.slug}`);
+      console.log('[Match Preview API] Revalidated /blog cache');
+
       return NextResponse.json({
         success: true,
         postId: result.postId,
