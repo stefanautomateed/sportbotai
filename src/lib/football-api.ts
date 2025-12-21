@@ -313,10 +313,6 @@ const TEAM_NAME_MAPPINGS: Record<string, { id?: number; leagueId?: number; searc
   'Cardiff City': { id: 56, leagueId: 40 },
   'Oxford United': { id: 57, leagueId: 40 },
   'Portsmouth': { id: 73, leagueId: 40 },
-  'Sunderland': { id: 74, leagueId: 40 },
-  'Leeds United': { id: 63, leagueId: 40 },
-  'Sheffield United': { id: 49, leagueId: 40 },
-  'Luton Town': { id: 1359, leagueId: 40 },
 
   // ============================================
   // CHAMPIONS LEAGUE / EUROPA LEAGUE CLUBS
