@@ -565,9 +565,9 @@ let providerInstance: APISportsProvider | null = null;
 
 export function getAPISportsProvider(): APISportsProvider {
   if (!providerInstance) {
-    providerInstance = new APISportsProvider({
-      apiKey: process.env.API_FOOTBALL_KEY || '',
-    });
+    const apiKey = process.env.API_FOOTBALL_KEY || '';
+    console.log(`[API-Sports] Initializing provider, API key configured: ${!!apiKey} (length: ${apiKey.length})`);
+    providerInstance = new APISportsProvider({ apiKey });
   }
   return providerInstance;
 }

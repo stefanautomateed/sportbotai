@@ -63,10 +63,12 @@ export class SoccerAdapter extends BaseSportAdapter {
       ...config,
       apiKey: config.apiKey || process.env.API_FOOTBALL_KEY,
     });
+    console.log(`[Soccer] Adapter initialized, API available: ${this.isAvailable()}`);
   }
   
   isAvailable(): boolean {
-    return this.apiProvider.isConfigured();
+    const available = this.apiProvider.isConfigured();
+    return available;
   }
   
   /**
