@@ -61,6 +61,7 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
   
   // Match Preview State
   const [selectedSport, setSelectedSport] = useState('all');
+  const [matchSource, setMatchSource] = useState<'predictions' | 'all'>('predictions');
   const [matchGenerating, setMatchGenerating] = useState(false);
   const [upcomingMatches, setUpcomingMatches] = useState<Array<{
     matchId: string;
@@ -69,6 +70,10 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
     commenceTime: string;
     league: string;
     sportKey: string;
+    hasPrediction?: boolean;
+    hasBlogPost?: boolean;
+    prediction?: string;
+    conviction?: number;
   }>>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
@@ -81,7 +86,44 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
   const handleFetchMatches = async () => {
     setLoadingMatches(true);
     setMessage(null);
+    setSelectedMatch(null);
+    
     try {
+      // If fetching from predictions (recommended)
+      if (matchSource === 'predictions') {
+        const res = await fetch('/api/admin/predictions?limit=30', {
+          credentials: 'include',
+        });
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch predictions');
+        }
+        
+        const data = await res.json();
+        
+        if (data.success && data.matches) {
+          // Filter out matches that already have blog posts
+          const matchesWithoutBlogs = data.matches.filter((m: { hasBlogPost: boolean }) => !m.hasBlogPost);
+          setUpcomingMatches(matchesWithoutBlogs);
+          
+          if (matchesWithoutBlogs.length === 0) {
+            setMessage({ 
+              type: 'success', 
+              text: `All ${data.total} predicted matches already have blog posts! 🎉` 
+            });
+          } else {
+            setMessage({ 
+              type: 'success', 
+              text: `Found ${matchesWithoutBlogs.length} matches with predictions (${data.withBlogPost} already have blogs)` 
+            });
+          }
+        } else {
+          setMessage({ type: 'error', text: 'No predictions found' });
+        }
+        return;
+      }
+
+      // Fallback: Fetch from Odds API (all matches)
       const sportsToFetch = selectedSport === 'all' ? PRE_ANALYZE_SPORTS : [selectedSport];
       
       const allMatches: Array<{
@@ -91,6 +133,7 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
         commenceTime: string;
         league: string;
         sportKey: string;
+        hasPrediction?: boolean;
       }> = [];
 
       // Fetch in parallel
@@ -115,6 +158,7 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
               commenceTime: event.commenceTime,
               league: event.league || response.value.sport,
               sportKey: response.value.sport,
+              hasPrediction: false, // Unknown - need to check
             });
           }
         }
@@ -123,13 +167,16 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
       // Sort by commence time and limit
       const sorted = allMatches
         .sort((a, b) => new Date(a.commenceTime).getTime() - new Date(b.commenceTime).getTime())
-        .slice(0, 20); // Show 20 matches
+        .slice(0, 20);
 
       setUpcomingMatches(sorted);
       if (sorted.length === 0) {
         setMessage({ type: 'error', text: 'No upcoming matches found' });
       } else {
-        setMessage({ type: 'success', text: `Found ${sorted.length} upcoming matches` });
+        setMessage({ 
+          type: 'success', 
+          text: `Found ${sorted.length} matches (⚠️ may not have predictions)` 
+        });
       }
     } catch {
       setMessage({ type: 'error', text: 'Network error fetching matches' });
@@ -375,6 +422,51 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
             <h2 className="text-lg font-semibold text-white">Generate Match Preview</h2>
             <span className="px-2 py-0.5 bg-accent/20 text-accent text-xs rounded-full">NEW</span>
           </div>
+
+          {/* Match Source Toggle */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm text-text-muted">Source:</span>
+            <div className="flex bg-bg-primary rounded-lg p-1 border border-white/10">
+              <button
+                onClick={() => {
+                  setMatchSource('predictions');
+                  setUpcomingMatches([]);
+                  setSelectedMatch(null);
+                }}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  matchSource === 'predictions'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
+                }`}
+              >
+                ✅ With Predictions
+              </button>
+              <button
+                onClick={() => {
+                  setMatchSource('all');
+                  setUpcomingMatches([]);
+                  setSelectedMatch(null);
+                }}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  matchSource === 'all'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
+                }`}
+              >
+                📋 All Matches
+              </button>
+            </div>
+            {matchSource === 'predictions' && (
+              <span className="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded">
+                Recommended – AI analysis ready
+              </span>
+            )}
+            {matchSource === 'all' && (
+              <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded">
+                ⚠️ May need on-demand analysis
+              </span>
+            )}
+          </div>
           
           <div className="grid md:grid-cols-2 gap-6">
             {/* Left: Select Sport & Fetch */}
@@ -418,6 +510,8 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
                       className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
                         selectedMatch === match.matchId
                           ? 'bg-accent/20 border border-accent'
+                          : match.hasBlogPost
+                          ? 'bg-green-500/10 border border-green-500/30 opacity-60'
                           : 'bg-bg-primary/50 border border-white/5 hover:border-white/20'
                       }`}
                     >
@@ -427,26 +521,44 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
                         value={match.matchId}
                         checked={selectedMatch === match.matchId}
                         onChange={(e) => setSelectedMatch(e.target.value)}
+                        disabled={match.hasBlogPost}
                         className="sr-only"
                       />
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-white font-medium text-sm">
                             {match.homeTeam} vs {match.awayTeam}
                           </p>
                           <span className="text-xs px-1.5 py-0.5 bg-white/10 rounded text-text-muted">
                             {match.league}
                           </span>
+                          {match.hasPrediction && (
+                            <span className="text-xs px-1.5 py-0.5 bg-accent/20 rounded text-accent">
+                              {'⭐'.repeat(match.conviction || 3)}
+                            </span>
+                          )}
+                          {match.hasBlogPost && (
+                            <span className="text-xs px-1.5 py-0.5 bg-green-500/20 rounded text-green-400">
+                              ✓ Has Blog
+                            </span>
+                          )}
                         </div>
-                        <p className="text-text-muted text-xs">
-                          {new Date(match.commenceTime).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-text-muted text-xs">
+                            {new Date(match.commenceTime).toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                          {match.prediction && (
+                            <span className="text-xs text-accent/80">
+                              → {match.prediction}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {selectedMatch === match.matchId && (
                         <span className="text-accent">✓</span>
