@@ -111,11 +111,14 @@ export function calculateMargin(homeOdds: number, awayOdds: number, drawOdds?: n
  * Calculate model probability from Universal Signals
  * 
  * This is our proprietary model based on:
- * - Form momentum
- * - Strength edge calculation
+ * - Strength edge (which now includes form heavily)
+ * - Form momentum (additional boost)
  * - Efficiency patterns
  * - Home advantage
  * - Injury impact
+ * 
+ * CRITICAL: The strength edge now includes 40% form weighting.
+ * We apply additional form adjustments here for extreme cases.
  */
 export function calculateModelProbability(
   signals: UniversalSignals,
@@ -126,29 +129,31 @@ export function calculateModelProbability(
   let awayBase = hasDraw ? 30 : 50;  // Base away probability
   let drawBase = hasDraw ? 30 : 0;   // Base draw probability
   
-  // 1. Apply Strength Edge (biggest factor) - with null safety
+  // 1. Apply Strength Edge (biggest factor - now includes form heavily)
   const edgeDir = signals.display?.edge?.direction || 'even';
-  const edgePct = signals.display?.edge?.percentage || 50;
+  const edgePct = signals.display?.edge?.percentage || 0;
   
   if (edgeDir === 'home') {
-    homeBase += edgePct * 0.8;  // 80% of edge goes to win prob
-    awayBase -= edgePct * 0.5;
-    drawBase -= edgePct * 0.3;
+    homeBase += edgePct * 1.0;  // Full edge goes to win prob
+    awayBase -= edgePct * 0.6;
+    drawBase -= edgePct * 0.4;
   } else if (edgeDir === 'away') {
-    awayBase += edgePct * 0.8;
-    homeBase -= edgePct * 0.5;
-    drawBase -= edgePct * 0.3;
+    awayBase += edgePct * 1.0;
+    homeBase -= edgePct * 0.6;
+    drawBase -= edgePct * 0.4;
   }
   
-  // 2. Apply Form Factor
+  // 2. Apply Form Factor (additional boost for extreme form differences)
+  // This is on TOP of form already in edge calculation
   const homeForm = signals.display.form.home;
   const awayForm = signals.display.form.away;
   
-  if (homeForm === 'strong') homeBase += 5;
-  else if (homeForm === 'weak') homeBase -= 5;
+  // Strong form = +8, Weak form = -8 (increased from ±5)
+  if (homeForm === 'strong') homeBase += 8;
+  else if (homeForm === 'weak') homeBase -= 8;
   
-  if (awayForm === 'strong') awayBase += 5;
-  else if (awayForm === 'weak') awayBase -= 5;
+  if (awayForm === 'strong') awayBase += 8;
+  else if (awayForm === 'weak') awayBase -= 8;
   
   // 3. Apply Efficiency Edge
   const effWinner = signals.display.efficiency.winner;

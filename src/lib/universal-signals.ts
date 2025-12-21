@@ -221,36 +221,49 @@ function calculateFormTrend(form: string): 'improving' | 'declining' | 'stable' 
 
 /**
  * Calculate strength edge percentage
+ * 
+ * CRITICAL: This now includes recent form as a major factor.
+ * Form is weighted heavily because WWWWW vs LDLWD should massively
+ * favor the team in better form, regardless of season stats.
  */
 function calculateStrengthEdge(
   input: RawMatchInput,
   config: SportConfig
 ): { direction: 'home' | 'away' | 'even'; percentage: number } {
-  const { homeStats, awayStats, h2h } = input;
+  const { homeStats, awayStats, h2h, homeForm, awayForm } = input;
   
-  // Win rate differential
+  // 1. FORM DIFFERENTIAL (NEW - weighted heavily: 40% of edge)
+  // WWWWW = 100, LDLWD ≈ 30, so diff could be 70 points
+  const homeFormRating = calculateFormRating(homeForm, config.hasDraw);
+  const awayFormRating = calculateFormRating(awayForm, config.hasDraw);
+  const formDiff = (homeFormRating - awayFormRating) / 100; // -1 to 1
+  const formFactor = formDiff * 0.4; // 40% weight for form
+  
+  // 2. Win rate differential (20% of edge)
   const homeWinRate = homeStats.played > 0 ? homeStats.wins / homeStats.played : 0.5;
   const awayWinRate = awayStats.played > 0 ? awayStats.wins / awayStats.played : 0.5;
+  const winRateDiff = (homeWinRate - awayWinRate) * 0.2;
   
-  // Scoring differential per game
+  // 3. Scoring differential per game (15% of edge)
   const homeGD = homeStats.played > 0 
     ? (homeStats.scored - homeStats.conceded) / homeStats.played 
     : 0;
   const awayGD = awayStats.played > 0 
     ? (awayStats.scored - awayStats.conceded) / awayStats.played 
     : 0;
+  const gdDiff = (homeGD - awayGD) * 0.015; // Scale down scoring diff
   
-  // H2H factor
+  // 4. H2H factor (10% of edge)
   const h2hFactor = h2h.total >= 3
-    ? (h2h.homeWins - h2h.awayWins) / h2h.total * 0.05
+    ? (h2h.homeWins - h2h.awayWins) / h2h.total * 0.10
     : 0;
   
-  // Combine factors
-  const winRateDiff = (homeWinRate - awayWinRate) * 0.5;
-  const gdDiff = (homeGD - awayGD) * 0.02; // Scale down scoring diff
+  // 5. Home advantage (15% of edge) - already in config
+  const homeAdvFactor = config.homeAdvantage;
   
-  const rawEdge = (winRateDiff + gdDiff + h2hFactor + config.homeAdvantage) * 100;
-  const clampedEdge = Math.max(-15, Math.min(15, rawEdge));
+  // Combine factors (form is now the biggest factor)
+  const rawEdge = (formFactor + winRateDiff + gdDiff + h2hFactor + homeAdvFactor) * 100;
+  const clampedEdge = Math.max(-20, Math.min(20, rawEdge)); // Increased max edge for form
   
   if (Math.abs(clampedEdge) < 2) {
     return { direction: 'even', percentage: 0 };
