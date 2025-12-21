@@ -59,6 +59,11 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
   const [keyword, setKeyword] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
+  // Bulk Keywords State
+  const [bulkKeywords, setBulkKeywords] = useState('');
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  
   // Match Preview State
   const [selectedSport, setSelectedSport] = useState('all');
   const [matchSource, setMatchSource] = useState<'predictions' | 'all'>('predictions');
@@ -294,6 +299,50 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
     }
   };
 
+  // Bulk import keywords handler
+  const handleBulkImport = async () => {
+    const lines = bulkKeywords
+      .split('\n')
+      .map(line => line.trim().toLowerCase())
+      .filter(line => line.length >= 3);
+    
+    if (lines.length === 0) {
+      setMessage({ type: 'error', text: 'Please enter at least one keyword (one per line)' });
+      return;
+    }
+
+    setBulkImporting(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch('/api/blog/keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ keywords: lines }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        const created = data.results?.filter((r: { status: string }) => r.status === 'created').length || 0;
+        const exists = data.results?.filter((r: { status: string }) => r.status === 'exists').length || 0;
+        setMessage({ 
+          type: 'success', 
+          text: `✅ Imported ${created} new keywords, ${exists} already existed. Run cron job to generate posts.` 
+        });
+        setBulkKeywords('');
+        setShowBulkImport(false);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to import keywords' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Network error' });
+    } finally {
+      setBulkImporting(false);
+    }
+  };
+
   const handleDeletePost = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
 
@@ -392,27 +441,78 @@ export default function BlogAdminPanel({ posts, stats }: BlogAdminPanelProps) {
 
         {/* Generate New Post */}
         <div className="bg-bg-secondary rounded-xl p-6 border border-white/10 mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Generate New Post (Keyword)</h2>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <input
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Enter keyword (e.g., 'NBA analytics', 'Premier League predictions')"
-              className="flex-1 bg-bg-primary border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-text-muted focus:outline-none focus:border-accent"
-              disabled={generating}
-            />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Generate New Post (Keyword)</h2>
             <button
-              onClick={handleGeneratePost}
-              disabled={generating || !keyword.trim()}
-              className="px-6 py-3 bg-accent hover:bg-accent/80 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
+              onClick={() => setShowBulkImport(!showBulkImport)}
+              className="text-sm text-accent hover:text-accent/80 transition-colors"
             >
-              {generating ? 'Generating...' : 'Generate Post'}
+              {showBulkImport ? '← Single Keyword' : 'Bulk Import →'}
             </button>
           </div>
-          <p className="text-text-muted text-sm mt-2">
-            AI will research the topic, generate content, and create a featured image. This takes ~30-60 seconds.
-          </p>
+
+          {!showBulkImport ? (
+            <>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <input
+                  type="text"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder="Enter keyword (e.g., 'NBA analytics', 'Premier League predictions')"
+                  className="flex-1 bg-bg-primary border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-text-muted focus:outline-none focus:border-accent"
+                  disabled={generating}
+                />
+                <button
+                  onClick={handleGeneratePost}
+                  disabled={generating || !keyword.trim()}
+                  className="px-6 py-3 bg-accent hover:bg-accent/80 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
+                >
+                  {generating ? 'Generating...' : 'Generate Post'}
+                </button>
+              </div>
+              <p className="text-text-muted text-sm mt-2">
+                AI will research the topic, generate content, and create a featured image. This takes ~30-60 seconds.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <textarea
+                  value={bulkKeywords}
+                  onChange={(e) => setBulkKeywords(e.target.value)}
+                  placeholder="Paste keywords here, one per line:
+
+how to bet on premier league matches
+premier league betting guide for beginners
+understanding premier league odds
+nba player props betting guide
+..."
+                  rows={12}
+                  className="w-full bg-bg-primary border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-text-muted focus:outline-none focus:border-accent font-mono text-sm"
+                  disabled={bulkImporting}
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-text-muted text-sm">
+                    {bulkKeywords.split('\n').filter(l => l.trim().length >= 3).length} keywords ready to import
+                  </p>
+                  <button
+                    onClick={handleBulkImport}
+                    disabled={bulkImporting || bulkKeywords.split('\n').filter(l => l.trim().length >= 3).length === 0}
+                    className="px-6 py-3 bg-accent hover:bg-accent/80 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
+                  >
+                    {bulkImporting ? 'Importing...' : 'Queue All Keywords'}
+                  </button>
+                </div>
+              </div>
+              <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <p className="text-blue-400 text-sm">
+                  💡 <strong>How it works:</strong> Keywords are added to the queue with &quot;PENDING&quot; status. 
+                  The cron job (<code>/api/blog/generate</code>) will pick them up and generate posts automatically.
+                  Run it manually or wait for scheduled execution.
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Generate Match Preview */}
