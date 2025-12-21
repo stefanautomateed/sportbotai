@@ -310,7 +310,7 @@ export default function UserManagement() {
                   {/* Credits */}
                   <td className="px-4 py-3">
                     <div className="text-xs">
-                      <span className="text-text-secondary">{user.analysisCount} used</span>
+                      <span className="text-text-secondary">{user.analysesCount} analyses</span>
                       {user.bonusCredits > 0 && (
                         <span className="ml-1 text-emerald-400">+{user.bonusCredits} bonus</span>
                       )}
