@@ -54,6 +54,9 @@ interface MarketAlert {
   hasValueEdge: boolean;
   alertLevel: 'HIGH' | 'MEDIUM' | 'LOW' | null;
   alertNote?: string;
+  // Blur flags for non-premium users
+  isBlurred?: boolean;
+  blurRank?: number;
 }
 
 interface MarketAlertsResponse {
@@ -335,6 +338,155 @@ function EdgeMatchCard({ alert }: { alert: MarketAlert }) {
 }
 
 /**
+ * Blurred Edge Card - Shows partial info to entice non-premium users
+ * Teams visible, edge % hidden with blur effect, teaser text showing edge strength hint
+ */
+function BlurredEdgeCard({ alert }: { alert: MarketAlert }) {
+  const matchTime = new Date(alert.matchDate).toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  
+  const rank = alert.blurRank || 1;
+  const rankBadge = rank <= 3 ? '🥇' : rank <= 6 ? '🥈' : '🥉';
+  
+  // Edge hint based on rank
+  const edgeHint = rank <= 3 ? '+8-15%' : rank <= 6 ? '+5-8%' : '+3-5%';
+  const hintColor = rank <= 3 ? 'from-emerald-400 to-emerald-500' : 
+                    rank <= 6 ? 'from-emerald-500 to-emerald-600' : 
+                    'from-emerald-600 to-emerald-700';
+  
+  return (
+    <Link href="/pricing" className="block">
+      <div className="group relative bg-bg-card border border-zinc-500/30 rounded-lg p-3.5 hover:border-zinc-400/50 transition-all cursor-pointer overflow-hidden">
+        {/* Premium badge overlay */}
+        <div className="absolute top-2 right-2 z-10">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-zinc-300/20 to-zinc-400/20 text-zinc-300 border border-zinc-400/40 flex items-center gap-1">
+            {rankBadge} #{rank}
+          </span>
+        </div>
+        
+        {/* Context row - ultra compact */}
+        <LeagueHeader sport={alert.sport} sportTitle={alert.sportTitle} time={matchTime} />
+        
+        {/* Main content: Teams visible */}
+        <div className="flex items-center justify-between mt-2.5 mb-2">
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-base truncate text-text-primary">
+              {alert.homeTeam}
+            </div>
+            <div className="text-sm truncate text-text-secondary">
+              {alert.awayTeam}
+            </div>
+          </div>
+          
+          {/* Blurred Edge % with gradient tease */}
+          <div className="text-right pl-3 relative">
+            <div className={`text-2xl font-black bg-gradient-to-r ${hintColor} bg-clip-text text-transparent blur-[2px] select-none`}>
+              {edgeHint}
+            </div>
+            <div className="text-[10px] text-text-muted uppercase">edge hidden</div>
+          </div>
+        </div>
+        
+        {/* Blurred odds row */}
+        <div className="flex items-center gap-3 text-xs mb-2.5 bg-zinc-500/10 rounded px-2 py-1.5 relative overflow-hidden">
+          <span className="text-text-muted">Odds</span>
+          <span className="font-mono text-text-muted/50">
+            {alert.homeOdds.toFixed(2)}
+          </span>
+          <span className="text-text-muted/30">vs</span>
+          <span className="font-mono text-text-muted/50">
+            {alert.awayOdds.toFixed(2)}
+          </span>
+          <span className="text-text-muted/50 mx-1">|</span>
+          <span className="text-zinc-400 font-medium blur-sm select-none">Model: ??.?%</span>
+          {/* Blur overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-bg-card/50 to-transparent pointer-events-none" />
+        </div>
+        
+        {/* Teaser bar instead of strength indicator */}
+        <div className="flex items-center justify-between gap-4 pt-2 border-t border-zinc-500/30">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-zinc-400">{alert.bestEdge.label}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400 group-hover:text-zinc-300 transition-colors">
+            <span>Unlock to see</span>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/**
+ * Blurred Steam Card - Shows partial steam info to entice non-premium users
+ */
+function BlurredSteamCard({ alert }: { alert: MarketAlert }) {
+  const matchTime = new Date(alert.matchDate).toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  
+  const rank = alert.blurRank || 1;
+  const intensity = rank <= 2 ? 'hot' : rank <= 4 ? 'warm' : 'cooling';
+  
+  const pillColors = {
+    hot: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    warm: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
+    cooling: 'bg-amber-500/10 text-amber-500/70 border-amber-500/15',
+  };
+  
+  return (
+    <Link href="/pricing" className="block">
+      <div className="group bg-bg-card border border-zinc-500/30 rounded-lg p-3 hover:border-zinc-400/50 transition-all cursor-pointer relative overflow-hidden">
+        {/* Top row */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <LeagueHeader sport={alert.sport} sportTitle={alert.sportTitle} />
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${pillColors[intensity]}`}>
+              {intensity === 'hot' ? '🔥 HOT' : intensity === 'warm' ? '⚡ SHARP' : '📊 MOVE'}
+            </span>
+          </div>
+          <span className="text-text-muted/40 text-[10px]">{matchTime}</span>
+        </div>
+        
+        {/* Teams visible */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-sm">
+            <span className="truncate flex-1 text-text-primary font-medium">{alert.homeTeam}</span>
+            <span className="font-mono text-xs text-text-muted/50 blur-sm select-none">?.?? → ?.??</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="truncate flex-1 text-text-secondary">{alert.awayTeam}</span>
+            <span className="font-mono text-xs text-text-muted/50 blur-sm select-none">?.?? → ?.??</span>
+          </div>
+        </div>
+        
+        {/* Teaser */}
+        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-zinc-500/30 text-xs">
+          <span className="text-amber-400/80">{alert.alertNote}</span>
+          <span className="text-zinc-400 flex items-center gap-1 group-hover:text-zinc-300 transition-colors">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/**
  * Steam Move Card - Compact ticker-style
  */
 function SteamMoveCard({ alert }: { alert: MarketAlert }) {
@@ -565,7 +717,7 @@ export default function MarketAlertsPage() {
     }
   }, [status, router, fetchAlerts]);
 
-  // Auto-refresh every 5 minutes
+  // Auto-refresh every 5 minutes (only for premium)
   useEffect(() => {
     if (!data?.isPremium) return;
     
@@ -580,9 +732,7 @@ export default function MarketAlertsPage() {
     return <LoadingState />;
   }
 
-  if (data && !data.isPremium) {
-    return <PremiumGate />;
-  }
+  // Removed PremiumGate - now we show blurred data instead
 
   if (error && !data?.data) {
     return (
@@ -600,6 +750,7 @@ export default function MarketAlertsPage() {
   }
 
   const { topEdgeMatches = [], allMatches = [], steamMoves = [], allSteamMoves = [], recentUpdates } = data?.data || {};
+  const isPremium = data?.isPremium ?? false;
   
   // Search filter function
   const matchesSearch = (alert: MarketAlert) => {
@@ -621,21 +772,46 @@ export default function MarketAlertsPage() {
     ? allSteamMoves.filter(matchesSearch) 
     : steamMoves;
   
-  // Remaining matches (after top 5) - only when not searching
-  const remainingMatches = isSearching ? [] : allMatches.slice(5);
+  // Remaining matches (after top edges shown) - only when not searching
+  const remainingMatches = isSearching ? [] : allMatches.slice(isPremium ? 5 : 10);
 
   return (
     <div className="min-h-screen bg-bg-primary py-8 sm:py-10">
       <div className="container-custom">
+        {/* Upgrade Banner for non-premium users */}
+        {!isPremium && (
+          <div className="mb-6 bg-gradient-to-r from-zinc-800/80 via-zinc-800/60 to-zinc-800/80 border border-zinc-600/40 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔓</span>
+              <div>
+                <h3 className="font-semibold text-text-primary text-sm">Unlock All Market Edges</h3>
+                <p className="text-text-muted text-xs">Top 10 edges are hidden • Upgrade to see exact values and full analytics</p>
+              </div>
+            </div>
+            <Link 
+              href="/pricing" 
+              className="flex-shrink-0 bg-gradient-to-r from-zinc-300 to-zinc-400 hover:from-zinc-200 hover:to-zinc-300 text-zinc-900 font-semibold text-sm px-5 py-2 rounded-lg transition-colors shadow-lg shadow-zinc-400/10"
+            >
+              Upgrade to Premium
+            </Link>
+          </div>
+        )}
+        
         {/* Header - Compact */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
               Market Alerts
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-zinc-300/20 to-zinc-400/20 text-zinc-300 border border-zinc-400/30">
-              PREMIUM
-            </span>
+            {isPremium ? (
+              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-zinc-300/20 to-zinc-400/20 text-zinc-300 border border-zinc-400/30">
+                PREMIUM
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                PREVIEW
+              </span>
+            )}
           </div>
           
           <button 
@@ -730,9 +906,13 @@ export default function MarketAlertsPage() {
               </div>
             ) : (
               <div className="space-y-2.5">
-                {filteredEdgeMatches.map(alert => (
-                  <EdgeMatchCard key={alert.id} alert={alert} />
-                ))}
+                {filteredEdgeMatches.map(alert => 
+                  alert.isBlurred ? (
+                    <BlurredEdgeCard key={alert.id} alert={alert} />
+                  ) : (
+                    <EdgeMatchCard key={alert.id} alert={alert} />
+                  )
+                )}
               </div>
             )}
             
@@ -764,9 +944,13 @@ export default function MarketAlertsPage() {
                 
                 {showAllEdges && (
                   <div className="mt-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
-                    {remainingMatches.map(alert => (
-                      <EdgeMatchCard key={alert.id} alert={alert} />
-                    ))}
+                    {remainingMatches.map(alert => 
+                      alert.isBlurred ? (
+                        <BlurredEdgeCard key={alert.id} alert={alert} />
+                      ) : (
+                        <EdgeMatchCard key={alert.id} alert={alert} />
+                      )
+                    )}
                   </div>
                 )}
               </div>
@@ -808,9 +992,13 @@ export default function MarketAlertsPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {filteredSteamMoves.map(alert => (
-                  <SteamMoveCard key={alert.id} alert={alert} />
-                ))}
+                {filteredSteamMoves.map(alert => 
+                  alert.isBlurred ? (
+                    <BlurredSteamCard key={alert.id} alert={alert} />
+                  ) : (
+                    <SteamMoveCard key={alert.id} alert={alert} />
+                  )
+                )}
               </div>
             )}
             
@@ -842,9 +1030,13 @@ export default function MarketAlertsPage() {
                 
                 {showAllSteam && (
                   <div className="mt-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
-                    {allSteamMoves.slice(5).map(alert => (
-                      <SteamMoveCard key={alert.id} alert={alert} />
-                    ))}
+                    {allSteamMoves.slice(5).map(alert => 
+                      alert.isBlurred ? (
+                        <BlurredSteamCard key={alert.id} alert={alert} />
+                      ) : (
+                        <SteamMoveCard key={alert.id} alert={alert} />
+                      )
+                    )}
                   </div>
                 )}
               </div>

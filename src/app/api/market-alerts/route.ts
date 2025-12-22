@@ -64,6 +64,10 @@ interface MarketAlert {
   hasValueEdge: boolean;
   alertLevel: 'HIGH' | 'MEDIUM' | 'LOW' | null;
   alertNote?: string;
+  
+  // Blur flag for non-premium users (top 10 edges are blurred)
+  isBlurred?: boolean;
+  blurRank?: number; // 1-10 for blurred items
 }
 
 interface MarketAlertsResponse {
@@ -411,13 +415,8 @@ export async function GET(request: NextRequest) {
     
     const isPremium = user?.plan === 'PREMIUM';
     
-    if (!isPremium) {
-      return NextResponse.json({
-        success: false,
-        error: 'Premium subscription required',
-        isPremium: false,
-      } as MarketAlertsResponse, { status: 403 });
-    }
+    // For non-premium users, we'll return partial data with blurred top 10
+    // This creates FOMO and shows value without giving away the best picks
     
     // Check if Odds API is configured
     if (!theOddsClient.isConfigured()) {
@@ -838,13 +837,61 @@ export async function GET(request: NextRequest) {
     const totalTime = Date.now() - startTime;
     console.log(`[Market Alerts] Response ready in ${totalTime}ms`);
     
+    // For non-premium users: blur top 10 edges and top 5 steam moves
+    // Show enough to create FOMO but hide the actual edge values
+    let responseEdges = allEdgesSorted;
+    let responseSteam = steamMoves;
+    
+    if (!isPremium) {
+      // Blur top 10 edges - hide the actual edge % but show teams
+      responseEdges = allEdgesSorted.map((alert, index) => {
+        if (index < 10) {
+          return {
+            ...alert,
+            isBlurred: true,
+            blurRank: index + 1,
+            // Hide the actual edge value - show range hint instead
+            bestEdge: {
+              ...alert.bestEdge,
+              percent: 0, // Hidden
+              label: index < 3 ? 'Strong Edge 🔥' : index < 6 ? 'Good Edge ⚡' : 'Edge Found 📊'
+            },
+            modelHomeProb: 0,
+            modelAwayProb: 0,
+            modelDrawProb: undefined,
+            homeEdge: 0,
+            awayEdge: 0,
+            drawEdge: undefined,
+            alertLevel: null,
+          };
+        }
+        return { ...alert, isBlurred: false };
+      });
+      
+      // Blur top 5 steam moves
+      responseSteam = steamMoves.map((alert, index) => {
+        if (index < 5) {
+          return {
+            ...alert,
+            isBlurred: true,
+            blurRank: index + 1,
+            homeChange: undefined,
+            awayChange: undefined,
+            drawChange: undefined,
+            alertNote: index < 2 ? '🔥 Major line movement detected' : '⚡ Sharp action detected',
+          };
+        }
+        return { ...alert, isBlurred: false };
+      });
+    }
+    
     return NextResponse.json({
       success: true,
       data: {
-        topEdgeMatches: allEdgesSorted.slice(0, 5),  // Top 5 for highlight
-        allMatches: allEdgesSorted,  // All matches sorted by edge
-        steamMoves: steamMoves.slice(0, 5),  // Top 5 steam
-        allSteamMoves: steamMoves,  // All steam moves
+        topEdgeMatches: responseEdges.slice(0, isPremium ? 5 : 10),  // Show more for free (blurred)
+        allMatches: responseEdges,  // All matches sorted by edge
+        steamMoves: responseSteam.slice(0, isPremium ? 5 : 5),  // Top 5 steam
+        allSteamMoves: responseSteam,  // All steam moves
         recentUpdates: {
           lastFetch: new Date().toISOString(),
           matchesScanned: totalMatches,
@@ -852,7 +899,7 @@ export async function GET(request: NextRequest) {
           responseTimeMs: totalTime,
         },
       },
-      isPremium: true,
+      isPremium,
     } as MarketAlertsResponse);
     
   } catch (error) {
