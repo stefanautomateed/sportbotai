@@ -126,8 +126,11 @@ async function getMatchResult(homeTeam: string, awayTeam: string, matchDate: Dat
   const leagueLower = league?.toLowerCase() || '';
   
   // Detect sport from sport field, league, or team names
-  const isNBA = sportLower.includes('basketball') || leagueLower.includes('nba') || 
+  const isNBA = sportLower.includes('basketball_nba') || leagueLower.includes('nba') || 
     ['lakers', 'celtics', 'bulls', 'heat', 'warriors', 'nuggets', 'suns', 'bucks', 'nets', 'knicks', 'clippers', 'mavs', 'mavericks', 'rockets', 'spurs', 'jazz', 'thunder', 'grizzlies', 'pelicans', 'timberwolves', 'blazers', 'kings', 'magic', 'hawks', 'hornets', 'pistons', 'pacers', 'cavaliers', '76ers', 'raptors', 'wizards'].some(t => searchHome.includes(t) || searchAway.includes(t));
+  
+  const isEuroLeague = sportLower.includes('euroleague') || leagueLower.includes('euroleague') ||
+    ['olympiacos', 'panathinaikos', 'fenerbahce', 'anadolu efes', 'real madrid', 'barcelona', 'maccabi', 'partizan', 'crvena zvezda', 'zalgiris', 'žalgiris', 'virtus', 'baskonia', 'milano', 'asvel', 'bayern munich', 'alba berlin'].some(t => searchHome.includes(t) || searchAway.includes(t));
   
   const isNHL = sportLower.includes('hockey') || sportLower.includes('icehockey') || leagueLower.includes('nhl') || 
     ['bruins', 'rangers', 'penguins', 'capitals', 'flyers', 'devils', 'islanders', 'canadiens', 'senators', 'maple leafs', 'lightning', 'panthers', 'hurricanes', 'predators', 'blue jackets', 'red wings', 'blackhawks', 'wild', 'blues', 'jets', 'avalanche', 'stars', 'coyotes', 'ducks', 'kings', 'sharks', 'kraken', 'golden knights', 'flames', 'oilers', 'canucks'].some(t => searchHome.includes(t) || searchAway.includes(t));
@@ -136,7 +139,13 @@ async function getMatchResult(homeTeam: string, awayTeam: string, matchDate: Dat
     ['chiefs', 'bills', 'ravens', 'bengals', 'dolphins', 'patriots', 'jets', 'steelers', 'browns', 'titans', 'colts', 'jaguars', 'texans', 'broncos', 'raiders', 'chargers', 'eagles', 'cowboys', 'giants', 'commanders', 'lions', 'packers', 'vikings', 'bears', 'buccaneers', 'saints', 'falcons', 'panthers', 'seahawks', '49ers', 'cardinals', 'rams'].some(t => searchHome.includes(t) || searchAway.includes(t));
 
   try {
-    // Try NBA API
+    // Try EuroLeague API (league 120)
+    if (isEuroLeague) {
+      const euroResult = await fetchSportResult('basketball', 120, dateStr, searchHome, searchAway, apiKey);
+      if (euroResult) return euroResult;
+    }
+    
+    // Try NBA API (league 12)
     if (isNBA) {
       const nbaResult = await fetchSportResult('basketball', 12, dateStr, searchHome, searchAway, apiKey);
       if (nbaResult) return nbaResult;

@@ -129,6 +129,41 @@ async function fetchNFL(dateStr: string, searchHome: string, searchAway: string,
   return null;
 }
 
+async function fetchEuroLeague(dateStr: string, searchHome: string, searchAway: string, apiKey: string): Promise<MatchResult | null> {
+  const season = getSeasonForDate(dateStr, 'nba'); // EuroLeague uses same format as NBA
+  console.log(`  [EuroLeague] Fetching for ${dateStr}, season ${season}`);
+  
+  const response = await fetch(
+    `https://v1.basketball.api-sports.io/games?date=${dateStr}&league=120&season=${season}`,
+    { headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': 'v1.basketball.api-sports.io' } }
+  );
+  if (!response.ok) { console.log(`  [EuroLeague] API error: ${response.status}`); return null; }
+  
+  const data = await response.json();
+  const games = data.response || [];
+  console.log(`  [EuroLeague] Found ${games.length} games`);
+  
+  for (const game of games) {
+    const home = game.teams?.home?.name?.toLowerCase() || '';
+    const away = game.teams?.away?.name?.toLowerCase() || '';
+    const status = game.status?.short || '';
+    
+    if ((home.includes(searchHome) || searchHome.includes(home.split(' ').pop() || '')) &&
+        (away.includes(searchAway) || searchAway.includes(away.split(' ').pop() || ''))) {
+      console.log(`  [EuroLeague] Match found: ${game.teams.home.name} vs ${game.teams.away.name}, status: ${status}`);
+      if (!['FT', 'AOT', 'AP'].includes(status)) { console.log(`  [EuroLeague] Game not finished`); return null; }
+      return {
+        homeTeam: game.teams.home.name,
+        awayTeam: game.teams.away.name,
+        homeScore: game.scores?.home?.total ?? 0,
+        awayScore: game.scores?.away?.total ?? 0,
+        completed: true,
+      };
+    }
+  }
+  return null;
+}
+
 async function fetchSoccer(dateStr: string, searchHome: string, searchAway: string, apiKey: string): Promise<MatchResult | null> {
   console.log(`  [Soccer] Fetching for ${dateStr}`);
   
@@ -248,7 +283,14 @@ async function main() {
     const sportLower = pred.sport?.toLowerCase() || '';
     const leagueLower = pred.league?.toLowerCase() || '';
     
-    if (sportLower.includes('basketball') || leagueLower.includes('nba')) {
+    // EuroLeague detection
+    const isEuroLeague = sportLower.includes('euroleague') || leagueLower.includes('euroleague') ||
+      ['olympiacos', 'panathinaikos', 'fenerbahce', 'anadolu efes', 'real madrid', 'barcelona', 'maccabi', 'partizan', 'crvena zvezda', 'zalgiris', 'žalgiris', 'virtus', 'baskonia', 'milano', 'asvel', 'bayern munich', 'alba berlin'].some(t => 
+        homeTeam.toLowerCase().includes(t) || awayTeam.toLowerCase().includes(t));
+    
+    if (isEuroLeague) {
+      result = await fetchEuroLeague(dateStr, searchHome, searchAway, apiKey);
+    } else if (sportLower.includes('basketball') || leagueLower.includes('nba')) {
       result = await fetchNBA(dateStr, searchHome, searchAway, apiKey);
     } else if (sportLower.includes('hockey') || sportLower.includes('icehockey') || leagueLower.includes('nhl')) {
       result = await fetchNHL(dateStr, searchHome, searchAway, apiKey);
