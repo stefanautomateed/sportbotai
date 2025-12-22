@@ -158,6 +158,17 @@ export default function RootLayout({
         {/* Google Analytics */}
         <GoogleAnalytics />
         
+        {/* DNS Prefetch & Preconnect for Logo CDNs - faster image loading */}
+        <link rel="dns-prefetch" href="//a.espncdn.com" />
+        <link rel="dns-prefetch" href="//media-cdn.cortextech.io" />
+        <link rel="dns-prefetch" href="//media-cdn.incrowdsports.com" />
+        <link rel="dns-prefetch" href="//upload.wikimedia.org" />
+        <link rel="dns-prefetch" href="//crests.football-data.org" />
+        <link rel="dns-prefetch" href="//flagcdn.com" />
+        <link rel="preconnect" href="https://a.espncdn.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://media-cdn.cortextech.io" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://flagcdn.com" crossOrigin="anonymous" />
+        
         {/* AI/LLM Discovery Links */}
         <link rel="llms" href="/llms.txt" />
         <link rel="llms-full" href="/llms-full.txt" />

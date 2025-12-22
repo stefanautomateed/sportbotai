@@ -3,18 +3,23 @@
  * 
  * Displays league/competition logos with automatic fallback.
  * Features smooth fade-in transitions and graceful error handling.
+ * Uses eager loading and in-memory cache for instant display.
  */
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getLeagueLogo } from '@/lib/logos';
+
+// In-memory cache for loaded images (persists across component instances)
+const loadedImages = new Set<string>();
 
 interface LeagueLogoProps {
   leagueName: string;
   sport?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  priority?: boolean; // Load eagerly for above-the-fold content
 }
 
 // Bigger, more visible sizes
@@ -39,12 +44,28 @@ export default function LeagueLogo({
   leagueName, 
   sport,
   size = 'md',
-  className = '' 
+  className = '',
+  priority = false 
 }: LeagueLogoProps) {
-  const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
   const logoUrl = getLeagueLogo(leagueName, sport);
   const isFallback = !logoUrl || logoUrl.startsWith('data:');
+  
+  // Check if image was already loaded (cached in memory)
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(() => loadedImages.has(logoUrl || ''));
+  
+  // Preload image on mount for faster display
+  useEffect(() => {
+    if (!logoUrl || isFallback || loadedImages.has(logoUrl)) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      loadedImages.add(logoUrl);
+      setIsLoaded(true);
+    };
+    img.onerror = () => setHasError(true);
+    img.src = logoUrl;
+  }, [logoUrl, isFallback]);
 
   // Generate initials for fallback
   const getInitials = (name: string) => {
@@ -111,12 +132,17 @@ export default function LeagueLogo({
       <img
         src={logoUrl}
         alt={`${leagueName} logo`}
-        className={`${hasDarkLogo ? 'relative p-0.5' : ''} w-full h-full object-contain transition-opacity duration-300 ${
+        className={`${hasDarkLogo ? 'relative p-0.5' : ''} w-full h-full object-contain transition-opacity duration-200 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
-        onLoad={() => setIsLoaded(true)}
+        onLoad={() => {
+          if (logoUrl) loadedImages.add(logoUrl);
+          setIsLoaded(true);
+        }}
         onError={() => setHasError(true)}
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchPriority={priority ? 'high' : 'auto'}
       />
     </div>
   );

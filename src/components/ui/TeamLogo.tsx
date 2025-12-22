@@ -5,13 +5,17 @@
  * Uses ESPN, API-Sports, or fallback SVG based on sport/team.
  * For MMA/UFC (individual sports), shows fighter's country flag instead.
  * Features smooth fade-in transitions and graceful error handling.
+ * Uses in-memory cache for instant display on revisit.
  */
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getTeamLogo } from '@/lib/logos';
 import FighterFlag from './FighterFlag';
+
+// In-memory cache for loaded team logos
+const loadedLogos = new Set<string>();
 
 interface TeamLogoProps {
   teamName: string;
@@ -19,6 +23,7 @@ interface TeamLogoProps {
   league?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  priority?: boolean;
 }
 
 const sizeClasses = {
@@ -55,11 +60,9 @@ export default function TeamLogo({
   sport, 
   league, 
   size = 'md',
-  className = '' 
+  className = '',
+  priority = false 
 }: TeamLogoProps) {
-  const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  
   // For MMA/UFC/Boxing - show fighter's country flag instead of team logo
   if (isIndividualSport(sport)) {
     return <FighterFlag fighterName={teamName} size={size} className={className} />;
@@ -67,6 +70,22 @@ export default function TeamLogo({
   
   const logoUrl = getTeamLogo(teamName, sport, league);
   const isFallback = logoUrl.startsWith('data:');
+  
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(() => loadedLogos.has(logoUrl));
+  
+  // Preload logo image
+  useEffect(() => {
+    if (isFallback || loadedLogos.has(logoUrl)) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      loadedLogos.add(logoUrl);
+      setIsLoaded(true);
+    };
+    img.onerror = () => setHasError(true);
+    img.src = logoUrl;
+  }, [logoUrl, isFallback]);
 
   // Generate fallback initials
   const getInitials = (name: string) => {
@@ -124,12 +143,16 @@ export default function TeamLogo({
       <img
         src={logoUrl}
         alt={`${teamName} logo`}
-        className={`${hasDarkLogo ? 'relative p-0.5' : ''} w-full h-full object-contain transition-opacity duration-300 ${
+        className={`${hasDarkLogo ? 'relative p-0.5' : ''} w-full h-full object-contain transition-opacity duration-200 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
-        onLoad={() => setIsLoaded(true)}
+        onLoad={() => {
+          loadedLogos.add(logoUrl);
+          setIsLoaded(true);
+        }}
         onError={() => setHasError(true)}
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
       />
     </div>
   );

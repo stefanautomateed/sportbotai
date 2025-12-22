@@ -3,16 +3,21 @@
  * 
  * Displays country flags using flag CDN.
  * Supports common country codes for soccer leagues.
+ * Uses in-memory cache for instant display on revisit.
  */
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+// In-memory cache for loaded flags
+const loadedFlags = new Set<string>();
 
 interface CountryFlagProps {
   country: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  priority?: boolean;
 }
 
 // Size mappings
@@ -119,12 +124,27 @@ export function getCountryCode(country: string): string | null {
 export default function CountryFlag({ 
   country, 
   size = 'md',
-  className = '' 
+  className = '',
+  priority = false 
 }: CountryFlagProps) {
-  const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  
   const countryCode = getCountryCode(country);
+  const flagUrl = countryCode ? `https://flagcdn.com/w80/${countryCode}.png` : null;
+  
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(() => loadedFlags.has(flagUrl || ''));
+  
+  // Preload flag image
+  useEffect(() => {
+    if (!flagUrl || loadedFlags.has(flagUrl)) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      loadedFlags.add(flagUrl);
+      setIsLoaded(true);
+    };
+    img.onerror = () => setHasError(true);
+    img.src = flagUrl;
+  }, [flagUrl]);
   
   if (!countryCode || hasError) {
     // Fallback to emoji or initials
@@ -137,9 +157,6 @@ export default function CountryFlag({
     );
   }
 
-  // Using flagcdn.com for high-quality flags
-  const flagUrl = `https://flagcdn.com/w80/${countryCode}.png`;
-
   return (
     <div className={`${sizeClasses[size]} relative flex-shrink-0 overflow-hidden rounded ${className}`}>
       {/* Placeholder while loading */}
@@ -149,12 +166,16 @@ export default function CountryFlag({
       <img
         src={flagUrl}
         alt={`${country} flag`}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
+        className={`w-full h-full object-cover transition-opacity duration-200 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
-        onLoad={() => setIsLoaded(true)}
+        onLoad={() => {
+          if (flagUrl) loadedFlags.add(flagUrl);
+          setIsLoaded(true);
+        }}
         onError={() => setHasError(true)}
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
       />
     </div>
   );
