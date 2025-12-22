@@ -71,6 +71,147 @@ interface GeneratedMatchContent {
 }
 
 // ============================================
+// PLACEHOLDER REPLACEMENT
+// ============================================
+
+interface AnalysisData {
+  probabilities: {
+    homeWin: number;
+    draw: number | null;
+    awayWin: number;
+  };
+  homeForm: { wins: number; draws: number; losses: number };
+  awayForm: { wins: number; draws: number; losses: number };
+  headToHead: { homeWins: number; draws: number; awayWins: number };
+  [key: string]: unknown;
+}
+
+/**
+ * Replace placeholder values in generated content with actual data
+ */
+function replacePlaceholders(
+  content: string,
+  match: MatchInfo,
+  analysis: AnalysisData | null
+): string {
+  let result = content;
+  
+  if (analysis) {
+    // Replace probability placeholders
+    const homeWinPct = (analysis.probabilities.homeWin * 100).toFixed(1);
+    const awayWinPct = (analysis.probabilities.awayWin * 100).toFixed(1);
+    const drawPct = analysis.probabilities.draw !== null 
+      ? (analysis.probabilities.draw * 100).toFixed(1) 
+      : 'N/A';
+    
+    // Replace common placeholder patterns
+    result = result
+      // [HOME_%]% style
+      .replace(/\[HOME_%\]%?/gi, `${homeWinPct}%`)
+      .replace(/\[AWAY_%\]%?/gi, `${awayWinPct}%`)
+      .replace(/\[DRAW_%\]%?/gi, `${drawPct}%`)
+      // [HOME_WINS] style for H2H
+      .replace(/\[HOME_WINS\]/gi, String(analysis.headToHead.homeWins))
+      .replace(/\[AWAY_WINS\]/gi, String(analysis.headToHead.awayWins))
+      .replace(/\[H2H_DRAWS\]/gi, String(analysis.headToHead.draws))
+      // Form records
+      .replace(/\[HOME_FORM_WINS\]/gi, String(analysis.homeForm.wins))
+      .replace(/\[HOME_FORM_DRAWS\]/gi, String(analysis.homeForm.draws))
+      .replace(/\[HOME_FORM_LOSSES\]/gi, String(analysis.homeForm.losses))
+      .replace(/\[AWAY_FORM_WINS\]/gi, String(analysis.awayForm.wins))
+      .replace(/\[AWAY_FORM_DRAWS\]/gi, String(analysis.awayForm.draws))
+      .replace(/\[AWAY_FORM_LOSSES\]/gi, String(analysis.awayForm.losses));
+  }
+  
+  // Replace team name placeholders
+  result = result
+    .replace(/\[HOME_TEAM\]/gi, match.homeTeam)
+    .replace(/\[AWAY_TEAM\]/gi, match.awayTeam);
+  
+  return result;
+}
+
+// ============================================
+// NEWS-STYLE CONTENT GENERATOR (for Google News)
+// ============================================
+
+interface NewsContent {
+  title: string;
+  excerpt: string;
+  content: string;
+}
+
+/**
+ * Transform match data into Google News-style content
+ * Requirements:
+ * - Time-bound: what, when, who
+ * - Journalistic style: factual, objective, timely
+ * - Clean headline: no clickbait, 50-70 chars
+ * - Short content: 300-500 words max
+ */
+async function generateNewsStyleContent(
+  match: MatchInfo,
+  blogContent: GeneratedMatchContent
+): Promise<NewsContent> {
+  const matchDate = new Date(match.commenceTime);
+  const dayName = matchDate.toLocaleDateString('en-US', { weekday: 'long' });
+  const dateStr = matchDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  
+  const prompt = `You are a sports news journalist. Convert this match preview into a NEWS ARTICLE for Google News.
+
+MATCH: ${match.homeTeam} vs ${match.awayTeam}
+LEAGUE: ${match.league}
+DATE: ${dayName}, ${dateStr}
+${match.odds ? `ODDS: ${match.homeTeam} ${match.odds.home.toFixed(2)} | Draw ${match.odds.draw?.toFixed(2) || 'N/A'} | ${match.awayTeam} ${match.odds.away.toFixed(2)}` : ''}
+
+ORIGINAL CONTENT (for context):
+${blogContent.excerpt}
+
+GOOGLE NEWS REQUIREMENTS:
+1. HEADLINE: 50-70 chars, newsworthy, time-bound (e.g. "Liverpool Host Wolves in Boxing Day Clash")
+   - NO: "Complete Guide", "Everything You Need", "Ultimate Preview"
+   - YES: "[Team] Face [Team] in [League] Showdown", "[Team] Eye Victory Against [Opponent]"
+2. EXCERPT: 120-150 chars, factual summary
+3. CONTENT: 300-400 words MAX
+   - Lead paragraph: WHO, WHAT, WHEN, WHERE
+   - 2-3 short paragraphs with key facts
+   - Quote market odds naturally
+   - End with match time/broadcast info if known
+   - HTML: <p>, <strong> only. NO <h2>, <h3>, <ul>
+
+Respond in JSON:
+{
+  "title": "news headline here",
+  "excerpt": "short factual summary",
+  "content": "<p>Lead paragraph...</p><p>Second paragraph...</p>"
+}`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.6,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return {
+      title: result.title || `${match.homeTeam} vs ${match.awayTeam}: ${match.league} Match`,
+      excerpt: result.excerpt || `${match.homeTeam} face ${match.awayTeam} in ${match.league} action.`,
+      content: result.content || `<p>${match.homeTeam} will take on ${match.awayTeam} in ${match.league}.</p>`,
+    };
+  } catch (error) {
+    console.warn('[News Content] AI generation failed, using fallback:', error);
+    // Fallback: Create simple news-style content
+    return {
+      title: `${match.homeTeam} Face ${match.awayTeam} in ${match.league}`,
+      excerpt: `${match.homeTeam} host ${match.awayTeam} on ${dayName} in a key ${match.league} fixture.`,
+      content: `<p><strong>${match.homeTeam}</strong> will face <strong>${match.awayTeam}</strong> on ${dayName}, ${dateStr} in ${match.league} action.</p><p>The match promises to be an exciting encounter as both sides look to secure vital points.</p>`,
+    };
+  }
+}
+
+// ============================================
 // FEATURED IMAGE GENERATION (Team Logos)
 // ============================================
 
@@ -233,8 +374,10 @@ async function generateMatchFeaturedImage(
 </svg>`;
     
     // Upload SVG to Vercel Blob storage
+    // Add timestamp to avoid 409 conflict if regenerating for same match
+    const timestamp = Date.now();
     const blob = await put(
-      `blog/match-previews/${match.matchId}.svg`,
+      `blog/match-previews/${match.matchId}-${timestamp}.svg`,
       svgContent,
       {
         access: 'public',
@@ -716,21 +859,21 @@ ${internalLinksInfo}
 
 1. MATCH INFO BOX (at the start, after intro):
 <div class="match-info-box" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; padding: 24px; margin: 24px 0; border: 1px solid #334155;">
-  <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; text-align: center;">
-    <div>
-      <p style="font-size: 24px; font-weight: bold; color: #fff;">${match.homeTeam}</p>
-      <p style="color: #10b981; font-size: 14px;">HOME</p>
+  <div class="match-teams" style="display: flex; flex-direction: row; justify-content: space-around; align-items: center; text-align: center; gap: 16px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 120px;">
+      <p style="font-size: 22px; font-weight: bold; color: #fff; margin: 0;">${match.homeTeam}</p>
+      <p style="color: #10b981; font-size: 14px; margin: 4px 0 0 0;">HOME</p>
     </div>
-    <div style="font-size: 28px; color: #64748b;">VS</div>
-    <div>
-      <p style="font-size: 24px; font-weight: bold; color: #fff;">${match.awayTeam}</p>
-      <p style="color: #ef4444; font-size: 14px;">AWAY</p>
+    <div style="font-size: 24px; color: #64748b; font-weight: 300;">VS</div>
+    <div style="flex: 1; min-width: 120px;">
+      <p style="font-size: 22px; font-weight: bold; color: #fff; margin: 0;">${match.awayTeam}</p>
+      <p style="color: #ef4444; font-size: 14px; margin: 4px 0 0 0;">AWAY</p>
     </div>
   </div>
-  <div style="border-top: 1px solid #334155; margin-top: 16px; padding-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center;">
-    <div><p style="color: #94a3b8; font-size: 12px;">📅 Date</p><p style="color: #fff; font-weight: 500;">${dateStr.split(',')[0]}, ${dateStr.split(',')[1]}</p></div>
-    <div><p style="color: #94a3b8; font-size: 12px;">⏰ Kick-off</p><p style="color: #fff; font-weight: 500;">${timeStr}</p></div>
-    <div><p style="color: #94a3b8; font-size: 12px;">🏆 Competition</p><p style="color: #fff; font-weight: 500;">${match.league}</p></div>
+  <div class="match-details" style="border-top: 1px solid #334155; margin-top: 16px; padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; text-align: center;">
+    <div><p style="color: #94a3b8; font-size: 12px; margin: 0;">📅 Date</p><p style="color: #fff; font-weight: 500; margin: 4px 0 0 0;">${dateStr.split(',')[0]}, ${dateStr.split(',')[1]}</p></div>
+    <div><p style="color: #94a3b8; font-size: 12px; margin: 0;">⏰ Kick-off</p><p style="color: #fff; font-weight: 500; margin: 4px 0 0 0;">${timeStr}</p></div>
+    <div><p style="color: #94a3b8; font-size: 12px; margin: 0;">🏆 Competition</p><p style="color: #fff; font-weight: 500; margin: 4px 0 0 0;">${match.league}</p></div>
   </div>
 </div>
 
@@ -1062,6 +1205,10 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
     const content = await generatePreviewContent(match, keywords, research, analysis);
     totalCost += 0.03;
 
+    // Step 4.5: Replace any remaining placeholders with actual data
+    const processedContent = replacePlaceholders(content.content, match, analysis);
+    const processedExcerpt = replacePlaceholders(content.excerpt, match, analysis);
+
     // Step 5: Generate featured image with team logos
     console.log('[Match Preview] Step 5/6: Generating image...');
     let featuredImage: string;
@@ -1092,8 +1239,8 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
       data: {
         title: content.title,
         slug,
-        excerpt: content.excerpt,
-        content: content.content,
+        excerpt: processedExcerpt,
+        content: processedContent,
         metaTitle: content.metaTitle,
         metaDescription: content.metaDescription,
         focusKeyword: content.focusKeyword,
@@ -1115,6 +1262,48 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
         postType: 'MATCH_PREVIEW',
       },
     });
+
+    // Also create NEWS entry for Google News (news-style content, different URL)
+    console.log('[Match Preview] Generating news-style content for Google News...');
+    const newsContent = await generateNewsStyleContent(match, content);
+    
+    const newsSlug = `${match.homeTeam}-vs-${match.awayTeam}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    try {
+      await prisma.blogPost.create({
+        data: {
+          title: newsContent.title,
+          slug: `${newsSlug}-${Date.now()}`,
+          excerpt: newsContent.excerpt,
+          content: newsContent.content,
+          metaTitle: newsContent.title,
+          metaDescription: newsContent.excerpt,
+          focusKeyword: `${match.homeTeam} vs ${match.awayTeam}`,
+          featuredImage,
+          imageAlt,
+          category: 'Sports News',
+          tags: [match.sport, match.league, match.homeTeam, match.awayTeam],
+          status: 'PUBLISHED',
+          publishedAt: new Date(),
+          aiModel: AI_MODEL,
+          generationCost: 0.005, // Small cost for news generation
+          matchId: match.matchId,
+          matchDate: new Date(match.commenceTime),
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          sport: match.sport,
+          league: match.league,
+          postType: 'NEWS', // This goes to /news/ section for Google News
+        },
+      });
+      console.log(`[Match Preview] ✅ Also created NEWS entry: "${newsContent.title}"`);
+    } catch (newsError) {
+      console.warn('[Match Preview] Could not create NEWS entry:', newsError);
+    }
 
     const duration = Date.now() - startTime;
     console.log(`[Match Preview] ✅ Complete! Post ID: ${post.id}, Duration: ${duration}ms`);
@@ -1275,6 +1464,11 @@ export async function generatePreviewsForUpcomingMatches(
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.sportbotai.com');
 
+    // Only generate previews for matches within 48 hours (when we have good data)
+    const now = new Date();
+    const maxFutureTime = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48 hours from now
+    console.log(`[Batch Preview] Only processing matches between now and ${maxFutureTime.toISOString()}`);
+
     // Process each sport until we hit the limit
     for (const sport of sportsToProcess) {
       if (generated >= limit) {
@@ -1293,8 +1487,12 @@ export async function generatePreviewsForUpcomingMatches(
         continue;
       }
 
-      const allMatches = data.events;
-      console.log(`[Batch Preview] Found ${allMatches.length} matches in ${sport}`);
+      // Filter to only matches within 48 hours
+      const allMatches = data.events.filter((m: { commenceTime: string }) => {
+        const matchTime = new Date(m.commenceTime);
+        return matchTime >= now && matchTime <= maxFutureTime;
+      });
+      console.log(`[Batch Preview] Found ${allMatches.length} matches within 48h in ${sport} (${data.events.length} total)`);
 
       for (let i = 0; i < allMatches.length; i++) {
         // Stop if we've generated enough new posts
