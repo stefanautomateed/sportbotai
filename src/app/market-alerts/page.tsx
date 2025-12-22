@@ -916,8 +916,8 @@ export default function MarketAlertsPage() {
               </div>
             )}
             
-            {/* Expandable: All Other Matches - only when not searching */}
-            {!isSearching && remainingMatches.length > 0 && (
+            {/* Expandable: All Other Matches - only for premium users */}
+            {isPremium && !isSearching && remainingMatches.length > 0 && (
               <div className="mt-4">
                 <button 
                   onClick={() => setShowAllEdges(!showAllEdges)}
@@ -1002,8 +1002,8 @@ export default function MarketAlertsPage() {
               </div>
             )}
             
-            {/* Expandable: All Other Steam Moves - only when not searching */}
-            {!isSearching && allSteamMoves.length > 5 && (
+            {/* Expandable: All Other Steam Moves - only for premium users */}
+            {isPremium && !isSearching && allSteamMoves.length > 5 && (
               <div className="mt-4">
                 <button 
                   onClick={() => setShowAllSteam(!showAllSteam)}
