@@ -1108,6 +1108,13 @@ export async function GET(request: NextRequest) {
                                         predictedOutcome === 'away' ? impliedProbs.away :
                                         impliedProbs.draw || 0;
               
+              // Build value-focused reasoning that explains the edge, not just the match narrative
+              const pickedTeam = predictedOutcome === 'home' ? event.home_team : 
+                                 predictedOutcome === 'away' ? event.away_team : 'Draw';
+              const aiProb = (predictedProb * 100).toFixed(0);
+              const marketProb = (storedImpliedProb * 100).toFixed(0);
+              const valueReasoning = `VALUE PICK: ${pickedTeam} (${aiProb}% AI vs ${marketProb}% market = +${edge.toFixed(1)}% edge). ${analysis.story?.narrative || 'AI model analysis'}`;
+              
               await prisma.prediction.upsert({
                 where: { id: predictionId },
                 create: {
@@ -1119,7 +1126,7 @@ export async function GET(request: NextRequest) {
                   kickoff: matchDate,
                   type: 'MATCH_RESULT',
                   prediction: predictionText,
-                  reasoning: analysis.story?.narrative || 'AI model analysis',
+                  reasoning: valueReasoning,
                   conviction,
                   odds: predictedOdds,
                   impliedProb: storedImpliedProb * 100,
@@ -1132,7 +1139,7 @@ export async function GET(request: NextRequest) {
                 update: {
                   conviction,
                   odds: predictedOdds,
-                  reasoning: analysis.story?.narrative || 'AI model analysis',
+                  reasoning: valueReasoning,
                   // Update opening odds if this is a fresh prediction
                   openingOdds: predictedOdds,
                 },
