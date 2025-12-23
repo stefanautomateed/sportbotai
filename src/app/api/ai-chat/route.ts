@@ -1308,14 +1308,29 @@ function extractSearchQuery(message: string): { query: string; category: QueryCa
       break;
       
     case 'STATS':
+      // Get sport-specific season and sources
+      const statsSport = detectSport(query) || 'football';
+      const statsSeason = getCurrentSeasonForSport(statsSport);
+      const statsSourcesMap: Record<string, string> = {
+        basketball: 'basketball-reference ESPN NBA.com',
+        nba: 'basketball-reference ESPN NBA.com',
+        football: 'transfermarkt fbref sofascore',
+        soccer: 'transfermarkt fbref sofascore',
+        hockey: 'hockey-reference NHL.com ESPN',
+        nhl: 'hockey-reference NHL.com ESPN',
+        american_football: 'pro-football-reference ESPN NFL.com',
+        nfl: 'pro-football-reference ESPN NFL.com',
+      };
+      const statsSources = statsSourcesMap[statsSport] || 'ESPN sports-reference';
+      
       // Extract player name if mentioned and build better search query
       const statsPlayerMatch = query.match(/([A-Z][a-zćčšžđ]+(?:\s+[A-Z][a-zćčšžđ]+)+)|Filip\s+\w+|(\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b)/i);
       if (statsPlayerMatch) {
         const playerName = statsPlayerMatch[0];
-        // Search for current season stats from Transfermarkt, SofaScore, FBRef
-        query = `"${playerName}" 2025-2026 season stats goals assists current club team transfermarkt`;
+        // Search for current season stats with sport-specific sources
+        query = `"${playerName}" ${statsSeason} season stats current ${statsSources}`;
       } else {
-        query += ' 2025-2026 season statistics stats goals assists';
+        query += ` ${statsSeason} season statistics stats`;
       }
       recency = 'week';
       break;
@@ -1627,22 +1642,37 @@ DO NOT:
 - Be wishy-washy when the data is actually clear`;
     } else if (perplexityContext) {
       // For STATS queries, be extra strict about using only real-time data
-      if (queryCategory === 'STATS') {
+      if (queryCategory === 'STATS' || queryCategory === 'PLAYER' || queryCategory === 'PLAYER_PROP') {
         userContent = `USER QUESTION: ${message}
 
-⚠️ CRITICAL: The user is asking about CURRENT SEASON STATISTICS. Your training data is OUTDATED.
+🚨 CRITICAL WARNING: You are being asked about CURRENT SEASON statistics.
+Your training data is from 2023 or earlier - IT IS OUTDATED AND WRONG.
+You MUST use ONLY the real-time data below.
 
-REAL-TIME DATA (December 2025 - USE ONLY THIS):
+═══════════════════════════════════════════════════
+VERIFIED REAL-TIME DATA (from web search just now):
+═══════════════════════════════════════════════════
 ${perplexityContext}
+═══════════════════════════════════════════════════
 
-STRICT RULES:
-1. ONLY use the numbers from the REAL-TIME DATA above
-2. DO NOT use any statistics from your training data (it's from 2023 or earlier)
-3. If the real-time data doesn't have the exact stat requested, say "Based on the available data..." and give what you have
-4. NEVER guess or estimate numbers - only report what's in the real-time data
-5. Lead with the current stats, then add context
+ABSOLUTE RULES - NO EXCEPTIONS:
+1. Use ONLY the exact numbers shown in the REAL-TIME DATA above
+2. If it says "24.3 PPG" then say "24.3 PPG" - do NOT change it
+3. If the data doesn't include a specific stat, say "I couldn't find that specific stat"
+4. NEVER use numbers from your training data - they are WRONG for current season
+5. If no stats are in the real-time data, say "I couldn't find current season statistics for this player"
 
 RESPONSE FORMAT:
+- Lead with: "This season, [Player] is averaging [EXACT NUMBER FROM DATA ABOVE]..."
+- Include the source if mentioned in the data
+- Be brief and factual
+
+FORBIDDEN:
+- Making up numbers
+- Using "around", "approximately", "typically" for stats
+- Citing your training data for current stats
+- Saying different numbers than what's in the real-time data`;
+      } else {
 - Start with the CURRENT SEASON stat: "In the 2025-26 season, [Player] is averaging..."
 - Then add recent performance context
 - Keep it factual and concise`;
