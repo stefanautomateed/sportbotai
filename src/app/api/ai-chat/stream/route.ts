@@ -24,7 +24,11 @@ import { cacheGet, cacheSet, CACHE_KEYS, hashChatQuery, getChatTTL } from '@/lib
 import { checkChatRateLimit, getClientIp, CHAT_RATE_LIMITS } from '@/lib/rateLimit';
 import { prisma } from '@/lib/prisma';
 import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
+// Verified stats imports for all sports
 import { isStatsQuery, getVerifiedPlayerStats, formatVerifiedPlayerStats } from '@/lib/verified-nba-stats';
+import { isNFLStatsQuery, getVerifiedNFLPlayerStats, formatVerifiedNFLPlayerStats } from '@/lib/verified-nfl-stats';
+import { isNHLStatsQuery, getVerifiedNHLPlayerStats, formatVerifiedNHLPlayerStats } from '@/lib/verified-nhl-stats';
+import { isSoccerStatsQuery, getVerifiedSoccerPlayerStats, formatVerifiedSoccerPlayerStats } from '@/lib/verified-soccer-stats';
 
 // ============================================
 // TYPES
@@ -745,8 +749,10 @@ export async function POST(request: NextRequest) {
     const detectedSport = detectSport(message);
     
     // Skip cache for player stats queries to ensure verified stats are used
-    const isPlayerStatsQuery = /\b(average|averaging|ppg|rpg|apg|points|rebounds|assists|stats|statistics)\b/i.test(message) &&
-      /\b(player|embiid|jokic|lebron|curry|durant|wembanyama|tatum|doncic|giannis|morant)\b/i.test(message);
+    // This covers NBA, NFL, NHL, and Soccer player stats
+    const statsKeywords = /\b(average|averaging|ppg|rpg|apg|points|rebounds|assists|stats|statistics|goals|assists|touchdowns|yards|passing|rushing|receiving|saves|shutouts)\b/i;
+    const playerKeywords = /\b(player|embiid|jokic|lebron|curry|durant|wembanyama|tatum|doncic|giannis|morant|mahomes|allen|burrow|jackson|henry|mccaffrey|hill|jefferson|chase|kelce|mcdavid|crosby|matthews|draisaitl|ovechkin|haaland|salah|mbappe|bellingham|kane|ronaldo|messi)\b/i;
+    const isPlayerStatsQuery = statsKeywords.test(message) && playerKeywords.test(message);
     
     if (history.length === 0 && !isPlayerStatsQuery) {
       const cached = await cacheGet<CachedChatResponse>(cacheKey);
@@ -872,24 +878,60 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Step 1.6: Verified NBA Player Stats (bypasses Perplexity for accurate stats)
+          // Step 1.6: Verified Player Stats for ALL SPORTS (bypasses Perplexity for accurate stats)
           let verifiedPlayerStatsContext = '';
-          if (isStatsQuery(searchMessage)) {
-            console.log('[AI-Chat-Stream] Stats query detected, fetching verified stats...');
+          const isAnyStatsQuery = isStatsQuery(searchMessage) || isNFLStatsQuery(searchMessage) || isNHLStatsQuery(searchMessage) || isSoccerStatsQuery(searchMessage);
+          
+          if (isAnyStatsQuery) {
+            console.log('[AI-Chat-Stream] Stats query detected, determining sport...');
             console.log(`[AI-Chat-Stream] API_FOOTBALL_KEY configured: ${!!process.env.API_FOOTBALL_KEY}`);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🔍 Fetching verified player stats...' })}\n\n`));
             
-            const verifiedStatsResult = await getVerifiedPlayerStats(searchMessage);
-            if (verifiedStatsResult.success && verifiedStatsResult.data) {
-              const verifiedStats = verifiedStatsResult.data;
-              verifiedPlayerStatsContext = formatVerifiedPlayerStats(verifiedStats);
-              console.log(`[AI-Chat-Stream] ✅ Verified player stats: ${verifiedStats.playerFullName} - ${verifiedStats.stats.pointsPerGame} PPG`);
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found verified stats for ${verifiedStats.playerFullName}` })}\n\n`));
-              // Override Perplexity context if we have verified stats to prevent wrong data
+            // Try each sport in order of likelihood based on query
+            if (isStatsQuery(searchMessage)) {
+              // NBA stats
+              const verifiedStatsResult = await getVerifiedPlayerStats(searchMessage);
+              if (verifiedStatsResult.success && verifiedStatsResult.data) {
+                const stats = verifiedStatsResult.data;
+                verifiedPlayerStatsContext = formatVerifiedPlayerStats(stats);
+                console.log(`[AI-Chat-Stream] ✅ NBA stats: ${stats.playerFullName} - ${stats.stats.pointsPerGame} PPG`);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found NBA stats for ${stats.playerFullName}` })}\n\n`));
+              }
+            } else if (isNFLStatsQuery(searchMessage)) {
+              // NFL stats
+              const verifiedStatsResult = await getVerifiedNFLPlayerStats(searchMessage);
+              if (verifiedStatsResult.success && verifiedStatsResult.data) {
+                const stats = verifiedStatsResult.data;
+                verifiedPlayerStatsContext = formatVerifiedNFLPlayerStats(stats);
+                console.log(`[AI-Chat-Stream] ✅ NFL stats: ${stats.playerFullName}`);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found NFL stats for ${stats.playerFullName}` })}\n\n`));
+              }
+            } else if (isNHLStatsQuery(searchMessage)) {
+              // NHL stats
+              const verifiedStatsResult = await getVerifiedNHLPlayerStats(searchMessage);
+              if (verifiedStatsResult.success && verifiedStatsResult.data) {
+                const stats = verifiedStatsResult.data;
+                verifiedPlayerStatsContext = formatVerifiedNHLPlayerStats(stats);
+                console.log(`[AI-Chat-Stream] ✅ NHL stats: ${stats.playerFullName}`);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found NHL stats for ${stats.playerFullName}` })}\n\n`));
+              }
+            } else if (isSoccerStatsQuery(searchMessage)) {
+              // Soccer stats
+              const verifiedStatsResult = await getVerifiedSoccerPlayerStats(searchMessage);
+              if (verifiedStatsResult.success && verifiedStatsResult.data) {
+                const stats = verifiedStatsResult.data;
+                verifiedPlayerStatsContext = formatVerifiedSoccerPlayerStats(stats);
+                console.log(`[AI-Chat-Stream] ✅ Soccer stats: ${stats.playerFullName} - ${stats.stats.goals}G ${stats.stats.assists}A`);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found soccer stats for ${stats.playerFullName}` })}\n\n`));
+              }
+            }
+            
+            // If we got verified stats, override Perplexity context to prevent wrong data
+            if (verifiedPlayerStatsContext) {
               perplexityContext = '';
               citations = [];
             } else {
-              console.log(`[AI-Chat-Stream] ⚠️ Could not get verified player stats: ${verifiedStatsResult.error || 'unknown error'}`);
+              console.log('[AI-Chat-Stream] ⚠️ Could not get verified player stats, falling back to Perplexity');
             }
           }
 
