@@ -819,8 +819,21 @@ export async function POST(request: NextRequest) {
             const perplexity = getPerplexityClient();
             
             if (perplexity.isConfigured()) {
-              // Send status: searching
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: 'Searching real-time data...' })}\n\n`));
+              // Send category-specific status message
+              const statusMessages: Record<string, string> = {
+                'STATS': '🔍 Searching 2025-26 season statistics...',
+                'PLAYER_PROP': '📊 Fetching current player averages...',
+                'STANDINGS': '📋 Loading latest standings...',
+                'RESULT': '🏆 Checking recent results...',
+                'INJURY': '🏥 Checking injury reports...',
+                'TRANSFER': '📰 Searching transfer news...',
+                'FIXTURE': '📅 Looking up fixtures...',
+                'ROSTER': '👥 Loading current roster...',
+                'PLAYER': '🔎 Searching player info...',
+                'BETTING_ADVICE': '📈 Gathering performance data...',
+              };
+              const statusMsg = statusMessages[queryCategory] || 'Searching real-time data...';
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: statusMsg })}\n\n`));
               console.log('[AI-Chat-Stream] Fetching real-time context...');
               
               const searchResult = await perplexity.search(searchMessage, {
@@ -832,6 +845,10 @@ export async function POST(request: NextRequest) {
               if (searchResult.success && searchResult.content) {
                 perplexityContext = searchResult.content;
                 citations = searchResult.citations || [];
+                // Send found status for stats queries
+                if (queryCategory === 'STATS') {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '✅ Found current stats, analyzing...' })}\n\n`));
+                }
               }
             }
           }
@@ -907,17 +924,40 @@ export async function POST(request: NextRequest) {
           const hasContext = perplexityContext || dataLayerContext;
           
           if (hasContext) {
-            userContent = `USER QUESTION: ${message}`;
+            // For STATS queries, use strict real-time data instructions
+            if (queryCategory === 'STATS') {
+              userContent = `USER QUESTION: ${message}
+
+⚠️ CRITICAL: The user is asking about CURRENT SEASON STATISTICS. Your training data is OUTDATED.
+
+REAL-TIME DATA (December 2025 - USE ONLY THIS):
+${perplexityContext || 'No real-time data available'}
+${dataLayerContext ? `\nSTRUCTURED STATS:\n${dataLayerContext}` : ''}
+
+STRICT RULES:
+1. ONLY use the numbers from the REAL-TIME DATA above
+2. DO NOT use any statistics from your training data (it's from 2023 or earlier)
+3. If the real-time data doesn't have the exact stat requested, say "Based on the available data..." and give what you have
+4. NEVER guess or estimate numbers - only report what's in the real-time data
+5. Lead with the current stats, then add context
+
+RESPONSE FORMAT:
+- Start with the CURRENT SEASON stat: "In the 2025-26 season, [Player] is averaging..."
+- Then add recent performance context
+- Keep it factual and concise`;
+            } else {
+              userContent = `USER QUESTION: ${message}`;
             
-            if (dataLayerContext) {
-              userContent += `\n\nSTRUCTURED STATS (verified data):\n${dataLayerContext}`;
+              if (dataLayerContext) {
+                userContent += `\n\nSTRUCTURED STATS (verified data):\n${dataLayerContext}`;
+              }
+            
+              if (perplexityContext) {
+                userContent += `\n\nREAL-TIME NEWS & INFO:\n${perplexityContext}`;
+              }
+            
+              userContent += '\n\nIMPORTANT: Use ONLY the data provided above for current season stats. Your training data may be outdated. Be sharp and specific.';
             }
-            
-            if (perplexityContext) {
-              userContent += `\n\nREAL-TIME NEWS & INFO:\n${perplexityContext}`;
-            }
-            
-            userContent += '\n\nUse BOTH the structured stats AND real-time info to give a complete answer. Be sharp and specific.';
           }
           messages.push({ role: 'user', content: userContent });
 
