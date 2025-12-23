@@ -7,6 +7,7 @@ import { researchTopic } from './research';
 import { put } from '@vercel/blob';
 import { getTeamLogo, getLeagueLogo } from '@/lib/logos';
 import { getTeamRosterContext } from '@/lib/perplexity';
+import { getMultiSportEnrichedData } from '@/lib/sports-api';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -563,6 +564,20 @@ async function fetchMatchAnalysis(match: MatchInfo): Promise<MatchAnalysisData |
     if (existingPrediction) {
       console.log(`[Match Analysis] Using cached prediction for ${match.homeTeam} vs ${match.awayTeam}`);
       
+      // Fetch enriched data (form + H2H) separately - predictions don't store this
+      let enrichedData = null;
+      try {
+        enrichedData = await getMultiSportEnrichedData(
+          match.homeTeam,
+          match.awayTeam,
+          match.sport,
+          match.league
+        );
+        console.log(`[Match Analysis] Enriched data fetched: H2H=${enrichedData.headToHead?.length || 0}, homeForm=${enrichedData.homeForm?.length || 0}`);
+      } catch (error) {
+        console.warn('[Match Analysis] Failed to fetch enriched data:', error);
+      }
+      
       // Parse prediction to determine probabilities
       const isHomeWin = existingPrediction.prediction.includes('Home Win');
       const isAwayWin = existingPrediction.prediction.includes('Away Win');
@@ -590,6 +605,16 @@ async function fetchMatchAnalysis(match: MatchInfo): Promise<MatchAnalysisData |
         awayProb = (100 - drawProb) / 2;
       }
       
+      // Calculate H2H from enriched data if available
+      const h2hMatches = enrichedData?.headToHead || [];
+      const h2hHomeWins = h2hMatches.filter(m => m.homeScore > m.awayScore).length;
+      const h2hAwayWins = h2hMatches.filter(m => m.awayScore > m.homeScore).length;
+      const h2hDraws = h2hMatches.filter(m => m.homeScore === m.awayScore).length;
+      
+      // Extract form from enriched data
+      const homeForm = enrichedData?.homeForm || [];
+      const awayForm = enrichedData?.awayForm || [];
+      
       return {
         probabilities: {
           homeWin: homeProb,
@@ -603,9 +628,26 @@ async function fetchMatchAnalysis(match: MatchInfo): Promise<MatchAnalysisData |
         valueAssessment: existingPrediction.odds 
           ? `Odds of ${existingPrediction.odds.toFixed(2)} offer potential value based on our analysis.`
           : 'Value assessment pending odds data.',
-        homeForm: { wins: 0, draws: 0, losses: 0, trend: 'stable' as const },
-        awayForm: { wins: 0, draws: 0, losses: 0, trend: 'stable' as const },
-        headToHead: { homeWins: 0, draws: 0, awayWins: 0, summary: 'No historical data available' },
+        homeForm: { 
+          wins: homeForm.filter(m => m.result === 'W').length, 
+          draws: homeForm.filter(m => m.result === 'D').length, 
+          losses: homeForm.filter(m => m.result === 'L').length, 
+          trend: 'stable' as const 
+        },
+        awayForm: { 
+          wins: awayForm.filter(m => m.result === 'W').length, 
+          draws: awayForm.filter(m => m.result === 'D').length, 
+          losses: awayForm.filter(m => m.result === 'L').length, 
+          trend: 'stable' as const 
+        },
+        headToHead: { 
+          homeWins: h2hHomeWins, 
+          draws: h2hDraws, 
+          awayWins: h2hAwayWins, 
+          summary: h2hMatches.length > 0 
+            ? `Last ${h2hMatches.length} meetings: ${h2hHomeWins} home wins, ${h2hDraws} draws, ${h2hAwayWins} away wins`
+            : 'No historical data available' 
+        },
         injuries: { home: [], away: [] },
         narrative: existingPrediction.reasoning,
         marketInsights: existingPrediction.odds 
