@@ -462,7 +462,48 @@ export const STYLE_GUIDELINES = {
 // CORE PERSONA (shared across all modes) - AIXBT STYLE
 // ============================================
 
+// Get current date and season dynamically
+function getCurrentSeasonInfo(): string {
+  const now = new Date();
+  const month = now.getMonth(); // 0-11
+  const year = now.getFullYear();
+  
+  // NBA/NHL: Oct-June = current year to next year (e.g., 2025-2026)
+  // NFL: Sept-Feb = current year to next year
+  // Soccer: Aug-May = current year to next year
+  
+  let nbaHockeySeason: string;
+  let soccerSeason: string;
+  
+  if (month >= 9) { // Oct-Dec
+    nbaHockeySeason = `${year}-${year + 1}`;
+    soccerSeason = `${year}-${String(year + 1).slice(2)}`;
+  } else { // Jan-Sept
+    nbaHockeySeason = `${year - 1}-${year}`;
+    soccerSeason = `${year - 1}-${String(year).slice(2)}`;
+  }
+  
+  const dateStr = now.toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  return `
+CURRENT DATE: ${dateStr}
+CURRENT SEASONS:
+- NBA: ${nbaHockeySeason} season
+- NHL: ${nbaHockeySeason} season  
+- NFL: ${nbaHockeySeason} season
+- European Soccer (Premier League, La Liga, etc.): ${soccerSeason} season
+
+IMPORTANT: Always reference the CURRENT season above. Do NOT use outdated season data from your training.`;
+}
+
 const CORE_PERSONA = `You are SportBot, an AIXBT-style sports intelligence AI.
+
+${getCurrentSeasonInfo()}
 
 CORE IDENTITY:
 - Sharp, pattern-recognition obsessed
