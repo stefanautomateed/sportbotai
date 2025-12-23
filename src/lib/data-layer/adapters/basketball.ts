@@ -761,8 +761,9 @@ export class BasketballAdapter extends BaseSportAdapter {
     
     // Get current team from most recent game
     if (sortedGames.length > 0) {
-      teamId = String(sortedGames[0].team?.id || '');
-      teamName = sortedGames[0].team?.name || '';
+      const latestGame = sortedGames[0] as any;
+      teamId = String(latestGame.team?.id || '');
+      teamName = latestGame.team?.name || '';
     }
     
     for (const game of games) {

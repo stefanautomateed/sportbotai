@@ -12,7 +12,7 @@
  * 4. Strict response contract with source attribution
  */
 
-import { getAPISportsProvider, LEAGUE_IDS } from './data-layer/providers/api-sports';
+import { getAPISportsProvider } from './data-layer/providers/api-sports';
 
 // ============================================================================
 // Types
