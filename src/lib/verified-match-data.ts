@@ -34,6 +34,10 @@ import {
   getVerifiedSoccerPlayerStats, 
   isSoccerStatsQuery 
 } from './verified-soccer-stats';
+import { 
+  getVerifiedEuroleaguePlayerStats, 
+  isEuroleagueStatsQuery 
+} from './verified-euroleague-stats';
 
 // ============================================================================
 // Types
@@ -158,8 +162,8 @@ class SeasonNormalizer {
     
     const sportLower = sport.toLowerCase();
     
-    // NBA: Season runs Oct-June, format "2024-2025"
-    if (sportLower.includes('basketball') || sportLower === 'nba') {
+    // NBA & Euroleague: Season runs Oct-June, format "2024-2025"
+    if (sportLower.includes('basketball') || sportLower === 'nba' || sportLower === 'euroleague') {
       const seasonStart = currentMonth >= 10 ? currentYear : currentYear - 1;
       return `${seasonStart}-${seasonStart + 1}`;
     }

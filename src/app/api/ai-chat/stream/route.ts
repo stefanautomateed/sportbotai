@@ -29,6 +29,7 @@ import { isStatsQuery, getVerifiedPlayerStats, formatVerifiedPlayerStats } from 
 import { isNFLStatsQuery, getVerifiedNFLPlayerStats, formatVerifiedNFLPlayerStats } from '@/lib/verified-nfl-stats';
 import { isNHLStatsQuery, getVerifiedNHLPlayerStats, formatVerifiedNHLPlayerStats } from '@/lib/verified-nhl-stats';
 import { isSoccerStatsQuery, getVerifiedSoccerPlayerStats, formatVerifiedSoccerPlayerStats } from '@/lib/verified-soccer-stats';
+import { isEuroleagueStatsQuery, getVerifiedEuroleaguePlayerStats, formatVerifiedEuroleaguePlayerStats } from '@/lib/verified-euroleague-stats';
 
 // ============================================
 // TYPES
@@ -880,7 +881,7 @@ export async function POST(request: NextRequest) {
 
           // Step 1.6: Verified Player Stats for ALL SPORTS (bypasses Perplexity for accurate stats)
           let verifiedPlayerStatsContext = '';
-          const isAnyStatsQuery = isStatsQuery(searchMessage) || isNFLStatsQuery(searchMessage) || isNHLStatsQuery(searchMessage) || isSoccerStatsQuery(searchMessage);
+          const isAnyStatsQuery = isStatsQuery(searchMessage) || isNFLStatsQuery(searchMessage) || isNHLStatsQuery(searchMessage) || isSoccerStatsQuery(searchMessage) || isEuroleagueStatsQuery(searchMessage);
           
           if (isAnyStatsQuery) {
             console.log('[AI-Chat-Stream] Stats query detected, determining sport...');
@@ -888,7 +889,17 @@ export async function POST(request: NextRequest) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🔍 Fetching verified player stats...' })}\n\n`));
             
             // Try each sport in order of likelihood based on query
-            if (isStatsQuery(searchMessage)) {
+            // Check Euroleague BEFORE NBA to avoid false positives (Euroleague is more specific)
+            if (isEuroleagueStatsQuery(searchMessage)) {
+              // Euroleague stats
+              const verifiedStatsResult = await getVerifiedEuroleaguePlayerStats(searchMessage);
+              if (verifiedStatsResult.success && verifiedStatsResult.data) {
+                const stats = verifiedStatsResult.data;
+                verifiedPlayerStatsContext = formatVerifiedEuroleaguePlayerStats(stats);
+                console.log(`[AI-Chat-Stream] ✅ Euroleague stats: ${stats.playerFullName} - ${stats.stats.pointsPerGame} PPG`);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found Euroleague stats for ${stats.playerFullName}` })}\n\n`));
+              }
+            } else if (isStatsQuery(searchMessage)) {
               // NBA stats
               const verifiedStatsResult = await getVerifiedPlayerStats(searchMessage);
               if (verifiedStatsResult.success && verifiedStatsResult.data) {
