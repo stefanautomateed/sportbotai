@@ -1691,6 +1691,7 @@ export async function POST(request: NextRequest) {
     // Check if this is a verified stats query (NBA player/team stats)
     if (isStatsQuery(searchMessage)) {
       console.log('[AI-Chat] Detected stats query - using Verified NBA Stats service');
+      console.log('[AI-Chat] API_SPORTS_API_KEY configured:', !!process.env.API_SPORTS_API_KEY);
       
       // Extract season from message (handles "this season", "2024-25", etc.)
       const seasonMatch = searchMessage.match(/(?:this|current|last|previous|\d{4}[-/]\d{2,4})\s*season/i);
@@ -1704,6 +1705,7 @@ export async function POST(request: NextRequest) {
         dataLayerContext = formatVerifiedPlayerStats(stats);
         console.log(`[AI-Chat] ✅ Verified player stats: ${stats.playerFullName} - ${stats.stats.pointsPerGame} PPG (${stats.gamesPlayed} games)`);
       } else {
+        console.log(`[AI-Chat] ⚠️ Verified stats failed: ${playerResult.error}`);
         // Try team stats
         const teamResult = await getVerifiedTeamStats(searchMessage, seasonInput);
         

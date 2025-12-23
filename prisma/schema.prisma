@@ -319,33 +319,29 @@ model Prediction {
   league            String
   kickoff           DateTime
   type              CallType
-  prediction        String           // Winner prediction: "Home Win - Team A"
+  prediction        String
   reasoning         String
-  conviction        Int              // 1-10 based on probability confidence
-  odds              Float?           // Odds for the predicted winner
-  impliedProb       Float?           // AI probability for predicted winner
+  conviction        Int
+  odds              Float?
+  impliedProb       Float?
   tweetId           String?
   validationTweetId String?
-  outcome           CallOutcome      @default(PENDING)  // HIT/MISS for winner prediction
+  outcome           CallOutcome      @default(PENDING)
   actualResult      String?
   validatedAt       DateTime?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   actualScore       String?
   source            PredictionSource @default(PRE_ANALYZE)
-  
-  // VALUE BET TRACKING (separate from winner prediction)
-  valueBetSide      String?          // "HOME", "AWAY", "DRAW" - best value pick
-  valueBetOdds      Float?           // Odds for value bet
-  valueBetEdge      Float?           // Edge percentage (AI prob - market prob)
-  valueBetOutcome   CallOutcome?     // HIT/MISS for value bet (can differ from winner)
-  valueBetProfit    Float?           // Profit/loss from 1 unit bet
-  
-  // CLV Tracking - Closing Line Value
-  openingOdds       Float?           // Odds when prediction was made
-  closingOdds       Float?           // Odds at kickoff (fetched before match)
-  clvPercentage     Float?           // (closingProb - openingProb) / openingProb * 100
-  clvFetched        Boolean          @default(false) // Whether closing odds were fetched
+  closingOdds       Float?
+  clvFetched        Boolean          @default(false)
+  clvPercentage     Float?
+  openingOdds       Float?
+  valueBetEdge      Float?
+  valueBetOdds      Float?
+  valueBetOutcome   CallOutcome?
+  valueBetProfit    Float?
+  valueBetSide      String?
 
   @@index([matchId])
   @@index([outcome])
