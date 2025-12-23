@@ -56,6 +56,15 @@ interface ChatAnalytics {
   agentPostsCount: number;
 }
 
+interface ValueBetStats {
+  totalBets: number;
+  hits: number;
+  misses: number;
+  totalProfit: number;
+  roi: number;
+  avgWinningOdds?: number;
+  avgEdge?: number;
+}
 
 interface AIPredictionStats {
   totalPredictions: number;
@@ -76,13 +85,18 @@ interface AIPredictionStats {
     outcome: string;
     actualResult: string | null;
     createdAt: Date;
+    valueBetSide?: string | null;
+    valueBetOdds?: number | null;
+    valueBetEdge?: number | null;
+    valueBetOutcome?: string | null;
+    valueBetProfit?: number | null;
   }>;
   byLeague: Array<{ league: string; total: number; hits: number; accuracy: number }>;
   bySport: Array<{ sport: string; total: number; hits: number; accuracy: number }>;
   byConviction?: Array<{ level: string; total: number; hits: number; accuracy: number }>;
   byType?: Array<{ type: string; total: number; hits: number; accuracy: number }>;
+  valueBetStats?: ValueBetStats;
 }
-
 interface AdminDashboardProps {
   stats: Stats;
   recentUsers: RecentUser[];
@@ -608,30 +622,70 @@ export default function AdminDashboard({
         {/* AI Predictions Tab - Pre-Analyzed Match Predictions */}
         {activeTab === 'ai-predictions' && aiPredictionStats && (
           <div className="space-y-6">
-            {/* AI Prediction Overview Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              <div className="card p-4 border-green-500/30 bg-green-500/5">
-                <div className="text-3xl font-bold text-green-400">{aiPredictionStats.overallAccuracy}%</div>
-                <div className="text-sm text-text-secondary">Overall Accuracy</div>
-                <div className="text-xs text-text-muted mt-1">{aiPredictionStats.evaluatedCount} evaluated</div>
-              </div>
-              <div className="card p-4 border-green-500/30 bg-green-500/5">
-                <div className="text-3xl font-bold text-green-400">{aiPredictionStats.hitPredictions}</div>
-                <div className="text-sm text-text-secondary">Hits ✓</div>
-              </div>
-              <div className="card p-4 border-red-500/30 bg-red-500/5">
-                <div className="text-3xl font-bold text-red-400">{aiPredictionStats.missPredictions}</div>
-                <div className="text-sm text-text-secondary">Misses ✗</div>
-              </div>
-              <div className="card p-4 border-yellow-500/30 bg-yellow-500/5">
-                <div className="text-3xl font-bold text-yellow-400">{aiPredictionStats.pendingPredictions}</div>
-                <div className="text-sm text-text-secondary">Pending</div>
-              </div>
-              <div className="card p-4">
-                <div className="text-3xl font-bold text-text-primary">{aiPredictionStats.totalPredictions}</div>
-                <div className="text-sm text-text-secondary">Total Predictions</div>
+            {/* AI Prediction Overview Cards - Winner Accuracy */}
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary mb-3">🎯 Winner Prediction Accuracy</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="card p-4 border-green-500/30 bg-green-500/5">
+                  <div className="text-3xl font-bold text-green-400">{aiPredictionStats.overallAccuracy}%</div>
+                  <div className="text-sm text-text-secondary">Accuracy</div>
+                  <div className="text-xs text-text-muted mt-1">{aiPredictionStats.evaluatedCount} evaluated</div>
+                </div>
+                <div className="card p-4 border-green-500/30 bg-green-500/5">
+                  <div className="text-3xl font-bold text-green-400">{aiPredictionStats.hitPredictions}</div>
+                  <div className="text-sm text-text-secondary">Hits ✓</div>
+                </div>
+                <div className="card p-4 border-red-500/30 bg-red-500/5">
+                  <div className="text-3xl font-bold text-red-400">{aiPredictionStats.missPredictions}</div>
+                  <div className="text-sm text-text-secondary">Misses ✗</div>
+                </div>
+                <div className="card p-4 border-yellow-500/30 bg-yellow-500/5">
+                  <div className="text-3xl font-bold text-yellow-400">{aiPredictionStats.pendingPredictions}</div>
+                  <div className="text-sm text-text-secondary">Pending</div>
+                </div>
+                <div className="card p-4">
+                  <div className="text-3xl font-bold text-text-primary">{aiPredictionStats.totalPredictions}</div>
+                  <div className="text-sm text-text-secondary">Total</div>
+                </div>
               </div>
             </div>
+
+            {/* Value Bet ROI Stats */}
+            {aiPredictionStats.valueBetStats && aiPredictionStats.valueBetStats.totalBets > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary mb-3">💰 Value Bet ROI</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  <div className={`card p-4 ${aiPredictionStats.valueBetStats.roi >= 0 ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}`}>
+                    <div className={`text-3xl font-bold ${aiPredictionStats.valueBetStats.roi >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {aiPredictionStats.valueBetStats.roi >= 0 ? '+' : ''}{aiPredictionStats.valueBetStats.roi}%
+                    </div>
+                    <div className="text-sm text-text-secondary">ROI</div>
+                  </div>
+                  <div className={`card p-4 ${aiPredictionStats.valueBetStats.totalProfit >= 0 ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}`}>
+                    <div className={`text-3xl font-bold ${aiPredictionStats.valueBetStats.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {aiPredictionStats.valueBetStats.totalProfit >= 0 ? '+' : ''}{aiPredictionStats.valueBetStats.totalProfit}u
+                    </div>
+                    <div className="text-sm text-text-secondary">Profit (units)</div>
+                  </div>
+                  <div className="card p-4 border-green-500/30 bg-green-500/5">
+                    <div className="text-3xl font-bold text-green-400">{aiPredictionStats.valueBetStats.hits}</div>
+                    <div className="text-sm text-text-secondary">Value Hits</div>
+                  </div>
+                  <div className="card p-4 border-red-500/30 bg-red-500/5">
+                    <div className="text-3xl font-bold text-red-400">{aiPredictionStats.valueBetStats.misses}</div>
+                    <div className="text-sm text-text-secondary">Value Misses</div>
+                  </div>
+                  <div className="card p-4">
+                    <div className="text-3xl font-bold text-text-primary">{aiPredictionStats.valueBetStats.totalBets}</div>
+                    <div className="text-sm text-text-secondary">Total Bets</div>
+                  </div>
+                  <div className="card p-4">
+                    <div className="text-3xl font-bold text-text-primary">+{aiPredictionStats.valueBetStats.avgEdge || 0}%</div>
+                    <div className="text-sm text-text-secondary">Avg Edge</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Accuracy by Conviction & Type */}
             <div className="grid md:grid-cols-2 gap-6">

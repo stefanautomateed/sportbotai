@@ -245,6 +245,7 @@ async function getAIPredictionStats() {
       bySport,
       byConviction,
       byType,
+      valueBetStats,
     ] = await Promise.all([
       // Total predictions
       prisma.prediction.count(),
@@ -274,6 +275,11 @@ async function getAIPredictionStats() {
           outcome: true,
           actualResult: true,
           createdAt: true,
+          valueBetSide: true,
+          valueBetOdds: true,
+          valueBetEdge: true,
+          valueBetOutcome: true,
+          valueBetProfit: true,
         },
       }),
       
@@ -324,6 +330,9 @@ async function getAIPredictionStats() {
       
       // By prediction type (HOME, AWAY, DRAW)
       getTypeStats(),
+      
+      // Value bet ROI stats
+      getValueBetStats(),
     ]);
     
     const evaluatedCount = hitPredictions + missPredictions;
@@ -343,6 +352,7 @@ async function getAIPredictionStats() {
       bySport: bySport.sort((a, b) => b.total - a.total),
       byConviction,
       byType,
+      valueBetStats,
     };
   } catch (error) {
     console.error('Error fetching AI prediction stats:', error);
@@ -358,6 +368,7 @@ async function getAIPredictionStats() {
       bySport: [],
       byConviction: [],
       byType: [],
+      valueBetStats: { totalBets: 0, hits: 0, misses: 0, totalProfit: 0, roi: 0 },
     };
   }
 }
@@ -447,5 +458,52 @@ async function getTypeStats() {
     }));
   } catch {
     return [];
+  }
+}
+/**
+ * Get value bet ROI statistics
+ */
+async function getValueBetStats() {
+  try {
+    // Get all predictions with value bet data that have been evaluated
+    const predictions = await prisma.prediction.findMany({
+      where: { 
+        valueBetOutcome: { not: null },
+        valueBetProfit: { not: null },
+      },
+      select: { 
+        valueBetOutcome: true, 
+        valueBetProfit: true,
+        valueBetOdds: true,
+        valueBetEdge: true,
+      },
+    });
+    
+    const hits = predictions.filter(p => p.valueBetOutcome === 'HIT').length;
+    const misses = predictions.filter(p => p.valueBetOutcome === 'MISS').length;
+    const totalBets = hits + misses;
+    const totalProfit = predictions.reduce((sum, p) => sum + (p.valueBetProfit || 0), 0);
+    const roi = totalBets > 0 ? (totalProfit / totalBets) * 100 : 0; // ROI as percentage
+    
+    // Average odds and edge for winning bets
+    const winningBets = predictions.filter(p => p.valueBetOutcome === 'HIT');
+    const avgWinningOdds = winningBets.length > 0 
+      ? winningBets.reduce((sum, p) => sum + (p.valueBetOdds || 0), 0) / winningBets.length 
+      : 0;
+    const avgEdge = predictions.length > 0
+      ? predictions.reduce((sum, p) => sum + (p.valueBetEdge || 0), 0) / predictions.length
+      : 0;
+    
+    return {
+      totalBets,
+      hits,
+      misses,
+      totalProfit: Math.round(totalProfit * 100) / 100,
+      roi: Math.round(roi * 10) / 10,
+      avgWinningOdds: Math.round(avgWinningOdds * 100) / 100,
+      avgEdge: Math.round(avgEdge * 10) / 10,
+    };
+  } catch {
+    return { totalBets: 0, hits: 0, misses: 0, totalProfit: 0, roi: 0, avgWinningOdds: 0, avgEdge: 0 };
   }
 }

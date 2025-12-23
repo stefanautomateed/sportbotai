@@ -1195,7 +1195,7 @@ export async function GET(request: NextRequest) {
                 console.log(`[Pre-Analyze] Blog skipped: ${err.message}`);
               });
             } else {
-              console.log(`[Pre-Analyze] Skipped: ${matchRef} (edge: ${edge.toFixed(1)}% < ${minEdgeThreshold}% for ${sport.league})`);
+              console.log(`[Pre-Analyze] Skipped: ${matchRef} (prob: ${(winnerProb*100).toFixed(0)}% < ${(minProbThreshold*100).toFixed(0)}%, edge: ${valueBetEdge.toFixed(1)}%)`);
             }
           } catch (predError) {
             console.error(`[Pre-Analyze] Prediction creation failed:`, predError);
