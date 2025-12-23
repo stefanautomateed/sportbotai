@@ -1357,40 +1357,28 @@ function extractSearchQuery(message: string): { query: string; category: QueryCa
       break;
       
     case 'STATS':
-      // Get sport-specific season and stat terms
+      // Get sport-specific season
       const statsSport = detectSport(query) || 'football';
       const statsSeason = getCurrentSeasonForSport(statsSport);
-      // Sport-specific stat keywords (what matters for each sport)
-      const statsTermsMap: Record<string, string> = {
-        basketball: 'PPG RPG APG season averages',
-        nba: 'PPG RPG APG season averages',
-        football: 'goals assists this season',
-        soccer: 'goals assists this season',
-        hockey: 'goals assists points this season',
-        nhl: 'goals assists points this season',
-        american_football: 'passing yards touchdowns this season',
-        nfl: 'passing yards touchdowns this season',
-        tennis: 'wins losses ranking',
-        mma: 'wins losses record',
-        ufc: 'wins losses record',
-        baseball: 'batting average home runs',
-        mlb: 'batting average home runs',
-        f1: 'wins podiums points',
-        golf: 'wins ranking',
-        cricket: 'runs wickets',
-      };
-      const statsTerms = statsTermsMap[statsSport] || 'stats statistics';
       
-      // Extract player name if mentioned and build focused search query
+      // Extract player name if mentioned
       const statsPlayerMatch = query.match(/([A-Z][a-zćčšžđ]+(?:\s+[A-Z][a-zćčšžđ]+)+)|Filip\s+\w+|(\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b)/i);
+      
+      // Only use authoritative sources for NBA/basketball - they have accurate live stats
+      const isNBA = statsSport === 'basketball' || statsSport === 'nba';
+      
       if (statsPlayerMatch) {
         const playerName = statsPlayerMatch[0];
-        // Add current month to force recent results
-        query = `"${playerName}" ${statsSeason} ${statsTerms} ${currentMonth}`;
+        if (isNBA) {
+          // Force ESPN/NBA.com for NBA stats - they have accurate current season data
+          query = `"${playerName}" ${statsSeason} season stats PPG RPG APG (site:espn.com OR site:nba.com OR site:basketball-reference.com)`;
+        } else {
+          // Other sports - just add season context
+          query = `"${playerName}" ${statsSeason} season stats`;
+        }
       } else {
-        query += ` ${statsSeason} season stats ${currentMonth}`;
+        query += ` ${statsSeason} season stats`;
       }
-      // Use 'day' recency to get the most current stats
       recency = 'day';
       break;
       
