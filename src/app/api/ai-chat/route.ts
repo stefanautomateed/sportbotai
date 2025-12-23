@@ -1068,11 +1068,51 @@ function needsRealTimeSearch(message: string): boolean {
 /**
  * Build optimized search query based on routing decision
  */
+/**
+ * Get current season string based on sport and current date
+ * NBA/NHL: Oct-Jun = year-year+1 (e.g., 2024-25 for Oct 2024 - Jun 2025)
+ * Football (Soccer): Aug-May = year-year+1 (e.g., 2024-25)
+ * NFL: Sep-Feb = year-year+1
+ */
+function getCurrentSeasonForSport(sport: string): string {
+  const now = new Date();
+  const month = now.getMonth(); // 0-11
+  const year = now.getFullYear();
+  
+  // For most sports, season spans two calendar years
+  // If we're in the first half (Jan-Jun), we're in the previous year's season
+  // If we're in the second half (Jul-Dec), we're in the current year's season
+  
+  let seasonStartYear: number;
+  
+  if (sport === 'basketball' || sport === 'nba') {
+    // NBA: Oct-Jun. If Jan-Jun, season started previous year
+    seasonStartYear = (month >= 0 && month <= 5) ? year - 1 : year;
+  } else if (sport === 'hockey' || sport === 'nhl') {
+    // NHL: Oct-Jun. If Jan-Jun, season started previous year
+    seasonStartYear = (month >= 0 && month <= 5) ? year - 1 : year;
+  } else if (sport === 'american_football' || sport === 'nfl') {
+    // NFL: Sep-Feb. If Jan-Feb, season started previous year
+    seasonStartYear = (month >= 0 && month <= 1) ? year - 1 : year;
+  } else {
+    // Football/Soccer: Aug-May. If Jan-May, season started previous year
+    seasonStartYear = (month >= 0 && month <= 4) ? year - 1 : year;
+  }
+  
+  const seasonEndYear = (seasonStartYear + 1) % 100; // Get last 2 digits
+  return `${seasonStartYear}-${seasonEndYear.toString().padStart(2, '0')}`;
+}
+
 function buildOptimizedSearchQuery(message: string, route: RoutingDecision): string {
   const query = message
     .replace(/\?/g, '')
     .replace(/please|can you|could you|tell me|what do you think|i want to know/gi, '')
     .trim();
+  
+  // Detect sport for season context
+  const sport = detectSport(message) || 'football';
+  const currentSeason = getCurrentSeasonForSport(sport);
+  const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   
   // Extract player/team name for better search - ROBUST extraction
   // Try multiple patterns, case-insensitive
@@ -1107,6 +1147,22 @@ function buildOptimizedSearchQuery(message: string, route: RoutingDecision): str
     }
   }
   
+  // Sport-specific search sources
+  const sportSources: Record<string, string> = {
+    basketball: 'basketball-reference nba.com espn',
+    nba: 'basketball-reference nba.com espn',
+    football: 'fbref sofascore transfermarkt',
+    soccer: 'fbref sofascore transfermarkt',
+    hockey: 'hockey-reference nhl.com espn',
+    nhl: 'hockey-reference nhl.com espn',
+    american_football: 'pro-football-reference espn nfl.com',
+    nfl: 'pro-football-reference espn nfl.com',
+    tennis: 'atptour.com wtatennis.com espn',
+    mma: 'ufc.com sherdog tapology',
+  };
+  
+  const sources = sportSources[sport] || 'espn sofascore';
+  
   switch (route.source) {
     case 'GPT_ONLY':
       return ''; // No search needed
@@ -1121,28 +1177,28 @@ function buildOptimizedSearchQuery(message: string, route: RoutingDecision): str
       if (extractedName) {
         // For current status queries (where does X play)
         if (REALTIME_TRIGGERS.currentStatus.test(message)) {
-          return `"${extractedName}" 2025-2026 current club team transfermarkt sofascore`;
+          return `"${extractedName}" ${currentSeason} season current club team ${sources}`;
         }
-        // For stats queries (how many goals, season stats)
+        // For stats queries (how many goals/points, season stats)
         if (REALTIME_TRIGGERS.currentSeason.test(message)) {
-          return `"${extractedName}" 2025-26 goals scored season statistics fbref sofascore transfermarkt appearances matches`;
+          return `"${extractedName}" ${currentSeason} season statistics stats ${sources}`;
         }
         // For injury queries
         if (REALTIME_TRIGGERS.breakingNews.test(message)) {
-          return `"${extractedName}" injury news update December 2025`;
+          return `"${extractedName}" injury news update ${currentMonth}`;
         }
         // Default: combined current team + stats search
-        return `"${extractedName}" 2025-26 goals statistics fbref sofascore transfermarkt`;
+        return `"${extractedName}" ${currentSeason} season statistics ${sources}`;
       }
       // Default real-time enhancement
-      return `${query} ${route.recency === 'hour' ? 'today' : route.recency === 'day' ? 'December 2025' : '2025-2026'}`;
+      return `${query} ${route.recency === 'hour' ? 'today' : route.recency === 'day' ? currentMonth : currentSeason + ' season'}`;
       
     case 'HYBRID':
       // Use real-time with some Wikipedia context
       if (extractedName) {
-        return `"${extractedName}" 2025-2026 current team stats career transfermarkt soccerway`;
+        return `"${extractedName}" ${currentSeason} season current team stats career ${sources}`;
       }
-      return `${query} 2025-2026`;
+      return `${query} ${currentSeason} season`;
       
     default:
       return query;
