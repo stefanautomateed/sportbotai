@@ -13,7 +13,7 @@
  */
 
 import { DataLayer } from './data-layer';
-import { NormalizedPlayerStats, NormalizedPlayer, NormalizedTeamStats } from './data-layer/types';
+import { NormalizedPlayer } from './data-layer/types';
 
 // ============================================================================
 // Types

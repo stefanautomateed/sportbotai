@@ -879,16 +879,17 @@ export async function POST(request: NextRequest) {
             console.log(`[AI-Chat-Stream] API_FOOTBALL_KEY configured: ${!!process.env.API_FOOTBALL_KEY}`);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🔍 Fetching verified player stats...' })}\n\n`));
             
-            const verifiedStats = await getVerifiedPlayerStats(searchMessage);
-            if (verifiedStats) {
+            const verifiedStatsResult = await getVerifiedPlayerStats(searchMessage);
+            if (verifiedStatsResult.success && verifiedStatsResult.data) {
+              const verifiedStats = verifiedStatsResult.data;
               verifiedPlayerStatsContext = formatVerifiedPlayerStats(verifiedStats);
-              console.log(`[AI-Chat-Stream] ✅ Verified player stats: ${verifiedStats.playerFullName} - ${verifiedStats.stats.points} PPG`);
+              console.log(`[AI-Chat-Stream] ✅ Verified player stats: ${verifiedStats.playerFullName} - ${verifiedStats.stats.pointsPerGame} PPG`);
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found verified stats for ${verifiedStats.playerFullName}` })}\n\n`));
               // Override Perplexity context if we have verified stats to prevent wrong data
               perplexityContext = '';
               citations = [];
             } else {
-              console.log('[AI-Chat-Stream] ⚠️ Could not get verified player stats, using fallback');
+              console.log(`[AI-Chat-Stream] ⚠️ Could not get verified player stats: ${verifiedStatsResult.error || 'unknown error'}`);
             }
           }
 
