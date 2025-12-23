@@ -1691,7 +1691,7 @@ export async function POST(request: NextRequest) {
     // Check if this is a verified stats query (NBA player/team stats)
     if (isStatsQuery(searchMessage)) {
       console.log('[AI-Chat] Detected stats query - using Verified NBA Stats service');
-      console.log('[AI-Chat] API_SPORTS_API_KEY configured:', !!process.env.API_SPORTS_API_KEY);
+      console.log('[AI-Chat] API_FOOTBALL_KEY configured:', !!process.env.API_FOOTBALL_KEY);
       
       // Extract season from message (handles "this season", "2024-25", etc.)
       const seasonMatch = searchMessage.match(/(?:this|current|last|previous|\d{4}[-/]\d{2,4})\s*season/i);
