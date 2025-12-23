@@ -48,6 +48,7 @@ const PRE_ANALYZE_SPORTS = [
   { key: 'soccer_italy_serie_a', title: 'Serie A', league: 'Serie A', hasDraw: true },
   { key: 'soccer_france_ligue_one', title: 'Ligue 1', league: 'Ligue 1', hasDraw: true },
   { key: 'basketball_nba', title: 'NBA', league: 'NBA', hasDraw: false },
+  { key: 'basketball_euroleague', title: 'Euroleague', league: 'Euroleague', hasDraw: false },
   { key: 'americanfootball_nfl', title: 'NFL', league: 'NFL', hasDraw: false },
   { key: 'icehockey_nhl', title: 'NHL', league: 'NHL', hasDraw: false },
 ];
