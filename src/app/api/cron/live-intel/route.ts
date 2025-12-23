@@ -63,6 +63,10 @@ interface PredictionWithEdge {
   conviction: number; // 1-5 scale
   odds: number | null;
   impliedProb: number | null;
+  // Value bet tracking (may differ from winner prediction)
+  valueBetSide: string | null; // 'HOME' | 'AWAY' | 'DRAW'
+  valueBetOdds: number | null;
+  valueBetEdge: number | null;
 }
 
 // Smart hashtag mapping by sport/league
@@ -197,6 +201,9 @@ async function getHighConvictionPredictions(): Promise<PredictionWithEdge[]> {
         conviction: p.conviction,
         odds: p.odds,
         impliedProb: p.impliedProb,
+        valueBetSide: p.valueBetSide,
+        valueBetOdds: p.valueBetOdds,
+        valueBetEdge: p.valueBetEdge,
       };
     })
     .filter(p => !recentMatchRefs.has(`${p.homeTeam} vs ${p.awayTeam}`));
@@ -313,13 +320,28 @@ async function generatePostFromPrediction(prediction: PredictionWithEdge, catego
     // Step 4: Build prompt with computed analysis
     const matchContext = `${prediction.homeTeam} vs ${prediction.awayTeam} | ${prediction.league} | ${prediction.sport}`;
     
+    // Determine favorite and value side for clear narrative
+    const favoriteTeam = prediction.prediction.toLowerCase().includes('home') 
+      ? prediction.homeTeam 
+      : prediction.awayTeam;
+    const valueSideTeam = prediction.valueBetSide === 'HOME' 
+      ? prediction.homeTeam 
+      : prediction.valueBetSide === 'AWAY' 
+        ? prediction.awayTeam 
+        : null;
+    const hasContrarianValue = valueSideTeam && valueSideTeam !== favoriteTeam;
+    
     // Include the actual prediction reasoning for better content
+    // CRITICAL: Make it clear who is FAVORITE vs who has VALUE EDGE
     const predictionContext = `
 [PRE-ANALYZED PREDICTION]
+FAVORITE (most likely to win): ${favoriteTeam}
 Call: ${prediction.prediction}
 Conviction: ${prediction.conviction}/5
+${hasContrarianValue ? `
+VALUE EDGE: ${valueSideTeam} (underdog) at ${prediction.valueBetOdds?.toFixed(2) || 'N/A'} odds (+${prediction.valueBetEdge?.toFixed(1) || 'N/A'}% edge)
+NARRATIVE: ${favoriteTeam} is favored, but ${valueSideTeam} offers interesting value and could surprise.` : ''}
 Reasoning: ${prediction.reasoning}
-${prediction.odds ? `Odds: ${prediction.odds.toFixed(2)}` : ''}
 `;
     
     const prompt = buildAgentPostPromptWithAnalysis(
