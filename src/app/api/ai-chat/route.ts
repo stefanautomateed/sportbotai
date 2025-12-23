@@ -1765,8 +1765,8 @@ DO NOT:
 - Invent stats for players not in your LIVE DATA
 - Be wishy-washy when the data is actually clear`;
     } else if (perplexityContext) {
-      // For STATS queries, be extra strict about using only real-time data
-      if (queryCategory === 'STATS' || queryCategory === 'PLAYER' || queryCategory === 'PLAYER_PROP') {
+      // For STATS and PLAYER queries, be extra strict about using only real-time data
+      if (queryCategory === 'STATS' || queryCategory === 'PLAYER') {
         userContent = `USER QUESTION: ${message}
 
 🚨 CRITICAL WARNING: You are being asked about CURRENT SEASON statistics.
