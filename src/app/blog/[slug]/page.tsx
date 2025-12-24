@@ -75,30 +75,47 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const { post } = data;
 
   // Determine OG image URL for social sharing
-  // New posts have PNG images that work on Twitter/X
-  // Old posts have SVG images that don't work, so we fall back to /api/og
-  let ogImageUrl = post.featuredImage;
+  // Twitter/X requires PNG/JPG images with absolute URLs
+  // SVG images don't work on Twitter, so we use dynamic /api/og for all match previews
+  const baseUrl = 'https://www.sportbotai.com'; // Must be absolute URL for Twitter
   
-  // If no image or it's an SVG, use the dynamic /api/og generator
-  if (!ogImageUrl || ogImageUrl.endsWith('.svg')) {
-    if (post.homeTeam && post.awayTeam) {
-      const ogParams = new URLSearchParams({
-        home: post.homeTeam,
-        away: post.awayTeam,
-        league: post.league || post.sport || 'Match Preview',
-        verdict: 'AI Match Analysis',
-        date: post.matchDate ? new Date(post.matchDate).toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric', 
-          year: 'numeric' 
-        }) : '',
-      });
-      ogImageUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://sportbot.ai'}/api/og?${ogParams.toString()}`;
-    } else {
-      // Generic fallback for non-match posts
-      ogImageUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://sportbot.ai'}/api/og?home=${encodeURIComponent(post.title.split(' vs ')[0] || 'SportBot')}&away=${encodeURIComponent(post.title.split(' vs ')[1]?.split(' ')[0] || 'AI')}`;
-    }
+  let ogImageUrl: string;
+  
+  // Always use /api/og for match previews - it generates PNG that works on Twitter
+  // SVG images from Vercel Blob don't display on Twitter/X
+  if (post.homeTeam && post.awayTeam) {
+    const ogParams = new URLSearchParams({
+      home: post.homeTeam,
+      away: post.awayTeam,
+      league: post.league || post.sport || 'Match Preview',
+      verdict: 'AI Match Analysis',
+      date: post.matchDate ? new Date(post.matchDate).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      }) : '',
+    });
+    ogImageUrl = `${baseUrl}/api/og?${ogParams.toString()}`;
+  } else if (post.featuredImage && !post.featuredImage.endsWith('.svg')) {
+    // Use existing PNG/JPG image if available
+    ogImageUrl = post.featuredImage.startsWith('http') 
+      ? post.featuredImage 
+      : `${baseUrl}${post.featuredImage}`;
+  } else {
+    // Generic fallback for non-match posts
+    const titleParts = post.title.split(' vs ');
+    ogImageUrl = `${baseUrl}/api/og?home=${encodeURIComponent(titleParts[0] || 'SportBot')}&away=${encodeURIComponent(titleParts[1]?.split(' ')[0] || 'AI')}`;
   }
+
+  // Build proper image object for OG/Twitter with dimensions
+  const ogImage = {
+    url: ogImageUrl,
+    width: 1200,
+    height: 630,
+    alt: post.homeTeam && post.awayTeam 
+      ? `${post.homeTeam} vs ${post.awayTeam} - Match Preview` 
+      : post.title,
+  };
 
   return {
     title: post.metaTitle || `${post.title} | SportBot AI Blog`,
@@ -112,13 +129,13 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       description: post.metaDescription || post.excerpt,
       type: 'article',
       publishedTime: post.publishedAt?.toISOString(),
-      images: ogImageUrl ? [ogImageUrl] : [],
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.metaTitle || post.title,
       description: post.metaDescription || post.excerpt,
-      images: ogImageUrl ? [ogImageUrl] : [],
+      images: [ogImage],
     },
   };
 }
