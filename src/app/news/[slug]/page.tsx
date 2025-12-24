@@ -20,7 +20,6 @@ interface NewsArticlePageProps {
 const AUTHOR = {
   name: 'SportBot AI Editorial',
   url: `${SITE_CONFIG.url}/about`,
-  image: `${SITE_CONFIG.url}/team/sportbot-editorial.png`,
 };
 
 interface RelatedArticle {
@@ -121,10 +120,8 @@ export async function generateMetadata({ params }: NewsArticlePageProps): Promis
     keywords: post.tags.join(', '),
     authors: [{ name: AUTHOR.name, url: AUTHOR.url }],
     alternates: {
-      // Canonical points to blog version to avoid duplicate content
-      // Google News bot sees /news/ (we block /blog/ for Googlebot-News in robots.ts)
-      // Regular Google indexes /blog/ as canonical
-      canonical: `https://www.sportbotai.com/blog/${slug}`,
+      // Canonical for news section - Google News indexes this URL
+      canonical: `https://www.sportbotai.com/news/${slug}`,
     },
     openGraph: {
       title: post.metaTitle || displayTitle,

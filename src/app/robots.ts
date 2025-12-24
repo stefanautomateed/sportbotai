@@ -125,7 +125,7 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: [
       `${baseUrl}/sitemap.xml`,
-      `${baseUrl}/news-sitemap.xml`,  // Google News sitemap
+      `${baseUrl}/news/sitemap.xml`,  // Google News sitemap
     ],
     host: baseUrl,
   };
