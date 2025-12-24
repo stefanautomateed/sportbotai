@@ -729,16 +729,17 @@ export async function POST(request: NextRequest) {
       const hoursUntilKickoff = (matchDate.getTime() - now.getTime()) / (1000 * 60 * 60);
       
       if (hoursUntilKickoff > 48) {
-        const daysUntilKickoff = Math.ceil(hoursUntilKickoff / 24);
         const availableDate = new Date(matchDate.getTime() - 48 * 60 * 60 * 1000);
+        const hoursUntilAvailable = (availableDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+        const daysUntilAvailable = Math.ceil(hoursUntilAvailable / 24);
         
-        console.log(`[Analyze] Match too far away: ${hoursUntilKickoff.toFixed(1)}h (${daysUntilKickoff} days)`);
+        console.log(`[Analyze] Match too far away: ${hoursUntilKickoff.toFixed(1)}h until kickoff, ${hoursUntilAvailable.toFixed(1)}h until available`);
         
         return NextResponse.json({
           success: false,
           tooFarAway: true,
           hoursUntilKickoff,
-          daysUntilKickoff,
+          daysUntilKickoff: daysUntilAvailable, // Days until AVAILABLE, not kickoff
           availableDate: availableDate.toISOString(),
           matchInfo: {
             homeTeam: normalizedRequest.matchData.homeTeam,
@@ -747,7 +748,7 @@ export async function POST(request: NextRequest) {
             sport: normalizedRequest.matchData.sport,
             matchDate: normalizedRequest.matchData.matchDate,
           },
-          message: `Analysis available ${daysUntilKickoff} day${daysUntilKickoff > 1 ? 's' : ''} before kickoff`,
+          message: `Analysis available in ${daysUntilAvailable} day${daysUntilAvailable > 1 ? 's' : ''}`,
           reason: 'Our AI analysis becomes available 48 hours before kickoff when we have the most accurate data (injuries, lineups, latest odds).',
         });
       }

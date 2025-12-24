@@ -174,7 +174,10 @@ export default function MatchPreviewClient({ matchId }: MatchPreviewClientProps)
     const kickoffDate = new Date(parsedMatch.kickoff);
     const now = new Date();
     const hoursUntilKickoff = (kickoffDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-    const daysUntilKickoff = Math.ceil(hoursUntilKickoff / 24);
+    // Calculate when analysis becomes available (48h before kickoff)
+    const availableDate = new Date(kickoffDate.getTime() - 48 * 60 * 60 * 1000);
+    const hoursUntilAvailable = (availableDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const daysUntilKickoff = Math.ceil(hoursUntilAvailable / 24); // Days until AVAILABLE, not kickoff
     return {
       hoursUntilKickoff,
       daysUntilKickoff,
