@@ -409,7 +409,10 @@ async function updatePredictionResults() {
       const isDraw = result.homeScore === result.awayScore;
       const predLower = prediction.prediction?.toLowerCase() || '';
       
-      // Evaluate the prediction
+      // Determine actual winner for value bet evaluation
+      const actualWinner = homeWon ? 'HOME' : isDraw ? 'DRAW' : 'AWAY';
+      
+      // Evaluate the main prediction
       let wasAccurate = false;
       const homeKeyword = homeTeam.split(' ').pop()?.toLowerCase() || '';
       const awayKeyword = awayTeam.split(' ').pop()?.toLowerCase() || '';
@@ -429,6 +432,24 @@ async function updatePredictionResults() {
       
       const actualResult = homeWon ? 'Home Win' : isDraw ? 'Draw' : 'Away Win';
       
+      // Evaluate value bet if present
+      let valueBetOutcome: 'HIT' | 'MISS' | null = null;
+      let valueBetProfit: number | null = null;
+      
+      // Get valueBet fields from prediction (need to fetch full record)
+      const fullPred = await prisma.prediction.findUnique({
+        where: { id: prediction.id },
+        select: { valueBetSide: true, valueBetOdds: true }
+      });
+      
+      if (fullPred?.valueBetSide && fullPred?.valueBetOdds) {
+        const valueBetWon = fullPred.valueBetSide === actualWinner;
+        valueBetOutcome = valueBetWon ? 'HIT' : 'MISS';
+        // Profit: if won, profit = (odds - 1); if lost, profit = -1 (1 unit stake)
+        valueBetProfit = valueBetWon ? (fullPred.valueBetOdds - 1) : -1;
+        console.log(`    Value bet: ${fullPred.valueBetSide} @ ${fullPred.valueBetOdds.toFixed(2)} -> ${valueBetOutcome} (${valueBetProfit > 0 ? '+' : ''}${valueBetProfit.toFixed(2)} units)`);
+      }
+      
       await prisma.prediction.update({
         where: { id: prediction.id },
         data: {
@@ -436,6 +457,9 @@ async function updatePredictionResults() {
           actualScore: `${result.homeScore}-${result.awayScore}`,
           outcome: wasAccurate ? 'HIT' : 'MISS',
           validatedAt: new Date(),
+          // Value bet fields
+          ...(valueBetOutcome && { valueBetOutcome }),
+          ...(valueBetProfit !== null && { valueBetProfit }),
         },
       });
       
