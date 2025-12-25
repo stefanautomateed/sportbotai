@@ -33,7 +33,13 @@ const SPORTS = [
       { key: 'soccer_germany_bundesliga', name: 'Bundesliga' },
       { key: 'soccer_italy_serie_a', name: 'Serie A' },
       { key: 'soccer_france_ligue_one', name: 'Ligue 1' },
+      { key: 'soccer_portugal_primeira_liga', name: 'Primeira Liga' },
+      { key: 'soccer_netherlands_eredivisie', name: 'Eredivisie' },
+      { key: 'soccer_turkey_super_league', name: 'Süper Lig' },
+      { key: 'soccer_belgium_first_div', name: 'Jupiler Pro League' },
+      { key: 'soccer_spl', name: 'Scottish Premiership' },
       { key: 'soccer_uefa_champs_league', name: 'Champions League' },
+      { key: 'soccer_uefa_europa_league', name: 'Europa League' },
     ],
   },
   {
