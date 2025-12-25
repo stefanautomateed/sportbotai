@@ -164,14 +164,11 @@ export default function StandingsTable({
         .map(s => s.position);
       
       if (highlightPositions.length > 0) {
-        const minPos = Math.max(1, Math.min(...highlightPositions) - 2);
+        // Show continuous range from top to 2 positions below the lowest highlighted team
         const maxPos = Math.min(standings.length, Math.max(...highlightPositions) + 2);
         
-        // Show top 3 + context around highlighted teams
-        const contextRange = standings.filter(s => 
-          s.position <= 3 || 
-          (s.position >= minPos && s.position <= maxPos)
-        );
+        // Show from position 1 to maxPos (continuous, no gaps)
+        const contextRange = standings.filter(s => s.position <= maxPos);
         
         // If no limit or not collapsible, show all
         if (!maxRows && !collapsible) {
