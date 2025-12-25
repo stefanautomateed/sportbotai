@@ -31,7 +31,8 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 60; // Revalidate every minute for fresh news
+// Force dynamic rendering - always show latest posts
+export const dynamic = 'force-dynamic';
 
 interface NewsPageProps {
   searchParams: Promise<{

@@ -22,7 +22,8 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 import { getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
 import { getNFLMatchInjuries } from '@/lib/sports-api';
-import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
+import { normalizeSport } from '@/lib/data-layer/bridge';
+import { getUnifiedMatchData, type MatchIdentifier } from '@/lib/unified-match-service';
 import { normalizeToUniversalSignals, formatSignalsForAI, getSignalSummary, type RawMatchInput } from '@/lib/universal-signals';
 import { analyzeMarket, type MarketIntel, type OddsData } from '@/lib/value-detection';
 import { getDataLayer } from '@/lib/data-layer';
@@ -319,17 +320,40 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const isSoccer = !['basketball', 'basketball_nba', 'basketball_euroleague', 'euroleague', 'nba', 'americanfootball', 'americanfootball_nfl', 'nfl', 'icehockey', 'icehockey_nhl', 'nhl', 'hockey', 'baseball', 'mlb', 'mma', 'ufc']
       .includes(matchInfo.sport.toLowerCase());
 
-    // ALL sports now use DataLayer for core data (form, H2H, stats)
+    // ALL sports now use Unified Match Service for core data (form, H2H, stats)
     const normalizedSport = normalizeSport(matchInfo.sport);
-    console.log(`[Match-Preview] Using DataLayer for ${matchInfo.sport} (normalized: ${normalizedSport})`);
+    console.log(`[Match-Preview] Using UnifiedMatchService for ${matchInfo.sport} (normalized: ${normalizedSport})`);
     
     try {
-      enrichedData = await getEnrichedMatchDataV2(
-        matchInfo.homeTeam,
-        matchInfo.awayTeam,
-        matchInfo.sport,
-        matchInfo.league
-      );
+      const matchId: MatchIdentifier = {
+        homeTeam: matchInfo.homeTeam,
+        awayTeam: matchInfo.awayTeam,
+        sport: matchInfo.sport,
+        league: matchInfo.league,
+      };
+      
+      const unifiedData = await getUnifiedMatchData(matchId, { includeOdds: false });
+      
+      // Map to expected format (DATABASE maps to CACHE for compatibility)
+      const mappedDataSource: 'API_SPORTS' | 'CACHE' | 'UNAVAILABLE' = 
+        unifiedData.enrichedData.dataSource === 'DATABASE' ? 'CACHE' : unifiedData.enrichedData.dataSource;
+      
+      enrichedData = {
+        sport: matchInfo.sport,
+        homeForm: unifiedData.enrichedData.homeForm,
+        awayForm: unifiedData.enrichedData.awayForm,
+        headToHead: unifiedData.enrichedData.headToHead,
+        h2hSummary: unifiedData.enrichedData.h2hSummary ? {
+          totalMatches: unifiedData.enrichedData.h2hSummary.totalMatches,
+          homeWins: unifiedData.enrichedData.h2hSummary.homeWins,
+          awayWins: unifiedData.enrichedData.h2hSummary.awayWins,
+          draws: unifiedData.enrichedData.h2hSummary.draws,
+        } : null,
+        homeStats: unifiedData.enrichedData.homeStats,
+        awayStats: unifiedData.enrichedData.awayStats,
+        dataSource: mappedDataSource,
+      };
+      
       console.log(`[Match-Preview] ${matchInfo.sport} data fetched in ${Date.now() - startTime}ms:`, {
         dataSource: enrichedData.dataSource,
         homeFormGames: enrichedData.homeForm?.length || 0,

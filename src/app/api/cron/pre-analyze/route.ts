@@ -2,6 +2,7 @@
  * Pre-Analyze Matches Cron Job
  * 
  * Runs daily to pre-analyze ALL upcoming matches across major sports.
+ * Uses Unified Match Service for consistent data across all components.
  * This ensures:
  * 1. INSTANT loading for all users (pre-warmed cache)
  * 2. Consistent edges between Market Alerts and Analyzer (same AI model)
@@ -26,10 +27,15 @@ import { theOddsClient, OddsApiEvent } from '@/lib/theOdds';
 import { generateMatchPreview } from '@/lib/blog/match-generator';
 import { cacheSet, cacheGet, CACHE_TTL, CACHE_KEYS } from '@/lib/cache';
 import { analyzeMarket, type MarketIntel, type OddsData, oddsToImpliedProb } from '@/lib/value-detection';
-import { getEnrichedMatchDataV2, normalizeSport, getMatchRostersV2 } from '@/lib/data-layer/bridge';
+import { normalizeSport, getMatchRostersV2 } from '@/lib/data-layer/bridge';
 import { getEnrichedMatchData, getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
 import { normalizeToUniversalSignals, formatSignalsForAI, getSignalSummary, type RawMatchInput } from '@/lib/universal-signals';
 import { ANALYSIS_PERSONALITY } from '@/lib/sportbot-brain';
+import { 
+  getUnifiedMatchData,
+  type MatchIdentifier,
+  type OddsInfo,
+} from '@/lib/unified-match-service';
 import OpenAI from 'openai';
 
 export const maxDuration = 300; // 5 minute timeout for batch processing
@@ -531,28 +537,32 @@ async function runQuickAnalysis(
   };
 } | null> {
   try {
-    // Determine if soccer or other sport
-    const isNonSoccer = !sport.startsWith('soccer_');
-    
     // Determine sport type for roster lookup
     const rosterSport = sport.includes('basketball') ? 'basketball' as const
       : sport.includes('hockey') ? 'hockey' as const
       : sport.includes('american') ? 'american_football' as const
       : null;
     
-    // Get enriched match data, injuries, referee, and roster context in parallel
-    const [enrichedDataRaw, injuryInfo, refereeContext, rosterContext] = await Promise.all([
-      isNonSoccer 
-        ? getEnrichedMatchDataV2(homeTeam, awayTeam, sport, league)
-        : getEnrichedMatchData(homeTeam, awayTeam, league),
+    // Build match identifier for unified service
+    const matchId: MatchIdentifier = { homeTeam, awayTeam, sport, league };
+    const oddsInfo: OddsInfo = {
+      home: odds.home,
+      away: odds.away,
+      draw: odds.draw,
+    };
+    
+    // Get enriched match data through UNIFIED SERVICE (consistent 4-layer data across app)
+    // Also get injuries, referee, and roster context in parallel
+    const [unifiedData, injuryInfo, refereeContext, rosterContext] = await Promise.all([
+      getUnifiedMatchData(matchId, { odds: oddsInfo, includeOdds: false }),
       getInjuryInfo(homeTeam, awayTeam, sport, league),
       getRefereeContext(homeTeam, awayTeam, sport, league),
       // Fetch real-time roster context for NBA/NHL/NFL to avoid outdated AI training data
       rosterSport ? getRosterContextCached(homeTeam, awayTeam, rosterSport, league) : Promise.resolve(null),
     ]);
     
-    // Cast to any for cross-sport compatibility (different data shapes)
-    const enrichedData = enrichedDataRaw as any;
+    // Use enriched data from unified service for cross-sport compatibility
+    const enrichedData = unifiedData.enrichedData as any;
     
     // Build form strings
     const homeFormStr = enrichedData.homeForm?.map((m: any) => m.result).join('') || '-----';

@@ -59,9 +59,13 @@ import {
 } from '@/lib/config/systemPrompt';
 import { canUserAnalyze, incrementAnalysisCount } from '@/lib/auth';
 import { 
-  getEnrichedMatchDataV2, 
   normalizeSport,
 } from '@/lib/data-layer/bridge';
+import { 
+  getUnifiedMatchData,
+  type MatchIdentifier,
+  type OddsInfo as UnifiedOddsInfo,
+} from '@/lib/unified-match-service';
 import { isSportSupported, getDataSourceLabel, type MultiSportEnrichedData } from '@/lib/sports-api';
 import {
   cacheGet,
@@ -831,7 +835,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ========================================
-    // FETCH REAL DATA (multi-sport support)
+    // FETCH REAL DATA (via Unified Match Service)
     // ========================================
     let enrichedData: MultiSportEnrichedData | null = null;
     const sportInput = normalizedRequest.matchData.sport;
@@ -840,15 +844,39 @@ export async function POST(request: NextRequest) {
       try {
         const dataSource = getDataSourceLabel(sportInput);
         const normalizedSport = normalizeSport(sportInput);
-        console.log(`[${dataSource}] Fetching real data via DataLayer for ${sportInput} (normalized: ${normalizedSport})...`);
+        console.log(`[${dataSource}] Fetching real data via UnifiedMatchService for ${sportInput} (normalized: ${normalizedSport})...`);
         console.log(`[${dataSource}] Teams: "${normalizedRequest.matchData.homeTeam}" vs "${normalizedRequest.matchData.awayTeam}"`);
         
-        enrichedData = await getEnrichedMatchDataV2(
-          normalizedRequest.matchData.homeTeam,
-          normalizedRequest.matchData.awayTeam,
-          normalizedSport,
-          normalizedRequest.matchData.league
-        );
+        // Use Unified Match Service for consistent caching across all routes
+        const matchId: MatchIdentifier = {
+          homeTeam: normalizedRequest.matchData.homeTeam,
+          awayTeam: normalizedRequest.matchData.awayTeam,
+          sport: normalizedSport,
+          league: normalizedRequest.matchData.league,
+        };
+        
+        const unifiedData = await getUnifiedMatchData(matchId, { includeOdds: false });
+        
+        // Map unified data to expected enrichedData format
+        // Filter dataSource to match expected type (DATABASE maps to CACHE)
+        const mappedDataSource: 'API_SPORTS' | 'CACHE' | 'UNAVAILABLE' = 
+          unifiedData.enrichedData.dataSource === 'DATABASE' ? 'CACHE' : unifiedData.enrichedData.dataSource;
+        
+        enrichedData = {
+          sport: normalizedSport,
+          homeForm: unifiedData.enrichedData.homeForm,
+          awayForm: unifiedData.enrichedData.awayForm,
+          headToHead: unifiedData.enrichedData.headToHead,
+          h2hSummary: unifiedData.enrichedData.h2hSummary ? {
+            totalMatches: unifiedData.enrichedData.h2hSummary.totalMatches,
+            homeWins: unifiedData.enrichedData.h2hSummary.homeWins,
+            awayWins: unifiedData.enrichedData.h2hSummary.awayWins,
+            draws: unifiedData.enrichedData.h2hSummary.draws,
+          } : null,
+          homeStats: unifiedData.enrichedData.homeStats,
+          awayStats: unifiedData.enrichedData.awayStats,
+          dataSource: mappedDataSource,
+        };
         
         // Log what data we got back
         console.log(`[${dataSource}] Data received:`, {

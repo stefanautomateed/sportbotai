@@ -1,13 +1,19 @@
 // Match Blog Generator
 // Creates pre-match preview and post-match recap blog posts for upcoming matches
+// 
+// Uses Unified Match Service for consistent data across all app components
 
 import OpenAI from 'openai';
 import { prisma } from '@/lib/prisma';
 import { put } from '@vercel/blob';
 import { getTeamLogo, getLeagueLogo } from '@/lib/logos';
-import { getMultiSportEnrichedData } from '@/lib/sports-api';
 import { getMatchRostersV2, normalizeSport } from '@/lib/data-layer/bridge';
 import type { Sport } from '@/lib/data-layer/types';
+import { 
+  getUnifiedMatchData, 
+  type UnifiedMatchData,
+  type ComputedAnalysis,
+} from '@/lib/unified-match-service';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -433,260 +439,116 @@ function normalizeTeamName(name: string): string {
     .trim();
 }
 
+/**
+ * Fetch match analysis using the Unified Match Service
+ * 
+ * This ensures blogs use the same data pipeline as:
+ * - Pre-analyzer cron
+ * - AI Chat analysis
+ * - Agent posts
+ * - News/Match previews
+ */
 async function fetchMatchAnalysis(match: MatchInfo): Promise<MatchAnalysisData | null> {
   try {
-    // First, check if we have a cached prediction from pre-analyze
-    // Try by matchId first (exact match)
-    let existingPrediction = await prisma.prediction.findFirst({
-      where: {
-        matchId: match.matchId,
-        outcome: 'PENDING',
+    console.log(`[Match Analysis] Fetching via Unified Match Service: ${match.homeTeam} vs ${match.awayTeam}`);
+    
+    // Use the Unified Match Service (same as all other components)
+    const unifiedData = await getUnifiedMatchData(
+      {
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        sport: match.sportKey || match.sport,
+        league: match.league,
+        kickoff: match.commenceTime,
       },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    // If not found by matchId, try by matchName (more stable)
-    if (!existingPrediction) {
-      const matchName = `${match.homeTeam} vs ${match.awayTeam}`;
-      existingPrediction = await prisma.prediction.findFirst({
-        where: {
-          matchName: matchName,
-          outcome: 'PENDING',
-        },
-        orderBy: { createdAt: 'desc' },
-      });
-      
-      // Also try with normalized team names for partial matches
-      if (!existingPrediction) {
-        const homeNorm = normalizeTeamName(match.homeTeam);
-        const awayNorm = normalizeTeamName(match.awayTeam);
-        
-        existingPrediction = await prisma.prediction.findFirst({
-          where: {
-            outcome: 'PENDING',
-            OR: [
-              { matchName: { contains: homeNorm, mode: 'insensitive' } },
-            ],
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-        
-        // Verify it's actually the right match (both teams present)
-        if (existingPrediction) {
-          const predMatchName = existingPrediction.matchName.toLowerCase();
-          if (!predMatchName.includes(homeNorm) || !predMatchName.includes(awayNorm)) {
-            existingPrediction = null; // False match, ignore
-          }
-        }
+      {
+        odds: match.odds ? {
+          home: match.odds.home,
+          away: match.odds.away,
+          draw: match.odds.draw,
+        } : undefined,
+        includeOdds: !!match.odds,
       }
-    }
-
-    // Always call the analyze API to get full data (form, H2H, injuries, trends, etc.)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.sportbotai.com');
+    );
     
-    // Build analyze request using the expected format
-    const analyzePayload = {
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      sport: match.sport,
-      sportKey: match.sportKey,
-      league: match.league,
-      matchDate: match.commenceTime,
-      odds: {
-        home: match.odds?.home || 0,
-        draw: match.odds?.draw ?? null,
-        away: match.odds?.away || 0,
-      },
-    };
-
-    console.log(`[Match Analysis] Fetching full analysis for ${match.homeTeam} vs ${match.awayTeam}${existingPrediction ? ' (has cached prediction for probabilities)' : ''}`);
-    
-    const response = await fetch(`${baseUrl}/api/analyze`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Use internal API key for blog generator (bypasses auth)
-        'X-Internal-Key': INTERNAL_API_SECRET,
-      },
-      body: JSON.stringify(analyzePayload),
-    });
-
-    if (!response.ok) {
-      console.warn(`[Match Analysis] API returned ${response.status}, falling back to enriched data only`);
-      
-      // Fall back to enriched data if API call fails and we have a prediction
-      if (existingPrediction) {
-        return await fetchEnrichedDataFallback(match, existingPrediction);
-      }
-      return null;
-    }
-
-    const data = await response.json();
-    
-    if (!data.success || !data.data) {
-      console.warn('[Match Analysis] No analysis data returned');
-      if (existingPrediction) {
-        return await fetchEnrichedDataFallback(match, existingPrediction);
-      }
-      return null;
-    }
-
-    const analysis = data.data;
-    
-    // If we have a cached prediction, use its probabilities (they've already been computed)
-    let probabilities = {
-      homeWin: analysis.probabilityEstimates?.homeWin || 0,
-      draw: analysis.probabilityEstimates?.draw ?? null,
-      awayWin: analysis.probabilityEstimates?.awayWin || 0,
-    };
-    
-    let recommendation = analysis.recommendation || '';
-    let confidenceLevel = analysis.meta?.confidenceLevel || 'MEDIUM';
-    
-    if (existingPrediction) {
-      console.log(`[Match Analysis] Using cached prediction probabilities for ${match.homeTeam} vs ${match.awayTeam}`);
-      
-      // Parse prediction to determine probabilities from cached prediction
-      const isHomeWin = existingPrediction.prediction.includes('Home Win');
-      const isAwayWin = existingPrediction.prediction.includes('Away Win');
-      const isDraw = existingPrediction.prediction.includes('Draw');
-      
-      // Calculate estimated probabilities based on conviction
-      const baseProb = 33.33;
-      const convictionBoost = existingPrediction.conviction * 3;
-      
-      let homeProb = baseProb;
-      let drawProb = baseProb;
-      let awayProb = baseProb;
-      
-      if (isHomeWin) {
-        homeProb = Math.min(75, baseProb + convictionBoost);
-        drawProb = (100 - homeProb) * 0.35;
-        awayProb = 100 - homeProb - drawProb;
-      } else if (isAwayWin) {
-        awayProb = Math.min(75, baseProb + convictionBoost);
-        drawProb = (100 - awayProb) * 0.35;
-        homeProb = 100 - awayProb - drawProb;
-      } else if (isDraw) {
-        drawProb = Math.min(45, baseProb + convictionBoost);
-        homeProb = (100 - drawProb) / 2;
-        awayProb = (100 - drawProb) / 2;
-      }
-      
-      probabilities = {
-        homeWin: homeProb,
-        draw: drawProb,
-        awayWin: awayProb,
-      };
-      
-      recommendation = existingPrediction.prediction;
-      confidenceLevel = existingPrediction.conviction >= 4 ? 'HIGH' : existingPrediction.conviction >= 3 ? 'MEDIUM' : 'LOW';
-    }
-    
-    // Extract structured data from analysis response
-    return {
-      probabilities,
-      recommendation,
-      confidenceLevel,
-      keyFactors: analysis.keyFactors?.map((f: { factor: string; impact: string }) => 
-        `${f.factor}: ${f.impact}`
-      ) || [],
-      riskLevel: analysis.riskAssessment?.level || 'MEDIUM',
-      valueAssessment: analysis.valueAssessment?.summary || '',
-      homeForm: {
-        wins: analysis.homeTeamForm?.wins || 0,
-        draws: analysis.homeTeamForm?.draws || 0,
-        losses: analysis.homeTeamForm?.losses || 0,
-        trend: analysis.homeTeamForm?.trend || 'stable',
-      },
-      awayForm: {
-        wins: analysis.awayTeamForm?.wins || 0,
-        draws: analysis.awayTeamForm?.draws || 0,
-        losses: analysis.awayTeamForm?.losses || 0,
-        trend: analysis.awayTeamForm?.trend || 'stable',
-      },
-      headToHead: {
-        homeWins: analysis.headToHead?.homeWins || 0,
-        draws: analysis.headToHead?.draws || 0,
-        awayWins: analysis.headToHead?.awayWins || 0,
-        summary: analysis.headToHead?.summary || '',
-      },
-      injuries: {
-        home: analysis.injuries?.home?.map((i: { name: string }) => i.name) || [],
-        away: analysis.injuries?.away?.map((i: { name: string }) => i.name) || [],
-      },
-      narrative: existingPrediction?.reasoning || analysis.narrative || analysis.summary || '',
-      marketInsights: analysis.marketInsights?.map((m: { insight: string }) => m.insight) || [],
-    };
+    // Convert unified data to MatchAnalysisData format
+    return convertUnifiedToAnalysisData(unifiedData, match);
   } catch (error) {
-    console.error('[Match Analysis] Failed to fetch analysis:', error);
+    console.error('[Match Analysis] Failed to fetch via Unified Service:', error);
     return null;
   }
 }
 
-// Fallback function when API call fails but we have a cached prediction
-async function fetchEnrichedDataFallback(match: MatchInfo, prediction: {
-  prediction: string;
-  conviction: number;
-  reasoning: string;
-  odds: number | null;
-  impliedProb: number | null;
-}): Promise<MatchAnalysisData | null> {
-  console.log(`[Match Analysis] Using enriched data fallback for ${match.homeTeam} vs ${match.awayTeam}`);
+/**
+ * Convert UnifiedMatchData to MatchAnalysisData format
+ * This maintains backwards compatibility with existing blog templates
+ */
+function convertUnifiedToAnalysisData(
+  unified: UnifiedMatchData,
+  match: MatchInfo
+): MatchAnalysisData | null {
+  const { enrichedData, analysis } = unified;
   
-  // Fetch enriched data (form + H2H) separately
-  let enrichedData = null;
-  try {
-    enrichedData = await getMultiSportEnrichedData(
-      match.homeTeam,
-      match.awayTeam,
-      match.sport,
-      match.league
-    );
-    console.log(`[Match Analysis] Enriched data fetched: H2H=${enrichedData.headToHead?.length || 0}, homeForm=${enrichedData.homeForm?.length || 0}`);
-  } catch (error) {
-    console.warn('[Match Analysis] Failed to fetch enriched data:', error);
+  // If no analysis available, compute basic probabilities from odds
+  let probabilities = {
+    homeWin: 33.33,
+    draw: 33.33 as number | null,
+    awayWin: 33.33,
+  };
+  
+  let confidenceLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'MEDIUM';
+  let recommendation = '';
+  
+  if (analysis) {
+    probabilities = {
+      homeWin: analysis.probabilities.home,
+      draw: analysis.probabilities.draw,
+      awayWin: analysis.probabilities.away,
+    };
+    
+    confidenceLevel = analysis.dataQuality === 'HIGH' ? 'HIGH' : 
+                       analysis.dataQuality === 'MEDIUM' ? 'MEDIUM' : 'LOW';
+    
+    // Build recommendation from favored outcome
+    if (analysis.favored === 'home') {
+      recommendation = `${match.homeTeam} Win (${analysis.edge.percentage.toFixed(1)}% edge)`;
+    } else if (analysis.favored === 'away') {
+      recommendation = `${match.awayTeam} Win (${analysis.edge.percentage.toFixed(1)}% edge)`;
+    } else if (analysis.favored === 'draw') {
+      recommendation = 'Draw';
+    } else {
+      recommendation = 'Close match - no clear favorite';
+    }
+  } else if (unified.odds) {
+    // Fallback: compute from odds only
+    const homeImplied = 1 / unified.odds.home;
+    const awayImplied = 1 / unified.odds.away;
+    const drawImplied = unified.odds.draw ? 1 / unified.odds.draw : 0;
+    const total = homeImplied + awayImplied + drawImplied;
+    
+    probabilities = {
+      homeWin: (homeImplied / total) * 100,
+      draw: drawImplied > 0 ? (drawImplied / total) * 100 : null,
+      awayWin: (awayImplied / total) * 100,
+    };
+    confidenceLevel = 'LOW';
+    recommendation = 'Analysis based on market odds';
   }
   
-  // Parse prediction to determine probabilities
-  const isHomeWin = prediction.prediction.includes('Home Win');
-  const isAwayWin = prediction.prediction.includes('Away Win');
-  const isDraw = prediction.prediction.includes('Draw');
+  // Extract form data
+  const homeFormMatches = enrichedData.homeForm || [];
+  const awayFormMatches = enrichedData.awayForm || [];
   
-  const baseProb = 33.33;
-  const convictionBoost = prediction.conviction * 3;
+  const homeWins = homeFormMatches.filter(m => m.result === 'W').length;
+  const homeDraws = homeFormMatches.filter(m => m.result === 'D').length;
+  const homeLosses = homeFormMatches.filter(m => m.result === 'L').length;
   
-  let homeProb = baseProb;
-  let drawProb = baseProb;
-  let awayProb = baseProb;
+  const awayWins = awayFormMatches.filter(m => m.result === 'W').length;
+  const awayDraws = awayFormMatches.filter(m => m.result === 'D').length;
+  const awayLosses = awayFormMatches.filter(m => m.result === 'L').length;
   
-  if (isHomeWin) {
-    homeProb = Math.min(75, baseProb + convictionBoost);
-    drawProb = (100 - homeProb) * 0.35;
-    awayProb = 100 - homeProb - drawProb;
-  } else if (isAwayWin) {
-    awayProb = Math.min(75, baseProb + convictionBoost);
-    drawProb = (100 - awayProb) * 0.35;
-    homeProb = 100 - awayProb - drawProb;
-  } else if (isDraw) {
-    drawProb = Math.min(45, baseProb + convictionBoost);
-    homeProb = (100 - drawProb) / 2;
-    awayProb = (100 - drawProb) / 2;
-  }
-  
-  // Calculate H2H from enriched data if available
-  const h2hMatches = enrichedData?.headToHead || [];
-  const h2hHomeWins = h2hMatches.filter(m => m.homeScore > m.awayScore).length;
-  const h2hAwayWins = h2hMatches.filter(m => m.awayScore > m.homeScore).length;
-  const h2hDraws = h2hMatches.filter(m => m.homeScore === m.awayScore).length;
-  
-  // Extract form from enriched data
-  const homeForm = enrichedData?.homeForm || [];
-  const awayForm = enrichedData?.awayForm || [];
-  
-  // Calculate trend from form
-  const calculateTrend = (form: typeof homeForm): 'improving' | 'declining' | 'stable' => {
+  // Calculate trends
+  const calculateTrend = (form: typeof homeFormMatches): 'improving' | 'declining' | 'stable' => {
     if (form.length < 3) return 'stable';
     const recentWins = form.slice(0, 3).filter(m => m.result === 'W').length;
     const olderWins = form.slice(3, 6).filter(m => m.result === 'W').length;
@@ -695,46 +557,87 @@ async function fetchEnrichedDataFallback(match: MatchInfo, prediction: {
     return 'stable';
   };
   
+  // Extract H2H data
+  const h2hMatches = enrichedData.headToHead || [];
+  const h2hHomeWins = h2hMatches.filter(m => m.homeScore > m.awayScore).length;
+  const h2hDraws = h2hMatches.filter(m => m.homeScore === m.awayScore).length;
+  const h2hAwayWins = h2hMatches.filter(m => m.awayScore > m.homeScore).length;
+  
+  // Build narrative from analysis
+  let narrative = '';
+  if (analysis) {
+    const narrativeType = analysis.narrativeAngle;
+    if (narrativeType === 'TRAP_SPOT') {
+      narrative = `This match presents an interesting underdog scenario with ${analysis.favored === 'away' ? match.awayTeam : match.homeTeam} potentially undervalued.`;
+    } else if (narrativeType === 'BLOWOUT_POTENTIAL') {
+      narrative = `The numbers favor ${analysis.favored === 'home' ? match.homeTeam : match.awayTeam} in this statistical mismatch.`;
+    } else if (narrativeType === 'CHAOS') {
+      narrative = `Recent form strongly influences this matchup between ${match.homeTeam} and ${match.awayTeam}.`;
+    } else if (narrativeType === 'MIRROR_MATCH') {
+      narrative = `${match.homeTeam} faces ${match.awayTeam} in what promises to be a closely contested fixture.`;
+    } else {
+      narrative = `${match.homeTeam} faces ${match.awayTeam} in what promises to be a competitive fixture.`;
+    }
+  }
+  
+  // Build key factors from edge and quality
+  const keyFactors: string[] = [];
+  if (analysis) {
+    if (analysis.edge.percentage >= 5) {
+      keyFactors.push(`Value edge: ${analysis.edge.percentage.toFixed(1)}% ${analysis.edge.direction}`);
+    }
+    if (enrichedData.homeForm?.length && enrichedData.awayForm?.length) {
+      const homeFormStr = homeFormMatches.slice(0, 5).map(m => m.result).join('');
+      const awayFormStr = awayFormMatches.slice(0, 5).map(m => m.result).join('');
+      keyFactors.push(`Form: ${match.homeTeam} (${homeFormStr}) vs ${match.awayTeam} (${awayFormStr})`);
+    }
+    if (h2hMatches.length > 0) {
+      keyFactors.push(`H2H: ${h2hHomeWins}-${h2hDraws}-${h2hAwayWins} in last ${h2hMatches.length} meetings`);
+    }
+  }
+  
   return {
-    probabilities: {
-      homeWin: homeProb,
-      draw: drawProb,
-      awayWin: awayProb,
+    probabilities,
+    recommendation,
+    confidenceLevel,
+    keyFactors,
+    riskLevel: analysis?.dataQuality === 'LOW' ? 'HIGH' : 
+               analysis?.dataQuality === 'MEDIUM' ? 'MEDIUM' : 'LOW',
+    valueAssessment: analysis ? 
+      `${analysis.edge.percentage >= 5 ? 'Value detected' : 'Fair odds'} (${analysis.edge.quality} confidence)` : '',
+    homeForm: {
+      wins: homeWins,
+      draws: homeDraws,
+      losses: homeLosses,
+      trend: calculateTrend(homeFormMatches),
     },
-    recommendation: prediction.prediction,
-    confidenceLevel: prediction.conviction >= 4 ? 'HIGH' : prediction.conviction >= 3 ? 'MEDIUM' : 'LOW',
-    keyFactors: [prediction.reasoning],
-    riskLevel: prediction.conviction <= 2 ? 'HIGH' : prediction.conviction <= 3 ? 'MEDIUM' : 'LOW',
-    valueAssessment: prediction.odds 
-      ? `Odds of ${prediction.odds.toFixed(2)} offer potential value based on our analysis.`
-      : 'Value assessment pending odds data.',
-    homeForm: { 
-      wins: homeForm.filter(m => m.result === 'W').length, 
-      draws: homeForm.filter(m => m.result === 'D').length, 
-      losses: homeForm.filter(m => m.result === 'L').length, 
-      trend: calculateTrend(homeForm),
+    awayForm: {
+      wins: awayWins,
+      draws: awayDraws,
+      losses: awayLosses,
+      trend: calculateTrend(awayFormMatches),
     },
-    awayForm: { 
-      wins: awayForm.filter(m => m.result === 'W').length, 
-      draws: awayForm.filter(m => m.result === 'D').length, 
-      losses: awayForm.filter(m => m.result === 'L').length, 
-      trend: calculateTrend(awayForm),
+    headToHead: {
+      homeWins: h2hHomeWins,
+      draws: h2hDraws,
+      awayWins: h2hAwayWins,
+      summary: h2hMatches.length > 0 ? 
+        `${match.homeTeam} has won ${h2hHomeWins} of the last ${h2hMatches.length} meetings` : 
+        'No recent head-to-head data available',
     },
-    headToHead: { 
-      homeWins: h2hHomeWins, 
-      draws: h2hDraws, 
-      awayWins: h2hAwayWins, 
-      summary: h2hMatches.length > 0 
-        ? `Last ${h2hMatches.length} meetings: ${h2hHomeWins} home wins, ${h2hDraws} draws, ${h2hAwayWins} away wins`
-        : 'No historical data available' 
+    injuries: {
+      home: [],
+      away: [],
     },
-    injuries: { home: [], away: [] },
-    narrative: prediction.reasoning,
-    marketInsights: prediction.odds 
-      ? [`Current odds: ${prediction.odds.toFixed(2)}`, `Implied probability: ${(prediction.impliedProb || 0).toFixed(1)}%`]
-      : [],
+    narrative,
+    marketInsights: analysis?.marketIntel ? [
+      `Model probability: ${analysis.probabilities.home.toFixed(1)}% home, ${analysis.probabilities.away.toFixed(1)}% away`,
+      analysis.edge.percentage >= 3 ? `Edge detected: ${analysis.edge.percentage.toFixed(1)}%` : 'Fair market pricing',
+    ] : [],
   };
 }
+
+// NOTE: fetchEnrichedDataFallback has been removed - unified service handles all fallbacks
 
 async function researchMatch(match: MatchInfo): Promise<MatchResearch> {
   // Determine sport type for roster lookup using DataLayer
@@ -1185,6 +1088,106 @@ Return the HTML content ONLY (no JSON wrapper).`;
 }
 
 // ============================================
+// NEWS CONTENT GENERATION
+// ============================================
+
+/**
+ * Strip betting/promotional content from blog content
+ */
+function stripPromotionalContent(content: string): string {
+  return content
+    // Remove SportBot AI Prediction boxes
+    .replace(/<div[^>]*class="[^"]*prediction[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
+    // Remove CTAs with gradients
+    .replace(/<div[^>]*style="[^"]*background:\s*linear-gradient[^>]*>[\s\S]*?(Register|Subscribe|Join|Start|Try SportBot|Get Started|View Plans|Unlock)[\s\S]*?<\/div>/gi, '')
+    // Remove anchor tags to /register, /pricing
+    .replace(/<a[^>]*href="\/(?:register|pricing|login)"[^>]*>[\s\S]*?<\/a>/gi, '')
+    // Remove "Pro tip" boxes
+    .replace(/<p[^>]*>[\s\S]*?Pro tip[\s\S]*?<\/p>/gi, '')
+    // Remove probability percentages like "55%", "Win: 55%"
+    .replace(/\b(win|probability|chance):\s*\d+%/gi, '')
+    .replace(/\b\d+(\.\d+)?%\s*(probability|chance|win)/gi, '')
+    // Replace betting language
+    .replace(/best bet|betting value|stake|wager|value bet/gi, 'key matchup')
+    .replace(/gamblers?|bettors?/gi, 'fans')
+    .replace(/betting|odds analysis/gi, 'match analysis');
+}
+
+/**
+ * Generate news-style headline from blog title
+ * Uses simple transformation - no AI call needed
+ */
+function generateNewsTitle(
+  blogTitle: string,
+  homeTeam: string,
+  awayTeam: string
+): string {
+  // Remove common blog-style patterns
+  let newsTitle = blogTitle
+    .replace(/prediction|preview|tips|picks|best bets/gi, '')
+    .replace(/odds analysis|betting/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // If title is too short or generic, create a new one
+  if (newsTitle.length < 30 || newsTitle.toLowerCase().includes('vs')) {
+    // Create news-style headline
+    const newsVerbs = ['Face', 'Meet', 'Clash With', 'Take On', 'Battle'];
+    const verb = newsVerbs[Math.floor(Math.random() * newsVerbs.length)];
+    newsTitle = `${homeTeam} ${verb} ${awayTeam} in Key ${new Date().toLocaleDateString('en-US', { weekday: 'long' })} Matchup`;
+  }
+  
+  // Ensure it doesn't exceed reasonable length
+  if (newsTitle.length > 80) {
+    newsTitle = newsTitle.substring(0, 77) + '...';
+  }
+  
+  return newsTitle;
+}
+
+/**
+ * Transform blog content into news-friendly content
+ * Fast, synchronous transformation - no AI call needed
+ */
+function transformToNewsContent(
+  blogContent: string,
+  homeTeam: string,
+  awayTeam: string,
+  league: string
+): string {
+  // Start with stripped content
+  let newsContent = stripPromotionalContent(blogContent);
+  
+  // Add news-style end box (editorial, not promotional)
+  const newsEndBox = `
+<div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; padding: 32px; margin: 32px 0; text-align: center; border: 1px solid #334155;">
+  <div style="font-size: 32px; margin-bottom: 12px;">⚡</div>
+  <h3 style="color: #f1f5f9; font-size: 20px; font-weight: 600; margin: 0 0 8px 0;">
+    More ${league} Coverage
+  </h3>
+  <p style="color: #94a3b8; font-size: 15px; margin: 0 0 20px 0; max-width: 400px; margin-left: auto; margin-right: auto;">
+    Follow all ${league} matches with live updates and expert analysis.
+  </p>
+  <a href="/matches" style="display: inline-block; background: #10b981; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+    View All Matches →
+  </a>
+</div>`;
+  
+  // Replace any existing CTA boxes at the end with news-style box
+  newsContent = newsContent.replace(
+    /<div[^>]*style="[^"]*background:\s*linear-gradient[^"]*"[^>]*>[\s\S]*?<\/div>\s*$/i,
+    newsEndBox
+  );
+  
+  // If no CTA box was at the end, append the news box
+  if (!newsContent.includes('More ' + league + ' Coverage')) {
+    newsContent += newsEndBox;
+  }
+  
+  return newsContent;
+}
+
+// ============================================
 // MAIN: GENERATE MATCH PREVIEW
 // ============================================
 
@@ -1254,8 +1257,19 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
       imageAlt = `${match.homeTeam} vs ${match.awayTeam} - Match Preview`;
     }
 
-    // Step 6: Save to database
-    console.log('[Match Preview] Step 6/6: Saving to database...');
+    // Step 6: Generate News Content (same post, different view)
+    console.log('[Match Preview] Step 6/7: Generating news content...');
+    const newsTitle = generateNewsTitle(content.title, match.homeTeam, match.awayTeam);
+    const newsContent = transformToNewsContent(
+      processedContent,
+      match.homeTeam,
+      match.awayTeam,
+      match.league
+    );
+    console.log(`[Match Preview] News title: ${newsTitle}`);
+
+    // Step 7: Save to database (Blog + News in ONE record)
+    console.log('[Match Preview] Step 7/7: Saving to database...');
     
     // Ensure unique slug
     let slug = content.slug;
@@ -1289,11 +1303,15 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
         sport: match.sport,
         league: match.league,
         postType: 'MATCH_PREVIEW',
+        // NEWS CONTENT - same record, no double generation!
+        newsTitle,
+        newsContent,
       },
     });
 
     const duration = Date.now() - startTime;
     console.log(`[Match Preview] ✅ Complete! Post ID: ${post.id}, Duration: ${duration}ms`);
+    console.log(`[Match Preview] 📰 News also ready at: /news/${post.slug}`);
 
     return {
       success: true,

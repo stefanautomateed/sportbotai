@@ -2,6 +2,7 @@
  * SportBot Agent Posts API
  * 
  * Generates AIXBT-style sports intelligence posts with REAL-TIME DATA.
+ * Uses Unified Match Service for consistent data across all components.
  * Powered by Perplexity for live web search + OpenAI for generation.
  * Safe, observational, analytical content - never betting advice.
  * 
@@ -25,6 +26,11 @@ import {
   type ResearchResult 
 } from '@/lib/perplexity';
 import { runQuickAnalysis, type MinimalMatchData } from '@/lib/accuracy-core/live-intel-adapter';
+import { 
+  getQuickAnalysis,
+  type MatchIdentifier,
+  type OddsInfo,
+} from '@/lib/unified-match-service';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -99,23 +105,51 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 1: Run accuracy-core quick analysis
+    // STEP 1: Get analysis via Unified Match Service
     // ============================================
+    const matchIdentifier: MatchIdentifier = {
+      homeTeam: matchContext.homeTeam,
+      awayTeam: matchContext.awayTeam,
+      sport: matchContext.sport,
+      league: matchContext.league,
+      kickoff: matchContext.kickoff,
+    };
+    
+    const odds: OddsInfo | undefined = matchContext.odds ? {
+      home: matchContext.odds.home || 2.0,
+      away: matchContext.odds.away || 2.0,
+      draw: matchContext.odds.draw,
+    } : undefined;
+    
+    // Try unified service first for consistent data
+    let unifiedAnalysis = odds ? await getQuickAnalysis(matchIdentifier, odds) : null;
+    
+    // Fallback to quick analysis if unified service fails
+    // Convert odds to match MinimalMatchData interface (draw can't be null)
+    const safeOdds = odds ? {
+      home: odds.home,
+      away: odds.away,
+      draw: odds.draw ?? undefined,
+    } : undefined;
+    
     const analysisInput: MinimalMatchData = {
       homeTeam: matchContext.homeTeam,
       awayTeam: matchContext.awayTeam,
       league: matchContext.league,
       sport: matchContext.sport,
       kickoff: matchContext.kickoff,
-      odds: matchContext.odds ? {
-        home: matchContext.odds.home || 2.0,
-        away: matchContext.odds.away || 2.0,
-        draw: matchContext.odds.draw,
-      } : undefined,
+      odds: safeOdds,
     };
     
     const quickAnalysis = runQuickAnalysis(analysisInput);
     console.log(`[SportBot Agent] Analysis: ${quickAnalysis.narrativeAngle}, favored: ${quickAnalysis.favored}`);
+    
+    // Merge unified and quick analysis - unified takes priority
+    const mergedProbabilities = unifiedAnalysis ? {
+      home: unifiedAnalysis.probabilities.home,
+      away: unifiedAnalysis.probabilities.away,
+      draw: unifiedAnalysis.probabilities.draw || quickAnalysis.probabilities.draw,
+    } : quickAnalysis.probabilities;
     
     // ============================================
     // STEP 2: Real-time research via Perplexity
@@ -153,13 +187,19 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 3: Build computed analysis for Data-3 layer
     // ============================================
+    // Convert unified service numeric confidence to string format
+    const unifiedConfidenceStr: 'high' | 'medium' | 'low' | undefined = 
+      unifiedAnalysis?.confidence !== undefined
+        ? (unifiedAnalysis.confidence >= 0.7 ? 'high' : unifiedAnalysis.confidence >= 0.4 ? 'medium' : 'low')
+        : undefined;
+    
     const computedAnalysis: ComputedAnalysis = {
-      probabilities: quickAnalysis.probabilities,
-      favored: quickAnalysis.favored,
-      confidence: quickAnalysis.confidence,
-      dataQuality: quickAnalysis.dataQuality,
+      probabilities: mergedProbabilities,
+      favored: unifiedAnalysis?.favored || quickAnalysis.favored,
+      confidence: unifiedConfidenceStr || quickAnalysis.confidence,
+      dataQuality: unifiedAnalysis?.dataQuality || quickAnalysis.dataQuality,
       volatility: quickAnalysis.volatility,
-      narrativeAngle: quickAnalysis.narrativeAngle,
+      narrativeAngle: unifiedAnalysis?.narrativeAngle || quickAnalysis.narrativeAngle,
       catchphrase: quickAnalysis.catchphrase,
       motif: quickAnalysis.motif,
     };

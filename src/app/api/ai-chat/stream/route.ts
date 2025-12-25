@@ -23,7 +23,8 @@ import { saveKnowledge, buildLearnedContext, getTerminologyForSport } from '@/li
 import { cacheGet, cacheSet, CACHE_KEYS, hashChatQuery, getChatTTL } from '@/lib/cache';
 import { checkChatRateLimit, getClientIp, CHAT_RATE_LIMITS } from '@/lib/rateLimit';
 import { prisma } from '@/lib/prisma';
-import { getEnrichedMatchDataV2, normalizeSport } from '@/lib/data-layer/bridge';
+import { normalizeSport } from '@/lib/data-layer/bridge';
+import { getUnifiedMatchData, type MatchIdentifier } from '@/lib/unified-match-service';
 // Verified stats imports for all sports
 import { isStatsQuery, getVerifiedPlayerStats, formatVerifiedPlayerStats } from '@/lib/verified-nba-stats';
 import { isNFLStatsQuery, getVerifiedNFLPlayerStats, formatVerifiedNFLPlayerStats } from '@/lib/verified-nfl-stats';
@@ -322,13 +323,16 @@ async function fetchDataLayerContext(
                      sport === 'american_football' ? 'american_football' :
                      sport;
     
-    // If we have two teams, get matchup data
+    // If we have two teams, get matchup data via Unified Service
     if (teams.awayTeam) {
-      const data = await getEnrichedMatchDataV2(
-        teams.homeTeam,
-        teams.awayTeam,
-        sportKey
-      );
+      const matchId: MatchIdentifier = {
+        homeTeam: teams.homeTeam,
+        awayTeam: teams.awayTeam,
+        sport: sportKey,
+      };
+      
+      const unifiedData = await getUnifiedMatchData(matchId, { includeOdds: false });
+      const data = unifiedData.enrichedData;
       
       if (data.dataSource === 'UNAVAILABLE') return '';
       
