@@ -69,33 +69,49 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get fights for current season
-    const season = new Date().getFullYear();
-    const response = await fetch(
-      `${MMA_API_URL}/fights?season=${season}`,
-      {
-        headers: {
-          'x-apisports-key': API_KEY,
-        },
-        next: { revalidate: 300 }, // Cache for 5 minutes
-      }
-    );
+    // Get fights for current and next year to cover upcoming events
+    const currentYear = new Date().getFullYear();
+    const nextYear = currentYear + 1;
+    
+    // Fetch both years in parallel
+    const [currentYearResponse, nextYearResponse] = await Promise.all([
+      fetch(`${MMA_API_URL}/fights?season=${currentYear}`, {
+        headers: { 'x-apisports-key': API_KEY },
+        next: { revalidate: 300 },
+      }),
+      fetch(`${MMA_API_URL}/fights?season=${nextYear}`, {
+        headers: { 'x-apisports-key': API_KEY },
+        next: { revalidate: 300 },
+      }),
+    ]);
 
-    if (!response.ok) {
+    if (!currentYearResponse.ok && !nextYearResponse.ok) {
       return NextResponse.json(
-        { error: `API error: ${response.status}` },
-        { status: response.status }
+        { error: `API error: ${currentYearResponse.status}` },
+        { status: currentYearResponse.status }
       );
     }
 
-    const data = await response.json();
-    const fights: MMAFight[] = data.response || [];
+    const currentYearData = currentYearResponse.ok ? await currentYearResponse.json() : { response: [] };
+    const nextYearData = nextYearResponse.ok ? await nextYearResponse.json() : { response: [] };
+    
+    // Combine fights from both years
+    const allFights: MMAFight[] = [
+      ...(currentYearData.response || []),
+      ...(nextYearData.response || []),
+    ];
 
     // Filter to upcoming fights (NS = Not Started) unless showAll is true
+    // Also filter out TBA fights
     const now = new Date();
     const filteredFights = showAll 
-      ? fights 
-      : fights.filter(f => {
+      ? allFights 
+      : allFights.filter(f => {
+          // Skip TBA placeholder fights
+          if (f.fighters.first.name === 'TBA' || f.fighters.second.name === 'TBA' ||
+              f.fighters.first.name === 'Opponent TBA' || f.fighters.second.name === 'Opponent TBA') {
+            return false;
+          }
           // Include upcoming fights (NS) or very recent finished fights
           const fightDate = new Date(f.timestamp * 1000);
           const isUpcoming = f.status.short === 'NS';
