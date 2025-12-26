@@ -42,7 +42,7 @@ const PLAN_LIMITS: Record<string, number> = {
 const PLAN_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   FREE: { bg: 'bg-gray-500/20', text: 'text-gray-400', border: 'border-gray-500/30' },
   PRO: { bg: 'bg-primary/20', text: 'text-primary', border: 'border-primary/30' },
-  PREMIUM: { bg: 'bg-accent/20', text: 'text-accent', border: 'border-accent/30' },
+  PREMIUM: { bg: 'bg-slate-400/20', text: 'text-slate-300', border: 'border-slate-400/30' },
 };
 
 export default function AccountDashboard({ user }: Props) {
