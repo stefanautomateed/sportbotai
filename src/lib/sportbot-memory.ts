@@ -20,6 +20,7 @@ import crypto from 'crypto';
 
 interface QueryMetadata {
   query: string;
+  answer?: string;           // Store the AI response
   category?: string;
   brainMode?: string;
   sport?: string;
@@ -28,6 +29,7 @@ interface QueryMetadata {
   usedRealTimeSearch?: boolean;
   responseLength?: number;
   hadCitations?: boolean;
+  citations?: string[];      // Store citations for reuse
 }
 
 interface AgentPostData {
@@ -91,7 +93,72 @@ function extractSport(query: string): string | undefined {
 }
 
 /**
- * Track a chat query for learning
+ * Get cached answer from database if available and not expired
+ */
+export async function getCachedAnswer(query: string): Promise<{
+  answer: string;
+  citations: string[] | null;
+  brainMode: string | null;
+  usedRealTimeSearch: boolean;
+} | null> {
+  try {
+    const queryHash = hashQuery(query);
+    
+    const cached = await prisma.chatQuery.findFirst({
+      where: {
+        queryHash,
+        answer: { not: null },
+        expiresAt: { gt: new Date() }, // Not expired
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        answer: true,
+        citations: true,
+        brainMode: true,
+        usedRealTimeSearch: true,
+      },
+    });
+    
+    if (cached?.answer) {
+      console.log(`[Memory] DB Cache HIT for: "${query.slice(0, 50)}..."`);
+      return {
+        answer: cached.answer,
+        citations: cached.citations as string[] | null,
+        brainMode: cached.brainMode,
+        usedRealTimeSearch: cached.usedRealTimeSearch,
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[Memory] Failed to get cached answer:', error);
+    return null;
+  }
+}
+
+/**
+ * Get cache TTL in seconds based on category
+ */
+function getCacheTTLSeconds(category?: string): number {
+  switch (category) {
+    case 'rules':
+    case 'history':
+      return 24 * 60 * 60; // 24 hours - rules never change
+    case 'roster':
+      return 60 * 60; // 1 hour - rosters stable
+    case 'standings':
+      return 30 * 60; // 30 min - standings change after games
+    case 'stats':
+      return 60 * 60; // 1 hour - stats relatively stable
+    case 'schedule':
+      return 15 * 60; // 15 min
+    default:
+      return 30 * 60; // 30 min default
+  }
+}
+
+/**
+ * Track a chat query for learning and caching
  */
 export async function trackQuery(metadata: QueryMetadata): Promise<void> {
   try {
@@ -100,6 +167,10 @@ export async function trackQuery(metadata: QueryMetadata): Promise<void> {
     const team = metadata.team || extractTeam(metadata.query);
     const sport = metadata.sport || extractSport(metadata.query);
     
+    // Calculate expiry time based on category
+    const ttlSeconds = getCacheTTLSeconds(metadata.category);
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+    
     // Check if similar query exists
     const existing = await prisma.chatQuery.findFirst({
       where: { queryHash },
@@ -107,18 +178,28 @@ export async function trackQuery(metadata: QueryMetadata): Promise<void> {
     });
     
     if (existing) {
-      // Update count for similar queries
+      // Update count and optionally refresh answer
       await prisma.chatQuery.update({
         where: { id: existing.id },
-        data: { similarCount: { increment: 1 } },
+        data: { 
+          similarCount: { increment: 1 },
+          // Update answer if provided and different
+          ...(metadata.answer && metadata.answer !== existing.answer ? {
+            answer: metadata.answer,
+            citations: metadata.citations ? metadata.citations : undefined,
+            expiresAt,
+          } : {}),
+        },
       });
     } else {
-      // Create new query record
+      // Create new query record with answer
       await prisma.chatQuery.create({
         data: {
           query: metadata.query,
           queryNormalized: normalized,
           queryHash,
+          answer: metadata.answer,
+          citations: metadata.citations,
           category: metadata.category,
           brainMode: metadata.brainMode,
           sport,
@@ -127,6 +208,7 @@ export async function trackQuery(metadata: QueryMetadata): Promise<void> {
           usedRealTimeSearch: metadata.usedRealTimeSearch ?? false,
           responseLength: metadata.responseLength,
           hadCitations: metadata.hadCitations ?? false,
+          expiresAt,
         },
       });
     }

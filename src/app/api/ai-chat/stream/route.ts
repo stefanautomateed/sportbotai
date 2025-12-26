@@ -18,7 +18,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getPerplexityClient } from '@/lib/perplexity';
 import { detectChatMode, buildSystemPrompt, type BrainMode } from '@/lib/sportbot-brain';
-import { trackQuery } from '@/lib/sportbot-memory';
+import { trackQuery, getCachedAnswer } from '@/lib/sportbot-memory';
 import { saveKnowledge, buildLearnedContext, getTerminologyForSport } from '@/lib/sportbot-knowledge';
 import { cacheGet, cacheSet, CACHE_KEYS, hashChatQuery, getChatTTL } from '@/lib/cache';
 import { checkChatRateLimit, getClientIp, CHAT_RATE_LIMITS } from '@/lib/rateLimit';
@@ -806,6 +806,45 @@ If their favorite team has a match today/tonight, lead with that information.`;
           },
         });
       }
+      
+      // Check database cache (longer-term storage)
+      const dbCached = await getCachedAnswer(message);
+      if (dbCached) {
+        console.log(`[AI-Chat-Stream] DB Cache HIT for: "${message.slice(0, 50)}..."`);
+        
+        const followUps = generateQuickFollowUps(message, queryCategory, detectedSport);
+        
+        const encoder = new TextEncoder();
+        const readable = new ReadableStream({
+          start(controller) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'metadata',
+              citations: dbCached.citations || [],
+              usedRealTimeSearch: dbCached.usedRealTimeSearch,
+              brainMode: dbCached.brainMode,
+              fromCache: true,
+              fromDbCache: true,
+              followUps,
+            })}\n\n`));
+            
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'content',
+              content: dbCached.answer,
+            })}\n\n`));
+            
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+            controller.close();
+          },
+        });
+        
+        return new Response(readable, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        });
+      }
     }
 
     // Step 0: Translate if needed
@@ -1095,15 +1134,17 @@ RESPONSE FORMAT:
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
           controller.close();
 
-          // Track query and save knowledge (async)
+          // Track query with answer for caching (async)
           trackQuery({
             query: message,
+            answer: fullResponse,  // Save the answer for future cache hits
             category: queryCategory,
             brainMode,
             sport: detectSport(message),
             usedRealTimeSearch: !!perplexityContext,
             responseLength: fullResponse.length,
             hadCitations: citations.length > 0,
+            citations,  // Save citations for reuse
           }).catch(() => {});
 
           saveKnowledge({

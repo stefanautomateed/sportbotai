@@ -182,6 +182,7 @@ model ChatQuery {
   id                 String   @id @default(cuid())
   query              String
   queryNormalized    String?
+  answer             String?  @db.Text // Store the AI response for reuse
   category           String?
   brainMode          String?
   sport              String?
@@ -190,15 +191,18 @@ model ChatQuery {
   usedRealTimeSearch Boolean  @default(false)
   responseLength     Int?
   hadCitations       Boolean  @default(false)
+  citations          Json?    // Store citations for cached response
   queryHash          String?
   similarCount       Int      @default(1)
   createdAt          DateTime @default(now())
+  expiresAt          DateTime? // When this cached answer expires
 
   @@index([category])
   @@index([sport])
   @@index([team])
   @@index([queryHash])
   @@index([createdAt])
+  @@index([expiresAt])
 }
 
 model TrendingTopic {
