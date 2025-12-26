@@ -13,7 +13,7 @@ import Footer from '@/components/Footer';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { AuthProvider } from '@/components/auth';
 import { FavoritesProvider } from '@/lib/FavoritesContext';
-import { ToastProvider } from '@/components/ui';
+import { ToastProvider, ScrollToTop } from '@/components/ui';
 import { KeyboardShortcutsProvider } from '@/components/CommandPalette';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
@@ -209,6 +209,9 @@ export default function RootLayout({
                 
                 {/* Mobile Bottom Navigation */}
                 <MobileBottomNav />
+                
+                {/* Scroll to Top Button */}
+                <ScrollToTop />
                 
                 {/* Cookie Consent Banner */}
                 <CookieConsent />

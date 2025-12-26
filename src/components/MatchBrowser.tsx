@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MatchData } from '@/types';
 import MatchCard from '@/components/MatchCard';
+import { StaggeredItem } from '@/components/ui';
 import LeagueLogo from '@/components/ui/LeagueLogo';
 import CountryFlag, { getCountryForLeague } from '@/components/ui/CountryFlag';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -304,16 +305,17 @@ export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 
         {/* Matches Grid */}
         {!isLoading && !error && matches && matches.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {matches.slice(0, maxMatches).map((match) => (
-              <MatchCard
-                key={match.matchId}
-                matchId={match.matchId}
-                homeTeam={match.homeTeam}
-                awayTeam={match.awayTeam}
-                league={currentLeague.name}
-                sportKey={selectedLeague}
-                commenceTime={match.commenceTime}
-              />
+            {matches.slice(0, maxMatches).map((match, index) => (
+              <StaggeredItem key={match.matchId} index={index} staggerDelay={50} initialDelay={80}>
+                <MatchCard
+                  matchId={match.matchId}
+                  homeTeam={match.homeTeam}
+                  awayTeam={match.awayTeam}
+                  league={currentLeague.name}
+                  sportKey={selectedLeague}
+                  commenceTime={match.commenceTime}
+                />
+              </StaggeredItem>
             ))}
           </div>
         )}

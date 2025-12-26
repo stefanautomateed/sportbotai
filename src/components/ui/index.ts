@@ -26,6 +26,12 @@ export { Skeleton, SkeletonText, SkeletonCard, SkeletonMatchCard } from './Skele
 // Toast notifications
 export { ToastProvider, useToast, SimpleToast } from './Toast';
 
+// Scroll to top
+export { ScrollToTop } from './ScrollToTop';
+
+// Staggered animations
+export { StaggeredList, StaggeredItem, StaggeredGrid, useStaggeredAnimation } from './StaggeredAnimation';
+
 // Empty states
 export {
   EmptyState,

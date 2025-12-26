@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TrendingMatch, getTrendingMatches } from '@/components/match-selector/trending';
 import MatchCard from '@/components/MatchCard';
+import { StaggeredItem } from '@/components/ui';
 import { MatchData } from '@/types';
 
 interface TrendingSectionProps {
@@ -140,20 +141,21 @@ export default function TrendingSection({ maxMatches = 6 }: TrendingSectionProps
         {/* Matches Grid */}
         {!isLoading && matches.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {matches.map((match) => {
+            {matches.map((match, index) => {
               const tags = getMatchTags(match);
               return (
-                <MatchCard
-                  key={match.matchId}
-                  matchId={match.matchId}
-                  homeTeam={match.homeTeam}
-                  awayTeam={match.awayTeam}
-                  league={match.league}
-                  sportKey={match.sportKey}
-                  commenceTime={match.commenceTime}
-                  hotScore={match.hotScore}
-                  tags={tags}
-                />
+                <StaggeredItem key={match.matchId} index={index} staggerDelay={60} initialDelay={100}>
+                  <MatchCard
+                    matchId={match.matchId}
+                    homeTeam={match.homeTeam}
+                    awayTeam={match.awayTeam}
+                    league={match.league}
+                    sportKey={match.sportKey}
+                    commenceTime={match.commenceTime}
+                    hotScore={match.hotScore}
+                    tags={tags}
+                  />
+                </StaggeredItem>
               );
             })}
           </div>
