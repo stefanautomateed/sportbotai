@@ -1093,24 +1093,27 @@ Return the HTML content ONLY (no JSON wrapper).`;
 
 /**
  * Strip betting/promotional content from blog content
+ * More conservative approach - only remove explicit CTAs, keep match content
  */
 function stripPromotionalContent(content: string): string {
   return content
-    // Remove SportBot AI Prediction boxes
-    .replace(/<div[^>]*class="[^"]*prediction[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
-    // Remove CTAs with gradients
-    .replace(/<div[^>]*style="[^"]*background:\s*linear-gradient[^>]*>[\s\S]*?(Register|Subscribe|Join|Start|Try SportBot|Get Started|View Plans|Unlock)[\s\S]*?<\/div>/gi, '')
-    // Remove anchor tags to /register, /pricing
-    .replace(/<a[^>]*href="\/(?:register|pricing|login)"[^>]*>[\s\S]*?<\/a>/gi, '')
-    // Remove "Pro tip" boxes
-    .replace(/<p[^>]*>[\s\S]*?Pro tip[\s\S]*?<\/p>/gi, '')
+    // Remove specific CTA buttons/links (not entire sections)
+    .replace(/<a[^>]*href="\/(?:register|pricing|login)"[^>]*>[^<]*<\/a>/gi, '')
+    // Remove "Pro tip" paragraphs
+    .replace(/<p[^>]*>\s*(?:<[^>]+>)*\s*Pro tip[^<]*(?:<[^>]+>)*\s*<\/p>/gi, '')
+    // Remove explicit promotional text (but keep the structure)
+    .replace(/Try SportBot AI free|Get Started Free|Start Your Free|Join now|Subscribe today/gi, '')
     // Remove probability percentages like "55%", "Win: 55%"
     .replace(/\b(win|probability|chance):\s*\d+%/gi, '')
     .replace(/\b\d+(\.\d+)?%\s*(probability|chance|win)/gi, '')
-    // Replace betting language
-    .replace(/best bet|betting value|stake|wager|value bet/gi, 'key matchup')
+    // Replace betting language with neutral terms
+    .replace(/best bet|betting value|value bet/gi, 'key factor')
+    .replace(/\bstake\b|\bwager\b/gi, 'consideration')
     .replace(/gamblers?|bettors?/gi, 'fans')
-    .replace(/betting|odds analysis/gi, 'match analysis');
+    .replace(/betting tips|betting preview/gi, 'match analysis')
+    // Clean up empty elements that might result
+    .replace(/<p[^>]*>\s*<\/p>/gi, '')
+    .replace(/<div[^>]*>\s*<\/div>/gi, '');
 }
 
 /**
