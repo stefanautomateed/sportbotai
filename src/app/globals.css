@@ -831,6 +831,73 @@ button:focus-visible {
   animation: ping-once 0.4s ease-out forwards;
 }
 
+/* Typing indicator dots animation */
+@keyframes typing-dot {
+  0%, 60%, 100% { 
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% { 
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.animate-typing-dot {
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+
+/* Gradient border animation */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Animated border card variants */
+.animated-border-card {
+  position: relative;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.animated-border-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-primary), var(--color-accent));
+  background-size: 200% 100%;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: gradient-shift 3s ease infinite;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.animated-border-card:hover::before {
+  opacity: 1;
+}
+
+.animated-border-accent::before {
+  background: linear-gradient(90deg, #2AF6A0, #00D4AA, #2AF6A0);
+  background-size: 200% 100%;
+}
+
+.animated-border-rainbow::before {
+  background: linear-gradient(90deg, #2AF6A0, #3B82F6, #8B5CF6, #EC4899, #2AF6A0);
+  background-size: 400% 100%;
+  animation: gradient-shift 4s ease infinite;
+}
+
 /* ========================================
    UTILITY CLASSES
    ======================================== */

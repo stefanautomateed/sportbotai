@@ -11,6 +11,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Send, Bot, User, Loader2, Sparkles, X, MessageCircle, Volume2, VolumeX, Square, ThumbsUp, ThumbsDown, Mic, MicOff, Zap } from 'lucide-react';
 import Link from 'next/link';
+import TypingIndicator from '@/components/ui/TypingIndicator';
 
 // ============================================
 // TYPES
@@ -801,8 +802,8 @@ export default function AIDeskChat() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
                   <Bot className="w-4 h-4 text-primary" />
                 </div>
-                <div className="flex items-center gap-2 px-4 py-3 bg-white/5 rounded-2xl rounded-tl-md">
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-2xl rounded-tl-md">
+                  <TypingIndicator size="md" />
                   <span className="text-sm text-text-muted">Searching & analyzing...</span>
                 </div>
               </div>
