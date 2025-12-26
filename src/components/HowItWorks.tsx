@@ -2,7 +2,12 @@
  * How It Works section
  * 
  * Clean 4-step process with modern icons.
+ * Includes scroll reveal animations.
  */
+
+'use client';
+
+import ScrollReveal from '@/components/ui/ScrollReveal';
 
 export default function HowItWorks() {
   const steps = [
@@ -50,44 +55,48 @@ export default function HowItWorks() {
 
   return (
     <section className="bg-bg-primary section-container">
-      <div className="text-center mb-14">
-        <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-3">How It Works</p>
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-          Four simple steps to smarter analysis
-        </h2>
-        <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-          From match selection to AI-powered insights in seconds.
-        </p>
-      </div>
+      <ScrollReveal animation="fade-up">
+        <div className="text-center mb-14">
+          <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-3">How It Works</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Four simple steps to smarter analysis
+          </h2>
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+            From match selection to AI-powered insights in seconds.
+          </p>
+        </div>
+      </ScrollReveal>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {steps.map((step, index) => (
-          <div key={step.number} className="relative group">
-            {/* Connector Line (desktop) */}
-            {index < steps.length - 1 && (
-              <div className="hidden lg:block absolute top-10 left-[calc(50%+2rem)] w-[calc(100%-2rem)] h-[2px] bg-gradient-to-r from-primary/50 to-accent/50" />
-            )}
-            
-            <div className="relative bg-bg-card rounded-card p-6 border border-divider hover:border-primary/30 hover:shadow-glow-primary transition-all duration-300 h-full">
-              {/* Step Number */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center group-hover:bg-accent group-hover:text-bg-primary transition-colors">
-                  {step.icon}
-                </div>
-                <span className="text-4xl font-bold text-bg-elevated group-hover:text-primary/20 transition-colors">
-                  {step.number}
-                </span>
-              </div>
+          <ScrollReveal key={step.number} animation="fade-up" delay={index * 100}>
+            <div className="relative group h-full">
+              {/* Connector Line (desktop) */}
+              {index < steps.length - 1 && (
+                <div className="hidden lg:block absolute top-10 left-[calc(50%+2rem)] w-[calc(100%-2rem)] h-[2px] bg-gradient-to-r from-primary/50 to-accent/50" />
+              )}
               
-              {/* Content */}
-              <h3 className="text-lg font-bold text-white mb-2">
-                {step.title}
-              </h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                {step.description}
-              </p>
+              <div className="relative bg-bg-card rounded-card p-6 border border-divider hover:border-primary/30 hover:shadow-glow-primary transition-all duration-300 h-full">
+                {/* Step Number */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center group-hover:bg-accent group-hover:text-bg-primary transition-colors">
+                    {step.icon}
+                  </div>
+                  <span className="text-4xl font-bold text-bg-elevated group-hover:text-primary/20 transition-colors">
+                    {step.number}
+                  </span>
+                </div>
+                
+                {/* Content */}
+                <h3 className="text-lg font-bold text-white mb-2">
+                  {step.title}
+                </h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  {step.description}
+                </p>
+              </div>
             </div>
-          </div>
+          </ScrollReveal>
         ))}
       </div>
     </section>
