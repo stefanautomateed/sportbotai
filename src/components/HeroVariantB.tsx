@@ -10,15 +10,22 @@
 import Link from 'next/link';
 import { LiveStatsCounter } from './SocialProof';
 import LiveIntelCard from './LiveIntelCard';
+import VideoBackground from './VideoBackground';
 
 export default function HeroVariantB() {
   return (
     <section className="relative bg-bg-primary overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#2A3036_1px,transparent_1px),linear-gradient(to_bottom,#2A3036_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20" />
-        <div className="absolute top-0 right-0 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-primary/10 rounded-full blur-[80px] sm:blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[200px] sm:w-[400px] h-[200px] sm:h-[400px] bg-accent/10 rounded-full blur-[60px] sm:blur-[100px]" />
+      {/* Video Background (desktop) / Static fallback (mobile) */}
+      <VideoBackground
+        videoSrc="/videos/hero-bg.mp4"
+        overlayOpacity={0.55}
+        disableOnMobile={true}
+      />
+      
+      {/* Additional decorative elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-primary/5 rounded-full blur-[80px] sm:blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[200px] sm:w-[400px] h-[200px] sm:h-[400px] bg-accent/5 rounded-full blur-[60px] sm:blur-[100px]" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-28">
