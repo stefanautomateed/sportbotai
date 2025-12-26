@@ -81,7 +81,7 @@ async function fixBlogColors() {
   } else if (!DRY_RUN && fixedCount > 0) {
     console.log(`\n✅ Fixed ${fixedCount} posts!`);
     console.log(`\n🔄 Don't forget to revalidate cache:`);
-    console.log(`   curl -X POST "https://sportbot.ai/api/blog/revalidate" -H "x-revalidate-token: YOUR_TOKEN"`);
+    console.log(`   curl -X POST "https://www.sportbotai.com/api/blog/revalidate" -H "x-revalidate-token: YOUR_TOKEN"`);
   }
 
   await prisma.$disconnect();

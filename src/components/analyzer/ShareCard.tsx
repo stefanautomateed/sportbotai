@@ -70,7 +70,7 @@ export default function ShareCard({ result, className = '' }: ShareCardProps) {
       confidenceText,
       '',
       '🤖 Analyzed by SportBot AI',
-      'https://sportbot.ai'
+      'https://www.sportbotai.com'
     ].filter(Boolean)
 
     return lines.join('\n')
@@ -138,7 +138,7 @@ export default function ShareCard({ result, className = '' }: ShareCardProps) {
         await navigator.share({
           title: `${matchInfo.homeTeam} vs ${matchInfo.awayTeam} Analysis`,
           text: generateShareText(),
-          url: 'https://sportbot.ai'
+          url: 'https://www.sportbotai.com'
         })
       } catch {
         // User cancelled - open modal as fallback
@@ -259,7 +259,7 @@ export default function ShareCard({ result, className = '' }: ShareCardProps) {
 
                 {/* Footer */}
                 <div className="pt-2 border-t border-gray-800 text-center">
-                  <p className="text-xs text-gray-600">sportbot.ai • AI Match Research</p>
+                  <p className="text-xs text-gray-600">sportbotai.com • AI Match Research</p>
                 </div>
               </div>
             </div>
