@@ -42,17 +42,17 @@ export default function HeroVariantB() {
             </div>
 
             {/* Headline - VARIANT B: Different headline */}
-            <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 sm:mb-6">
-              <span className="text-accent">60-Second</span> Match
+            <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 sm:mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+              <span className="text-accent drop-shadow-[0_0_20px_rgba(42,246,160,0.5)]">60-Second</span> Match
               <br className="hidden xs:block" />
               Intelligence
             </h1>
 
             {/* Subheadline - VARIANT B: More benefit-focused */}
-            <p className="text-base sm:text-lg text-gray-400 leading-relaxed mb-6 sm:mb-8 max-w-xl mx-auto lg:mx-0">
+            <p className="text-base sm:text-lg text-gray-300 leading-relaxed mb-6 sm:mb-8 max-w-xl mx-auto lg:mx-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
               Stop guessing. Get <strong className="text-white">AI-analyzed insights</strong> on any match:
               form trends, head-to-head patterns, and what the data actually says.
-              <span className="block mt-2 text-gray-500">Soccer • NBA • NFL • NHL • UFC</span>
+              <span className="block mt-2 text-gray-400">Soccer • NBA • NFL • NHL • UFC</span>
             </p>
 
             {/* CTA Buttons - VARIANT B: Reversed order, different copy */}
@@ -76,8 +76,8 @@ export default function HeroVariantB() {
             </div>
 
             {/* Trust Indicators - VARIANT B: Different icons & copy */}
-            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/10">
-              <div className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 text-xs sm:text-sm text-gray-400">
+            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/20">
+              <div className="flex flex-wrap justify-center lg:justify-start gap-3 sm:gap-4 text-xs sm:text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                   <span className="text-accent">✓</span>
                   <span>No signup required</span>

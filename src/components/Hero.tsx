@@ -42,16 +42,16 @@ export default function Hero() {
             </div>
 
             {/* Headline - H1 for SEO */}
-            <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 sm:mb-6">
+            <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 sm:mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
               Know Any Match
               <br className="hidden xs:block" />
-              <span className="text-accent">Before It Happens</span>
+              <span className="text-accent drop-shadow-[0_0_20px_rgba(42,246,160,0.5)]">Before It Happens</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="text-base sm:text-lg text-gray-400 leading-relaxed mb-6 sm:mb-8 max-w-xl mx-auto lg:mx-0">
+            <p className="text-base sm:text-lg text-gray-300 leading-relaxed mb-6 sm:mb-8 max-w-xl mx-auto lg:mx-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
               Pre-match intelligence: headlines, form, H2H history & AI insights.
-              <strong className="text-gray-300"> Soccer, NBA, NFL, NHL & UFC—all in 60 seconds.</strong>
+              <strong className="text-white"> Soccer, NBA, NFL, NHL & UFC—all in 60 seconds.</strong>
             </p>
 
             {/* CTA Buttons - Stack on mobile */}
@@ -72,8 +72,8 @@ export default function Hero() {
             </div>
 
             {/* Trust Indicators - Horizontal scroll on mobile */}
-            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/10">
-              <div className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 text-xs sm:text-sm text-gray-400">
+            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/20">
+              <div className="flex flex-wrap justify-center lg:justify-start gap-3 sm:gap-5 text-xs sm:text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📰</span>
                   <span>Match Headlines</span>
