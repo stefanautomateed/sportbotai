@@ -94,6 +94,7 @@ function extractSport(query: string): string | undefined {
 
 /**
  * Get cached answer from database if available and not expired
+ * Returns null for time-sensitive queries that need fresh data
  */
 export async function getCachedAnswer(query: string): Promise<{
   answer: string;
@@ -102,6 +103,12 @@ export async function getCachedAnswer(query: string): Promise<{
   usedRealTimeSearch: boolean;
 } | null> {
   try {
+    // Skip cache for live/real-time queries
+    if (shouldSkipCache(query)) {
+      console.log(`[Memory] Skipping cache for time-sensitive query: "${query.slice(0, 50)}..."`);
+      return null;
+    }
+    
     const queryHash = hashQuery(query);
     
     const cached = await prisma.chatQuery.findFirst({
@@ -137,24 +144,97 @@ export async function getCachedAnswer(query: string): Promise<{
 }
 
 /**
- * Get cache TTL in seconds based on category
+ * Detect if query requires real-time/fresh data
+ * These should NOT be cached or have very short TTL
  */
-function getCacheTTLSeconds(category?: string): number {
+function isTimeSensitiveQuery(query: string): boolean {
+  const q = query.toLowerCase();
+  
+  // Live/current data patterns
+  const livePatterns = [
+    /\b(today|tonight|now|current|live|right now|at the moment)\b/,
+    /\b(this week|this weekend|upcoming|next game|next match)\b/,
+    /\b(latest|recent|breaking|just happened|just now)\b/,
+    /\b(score|scores|result|results|final score)\b/,
+    /\b(injured|injury|injuries|lineup|lineups|starting)\b/,
+    /\b(suspended|banned|out|available|playing)\b/,
+    /\b(odds|betting odds|spread|line|money line)\b/,
+    /\b(weather|forecast)\b/,
+    /\b(news|update|updates|announcement)\b/,
+  ];
+  
+  return livePatterns.some(pattern => pattern.test(q));
+}
+
+/**
+ * Detect if query is about static/historical facts
+ * These can be cached for longer periods
+ */
+function isStaticQuery(query: string): boolean {
+  const q = query.toLowerCase();
+  
+  const staticPatterns = [
+    /\b(rule|rules|regulation|regulations|how does|how do|what is a|what are)\b/,
+    /\b(history|historical|all-time|record|records|career)\b/,
+    /\b(founded|established|created|invented)\b/,
+    /\b(won|champion|championship|title)\s+(in\s+)?\d{4}/,  // "won in 2020"
+    /\b(20[0-2][0-4]|19\d{2})\b.*\b(season|final|game|match|cup)\b/, // Past years
+    /\bwho (won|was|were|played|scored)\b.*\b(20[0-2][0-4]|19\d{2}|last year)\b/,
+  ];
+  
+  return staticPatterns.some(pattern => pattern.test(q));
+}
+
+/**
+ * Get cache TTL in seconds based on category and query content
+ */
+function getCacheTTLSeconds(category?: string, query?: string): number {
+  // Check if query needs fresh data - don't cache or minimal cache
+  if (query && isTimeSensitiveQuery(query)) {
+    return 5 * 60; // 5 minutes max for time-sensitive queries
+  }
+  
+  // Check if query is about static facts - long cache
+  if (query && isStaticQuery(query)) {
+    return 7 * 24 * 60 * 60; // 7 days for historical facts
+  }
+  
+  // Category-based TTL
   switch (category) {
     case 'rules':
+      return 7 * 24 * 60 * 60; // 7 days - rules never change
     case 'history':
-      return 24 * 60 * 60; // 24 hours - rules never change
+      return 24 * 60 * 60; // 24 hours - historical facts stable
     case 'roster':
-      return 60 * 60; // 1 hour - rosters stable
+      return 60 * 60; // 1 hour - rosters change sometimes
     case 'standings':
-      return 30 * 60; // 30 min - standings change after games
+      return 15 * 60; // 15 min - standings change after games
     case 'stats':
-      return 60 * 60; // 1 hour - stats relatively stable
+      return 60 * 60; // 1 hour - season stats relatively stable
     case 'schedule':
-      return 15 * 60; // 15 min
+      return 10 * 60; // 10 min - schedules can update
+    case 'news':
+    case 'prediction':
+      return 5 * 60; // 5 min - needs fresh data
     default:
       return 30 * 60; // 30 min default
   }
+}
+
+/**
+ * Check if we should skip cache entirely for this query
+ */
+export function shouldSkipCache(query: string): boolean {
+  const q = query.toLowerCase();
+  
+  // Skip cache for very time-sensitive queries
+  const skipPatterns = [
+    /\b(live|right now|currently|at the moment)\b/,
+    /\b(score|scores|result|results)\b.*\b(now|today|tonight)\b/,
+    /\b(starting lineup|who is playing)\b.*\b(today|tonight)\b/,
+  ];
+  
+  return skipPatterns.some(pattern => pattern.test(q));
 }
 
 /**
@@ -167,8 +247,8 @@ export async function trackQuery(metadata: QueryMetadata): Promise<void> {
     const team = metadata.team || extractTeam(metadata.query);
     const sport = metadata.sport || extractSport(metadata.query);
     
-    // Calculate expiry time based on category
-    const ttlSeconds = getCacheTTLSeconds(metadata.category);
+    // Calculate expiry time based on category AND query content
+    const ttlSeconds = getCacheTTLSeconds(metadata.category, metadata.query);
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
     
     // Check if similar query exists

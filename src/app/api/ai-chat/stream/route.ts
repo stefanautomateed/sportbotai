@@ -18,7 +18,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getPerplexityClient } from '@/lib/perplexity';
 import { detectChatMode, buildSystemPrompt, type BrainMode } from '@/lib/sportbot-brain';
-import { trackQuery, getCachedAnswer } from '@/lib/sportbot-memory';
+import { trackQuery, getCachedAnswer, shouldSkipCache } from '@/lib/sportbot-memory';
 import { saveKnowledge, buildLearnedContext, getTerminologyForSport } from '@/lib/sportbot-knowledge';
 import { cacheGet, cacheSet, CACHE_KEYS, hashChatQuery, getChatTTL } from '@/lib/cache';
 import { checkChatRateLimit, getClientIp, CHAT_RATE_LIMITS } from '@/lib/rateLimit';
@@ -764,7 +764,10 @@ If their favorite team has a match today/tonight, lead with that information.`;
     const playerKeywords = /\b(player|embiid|jokic|lebron|curry|durant|wembanyama|tatum|doncic|giannis|morant|mahomes|allen|burrow|jackson|henry|mccaffrey|hill|jefferson|chase|kelce|mcdavid|crosby|matthews|draisaitl|ovechkin|haaland|salah|mbappe|bellingham|kane|ronaldo|messi)\b/i;
     const isPlayerStatsQuery = statsKeywords.test(message) && playerKeywords.test(message);
     
-    if (history.length === 0 && !isPlayerStatsQuery) {
+    // Also skip cache for time-sensitive queries (live scores, today's games, etc.)
+    const isTimeSensitive = shouldSkipCache(message);
+    
+    if (history.length === 0 && !isPlayerStatsQuery && !isTimeSensitive) {
       const cached = await cacheGet<CachedChatResponse>(cacheKey);
       if (cached) {
         console.log(`[AI-Chat-Stream] Cache HIT for: "${message.slice(0, 50)}..."`);
