@@ -196,7 +196,7 @@ export default function RootLayout({
                 </a>
                 
                 {/* Flex container for sticky footer */}
-                <div className="min-h-screen flex flex-col pb-16 md:pb-0">
+                <div className="min-h-screen flex flex-col pb-16 md:pb-0 pt-16">
                   <Header />
                   
                   {/* Main content */}
