@@ -682,6 +682,8 @@ function detectQueryCategory(message: string): QueryCategory {
       /koliko (golova|asistencija|utakmica)|golova je postigao/i.test(message) ||
       // Serbian/Croatian - basketball  
       /koliko (koseva|poena|skokova|asistencija)|postigao (koseva|poena)|ubacio|trojki/i.test(message) ||
+      // Serbian/Croatian - last game queries
+      /posledn(joj|ja|ju|ji|je|eg|oj|em) (utakmic|meč)|sinoć|jučer|juče/i.test(message) ||
       // English - last game queries
       /how many (goals|points|rebounds|assists)|scored (this|last)|last (game|match)/i.test(message) ||
       /points (did|in)|rebounds (did|in)|assists (did|in)/i.test(message) ||
@@ -1528,12 +1530,24 @@ function extractSearchQuery(message: string): { query: string; category: QueryCa
       // Extract player name if mentioned
       const statsPlayerMatch = query.match(/([A-Z][a-zćčšžđ]+(?:\s+[A-Z][a-zćčšžđ]+)+)|Filip\s+\w+|(\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b)/i);
       
+      // Check if asking about last game specifically (not season averages)
+      const isLastGameQuery = /last (game|match)|posledn(joj|ja|ju|ji|je|eg|oj|em) (utakmic|meč)|recent game|yesterday|sinoć|jučer|juče|latest (game|match)|most recent|previous (game|match)/i.test(query);
+      
       if (statsPlayerMatch) {
         const playerName = statsPlayerMatch[0];
-        // VERY explicit about current stats - include exact date
-        query = `${playerName} current ${statsSeason} season stats as of ${today}`;
+        if (isLastGameQuery) {
+          // Asking about last game specifically - search for game log/box score
+          query = `${playerName} last game box score stats points rebounds assists ${today}`;
+        } else {
+          // Season averages - VERY explicit about current stats
+          query = `${playerName} current ${statsSeason} season stats as of ${today}`;
+        }
       } else {
-        query += ` ${statsSeason} season stats as of ${today}`;
+        if (isLastGameQuery) {
+          query += ` last game box score stats ${today}`;
+        } else {
+          query += ` ${statsSeason} season stats as of ${today}`;
+        }
       }
       // Use hour recency to get the freshest data
       recency = 'hour';
