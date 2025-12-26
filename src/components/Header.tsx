@@ -20,14 +20,19 @@ const ADMIN_EMAILS = [
 ];
 
 // NavLink component with premium active state
+// Supports icon + label format where underline only appears under label
 function NavLink({ 
   href, 
   children, 
+  icon,
+  badge,
   className = '',
   onClick,
 }: { 
   href: string; 
-  children: React.ReactNode; 
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  badge?: React.ReactNode;
   className?: string;
   onClick?: () => void;
 }) {
@@ -38,17 +43,21 @@ function NavLink({
     <Link 
       href={href} 
       onClick={onClick}
-      className={`relative font-medium transition-all duration-300 text-sm ${className} ${
+      className={`flex items-center gap-1.5 font-medium transition-all duration-300 text-sm ${className} ${
         isActive 
           ? 'text-accent' 
           : 'text-text-secondary hover:text-text-primary'
       }`}
     >
-      {children}
-      {/* Premium glowing underline indicator */}
-      {isActive && (
-        <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-accent rounded-full shadow-[0_0_8px_2px_rgba(16,185,129,0.4)]" />
-      )}
+      {icon && <span className="text-base">{icon}</span>}
+      <span className="relative">
+        {children}
+        {/* Premium glowing underline indicator - only under text */}
+        {isActive && (
+          <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-accent rounded-full shadow-[0_0_8px_2px_rgba(16,185,129,0.4)]" />
+        )}
+      </span>
+      {badge}
     </Link>
   );
 }
@@ -112,24 +121,26 @@ export default function Header() {
             <NavLink href="/">
               Home
             </NavLink>
-            <NavLink href="/matches" className="flex items-center gap-1.5">
-              <span className="text-base">⚡</span>
+            <NavLink href="/matches" icon="⚡">
               Analyze
             </NavLink>
-            <NavLink href="/ai-desk" className="flex items-center gap-1.5">
-              <span className="text-base">🧠</span>
+            <NavLink href="/ai-desk" icon="🧠">
               AI Desk
             </NavLink>
-            <NavLink href="/market-alerts" className="flex items-center gap-1.5">
-              <span className="text-base">📊</span>
+            <NavLink 
+              href="/market-alerts" 
+              icon="📊"
+              badge={<span className="text-[10px] font-semibold bg-gradient-to-r from-zinc-400/20 to-slate-300/20 text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-400/30">PREMIUM</span>}
+            >
               Alerts
-              <span className="text-[10px] font-semibold bg-gradient-to-r from-zinc-400/20 to-slate-300/20 text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-400/30">PREMIUM</span>
             </NavLink>
             <NavLink href="/pricing">
               Pricing
             </NavLink>
-            <NavLink href="/news" className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+            <NavLink 
+              href="/news" 
+              icon={<span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>}
+            >
               News
             </NavLink>
             <NavLink href="/blog">
