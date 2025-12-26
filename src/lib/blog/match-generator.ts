@@ -1092,8 +1092,9 @@ Return the HTML content ONLY (no JSON wrapper).`;
 // ============================================
 
 /**
- * Strip betting/promotional content from blog content
- * More conservative approach - only remove explicit CTAs, keep match content
+ * Strip betting/promotional content from blog content for Google News
+ * Removes: AI predictions, signup CTAs, betting language
+ * Keeps: Match analysis, internal links to /matches, /blog, /news
  */
 function stripPromotionalContent(content: string): string {
   let result = content;
@@ -1107,18 +1108,32 @@ function stripPromotionalContent(content: string): string {
     ''
   );
   
-  // Remove CTA link elements only (not the containing divs)
-  result = result.replace(/<a[^>]*href="\/(register|pricing|login)"[^>]*>[^<]*<\/a>/gi, '');
+  // Remove entire CTA boxes that contain signup links (div with /register, /pricing, /login)
+  // These boxes look broken without the link, so remove them entirely
+  result = result.replace(
+    /<div[^>]*class="cta-box"[^>]*>[\s\S]*?<\/div>/gi,
+    ''
+  );
   
-  // Remove inline CTA text that prompts users to sign up
-  result = result.replace(/🤖\s*Want Real-Time AI Analysis\?/gi, '');
-  result = result.replace(/Get live probability updates[^<]*/gi, '');
+  // Remove inline CTA boxes with "Ready for Deeper Analysis?" or similar promotional headers
+  result = result.replace(
+    /<div[^>]*>[\s\S]*?Ready for Deeper Analysis\?[\s\S]*?<\/div>/gi,
+    ''
+  );
+  result = result.replace(
+    /<div[^>]*>[\s\S]*?Want Real-Time AI Analysis\?[\s\S]*?<\/div>/gi,
+    ''
+  );
+  result = result.replace(
+    /<div[^>]*>[\s\S]*?Unlock Advanced Stats[\s\S]*?<\/div>/gi,
+    ''
+  );
   
   // Remove "Pro tip" paragraphs
   result = result.replace(/<p[^>]*>\s*(?:<[^>]+>)*\s*Pro tip[^<]*(?:<[^>]+>)*\s*<\/p>/gi, '');
   
-  // Remove explicit promotional text
-  result = result.replace(/Try SportBot AI free|Get Started Free|Start Your Free|Join now|Subscribe today|See Pro Features|Unlock Advanced Stats/gi, '');
+  // Remove standalone promotional text
+  result = result.replace(/Try SportBot AI free|Get Started Free|Start Your Free|Join now|Subscribe today|See Pro Features/gi, '');
   
   // Remove probability percentages shown in prediction boxes like "55%", "Win: 55%"
   result = result.replace(/\b(win|probability|chance):\s*\d+%/gi, '');
