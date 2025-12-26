@@ -14,8 +14,6 @@
  * Euroleague League ID: 120 (API-Sports Basketball)
  */
 
-import { getAPISportsProvider, LEAGUE_IDS } from './data-layer/providers/api-sports';
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -655,6 +653,7 @@ async function fetchPlayerStats(
     
     // Get team from most recent game (more accurate than player search)
     // Sort games by date descending to get latest team
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sortedGames = [...games].sort((a: any, b: any) => {
       const dateA = a.game?.date || a.date || '';
       const dateB = b.game?.date || b.date || '';

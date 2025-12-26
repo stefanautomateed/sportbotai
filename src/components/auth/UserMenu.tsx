@@ -19,6 +19,30 @@ export function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  
+  // Use live plan from API, fallback to session
+  const [livePlan, setLivePlan] = useState<string>('FREE');
+  
+  // Fetch live plan from API
+  useEffect(() => {
+    if (!session?.user) return;
+    
+    const fetchPlan = async () => {
+      try {
+        const res = await fetch('/api/usage');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.plan) {
+            setLivePlan(data.plan);
+          }
+        }
+      } catch {
+        // Ignore - use session plan
+        setLivePlan(session.user?.plan || 'FREE');
+      }
+    };
+    fetchPlan();
+  }, [session?.user]);
 
   // Toggle menu - simple and direct
   const toggleMenu = useCallback(() => {
@@ -95,26 +119,6 @@ export function UserMenu() {
     .join('')
     .toUpperCase()
     .slice(0, 2) || session.user?.email?.[0].toUpperCase() || 'U';
-
-  // Use live plan from API, fallback to session
-  const [livePlan, setLivePlan] = useState<string>(session.user?.plan || 'FREE');
-  
-  useEffect(() => {
-    const fetchPlan = async () => {
-      try {
-        const res = await fetch('/api/usage');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.plan) {
-            setLivePlan(data.plan);
-          }
-        }
-      } catch (e) {
-        // Ignore - use session plan
-      }
-    };
-    fetchPlan();
-  }, []);
 
   const plan = livePlan;
   const isPro = plan === 'PRO' || plan === 'PREMIUM';

@@ -16,28 +16,12 @@
  */
 
 import { getDataLayer } from './data-layer';
-import type { Sport, NormalizedTeamStats, NormalizedMatch, DataLayerResponse } from './data-layer/types';
+import type { Sport } from './data-layer/types';
 import { normalizeSport } from './data-layer/bridge';
-import { 
-  getVerifiedPlayerStats, 
-  isStatsQuery,
-  SeasonNormalizer as NBASeasonNormalizer 
-} from './verified-nba-stats';
-import { 
-  getVerifiedNFLPlayerStats, 
-  isNFLStatsQuery 
-} from './verified-nfl-stats';
-import { 
-  getVerifiedNHLPlayerStats, 
-  isNHLStatsQuery 
-} from './verified-nhl-stats';
-import { 
-  getVerifiedSoccerPlayerStats, 
-  isSoccerStatsQuery 
-} from './verified-soccer-stats';
-import { 
-  getVerifiedEuroleaguePlayerStats 
-} from './verified-euroleague-stats';
+import { isStatsQuery } from './verified-nba-stats';
+import { isNFLStatsQuery } from './verified-nfl-stats';
+import { isNHLStatsQuery } from './verified-nhl-stats';
+import { isSoccerStatsQuery } from './verified-soccer-stats';
 
 // ============================================================================
 // Types
@@ -189,6 +173,7 @@ class SeasonNormalizer {
   static validateSeason(
     requested: string | number,
     received: string | number | undefined,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _sport: string
   ): { valid: boolean; warning?: string } {
     if (!received) {
