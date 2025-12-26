@@ -16,13 +16,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
 });
 
-// Map plan names to Price IDs (server-side only)
-const PRICE_IDS: Record<string, string> = {
-  pro: process.env.STRIPE_PRO_PRICE_ID || '',
-  'pro-yearly': process.env.STRIPE_PRO_YEARLY_PRICE_ID || '',
-  premium: process.env.STRIPE_PREMIUM_PRICE_ID || '',
-  'premium-yearly': process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID || '',
-};
+// Get price IDs at request time (not module load time)
+function getPriceIds(): Record<string, string> {
+  return {
+    pro: process.env.STRIPE_PRO_PRICE_ID || '',
+    'pro-yearly': process.env.STRIPE_PRO_YEARLY_PRICE_ID || '',
+    premium: process.env.STRIPE_PREMIUM_PRICE_ID || '',
+    'premium-yearly': process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID || '',
+  };
+}
 
 /**
  * POST /api/stripe/create-checkout-session
@@ -49,6 +51,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { priceId: planKey, planName } = body;
 
+    // Get price IDs at request time
+    const PRICE_IDS = getPriceIds();
+    
     // Resolve actual Price ID from plan key
     const actualPriceId = PRICE_IDS[planKey?.toLowerCase()] || planKey;
     
