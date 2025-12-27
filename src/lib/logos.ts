@@ -927,16 +927,11 @@ const SOCCER_TEAM_LOGOS: Record<string, string> = {
   'Kocaelispor': 'https://ankara.gsb.gov.tr/public/Images/GSB/012014/kocaelispor-logo.jpg',
   
   // ============================================
-  // JUPILER PRO LEAGUE (Belgium) - Full roster
+  // JUPILER PRO LEAGUE (Belgium) - Full roster (using ESPN CDN)
   // ============================================
-  'Club Brugge': 'https://media.api-sports.io/football/teams/569.png',
-  'Club Brugge KV': 'https://media.api-sports.io/football/teams/569.png',
-  'Brugge': 'https://media.api-sports.io/football/teams/569.png',
-  'Union Saint-Gilloise': 'https://media.api-sports.io/football/teams/1393.png',
-  'Union SG': 'https://media.api-sports.io/football/teams/1393.png',
-  'Union St. Gilloise': 'https://media.api-sports.io/football/teams/1393.png',
-  'Royale Union SG': 'https://media.api-sports.io/football/teams/1393.png',
-  'R. Union SG': 'https://media.api-sports.io/football/teams/1393.png',
+  'Club Brugge': 'https://a.espncdn.com/i/teamlogos/soccer/500/570.png',
+  'Club Brugge KV': 'https://a.espncdn.com/i/teamlogos/soccer/500/570.png',
+  'Brugge': 'https://a.espncdn.com/i/teamlogos/soccer/500/570.png',
   'Anderlecht': 'https://a.espncdn.com/i/teamlogos/soccer/500/441.png',
   'RSC Anderlecht': 'https://a.espncdn.com/i/teamlogos/soccer/500/441.png',
   'Gent': 'https://a.espncdn.com/i/teamlogos/soccer/500/3611.png',
@@ -979,6 +974,9 @@ const SOCCER_TEAM_LOGOS: Record<string, string> = {
   'Union St.-Gilloise': 'https://a.espncdn.com/i/teamlogos/soccer/500/5807.png',
   'Union SG': 'https://a.espncdn.com/i/teamlogos/soccer/500/5807.png',
   'Union Saint-Gilloise': 'https://a.espncdn.com/i/teamlogos/soccer/500/5807.png',
+  'Union St. Gilloise': 'https://a.espncdn.com/i/teamlogos/soccer/500/5807.png',
+  'Royale Union SG': 'https://a.espncdn.com/i/teamlogos/soccer/500/5807.png',
+  'R. Union SG': 'https://a.espncdn.com/i/teamlogos/soccer/500/5807.png',
   'Zulte Waregem': 'https://a.espncdn.com/i/teamlogos/soccer/500/4691.png',
   'SV Zulte Waregem': 'https://a.espncdn.com/i/teamlogos/soccer/500/4691.png',
   'SV Zulte-Waregem': 'https://a.espncdn.com/i/teamlogos/soccer/500/4691.png',

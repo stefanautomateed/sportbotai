@@ -310,7 +310,6 @@ function generateH2HInsights(
   // Count wins for each team (considering they might swap home/away)
   let homeTeamWins = 0;
   let awayTeamWins = 0;
-  let _draws = 0;
 
   h2h.forEach(match => {
     if (match.homeScore > match.awayScore) {
@@ -319,9 +318,8 @@ function generateH2HInsights(
     } else if (match.awayScore > match.homeScore) {
       if (match.awayTeam === homeTeam) homeTeamWins++;
       else awayTeamWins++;
-    } else {
-      _draws++;
     }
+    // Draws are implicitly counted as: h2h.length - homeTeamWins - awayTeamWins
   });
 
   // Last match winner
@@ -582,7 +580,7 @@ function generateHeadlines(params: {
   const headlines: MatchHeadline[] = [];
   const {
     homeTeam, awayTeam, homeStreaks, awayStreaks, h2hInsights, h2h,
-    keyAbsences, homeStats: _homeStats, awayStats: _awayStats, homeMomentumScore, awayMomentumScore,
+    keyAbsences, homeMomentumScore, awayMomentumScore,
   } = params;
 
   // High impact streaks
