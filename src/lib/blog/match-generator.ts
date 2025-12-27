@@ -1235,7 +1235,7 @@ function transformToNewsContent(
   league: string
 ): string {
   // Start with stripped content
-  let newsContent = stripPromotionalContent(blogContent);
+  const newsContent = stripPromotionalContent(blogContent);
   
   // Add news-style end box (editorial, not promotional)
   const newsEndBox = `

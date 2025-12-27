@@ -237,6 +237,47 @@ interface MMAFight {
   };
 }
 
+// Soccer API Types
+interface SoccerFixture {
+  fixture: { id: number; date: string };
+  teams: {
+    home: { id: number; name: string };
+    away: { id: number; name: string };
+  };
+  goals: { home: number; away: number };
+}
+
+// Basketball API Types (v1.basketball.api-sports.io)
+interface BasketballGame {
+  id: number;
+  date: string;
+  status?: { short?: string; long?: string };
+  teams: {
+    home: { id: number; name: string };
+    away: { id: number; name: string };
+  };
+  scores: {
+    home: { total: number };
+    away: { total: number };
+  };
+}
+
+interface BasketballTeamSearchResponse {
+  id: number;
+  name: string;
+  logo?: string;
+}
+
+// Hockey API already has HockeyGameResponse defined above
+
+// H2H Summary type
+interface H2HSummary {
+  totalMatches: number;
+  homeWins: number;
+  awayWins: number;
+  draws: number;
+}
+
 export interface MultiSportEnrichedData {
   sport: string;
   homeForm: FormMatch[] | null;
@@ -469,7 +510,7 @@ async function getSoccerTeamFixtures(teamId: number, baseUrl: string): Promise<G
 
   console.log(`[Soccer] Found ${response.response.length} fixtures for team ${teamId}`);
   
-  const matches: GameResult[] = response.response.slice(0, 5).map((fixture: any) => {
+  const matches: GameResult[] = response.response.slice(0, 5).map((fixture: SoccerFixture) => {
     const isHome = fixture.teams.home.id === teamId;
     const teamScore = isHome ? fixture.goals.home : fixture.goals.away;
     const oppScore = isHome ? fixture.goals.away : fixture.goals.home;
@@ -589,9 +630,9 @@ async function getSoccerTeamStats(teamId: number, baseUrl: string): Promise<Team
   return result;
 }
 
-async function getSoccerH2H(homeTeamId: number, awayTeamId: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: any } | null> {
+async function getSoccerH2H(homeTeamId: number, awayTeamId: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: H2HSummary } | null> {
   const cacheKey = `soccer:h2h:${homeTeamId}:${awayTeamId}`;
-  const cached = getCached<{ matches: H2HMatch[], summary: any }>(cacheKey);
+  const cached = getCached<{ matches: H2HMatch[], summary: H2HSummary }>(cacheKey);
   if (cached) return cached;
 
   // Don't use 'last' parameter as it doesn't work reliably on free tier
@@ -604,10 +645,10 @@ async function getSoccerH2H(homeTeamId: number, awayTeamId: number, baseUrl: str
 
   console.log(`[Soccer] Found ${response.response.length} H2H matches`);
   
-  const fixtures = response.response;
+  const fixtures = response.response as SoccerFixture[];
   let homeWins = 0, awayWins = 0, draws = 0;
 
-  const matches: H2HMatch[] = fixtures.slice(0, 5).map((f: any) => {
+  const matches: H2HMatch[] = fixtures.slice(0, 5).map((f: SoccerFixture) => {
     const isHomeTeamHome = f.teams.home.id === homeTeamId;
     const homeScore = f.goals.home;
     const awayScore = f.goals.away;
@@ -819,7 +860,7 @@ async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: bool
 
   // Basketball API requires season parameter for team searches
   const season = getCurrentBasketballSeason();
-  let response: any = null;
+  let response: { response?: BasketballTeamSearchResponse[] } | null = null;
   
   // Determine which league ID to search
   let targetLeagueId: number | null = null;
@@ -867,7 +908,7 @@ async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: bool
       }
     }
     
-    if (response?.response?.length > 0) {
+    if (response?.response && response.response.length > 0) {
       const teamId = response.response[0].id;
       console.log(`[Basketball] Found team "${teamName}" -> ID ${teamId} (${response.response[0].name})`);
       setCache(cacheKey, teamId);
@@ -893,7 +934,7 @@ async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: bool
     if (leagueId === targetLeagueId) continue; // Already tried this one
     
     response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(normalizedName)}&league=${leagueId}&season=${season}`);
-    if (response?.response?.length > 0) {
+    if (response?.response && response.response.length > 0) {
       const teamId = response.response[0].id;
       const leagueName = Object.entries(BASKETBALL_LEAGUE_IDS).find(([, id]) => id === leagueId)?.[0] || leagueId;
       console.log(`[Basketball] Found team "${teamName}" in ${leagueName} -> ID ${teamId}`);
@@ -908,7 +949,7 @@ async function findBasketballTeam(teamName: string, baseUrl: string, isNBA: bool
     response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(teamName)}&season=${season}`);
   }
   
-  if (response?.response?.length > 0) {
+  if (response?.response && response.response.length > 0) {
     const teamId = response.response[0].id;
     console.log(`[Basketball] Found team "${teamName}" -> ID ${teamId} (generic search)`);
     setCache(cacheKey, teamId);
@@ -929,17 +970,17 @@ async function getBasketballTeamGames(teamId: number, baseUrl: string): Promise<
   console.log(`[Basketball] Fetching games for team ${teamId}, season ${season}`);
   
   // Try with season first
-  const response = await apiRequest<any>(baseUrl, `/games?team=${teamId}&season=${season}`);
+  const response = await apiRequest<{ response: BasketballGame[] }>(baseUrl, `/games?team=${teamId}&season=${season}`);
   
   // Filter for finished games only and take last 5
   if (response?.response) {
     const finishedGames = response.response
-      .filter((g: any) => g.status?.short === 'FT' || g.status?.short === 'AOT')
-      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .filter((g: BasketballGame) => g.status?.short === 'FT' || g.status?.short === 'AOT')
+      .sort((a: BasketballGame, b: BasketballGame) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5);
     
     if (finishedGames.length > 0) {
-      const games: GameResult[] = finishedGames.map((game: any) => {
+      const games: GameResult[] = finishedGames.map((game: BasketballGame) => {
         const isHome = game.teams.home.id === teamId;
         const teamScore = isHome ? game.scores.home.total : game.scores.away.total;
         const oppScore = isHome ? game.scores.away.total : game.scores.home.total;
@@ -1012,23 +1053,23 @@ async function getBasketballTeamStats(teamId: number, baseUrl: string): Promise<
   return null;
 }
 
-async function getBasketballH2H(homeTeamId: number, awayTeamId: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: any } | null> {
+async function getBasketballH2H(homeTeamId: number, awayTeamId: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: H2HSummary } | null> {
   const cacheKey = `basketball:h2h:${homeTeamId}:${awayTeamId}`;
-  const cached = getCached<{ matches: H2HMatch[], summary: any }>(cacheKey);
+  const cached = getCached<{ matches: H2HMatch[], summary: H2HSummary }>(cacheKey);
   if (cached) return cached;
 
   // Basketball API doesn't support 'last' parameter, we filter/limit in code
-  const response = await apiRequest<any>(baseUrl, `/games?h2h=${homeTeamId}-${awayTeamId}`);
+  const response = await apiRequest<{ response: BasketballGame[] }>(baseUrl, `/games?h2h=${homeTeamId}-${awayTeamId}`);
   
   if (!response?.response || response.response.length === 0) return null;
 
   // Sort by date descending and take most recent 10
   const games = response.response
-    .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .sort((a: BasketballGame, b: BasketballGame) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 10);
   let homeWins = 0, awayWins = 0;
 
-  const matches: H2HMatch[] = games.slice(0, 5).map((g: any) => {
+  const matches: H2HMatch[] = games.slice(0, 5).map((g: BasketballGame) => {
     const homeScore = g.scores.home.total;
     const awayScore = g.scores.away.total;
     
@@ -1068,6 +1109,32 @@ async function getBasketballH2H(homeTeamId: number, awayTeamId: number, baseUrl:
 // ============================================
 // HOCKEY FUNCTIONS (NHL)
 // ============================================
+
+interface HockeyGameResponse {
+  date: string;
+  status?: { short?: string };
+  teams: { home: { id: number; name: string }; away: { id: number; name: string } };
+  scores: { home: number; away: number };
+}
+
+interface HockeyTeamStatsResponse {
+  games?: { played?: { all?: number } };
+  wins?: { all?: { total?: number } };
+  loses?: { all?: { total?: number } };
+  goals?: { for?: { total?: { all?: number } }; against?: { total?: { all?: number } } };
+}
+
+interface NFLTeamSearchResponse {
+  id: number;
+  name: string;
+}
+
+interface NFLStandingResponse {
+  team?: { id: number };
+  won?: number;
+  lost?: number;
+  points?: { for?: number; against?: number };
+}
 
 // NHL team name mappings
 const NHL_TEAM_MAPPINGS: Record<string, string> = {
@@ -1191,17 +1258,17 @@ async function getHockeyTeamGames(teamId: number, baseUrl: string): Promise<Game
 
   const season = getCurrentHockeySeason();
   // Hockey API doesn't support 'last' parameter, we filter in code
-  const response = await apiRequest<any>(baseUrl, `/games?team=${teamId}&season=${season}`);
+  const response = await apiRequest<{ response: HockeyGameResponse[] }>(baseUrl, `/games?team=${teamId}&season=${season}`);
   
   if (!response?.response) return [];
 
   // Filter for finished games, sort by date desc, take last 5
   const finishedGames = response.response
-    .filter((g: any) => g.status?.short === 'FT' || g.status?.short === 'AOT')
-    .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .filter((g: HockeyGameResponse) => g.status?.short === 'FT' || g.status?.short === 'AOT')
+    .sort((a: HockeyGameResponse, b: HockeyGameResponse) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
-  const games: GameResult[] = finishedGames.map((game: any) => {
+  const games: GameResult[] = finishedGames.map((game: HockeyGameResponse) => {
     const isHome = game.teams.home.id === teamId;
     const teamScore = isHome ? game.scores.home : game.scores.away;
     const oppScore = isHome ? game.scores.away : game.scores.home;
@@ -1229,7 +1296,7 @@ async function getHockeyTeamStats(teamId: number, baseUrl: string): Promise<Team
 
   const season = getCurrentHockeySeason();
   // Hockey stats endpoint requires league parameter (NHL = 57)
-  const response = await apiRequest<any>(baseUrl, `/teams/statistics?team=${teamId}&season=${season}&league=57`);
+  const response = await apiRequest<{ response: HockeyTeamStatsResponse }>(baseUrl, `/teams/statistics?team=${teamId}&season=${season}&league=57`);
   
   if (!response?.response) return null;
 
@@ -1251,9 +1318,9 @@ async function getHockeyTeamStats(teamId: number, baseUrl: string): Promise<Team
   return result;
 }
 
-async function getHockeyH2H(homeTeamId: number, awayTeamId: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: any } | null> {
+async function getHockeyH2H(homeTeamId: number, awayTeamId: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: { totalMatches: number; homeWins: number; awayWins: number; draws: number } } | null> {
   const cacheKey = `hockey:h2h:${homeTeamId}:${awayTeamId}`;
-  const cached = getCached<{ matches: H2HMatch[], summary: any }>(cacheKey);
+  const cached = getCached<{ matches: H2HMatch[], summary: { totalMatches: number; homeWins: number; awayWins: number; draws: number } }>(cacheKey);
   if (cached) return cached;
 
   // Hockey API doesn't support H2H parameter directly
@@ -1261,12 +1328,12 @@ async function getHockeyH2H(homeTeamId: number, awayTeamId: number, baseUrl: str
   const season = getCurrentHockeySeason();
   
   // Get games for home team
-  const homeGamesResponse = await apiRequest<any>(baseUrl, `/games?team=${homeTeamId}&season=${season}`);
+  const homeGamesResponse = await apiRequest<{ response: HockeyGameResponse[] }>(baseUrl, `/games?team=${homeTeamId}&season=${season}`);
   
   if (!homeGamesResponse?.response || homeGamesResponse.response.length === 0) return null;
 
   // Filter for games where the other team is the away team (H2H matchups)
-  const h2hGames = homeGamesResponse.response.filter((g: any) => 
+  const h2hGames = homeGamesResponse.response.filter((g: HockeyGameResponse) => 
     (g.teams.home.id === homeTeamId && g.teams.away.id === awayTeamId) ||
     (g.teams.home.id === awayTeamId && g.teams.away.id === homeTeamId)
   );
@@ -1275,15 +1342,15 @@ async function getHockeyH2H(homeTeamId: number, awayTeamId: number, baseUrl: str
 
   // Sort by date descending and take last 10
   const games = h2hGames
-    .filter((g: any) => g.status?.short === 'FT' || g.status?.short === 'AOT')
-    .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .filter((g: HockeyGameResponse) => g.status?.short === 'FT' || g.status?.short === 'AOT')
+    .sort((a: HockeyGameResponse, b: HockeyGameResponse) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 10);
   
   if (games.length === 0) return null;
   
   let homeWins = 0, awayWins = 0;
 
-  const matches: H2HMatch[] = games.slice(0, 5).map((g: any) => {
+  const matches: H2HMatch[] = games.slice(0, 5).map((g: HockeyGameResponse) => {
     const homeScore = g.scores.home;
     const awayScore = g.scores.away;
     
@@ -1417,14 +1484,14 @@ async function findNFLTeam(teamName: string, baseUrl: string): Promise<number | 
   const season = getCurrentNFLSeason();
   
   // Try with NFL league ID (1) first
-  let response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(normalizedName)}&league=1&season=${season}`);
+  let response = await apiRequest<{ response: NFLTeamSearchResponse[] }>(baseUrl, `/teams?search=${encodeURIComponent(normalizedName)}&league=1&season=${season}`);
   
   // Fallback: search without league filter but with season
   if (!response?.response?.length && normalizedName !== teamName) {
-    response = await apiRequest<any>(baseUrl, `/teams?search=${encodeURIComponent(teamName)}&season=${season}`);
+    response = await apiRequest<{ response: NFLTeamSearchResponse[] }>(baseUrl, `/teams?search=${encodeURIComponent(teamName)}&season=${season}`);
   }
   
-  if (response?.response?.length > 0) {
+  if (response?.response && response.response.length > 0) {
     const teamId = response.response[0].id;
     console.log(`[NFL] Found team "${teamName}" -> ID ${teamId}`);
     setCache(cacheKey, teamId);
@@ -1443,17 +1510,17 @@ async function getNFLTeamGames(teamId: number, baseUrl: string): Promise<GameRes
   // NFL season
   const season = getCurrentNFLSeason();
   // NFL API doesn't support 'last' parameter, we filter in code
-  const response = await apiRequest<any>(baseUrl, `/games?team=${teamId}&season=${season}`);
+  const response = await apiRequest<{ response: NFLGameResponse[] }>(baseUrl, `/games?team=${teamId}&season=${season}`);
   
   if (!response?.response) return [];
 
   // Filter for finished games, sort by date desc, take last 5
   const finishedGames = response.response
-    .filter((g: any) => g.game?.status?.short === 'FT')
-    .sort((a: any, b: any) => new Date(b.game?.date?.date || 0).getTime() - new Date(a.game?.date?.date || 0).getTime())
+    .filter((g: NFLGameResponse) => g.game?.status?.short === 'FT')
+    .sort((a: NFLGameResponse, b: NFLGameResponse) => new Date(b.game?.date?.date || 0).getTime() - new Date(a.game?.date?.date || 0).getTime())
     .slice(0, 5);
 
-  const games: GameResult[] = finishedGames.map((game: any) => {
+  const games: GameResult[] = finishedGames.map((game: NFLGameResponse) => {
     const isHome = game.teams.home.id === teamId;
     const teamScore = isHome ? game.scores.home.total : game.scores.away.total;
     const oppScore = isHome ? game.scores.away.total : game.scores.home.total;
@@ -1465,7 +1532,7 @@ async function getNFLTeamGames(teamId: number, baseUrl: string): Promise<GameRes
       result,
       score: `${game.scores.home.total}-${game.scores.away.total}`,
       opponent: isHome ? game.teams.away.name : game.teams.home.name,
-      date: game.game.date.date,
+      date: game.game?.date?.date || new Date().toISOString(),
       home: isHome,
     };
   });
@@ -1481,12 +1548,12 @@ async function getNFLTeamStats(teamId: number, baseUrl: string): Promise<TeamSea
 
   const season = getCurrentNFLSeason();
   // NFL API doesn't have /teams/statistics endpoint - use standings instead
-  const response = await apiRequest<any>(baseUrl, `/standings?league=1&season=${season}`);
+  const response = await apiRequest<{ response: NFLStandingResponse[] }>(baseUrl, `/standings?league=1&season=${season}`);
   
   if (!response?.response || response.response.length === 0) return null;
 
   // Find team in standings
-  const teamStanding = response.response.find((s: any) => s.team?.id === teamId);
+  const teamStanding = response.response.find((s: NFLStandingResponse) => s.team?.id === teamId);
   
   if (!teamStanding) {
     console.warn(`[NFL] Team ${teamId} not found in standings`);
@@ -1511,7 +1578,7 @@ async function getNFLTeamStats(teamId: number, baseUrl: string): Promise<TeamSea
   return result;
 }
 
-async function getNFLH2H(homeTeamId: number, awayTeamId: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: any } | null> {
+async function getNFLH2H(homeTeamId: number, awayTeamId: number, baseUrl: string): Promise<{ matches: H2HMatch[], summary: { totalMatches: number; homeWins: number; awayWins: number; draws: number } } | null> {
   const cacheKey = `nfl:h2h:${homeTeamId}:${awayTeamId}`;
   const cached = getCached<{ matches: H2HMatch[], summary: { totalMatches: number; homeWins: number; awayWins: number; draws: number } }>(cacheKey);
   if (cached) return cached;
@@ -1544,7 +1611,7 @@ async function getNFLH2H(homeTeamId: number, awayTeamId: number, baseUrl: string
     }
 
     return {
-      date: g.game.date.date,
+      date: g.game?.date?.date || new Date().toISOString(),
       homeTeam: g.teams.home.name,
       awayTeam: g.teams.away.name,
       homeScore,
@@ -1571,7 +1638,7 @@ async function getNFLH2H(homeTeamId: number, awayTeamId: number, baseUrl: string
 // ============================================
 
 interface NFLGameResponse {
-  game?: { date?: { date?: string } };
+  game?: { date?: { date?: string }; status?: { short?: string; long?: string } };
   scores: { home: { total: number }; away: { total: number } };
   teams: { home: { id: number; name: string }; away: { id: number; name: string } };
 }
