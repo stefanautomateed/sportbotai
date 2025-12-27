@@ -17,6 +17,19 @@ import FighterFlag from './FighterFlag';
 // In-memory cache for loaded team logos
 const loadedLogos = new Set<string>();
 
+/**
+ * Proxy external logo URLs through our API for better caching
+ * Only proxy external URLs, not data URIs or local URLs
+ */
+function getProxiedLogoUrl(url: string): string {
+  // Don't proxy data URIs or local URLs
+  if (url.startsWith('data:') || url.startsWith('/')) {
+    return url;
+  }
+  // Proxy external URLs for better caching (7 days vs ESPN's short TTL)
+  return `/api/logo?url=${encodeURIComponent(url)}`;
+}
+
 interface TeamLogoProps {
   teamName: string;
   sport: string;
@@ -65,8 +78,10 @@ export default function TeamLogo({
 }: TeamLogoProps) {
   // Compute these values before any hooks
   const isIndividual = isIndividualSport(sport);
-  const logoUrl = isIndividual ? '' : getTeamLogo(teamName, sport, league);
-  const isFallback = !isIndividual && logoUrl.startsWith('data:');
+  const rawLogoUrl = isIndividual ? '' : getTeamLogo(teamName, sport, league);
+  const isFallback = !isIndividual && rawLogoUrl.startsWith('data:');
+  // Use proxied URL for external logos (better caching)
+  const logoUrl = isFallback ? rawLogoUrl : getProxiedLogoUrl(rawLogoUrl);
   
   // All hooks must be called unconditionally at the top level
   const [hasError, setHasError] = useState(false);
