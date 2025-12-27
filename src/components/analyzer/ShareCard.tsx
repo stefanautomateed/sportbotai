@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { AnalyzeResponse } from '@/types'
-import { Share2, Copy, Download, Check, Twitter, MessageCircle, Link2 } from 'lucide-react'
+import { Share2, Copy, Download, Check, Twitter, MessageCircle, Link2, Loader2 } from 'lucide-react'
 
 interface ShareCardProps {
   result: AnalyzeResponse
@@ -14,6 +14,8 @@ export default function ShareCard({ result, className = '' }: ShareCardProps) {
   const [copied, setCopied] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [creatingLink, setCreatingLink] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
   const { matchInfo, probabilities, valueAnalysis, riskAnalysis, tacticalAnalysis } = result
@@ -54,8 +56,46 @@ export default function ShareCard({ result, className = '' }: ShareCardProps) {
     return `/api/og?${params.toString()}`
   }, [matchInfo, verdict, valueAnalysis, riskAnalysis])
 
-  // Generate shareable text summary
-  const generateShareText = useCallback(() => {
+  // Create a short share URL
+  const createShareUrl = useCallback(async (): Promise<string> => {
+    // Return cached URL if available
+    if (shareUrl) return shareUrl
+    
+    setCreatingLink(true)
+    try {
+      const response = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          homeTeam: matchInfo.homeTeam,
+          awayTeam: matchInfo.awayTeam,
+          league: matchInfo.leagueName,
+          verdict: verdict.headline,
+          risk: riskAnalysis.overallRiskLevel,
+          confidence: verdict.prob,
+          value: valueAnalysis.bestValueSide !== 'NONE' ? valueAnalysis.bestValueSide : null,
+          date: matchInfo.matchDate,
+          sport: matchInfo.sport || 'soccer',
+        }),
+      })
+      
+      const data = await response.json()
+      if (data.success && data.url) {
+        setShareUrl(data.url)
+        return data.url
+      }
+    } catch (err) {
+      console.error('Failed to create share URL:', err)
+    } finally {
+      setCreatingLink(false)
+    }
+    
+    // Fallback to site URL
+    return 'https://www.sportbotai.com'
+  }, [matchInfo, verdict, valueAnalysis, riskAnalysis, shareUrl])
+
+  // Generate shareable text summary with short URL
+  const generateShareText = useCallback((url?: string) => {
     const bestValue = valueAnalysis.bestValueSide !== 'NONE' 
       ? `Best value: ${valueAnalysis.bestValueSide}` 
       : ''
@@ -70,7 +110,7 @@ export default function ShareCard({ result, className = '' }: ShareCardProps) {
       confidenceText,
       '',
       '🤖 Analyzed by SportBot AI',
-      'https://www.sportbotai.com'
+      url || 'https://www.sportbotai.com'
     ].filter(Boolean)
 
     return lines.join('\n')
@@ -78,7 +118,8 @@ export default function ShareCard({ result, className = '' }: ShareCardProps) {
 
   // Copy text to clipboard
   const handleCopyText = async () => {
-    const text = generateShareText()
+    const url = await createShareUrl()
+    const text = generateShareText(url)
     try {
       await navigator.clipboard.writeText(text)
       setCopied(true)
@@ -90,9 +131,9 @@ export default function ShareCard({ result, className = '' }: ShareCardProps) {
 
   // Copy shareable link
   const handleCopyLink = async () => {
-    const ogUrl = `${window.location.origin}${buildOgImageUrl()}`
+    const url = await createShareUrl()
     try {
-      await navigator.clipboard.writeText(ogUrl)
+      await navigator.clipboard.writeText(url)
       setCopiedLink(true)
       setTimeout(() => setCopiedLink(false), 2000)
     } catch (err) {
@@ -120,25 +161,28 @@ export default function ShareCard({ result, className = '' }: ShareCardProps) {
   }
 
   // Share to Twitter
-  const shareToTwitter = () => {
-    const text = encodeURIComponent(generateShareText())
+  const shareToTwitter = async () => {
+    const url = await createShareUrl()
+    const text = encodeURIComponent(generateShareText(url))
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank')
   }
 
   // Share to WhatsApp
-  const shareToWhatsApp = () => {
-    const text = encodeURIComponent(generateShareText())
+  const shareToWhatsApp = async () => {
+    const url = await createShareUrl()
+    const text = encodeURIComponent(generateShareText(url))
     window.open(`https://wa.me/?text=${text}`, '_blank')
   }
 
   // Native share (mobile)
   const handleNativeShare = async () => {
+    const url = await createShareUrl()
     if (navigator.share) {
       try {
         await navigator.share({
           title: `${matchInfo.homeTeam} vs ${matchInfo.awayTeam} Analysis`,
-          text: generateShareText(),
-          url: 'https://www.sportbotai.com'
+          text: generateShareText(url),
+          url
         })
       } catch {
         // User cancelled - open modal as fallback

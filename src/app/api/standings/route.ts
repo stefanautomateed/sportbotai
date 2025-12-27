@@ -138,7 +138,15 @@ export async function GET(request: NextRequest) {
         const allStandings = response.data.flat();
         const firstEntry = allStandings[0];
         
-        const standings: StandingEntry[] = allStandings.map((team) => ({
+        // Deduplicate by team ID (API may return teams in multiple groups)
+        const seenTeamIds = new Set<number>();
+        const uniqueStandings = allStandings.filter((team) => {
+          if (seenTeamIds.has(team.team.id)) return false;
+          seenTeamIds.add(team.team.id);
+          return true;
+        });
+        
+        const standings: StandingEntry[] = uniqueStandings.map((team) => ({
           position: team.position,
           teamId: team.team.id,
           teamName: team.team.name,
@@ -187,7 +195,15 @@ export async function GET(request: NextRequest) {
         const allStandings = response.data.flat();
         const firstEntry = allStandings[0];
         
-        const standings: StandingEntry[] = allStandings.map((team) => ({
+        // Deduplicate by team ID (API may return teams in multiple groups)
+        const seenTeamIds = new Set<number>();
+        const uniqueStandings = allStandings.filter((team) => {
+          if (seenTeamIds.has(team.team.id)) return false;
+          seenTeamIds.add(team.team.id);
+          return true;
+        });
+        
+        const standings: StandingEntry[] = uniqueStandings.map((team) => ({
           position: team.position,
           teamId: team.team.id,
           teamName: team.team.name,
@@ -236,7 +252,15 @@ export async function GET(request: NextRequest) {
         const allStandings = response.data.flat();
         const firstEntry = allStandings[0];
         
-        const standings: StandingEntry[] = allStandings.map((team) => ({
+        // Deduplicate by team ID (API may return teams in multiple groups)
+        const seenTeamIds = new Set<number>();
+        const uniqueStandings = allStandings.filter((team) => {
+          if (seenTeamIds.has(team.team.id)) return false;
+          seenTeamIds.add(team.team.id);
+          return true;
+        });
+        
+        const standings: StandingEntry[] = uniqueStandings.map((team) => ({
           position: team.position,
           teamId: team.team.id,
           teamName: team.team.name,

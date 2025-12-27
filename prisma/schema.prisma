@@ -119,8 +119,6 @@ model BlogPost {
   slug               String       @unique
   excerpt            String
   content            String
-  newsContent        String?      // Google News optimized version (no CTAs, journalistic style)
-  newsTitle          String?      // News-style headline (shorter, more punchy)
   metaTitle          String?
   metaDescription    String?
   focusKeyword       String?
@@ -139,13 +137,15 @@ model BlogPost {
   awayTeam           String?
   finalScore         String?
   homeTeam           String?
-  league            String?
+  league             String?
   matchDate          DateTime?
   matchId            String?
   postMatchContent   String?
   postMatchUpdatedAt DateTime?
   postType           PostType     @default(GENERAL)
   sport              String?
+  newsContent        String?
+  newsTitle          String?
   keyword            BlogKeyword? @relation(fields: [keywordId], references: [id])
 
   @@index([slug])
@@ -179,23 +179,23 @@ model FavoriteTeam {
 }
 
 model ChatQuery {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   query              String
   queryNormalized    String?
-  answer             String?  @db.Text // Store the AI response for reuse
   category           String?
   brainMode          String?
   sport              String?
   team               String?
   league             String?
-  usedRealTimeSearch Boolean  @default(false)
+  usedRealTimeSearch Boolean   @default(false)
   responseLength     Int?
-  hadCitations       Boolean  @default(false)
-  citations          Json?    // Store citations for cached response
+  hadCitations       Boolean   @default(false)
   queryHash          String?
-  similarCount       Int      @default(1)
-  createdAt          DateTime @default(now())
-  expiresAt          DateTime? // When this cached answer expires
+  similarCount       Int       @default(1)
+  createdAt          DateTime  @default(now())
+  answer             String?
+  citations          Json?
+  expiresAt          DateTime?
 
   @@index([category])
   @@index([sport])
@@ -536,4 +536,25 @@ enum PostCategory {
   WEEKLY_STATS
   THREAD
   LIVE_INTEL
+}
+
+// Short share links for social media
+model ShareLink {
+  id         String    @id @default(cuid())
+  code       String    @unique // Short code like "abc123"
+  homeTeam   String
+  awayTeam   String
+  league     String    @default("Match")
+  verdict    String    @default("AI Analysis")
+  risk       String    @default("MEDIUM")
+  confidence Int       @default(75)
+  value      String?   // Best value side
+  matchDate  String?
+  sport      String    @default("soccer")
+  views      Int       @default(0)
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  
+  @@index([code])
+  @@index([createdAt])
 }

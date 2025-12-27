@@ -1368,13 +1368,36 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
     // Step 6: Generate News Content (same post, different view)
     console.log('[Match Preview] Step 6/7: Generating news content...');
     const newsTitle = generateNewsTitle(content.title, match.homeTeam, match.awayTeam);
-    const newsContent = transformToNewsContent(
+    let newsContent = transformToNewsContent(
       processedContent,
       match.homeTeam,
       match.awayTeam,
       match.league
     );
-    console.log(`[Match Preview] News title: ${newsTitle}`);
+    
+    // VALIDATION: Ensure newsContent has proper structure
+    const newsH2Count = (newsContent.match(/<h2/gi) || []).length;
+    const contentH2Count = (processedContent.match(/<h2/gi) || []).length;
+    
+    if (newsH2Count === 0 && contentH2Count > 0) {
+      console.warn('[Match Preview] ⚠️ newsContent has no H2 sections! Regenerating...');
+      // Try regenerating from full content
+      newsContent = transformToNewsContent(
+        content.content, // Use original content, not processed
+        match.homeTeam,
+        match.awayTeam,
+        match.league
+      );
+      const retryH2Count = (newsContent.match(/<h2/gi) || []).length;
+      console.log(`[Match Preview] Retry newsContent H2 count: ${retryH2Count}`);
+    }
+    
+    // Final validation - minimum length check
+    if (newsContent.length < 3000) {
+      console.warn(`[Match Preview] ⚠️ newsContent too short: ${newsContent.length} chars (expected 5000+)`);
+    }
+    
+    console.log(`[Match Preview] News title: ${newsTitle} (${newsContent.length} chars, ${newsH2Count} H2s)`);
 
     // Step 7: Save to database (Blog + News in ONE record)
     console.log('[Match Preview] Step 7/7: Saving to database...');
