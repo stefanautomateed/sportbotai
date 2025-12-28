@@ -1,6 +1,8 @@
 /**
  * Morning Briefing Cron Job
  * 
+ * DISABLED: Twitter posting is temporarily disabled.
+ * 
  * Runs daily at 7:00 AM UTC to post the day's fixture preview to Twitter.
  * Uses The Odds API for football events and API-Sports for basketball.
  * 
@@ -18,6 +20,9 @@ import { SportBotScheduler } from '@/lib/sportbot-scheduler';
 import { getBasketballGames, BASKETBALL_LEAGUES, getCurrentBasketballSeason } from '@/lib/apiSports/basketballClient';
 import { theOddsClient } from '@/lib/theOdds/theOddsClient';
 import { prisma } from '@/lib/prisma';
+
+// TWITTER POSTING DISABLED
+const TWITTER_POSTING_ENABLED = false;
 
 // Verify cron secret to prevent unauthorized access
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -105,6 +110,18 @@ export async function GET(request: NextRequest) {
     matches.sort((a, b) => a.kickoff.getTime() - b.kickoff.getTime());
     
     console.log(`[Cron] Found ${matches.length} matches for today`);
+    
+    // Check if Twitter posting is enabled
+    if (!TWITTER_POSTING_ENABLED) {
+      console.log('[Cron] Morning briefing calculated but Twitter posting is DISABLED');
+      return NextResponse.json({
+        success: true,
+        twitterDisabled: true,
+        message: 'Morning briefing calculated but Twitter posting is disabled',
+        matchesFound: matches.length,
+        matches: matches.map(m => `${m.homeTeam} vs ${m.awayTeam}`),
+      });
+    }
     
     // Generate and post briefing
     const result = await SportBotScheduler.postMorningBriefing(matches);
