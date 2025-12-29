@@ -1148,46 +1148,39 @@ export async function GET(request: NextRequest) {
             // Pick the outcome with the highest edge (best value)
             // This is for ROI tracking: "Did our value picks make profit?"
             // 
-            // FILTERS to avoid longshot losses:
-            // 1. Max odds cap: 4.00 (avoid longshots that rarely hit)
-            // 2. Min edge: 7% (be more selective)
-            // 3. Min probability: 25% (AI must believe outcome has reasonable chance)
+            // FILTERS to avoid losses:
+            // 1. Must align with main prediction (no contrarian bets)
+            // 2. Max odds cap: 4.00 (avoid longshots that rarely hit)
+            // 3. Min edge: 7% (be more selective)
+            // 4. Min probability: 25% (AI must believe outcome has reasonable chance)
             const MAX_VALUE_BET_ODDS = 4.00;
             const MIN_VALUE_BET_EDGE = 7; // 7% edge required
             const MIN_VALUE_BET_PROB = 0.25; // 25% minimum AI probability
             
-            // Get probabilities for each outcome
-            const outcomeProbs = {
-              home: normProbs.home,
-              away: normProbs.away,
-              draw: normProbs.draw || 0,
-            };
-            
-            // Filter candidates: must meet odds cap AND min probability
-            const valueCandidates: Array<{side: 'HOME' | 'AWAY' | 'DRAW', odds: number, edge: number, prob: number}> = [];
-            
-            if (consensus.home <= MAX_VALUE_BET_ODDS && outcomeProbs.home >= MIN_VALUE_BET_PROB) {
-              valueCandidates.push({ side: 'HOME', odds: consensus.home, edge: edges.home, prob: outcomeProbs.home });
-            }
-            if (consensus.away <= MAX_VALUE_BET_ODDS && outcomeProbs.away >= MIN_VALUE_BET_PROB) {
-              valueCandidates.push({ side: 'AWAY', odds: consensus.away, edge: edges.away, prob: outcomeProbs.away });
-            }
-            if (consensus.draw && consensus.draw <= MAX_VALUE_BET_ODDS && outcomeProbs.draw >= MIN_VALUE_BET_PROB) {
-              valueCandidates.push({ side: 'DRAW', odds: consensus.draw, edge: edges.draw, prob: outcomeProbs.draw });
-            }
-            
-            // Pick the candidate with highest edge (if any pass filters)
-            valueCandidates.sort((a, b) => b.edge - a.edge);
-            const bestValueBet = valueCandidates.length > 0 ? valueCandidates[0] : null;
+            // Only consider value bet on the predicted winner (align with main prediction)
+            // This avoids the scenario where we predict Team A wins but bet on Team B
+            const predictedSide = winnerOutcome.toUpperCase() as 'HOME' | 'AWAY' | 'DRAW';
+            const predictedOdds = winnerOutcome === 'home' ? consensus.home : 
+                                  winnerOutcome === 'away' ? consensus.away : 
+                                  consensus.draw || 0;
+            const predictedEdge = winnerOutcome === 'home' ? edges.home :
+                                  winnerOutcome === 'away' ? edges.away :
+                                  edges.draw;
             
             let valueBetSide: 'HOME' | 'AWAY' | 'DRAW' | null = null;
             let valueBetOdds: number | null = null;
             let valueBetEdge: number | null = null;
             
-            if (bestValueBet && bestValueBet.edge >= MIN_VALUE_BET_EDGE) {
-              valueBetSide = bestValueBet.side;
-              valueBetOdds = bestValueBet.odds;
-              valueBetEdge = bestValueBet.edge;
+            // Only create value bet if the predicted winner passes all filters
+            if (
+              predictedOdds > 0 &&
+              predictedOdds <= MAX_VALUE_BET_ODDS &&
+              winnerProb >= MIN_VALUE_BET_PROB &&
+              predictedEdge >= MIN_VALUE_BET_EDGE
+            ) {
+              valueBetSide = predictedSide;
+              valueBetOdds = predictedOdds;
+              valueBetEdge = predictedEdge;
             }
             
             // Conviction: 1-10 scale based on probability confidence (higher prob = higher conviction)
@@ -1240,11 +1233,8 @@ export async function GET(request: NextRequest) {
               // Only include value bet info if we have a qualified value bet
               let reasoning: string;
               if (valueBetSide && valueBetOdds && valueBetEdge) {
-                const valueTeam = valueBetSide === 'HOME' ? event.home_team : 
-                                  valueBetSide === 'AWAY' ? event.away_team : 'Draw';
-                reasoning = valueBetSide !== winnerOutcome.toUpperCase()
-                  ? `PREDICTION: ${winnerTeam} to win (${aiProb}% AI probability). VALUE BET: ${valueTeam} at ${valueBetOdds.toFixed(2)} odds (+${valueBetEdge.toFixed(1)}% edge). ${analysis.story?.narrative || ''}`
-                  : `PREDICTION: ${winnerTeam} to win (${aiProb}% AI probability, +${valueBetEdge.toFixed(1)}% edge). ${analysis.story?.narrative || ''}`;
+                // Value bet always aligns with main prediction now
+                reasoning = `PREDICTION: ${winnerTeam} to win (${aiProb}% AI probability, +${valueBetEdge.toFixed(1)}% edge at ${valueBetOdds.toFixed(2)} odds). ${analysis.story?.narrative || ''}`;
               } else {
                 reasoning = `PREDICTION: ${winnerTeam} to win (${aiProb}% AI probability). ${analysis.story?.narrative || ''}`;
               }
