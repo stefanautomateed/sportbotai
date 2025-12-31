@@ -289,7 +289,7 @@ export default function PricingCards() {
                   MOST POPULAR
                 </div>
               ) : isPremium && canUpgrade && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-accent-dark text-bg text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-glow-accent">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-500 text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
                   BEST VALUE
                 </div>
               )}
