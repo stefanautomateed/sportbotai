@@ -67,7 +67,6 @@ const SPORTS = [
     icon: '🏒',
     leagues: [
       { key: 'icehockey_nhl', name: 'NHL' },
-      { key: 'icehockey_sweden_allsvenskan', name: 'SHL' },
     ],
   },
 ];

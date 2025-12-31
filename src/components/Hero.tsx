@@ -51,7 +51,7 @@ export default function Hero() {
             {/* Subheadline */}
             <p className="text-base sm:text-lg text-white leading-relaxed mb-6 sm:mb-8 max-w-xl mx-auto lg:mx-0 bg-black/60 backdrop-blur-md rounded-xl px-5 py-4 shadow-xl border border-white/10">
               Pre-match intelligence: headlines, form, H2H history & AI insights.
-              <strong className="text-accent"> Soccer, NBA, NFL, NHL & UFC—all in 60 seconds.</strong>
+              <strong className="text-accent"> Soccer, NBA, NFL & NHL—all in 60 seconds.</strong>
             </p>
 
             {/* CTA Buttons - Stack on mobile */}
