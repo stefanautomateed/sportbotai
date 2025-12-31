@@ -1393,6 +1393,8 @@ const BASKETBALL_TEAM_LOGOS: Record<string, string> = {
   'Fenerbahce Basketball': 'https://media-cdn.cortextech.io/3b7f020e-5b39-49a1-b4b2-efea918edab7.png',
   'Fenerbahce Beko': 'https://media-cdn.cortextech.io/3b7f020e-5b39-49a1-b4b2-efea918edab7.png',
   'Fenerbahce Beko Istanbul': 'https://media-cdn.cortextech.io/3b7f020e-5b39-49a1-b4b2-efea918edab7.png',
+  'Fenerbahce SK': 'https://media-cdn.cortextech.io/3b7f020e-5b39-49a1-b4b2-efea918edab7.png',
+  'Fenerbahce': 'https://media-cdn.cortextech.io/3b7f020e-5b39-49a1-b4b2-efea918edab7.png',
   // Anadolu Efes
   'Anadolu Efes': 'https://media-cdn.cortextech.io/9a463aa2-ceb2-481c-9a95-1cddee0a248e.png',
   'Anadolu Efes Istanbul': 'https://media-cdn.cortextech.io/9a463aa2-ceb2-481c-9a95-1cddee0a248e.png',
