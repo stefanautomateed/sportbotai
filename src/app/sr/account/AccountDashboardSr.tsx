@@ -21,7 +21,7 @@ interface UserData {
   analysisCount: number;
   lastAnalysisDate: Date | null;
   stripeCustomerId: string | null;
-  stripePretplataId: string | null;
+  stripeSubscriptionId: string | null;
   createdAt: Date;
   _count: {
     analyses: number;
@@ -78,7 +78,7 @@ export default function AccountDashboardSr({ user }: Props) {
   const remaining = usageData?.remaining ?? (limit === -1 ? Infinity : Math.max(0, limit - used));
   const usagePercent = limit === -1 ? 0 : (used / limit) * 100;
 
-  const handleManagePretplata = async () => {
+  const handleManageSubscription = async () => {
     if (!user.stripeCustomerId) {
       // No subscription - redirect to pricing
       window.location.href = '/sr/pricing';
@@ -238,7 +238,7 @@ export default function AccountDashboardSr({ user }: Props) {
             </div>
             
             <button
-              onClick={handleManagePretplata}
+              onClick={handleManageSubscription}
               disabled={isLoadingPortal}
               className={`w-full text-center text-sm py-2 rounded-lg font-medium transition-colors ${
                 user.plan === 'FREE' 
