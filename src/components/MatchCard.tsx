@@ -142,12 +142,12 @@ export default function MatchCard({
     <Link
       href={`/match/${encodedMatchId}`}
       scroll={false}
-      className={`group relative bg-bg-card rounded-xl border ${isLive ? 'border-red-500/40 ring-1 ring-red-500/20' : isFinished ? 'border-gray-600/40' : 'border-divider'} p-3 sm:p-4 hover:border-primary/30 hover:bg-bg-elevated transition-all duration-300 ease-out block hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg touch-manipulation ${isFinished ? 'opacity-80' : ''}`}
+      className={`group relative card-glass rounded-xl ${isLive ? 'border-red-500/40 ring-1 ring-red-500/20' : isFinished ? 'border-gray-600/40' : 'border-white/10'} p-3 sm:p-4 hover:border-violet/40 hover:bg-white/[0.08] transition-all duration-300 ease-out block hover:scale-[1.02] hover:shadow-xl hover:shadow-violet/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg touch-manipulation ${isFinished ? 'opacity-80' : ''}`}
       data-card
     >
       {/* Live Badge */}
       {isLive && (
-        <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-red-500 rounded-full text-[10px] font-bold text-white shadow-lg">
+        <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-red-500 to-red-600 rounded-full text-[10px] font-bold text-white shadow-lg shadow-red-500/30">
           <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
@@ -158,14 +158,14 @@ export default function MatchCard({
       
       {/* Finished Badge */}
       {isFinished && liveScore && (
-        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-gray-600 rounded-full text-[10px] font-bold text-white shadow-lg">
+        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-zinc-700 rounded-full text-[10px] font-bold text-white shadow-lg">
           FT
         </div>
       )}
       
       {/* Hot Score Badge (only if not live or finished) */}
       {!isLive && !isFinished && hotScore >= 8 && (
-        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-full text-[10px] font-bold text-white shadow-lg">
+        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-violet to-violet-dark rounded-full text-[10px] font-bold text-white shadow-lg shadow-violet/30">
           HOT
         </div>
       )}
@@ -196,7 +196,7 @@ export default function MatchCard({
           <div className="transition-transform duration-300 group-hover:scale-110">
             <TeamLogo teamName={homeTeam} sport={sportKey} league={league} size="md" />
           </div>
-          <span className="text-sm font-semibold text-white truncate">{homeTeam}</span>
+          <span className="text-sm font-bold text-white truncate">{homeTeam}</span>
         </div>
 
         {/* Score Display - Live or Finished */}
@@ -224,7 +224,7 @@ export default function MatchCard({
 
         {/* Away Team */}
         <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-          <span className="text-sm font-semibold text-white truncate text-right">{awayTeam}</span>
+          <span className="text-sm font-bold text-white truncate text-right">{awayTeam}</span>
           <div className="transition-transform duration-300 group-hover:scale-110">
             <TeamLogo teamName={awayTeam} sport={sportKey} league={league} size="md" />
           </div>
@@ -246,7 +246,7 @@ export default function MatchCard({
       )}
 
       {/* Match time + Analyze CTA */}
-      <div className="mt-3 pt-3 border-t border-divider flex items-center justify-between">
+      <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
         <span className="text-xs text-text-muted" suppressHydrationWarning>{formattedDate}</span>
         {isLive ? (
           <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-red-500/15 text-red-400 border border-red-500/30 rounded-full group-hover:bg-red-500 group-hover:text-white group-hover:border-red-500 transition-all">

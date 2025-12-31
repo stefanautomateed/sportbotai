@@ -490,7 +490,10 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
   // Show header immediately with skeleton content while loading
   if (loading && parsedMatch) {
     return (
-      <div className="min-h-screen bg-[#050506]">
+      <div className="min-h-screen bg-bg relative overflow-hidden">
+        {/* Ambient Background Glows */}
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
         <div className="fixed inset-0 bg-gradient-to-b from-white/[0.01] via-transparent to-transparent pointer-events-none" />
         
         <div className="relative max-w-2xl mx-auto px-4 py-6 sm:py-10">
@@ -516,22 +519,22 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
 
           {/* Loading indicator */}
           <div className="mt-6 flex flex-col items-center justify-center gap-2">
-            <div className="w-8 h-8 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin" />
-            <span className="text-zinc-300 text-sm font-medium">{loadingMessage}</span>
+            <div className="w-8 h-8 border-2 border-zinc-700 border-t-violet rounded-full animate-spin" />
+            <span className="text-zinc-300 text-sm font-semibold">{loadingMessage}</span>
             <span className="text-zinc-600 text-xs">{t.thisMayTake}</span>
           </div>
 
           {/* Skeleton for signals */}
           <div className="mt-8 space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />
+              <div key={i} className="h-16 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-xl animate-pulse" />
             ))}
           </div>
 
           {/* Skeleton for content sections */}
           <div className="mt-6 space-y-4">
-            <div className="h-32 bg-white/5 rounded-2xl animate-pulse" />
-            <div className="h-24 bg-white/5 rounded-2xl animate-pulse" />
+            <div className="h-32 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-2xl animate-pulse" />
+            <div className="h-24 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-2xl animate-pulse" />
           </div>
         </div>
       </div>
@@ -552,7 +555,9 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
   if (isTooFarAway && (parsedMatch || data?.matchInfo)) {
     const matchForHeader = data?.matchInfo || parsedMatch;
     return (
-      <div className="min-h-screen bg-[#050506]">
+      <div className="min-h-screen bg-bg relative overflow-hidden">
+        {/* Ambient Background Glows */}
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
         <div className="fixed inset-0 bg-gradient-to-b from-white/[0.01] via-transparent to-transparent pointer-events-none" />
         
         <div className="relative max-w-2xl mx-auto px-4 py-6 sm:py-10">
@@ -579,7 +584,7 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
           )}
 
           {/* Too far away message - matches app card style */}
-          <div className="mt-8 p-5 rounded-xl bg-[#0a0a0b] border border-white/[0.04]">
+          <div className="mt-8 p-5 rounded-xl card-glass">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-white/[0.03] flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -611,7 +616,7 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
           </div>
 
           {/* Why we wait explanation */}
-          <div className="mt-4 p-4 rounded-xl bg-[#0a0a0b] border border-white/[0.04]">
+          <div className="mt-4 p-4 rounded-xl card-glass">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-sm">💡</span>
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{t.whyWeWait}</span>
@@ -657,7 +662,9 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
   if (usageLimit) {
     const matchForHeader = usageLimit.matchInfo || parsedMatch;
     return (
-      <div className="min-h-screen bg-[#050506]">
+      <div className="min-h-screen bg-bg relative overflow-hidden">
+        {/* Ambient Background Glows */}
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
         <div className="fixed inset-0 bg-gradient-to-b from-white/[0.01] via-transparent to-transparent pointer-events-none" />
         
         <div className="relative max-w-2xl mx-auto px-4 py-6 sm:py-10">
@@ -683,8 +690,8 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
             />
           )}
 
-          {/* Upgrade Card - Pro uses purple, Premium uses silver */}
-          <div className={`mt-8 bg-gradient-to-br from-bg-card via-bg-card ${usageLimit.plan === 'FREE' ? 'to-purple-500/5 border-purple-500/30' : 'to-zinc-400/5 border-zinc-400/30'} border rounded-2xl p-8 text-center`}>
+          {/* Upgrade Card - Pro uses violet, Premium uses violet gradient */}
+          <div className={`mt-8 card-glass ${usageLimit.plan === 'FREE' ? 'border-violet/30' : 'border-violet-light/30'} p-8 text-center`}>
             <div className="text-6xl mb-6">🔒</div>
             
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
@@ -709,19 +716,19 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
                 {usageLimit.plan === 'FREE' ? (
                   <>
                     <li className="flex items-center gap-3">
-                      <span className="text-purple-400">✓</span>
+                      <span className="text-violet-light">✓</span>
                       {t.analysesPerDay}
                     </li>
                     <li className="flex items-center gap-3">
-                      <span className="text-purple-400">✓</span>
+                      <span className="text-violet-light">✓</span>
                       {t.marketIntel}
                     </li>
                     <li className="flex items-center gap-3">
-                      <span className="text-purple-400">✓</span>
+                      <span className="text-violet-light">✓</span>
                       {t.earlyAccess}
                     </li>
                     <li className="flex items-center gap-3">
-                      <span className="text-purple-400">✓</span>
+                      <span className="text-violet-light">✓</span>
                       {t.prioritySupport}
                     </li>
                   </>
@@ -748,13 +755,10 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
               </ul>
             </div>
 
-            {/* CTA Button - Pro uses purple, Premium uses silver */}
+            {/* CTA Button - Uses violet theming */}
             <Link 
               href={`${localePath}/pricing`}
-              className={usageLimit.plan === 'FREE' 
-                ? "inline-block bg-purple-600 hover:bg-purple-700 text-white font-semibold text-lg px-8 py-3 rounded-lg transition-colors"
-                : "inline-block bg-gradient-to-r from-zinc-300 to-zinc-400 hover:from-zinc-200 hover:to-zinc-300 text-zinc-900 font-semibold text-lg px-8 py-3 rounded-lg transition-colors shadow-lg shadow-zinc-400/20"
-              }
+              className="btn-violet inline-block text-lg px-8 py-3"
             >
               {usageLimit.plan === 'FREE' ? t.upgradeToPro : t.upgradeToPremium}
             </Link>
@@ -771,18 +775,21 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
 
   if (error || !data || !data.matchInfo) {
     return (
-      <div className="min-h-screen bg-[#050506] flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
+      <div className="min-h-screen bg-bg relative overflow-hidden flex items-center justify-center p-4">
+        {/* Ambient Background Glows */}
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+        
+        <div className="text-center max-w-md relative">
           <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-500/20">
             <span className="text-3xl">⚠️</span>
           </div>
-          <h1 className="text-xl font-semibold text-white mb-2">{t.matchNotFound}</h1>
+          <h1 className="text-xl font-bold text-white mb-2">{t.matchNotFound}</h1>
           <p className="text-zinc-500 mb-6 text-sm">
             {error || t.couldntFindMatch}
           </p>
           <Link 
             href={`${localePath}/matches`}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 rounded-xl text-white text-sm font-medium hover:bg-white/10 transition-colors border border-white/10"
+            className="btn-gradient-border inline-flex items-center gap-2 text-sm"
           >
             <span>←</span>
             <span>{t.browseMatches}</span>
@@ -824,7 +831,11 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
   );
 
   return (
-    <div className="min-h-screen bg-[#050506]">
+    <div className="min-h-screen bg-bg relative overflow-hidden">
+      {/* Ambient Background Glows */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
+      
       {/* Subtle gradient overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-white/[0.01] via-transparent to-transparent pointer-events-none" />
       

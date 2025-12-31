@@ -176,10 +176,10 @@ export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 
             <button
               key={sport.id}
               onClick={() => setSelectedSport(sport.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
                 selectedSport === sport.id
-                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                  : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                  ? 'bg-gradient-to-r from-violet to-violet-dark text-white shadow-lg shadow-violet/20'
+                  : 'bg-white/5 backdrop-blur-sm text-gray-300 hover:bg-white/10 border border-white/5'
               }`}
             >
               <span className="text-lg">{sport.icon}</span>
@@ -190,24 +190,23 @@ export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 
 
         {/* League Pills */}
         <div className="mb-6">
-          <p className="text-xs text-text-muted uppercase tracking-wider mb-3">
+          <p className="text-xs text-text-muted uppercase tracking-wider mb-3 font-medium">
             {currentSport.name} Leagues
           </p>
           <div className="flex flex-wrap gap-2">
             {currentSport.leagues.map((league) => {
               const matchCount = leagueMatchCounts[league.key];
               const hasNoMatches = matchCount === 0;
-              
               return (
                 <button
                   key={league.key}
                   onClick={() => setSelectedLeague(league.key)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     selectedLeague === league.key
-                      ? 'bg-white/20 text-white border border-white/20'
+                      ? 'bg-white/20 text-white border border-violet/30 shadow-sm shadow-violet/10'
                       : hasNoMatches
-                        ? 'bg-white/5 text-gray-500 hover:bg-white/10 opacity-60'
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300'
+                        ? 'bg-white/5 text-gray-500 hover:bg-white/10 opacity-60 border border-transparent'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300 border border-white/5'
                   }`}
                 >
                   {/* Use country flag for domestic leagues, league logo for international competitions */}
@@ -232,10 +231,10 @@ export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 
         </div>
 
         {/* Current League Header */}
-        <div className="flex items-center gap-3 mb-4 py-3 border-t border-divider">
+        <div className="flex items-center gap-3 mb-4 py-3 border-t border-white/5">
           <LeagueLogo leagueName={currentLeague.name} sport={selectedLeague} size="md" />
           <div>
-            <h3 className="text-lg font-semibold text-white">{currentLeague.name}</h3>
+            <h3 className="text-lg font-bold text-white tracking-tight">{currentLeague.name}</h3>
             <p className="text-sm text-text-muted">
               {isLoading ? 'Loading matches...' : `${matches?.length || 0} upcoming matches`}
             </p>
@@ -246,7 +245,7 @@ export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 
         {isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-bg-card rounded-xl border border-divider p-4">
+              <div key={i} className="card-glass rounded-xl p-4">
                 {/* League & Time Skeleton */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">

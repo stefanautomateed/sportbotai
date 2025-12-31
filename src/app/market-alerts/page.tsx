@@ -170,29 +170,29 @@ function MarketSummary({
   const state = getMarketState();
   
   return (
-    <div className="bg-bg-card/80 border border-divider rounded-lg px-4 py-3 mb-6">
+    <div className="card-glass rounded-lg px-4 py-3 mb-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Market State */}
         <div className="flex items-center gap-3">
           <span className="text-lg">🧠</span>
           <div>
             <span className="text-[10px] text-text-muted uppercase tracking-wider mr-2">Status:</span>
-            <span className={`text-sm font-medium ${state.color}`}>{state.text}</span>
+            <span className={`text-sm font-semibold ${state.color}`}>{state.text}</span>
           </div>
         </div>
         
         {/* Stats row */}
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5">
-            <span className="text-xl font-bold text-emerald-400">{edgeCount}</span>
+            <span className="text-xl font-extrabold text-emerald-400">{edgeCount}</span>
             <span className="text-text-muted text-xs">edges</span>
           </div>
-          <div className="w-px h-4 bg-divider"></div>
+          <div className="w-px h-4 bg-white/10"></div>
           <div className="flex items-center gap-1.5">
-            <span className="text-xl font-bold text-amber-400">{steamCount}</span>
+            <span className="text-xl font-extrabold text-amber-400">{steamCount}</span>
             <span className="text-text-muted text-xs">steam</span>
           </div>
-          <div className="w-px h-4 bg-divider"></div>
+          <div className="w-px h-4 bg-white/10"></div>
           <div className="text-text-muted/50 text-xs">
             {matchesScanned} scanned
             {lastRefresh && ` • ${lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
@@ -215,7 +215,7 @@ function EdgeStrengthBar({ percent, alertLevel }: { percent: number; alertLevel:
                    'bg-emerald-600/60';
   
   return (
-    <div className="flex items-center gap-4 pt-2 border-t border-divider/50">
+    <div className="flex items-center gap-4 pt-2 border-t border-white/5">
       {/* Edge Strength */}
       <div className="flex items-center gap-2 flex-1">
         <span className="text-[10px] text-text-muted uppercase">Strength</span>
@@ -289,7 +289,7 @@ function EdgeMatchCard({ alert }: { alert: MarketAlert }) {
                     'text-emerald-500';
   
   return (
-    <div className="group bg-bg-card border border-divider rounded-lg p-3.5 hover:border-emerald-500/40 transition-all">
+    <div className="group card-glass rounded-lg p-3.5 hover:border-emerald-500/40 transition-all">
       {/* Context row - ultra compact */}
       <LeagueHeader sport={alert.sport} sportTitle={alert.sportTitle} time={matchTime} />
       
@@ -454,7 +454,7 @@ function BlurredSteamCard({ alert }: { alert: MarketAlert }) {
   
   return (
     <Link href="/pricing" className="block">
-      <div className="group bg-bg-card border border-zinc-500/30 rounded-lg p-3 hover:border-zinc-400/50 transition-all cursor-pointer relative overflow-hidden">
+      <div className="group card-glass border-zinc-500/30 rounded-lg p-3 hover:border-zinc-400/50 transition-all cursor-pointer relative overflow-hidden">
         {/* Top row */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -524,7 +524,7 @@ function SteamMoveCard({ alert }: { alert: MarketAlert }) {
   };
   
   return (
-    <div className="group bg-bg-card border border-amber-500/15 rounded-lg p-3 hover:border-amber-500/30 transition-all">
+    <div className="group card-glass border-amber-500/15 rounded-lg p-3 hover:border-amber-500/30 transition-all">
       {/* Top row: League + Signal pill + Time */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -606,43 +606,47 @@ function SteamLegend() {
 
 function PremiumGate() {
   return (
-    <div className="min-h-screen bg-bg-primary py-12">
-      <div className="container-custom max-w-2xl mx-auto">
-        <div className="bg-gradient-to-br from-bg-card via-bg-card to-zinc-400/5 border border-zinc-400/30 rounded-2xl p-8 text-center">
+    <div className="min-h-screen bg-bg relative overflow-hidden py-12">
+      {/* Ambient Background Glows */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
+      
+      <div className="container-custom max-w-2xl mx-auto relative">
+        <div className="card-glass p-8 text-center">
           <div className="text-6xl mb-6">🔒</div>
-          <h1 className="text-3xl font-bold text-text-primary mb-4">Market Alerts</h1>
+          <h1 className="text-3xl font-extrabold text-text-primary mb-4 tracking-tight">Market Alerts</h1>
           <p className="text-text-secondary text-lg mb-6">
             Real-time odds tracking, steam move detection, and model edge alerts 
             are exclusive to Premium subscribers.
           </p>
           
-          <div className="bg-bg-primary/50 rounded-xl p-6 mb-8 text-left">
-            <h3 className="font-semibold text-text-primary mb-4 text-center">What you get:</h3>
+          <div className="bg-white/5 rounded-xl p-6 mb-8 text-left">
+            <h3 className="font-bold text-text-primary mb-4 text-center">What you get:</h3>
             <ul className="space-y-3 text-text-secondary max-w-md mx-auto">
               <li className="flex items-center gap-3">
-                <span className="text-zinc-300">✓</span>
+                <span className="text-violet-light">✓</span>
                 Top 5 matches with highest model edge
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-zinc-300">✓</span>
+                <span className="text-violet-light">✓</span>
                 Steam move detection (sharp money alerts)
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-zinc-300">✓</span>
+                <span className="text-violet-light">✓</span>
                 Real-time odds movement tracking
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-zinc-300">✓</span>
+                <span className="text-violet-light">✓</span>
                 Edge strength & confidence indicators
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-zinc-300">✓</span>
+                <span className="text-violet-light">✓</span>
                 Market intelligence summary
               </li>
             </ul>
           </div>
           
-          <Link href="/pricing" className="inline-block bg-gradient-to-r from-zinc-300 to-zinc-400 hover:from-zinc-200 hover:to-zinc-300 text-zinc-900 font-semibold text-lg px-8 py-3 rounded-lg transition-colors shadow-lg shadow-zinc-400/20">
+          <Link href="/pricing" className="btn-violet inline-block">
             Upgrade to Premium
           </Link>
         </div>
@@ -653,21 +657,24 @@ function PremiumGate() {
 
 function LoadingState() {
   return (
-    <div className="min-h-screen bg-bg-primary py-12">
-      <div className="container-custom">
+    <div className="min-h-screen bg-bg relative overflow-hidden py-12">
+      {/* Ambient Background Glows */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+      
+      <div className="container-custom relative">
         <div className="animate-pulse space-y-6">
-          <div className="h-20 bg-bg-card rounded-xl"></div>
+          <div className="h-20 card-glass rounded-xl"></div>
           <div className="grid lg:grid-cols-2 gap-8">
             <div className="space-y-4">
-              <div className="h-8 bg-bg-card rounded w-48"></div>
+              <div className="h-8 card-glass rounded w-48"></div>
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-72 bg-bg-card rounded-xl"></div>
+                <div key={i} className="h-72 card-glass rounded-xl"></div>
               ))}
             </div>
             <div className="space-y-4">
-              <div className="h-8 bg-bg-card rounded w-40"></div>
+              <div className="h-8 card-glass rounded w-40"></div>
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-52 bg-bg-card rounded-xl"></div>
+                <div key={i} className="h-52 card-glass rounded-xl"></div>
               ))}
             </div>
           </div>
@@ -782,21 +789,25 @@ export default function MarketAlertsPage() {
   const remainingMatches = isSearching ? [] : allMatches.slice(isPremium ? 5 : 10);
 
   return (
-    <div className="min-h-screen bg-bg-primary py-8 sm:py-10">
-      <div className="container-custom">
+    <div className="min-h-screen bg-bg relative overflow-hidden py-8 sm:py-10">
+      {/* Ambient Background Glows */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
+      
+      <div className="container-custom relative">
         {/* Upgrade Banner for non-premium users */}
         {!isPremium && (
-          <div className="mb-6 bg-gradient-to-r from-zinc-800/80 via-zinc-800/60 to-zinc-800/80 border border-zinc-600/40 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="mb-6 card-glass border-violet/30 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🔓</span>
               <div>
-                <h3 className="font-semibold text-text-primary text-sm">Unlock All Market Edges</h3>
+                <h3 className="font-bold text-text-primary text-sm">Unlock All Market Edges</h3>
                 <p className="text-text-muted text-xs">Top 10 edges are hidden • Upgrade to see exact values and full analytics</p>
               </div>
             </div>
             <Link 
               href="/pricing" 
-              className="flex-shrink-0 bg-gradient-to-r from-zinc-300 to-zinc-400 hover:from-zinc-200 hover:to-zinc-300 text-zinc-900 font-semibold text-sm px-5 py-2 rounded-lg transition-colors shadow-lg shadow-zinc-400/10"
+              className="btn-violet flex-shrink-0 text-sm px-5 py-2"
             >
               Upgrade to Premium
             </Link>
@@ -806,15 +817,15 @@ export default function MarketAlertsPage() {
         {/* Header - Compact */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
               Market Alerts
             </h1>
             {isPremium ? (
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-zinc-300/20 to-zinc-400/20 text-zinc-300 border border-zinc-400/30">
+              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-violet/20 to-violet-dark/20 text-violet-light border border-violet/30">
                 PREMIUM
               </span>
             ) : (
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                 PREVIEW
               </span>
             )}
@@ -853,7 +864,7 @@ export default function MarketAlertsPage() {
               placeholder="Search team or match..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 bg-bg-card border border-divider rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              className="w-full pl-10 pr-10 py-2.5 card-glass border-white/10 rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-violet/50 focus:border-violet transition-colors"
             />
             {searchQuery && (
               <button
