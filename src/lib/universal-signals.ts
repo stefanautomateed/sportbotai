@@ -124,7 +124,7 @@ const SPORT_CONFIGS: Record<SportType, SportConfig> = {
   soccer: {
     hasDraw: true,
     tempoThresholds: { low: 1.2, high: 2.0 },  // Goals per game
-    homeAdvantage: 0.04,
+    homeAdvantage: 0.025,  // Modern football: post-COVID home advantage ~43-47% (reduced from 0.04)
     efficiencyThreshold: 0.15,
     scoringUnit: 'goals',
   },
@@ -138,14 +138,14 @@ const SPORT_CONFIGS: Record<SportType, SportConfig> = {
   football: {
     hasDraw: true,
     tempoThresholds: { low: 18, high: 28 },    // Points per game
-    homeAdvantage: 0.025,
+    homeAdvantage: 0.025,  // NFL home advantage ~53-55%
     efficiencyThreshold: 2,
     scoringUnit: 'points',
   },
   hockey: {
     hasDraw: false,  // NHL has OT/SO
     tempoThresholds: { low: 2.3, high: 3.2 },  // Goals per game
-    homeAdvantage: 0.035,
+    homeAdvantage: 0.02,  // NHL: high variance sport, OT equalizer - be conservative (reduced from 0.035)
     efficiencyThreshold: 0.2,
     scoringUnit: 'goals',
   },

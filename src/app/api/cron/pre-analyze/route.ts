@@ -68,24 +68,26 @@ const PRE_ANALYZE_SPORTS = [
 /**
  * League-specific prediction hints based on historical accuracy patterns
  * These are empirically derived from prediction performance analysis
+ * Updated: January 2025 based on 263 verified predictions
  */
 const LEAGUE_HINTS: Record<string, string> = {
-  // EPL: 64% accuracy - our best soccer league, trust form data
+  // EPL: 41.7% accuracy - home picks underperforming (42.9%), away picks better (62.5%)
   'Premier League': `
-EPL INSIGHT: This is a high-quality league with predictable patterns. 
-- Big 6 away wins are undervalued by markets
-- Bottom half teams rarely win against top 10 at home
-- Trust recent form over historical reputation`,
+EPL WARNING: Home picks have been underperforming (43% accuracy vs 62% away).
+- Modern EPL has weak home advantage (post-COVID ~45% home wins)
+- Top 6 away wins are often undervalued
+- Be skeptical of home picks for mid-table teams
+- Trust form data for away teams more than home advantage`,
 
-  // La Liga: 0% accuracy - heavily over-predict draws, need away focus  
+  // La Liga: need monitoring 
   'La Liga': `
-LA LIGA WARNING: Our model has struggled here. Adjustments needed:
-- MASSIVELY reduce draw predictions - draws are overrated here
+LA LIGA INSIGHT: Adjust for Spanish football patterns.
+- REDUCE draw predictions - draws are overrated here
 - Away wins happen more than expected, especially for top 4 teams
-- Real Madrid/Barcelona away wins are severely underpriced
+- Real Madrid/Barcelona away wins are very reliable
 - Mid-table clashes are volatile - lower conviction`,
 
-  // Bundesliga: 33% accuracy - home bias problem
+  // Bundesliga: home bias caution
   'Bundesliga': `
 BUNDESLIGA WARNING: Strong away team performance historically.
 - Bayern/Dortmund away wins are very reliable
@@ -93,7 +95,7 @@ BUNDESLIGA WARNING: Strong away team performance historically.
 - Bottom teams lose away almost always
 - High-scoring nature means form matters more than H2H`,
 
-  // Serie A: 50% accuracy - decent, defensive focus
+  // Serie A: defensive patterns
   'Serie A': `
 SERIE A INSIGHT: Defensive league patterns.
 - Low-scoring games favor underdogs and draws
@@ -109,29 +111,40 @@ LIGUE 1 INSIGHT: PSG dominates, rest is unpredictable.
 - Away wins for non-PSG teams are rare
 - Lower conviction on all non-PSG matches`,
 
-  // NBA: 63% accuracy - our best sport
+  // NBA: 45% accuracy - home picks (60.6%) good, away picks (37.2%) underperforming
   'NBA': `
-NBA INSIGHT: Our highest accuracy sport. Trust the model.
-- Form and H2H data are very predictive
-- Back-to-back games create real edges
-- Road underdogs often have value
-- High-scoring nature means favorites cover`,
+NBA INSIGHT: Strong home pick accuracy (61%), away picks struggling (37%).
+- HOME COURT MATTERS: NBA home teams win ~57% of games
+- Be MORE conservative on away picks - require stronger evidence
+- Back-to-back games are significant - favor rested teams
+- Trust form data, especially for home teams
+- Road underdogs need very clear edge to pick`,
 
-  // NFL: No recent data
+  // NFL: 72.7% accuracy - our best sport!
   'NFL': `
-NFL INSIGHT: Weekly reset nature makes prediction harder.
+NFL INSIGHT: Our highest accuracy sport (73%). Trust the model.
 - Home field matters more than other sports
-- Division games are unpredictable
-- Favor road teams with elite QBs
+- Division games are more predictable than expected
+- Favor road teams with elite QBs only when clear edge
 - Weather games favor running teams`,
 
-  // NHL: 50% accuracy
+  // NHL: 24.5% accuracy - CRITICAL ISSUE, home picks terrible (14.8%)
   'NHL': `
-NHL INSIGHT: High variance sport with goalie dependency.
-- Form is less predictive than other sports
-- Goalie matchups matter enormously (check injuries)
-- Road underdogs often have value
-- Divisional games are more unpredictable`,
+NHL CRITICAL WARNING: Very low accuracy (25%), home picks especially bad (15%).
+- DO NOT trust home ice advantage - it's overrated in our model
+- High variance sport - goalie matchups dominate outcomes
+- Favor AWAY picks more often - road teams perform better than expected
+- Lower conviction on ALL picks - NHL is unpredictable
+- Check for goalie injuries before picking - they matter most
+- Consider NOT picking a winner if match is close`,
+
+  // Euroleague: 66.7% accuracy - home picks excellent (85.7%), away weaker (50%)
+  'Euroleague': `
+EUROLEAGUE INSIGHT: Strong accuracy (67%), especially home picks (86%).
+- HOME COURT IS HUGE: Trust home picks strongly
+- European basketball has even stronger home advantage than NBA
+- Away picks need very strong form evidence
+- Trust the form data and H2H patterns`,
 };
 
 /**
