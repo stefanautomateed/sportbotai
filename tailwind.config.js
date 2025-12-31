@@ -48,6 +48,7 @@ module.exports = {
         // Background / Surface (Dark Theme - warmer blacks)
         bg: {
           DEFAULT: '#0A0A0A',
+          primary: '#000000', // Pure black for main sections
           card: '#121212',
           hover: '#1A1A1A',
           elevated: '#1E1E1E',
