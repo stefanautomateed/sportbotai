@@ -360,7 +360,7 @@ export default function PricingCardsI18n({ locale }: PricingCardsI18nProps) {
                   : plan.highlighted && canUpgrade
                   ? 'border-2 border-primary/50 md:scale-105'
                   : isPremium && canUpgrade
-                  ? 'border-2 border-white/10'
+                  ? 'border-2 border-slate-500/30'
                   : ''
               }`}
             >
@@ -387,7 +387,9 @@ export default function PricingCardsI18n({ locale }: PricingCardsI18nProps) {
 
                 {/* Price */}
                 <div className="mb-2">
-                  <span className="text-4xl font-extrabold text-white">
+                  <span className={`text-4xl font-extrabold ${
+                    plan.highlighted ? 'text-white' : isPremium ? 'text-slate-400' : 'text-white'
+                  }`}>
                     {yearly ? plan.yearlyPrice : plan.monthlyPrice}
                   </span>
                   <span className="text-sm text-gray-400">
@@ -405,7 +407,7 @@ export default function PricingCardsI18n({ locale }: PricingCardsI18nProps) {
                   <li key={index} className="flex items-start gap-3">
                     <svg
                       className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                        plan.highlighted ? 'text-primary' : isPremium ? 'text-accent' : 'text-accent'
+                        plan.highlighted ? 'text-primary' : isPremium ? 'text-slate-400' : 'text-accent'
                       }`}
                       fill="currentColor"
                       viewBox="0 0 20 20"

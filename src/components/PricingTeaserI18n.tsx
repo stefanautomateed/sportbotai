@@ -129,7 +129,7 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
         </div>
 
         {/* Premium Plan Card */}
-        <div className="card-glass p-5 sm:p-6 relative border-2 border-white/10">
+        <div className="card-glass p-5 sm:p-6 relative border-2 border-slate-500/30">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-accent-dark text-bg text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-glow-accent">
             {locale === 'sr' ? 'NAJBOLJA VREDNOST' : 'BEST VALUE'}
           </div>
@@ -137,7 +137,7 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
           <div className="text-center mb-4 pt-2">
             <h3 className="text-xl font-bold mb-3 text-white">{t.pricing.premium.name}</h3>
             <div className="mb-2">
-              <span className="text-4xl font-extrabold text-white">
+              <span className="text-4xl font-extrabold text-slate-400">
                 {isYearlyBilling ? '$290' : '$49.99'}
               </span>
               <span className="text-sm text-gray-400">
@@ -152,7 +152,7 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
           <ul className="space-y-3 mb-8">
             {t.pricing.premium.features.map((feature, index) => (
               <li key={index} className="flex items-start gap-3">
-                <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-accent" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <span className="text-sm text-gray-300">{feature}</span>
