@@ -21,7 +21,7 @@ interface UserData {
   analysisCount: number;
   lastAnalysisDate: Date | null;
   stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
+  stripePretplataId: string | null;
   createdAt: Date;
   _count: {
     analyses: number;
@@ -44,12 +44,6 @@ const PLAN_COLORS: Record<string, { bg: string; text: string; border: string }> 
   PREMIUM: { bg: 'bg-slate-400/20', text: 'text-slate-300', border: 'border-slate-400/30' },
 };
 
-const PLAN_NAMES_SR: Record<string, string> = {
-  FREE: 'Besplatno',
-  PRO: 'Pro',
-  PREMIUM: 'Premium',
-};
-
 export default function AccountDashboardSr({ user }: Props) {
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [usageData, setUsageData] = useState<{ used: number; limit: number; remaining: number } | null>(null);
@@ -58,6 +52,7 @@ export default function AccountDashboardSr({ user }: Props) {
     type: 'feature',
   });
 
+  // Fetch real-time usage on mount
   useEffect(() => {
     const fetchUsage = async () => {
       try {
@@ -71,7 +66,7 @@ export default function AccountDashboardSr({ user }: Props) {
           });
         }
       } catch (error) {
-        console.error('Greška pri učitavanju korišćenja:', error);
+        console.error('Failed to fetch usage:', error);
       }
     };
     fetchUsage();
@@ -83,8 +78,9 @@ export default function AccountDashboardSr({ user }: Props) {
   const remaining = usageData?.remaining ?? (limit === -1 ? Infinity : Math.max(0, limit - used));
   const usagePercent = limit === -1 ? 0 : (used / limit) * 100;
 
-  const handleManageSubscription = async () => {
+  const handleManagePretplata = async () => {
     if (!user.stripeCustomerId) {
+      // No subscription - redirect to pricing
       window.location.href = '/sr/pricing';
       return;
     }
@@ -99,11 +95,11 @@ export default function AccountDashboardSr({ user }: Props) {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error(data.error || 'Greška pri kreiranju portal sesije');
+        throw new Error(data.error || 'Failed to create portal session');
       }
     } catch (error) {
-      console.error('Greška pri otvaranju portala:', error);
-      alert('Greška pri otvaranju portala za upravljanje pretplatom. Pokušajte ponovo.');
+      console.error('Error opening customer portal:', error);
+      alert('Failed to open billing portal. Please try again.');
     } finally {
       setIsLoadingPortal(false);
     }
@@ -114,13 +110,14 @@ export default function AccountDashboardSr({ user }: Props) {
     .map((n) => n[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2) || user.email?.[0].toUpperCase() || 'K';
+    .slice(0, 2) || user.email?.[0].toUpperCase() || 'U';
 
   return (
     <div className="min-h-screen bg-bg">
       {/* Header */}
       <section className="bg-bg-card border-b border-divider">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {/* Mobile: Stack vertically, Desktop: Horizontal */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex items-center gap-4 flex-1 min-w-0">
               {user.image ? (
@@ -163,16 +160,16 @@ export default function AccountDashboardSr({ user }: Props) {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              Današnje Korišćenje
+              Today&apos;s Usage
             </h3>
             
             <div className="mb-4">
               <div className="flex items-end justify-between mb-2">
                 <span className="text-3xl font-bold text-white">
-                  {limit === -1 ? '∞' : \`\${used} / \${limit}\`}
+                  {limit === -1 ? '∞' : `${used} / ${limit}`}
                 </span>
                 <span className="text-text-muted text-sm">
-                  {limit === -1 ? 'neograničeno' : 'iskorišćeno danas'}
+                  {limit === -1 ? 'neograničeno' : `iskorišćeno danas`}
                 </span>
               </div>
               
@@ -180,12 +177,12 @@ export default function AccountDashboardSr({ user }: Props) {
                 <>
                   <div className="h-2 bg-bg rounded-full overflow-hidden">
                     <div 
-                      className={\`h-full transition-all \${usagePercent > 80 ? 'bg-danger' : usagePercent > 50 ? 'bg-warning' : 'bg-accent'}\`}
-                      style={{ width: \`\${Math.min(usagePercent, 100)}%\` }}
+                      className={`h-full transition-all ${usagePercent > 80 ? 'bg-danger' : usagePercent > 50 ? 'bg-warning' : 'bg-accent'}`}
+                      style={{ width: `${Math.min(usagePercent, 100)}%` }}
                     />
                   </div>
                   <p className="text-xs text-text-muted mt-2">
-                    {remaining > 0 ? \`\${remaining} \${remaining === 1 ? 'analiza preostala' : 'analiza preostalo'}\` : 'Limit dostignut – resetuje se u ponoć'}
+                    {remaining > 0 ? `${remaining} ${remaining === 1 ? 'analysis' : 'analyses'} remaining` : 'Limit dostignut – resetuje se u ponoć'}
                   </p>
                 </>
               )}
@@ -193,13 +190,13 @@ export default function AccountDashboardSr({ user }: Props) {
             
             <Link 
               href="/sr/matches"
-              className="btn-primary w-full text-center text-sm py-2 block"
+              className="btn-primary w-full text-center text-sm py-2"
             >
               Pregledaj Mečeve
             </Link>
           </div>
 
-          {/* Total Analyses Card */}
+          {/* Ukupno Analiza Card */}
           <div className="bg-bg-card rounded-xl border border-divider p-6">
             <h3 className="text-sm font-medium text-text-muted mb-4 flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -215,14 +212,14 @@ export default function AccountDashboardSr({ user }: Props) {
             
             <Link 
               href="/sr/history"
-              className="btn-secondary w-full text-center text-sm py-2 block"
+              className="btn-secondary w-full text-center text-sm py-2"
             >
               Pogledaj Istoriju
             </Link>
           </div>
 
-          {/* Subscription Card */}
-          <div className={\`bg-bg-card rounded-xl border \${planColors.border} p-6\`}>
+          {/* Pretplata Card */}
+          <div className={`bg-bg-card rounded-xl border ${planColors.border} p-6`}>
             <h3 className="text-sm font-medium text-text-muted mb-4 flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -231,7 +228,7 @@ export default function AccountDashboardSr({ user }: Props) {
             </h3>
             
             <div className="mb-4">
-              <span className={\`text-2xl font-bold \${planColors.text}\`}>{PLAN_NAMES_SR[user.plan] || user.plan}</span>
+              <span className={`text-2xl font-bold ${planColors.text}`}>{user.plan}</span>
               {user.plan === 'FREE' && (
                 <p className="text-text-muted text-sm mt-1">Nadogradite za više analiza</p>
               )}
@@ -241,13 +238,13 @@ export default function AccountDashboardSr({ user }: Props) {
             </div>
             
             <button
-              onClick={handleManageSubscription}
+              onClick={handleManagePretplata}
               disabled={isLoadingPortal}
-              className={\`w-full text-center text-sm py-2 rounded-lg font-medium transition-colors \${
+              className={`w-full text-center text-sm py-2 rounded-lg font-medium transition-colors ${
                 user.plan === 'FREE' 
                   ? 'bg-accent text-bg hover:bg-accent-green' 
                   : 'bg-bg border border-divider text-text-secondary hover:bg-bg-hover'
-              }\`}
+              }`}
             >
               {isLoadingPortal ? (
                 <span className="flex items-center justify-center gap-2">
@@ -314,6 +311,7 @@ export default function AccountDashboardSr({ user }: Props) {
           <h2 className="text-lg font-semibold text-white mb-3 sm:mb-4">Pomozite Nam da Poboljšamo</h2>
           
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+            {/* Predloži Funkciju */}
             <button
               onClick={() => setFeedbackModal({ isOpen: true, type: 'feature' })}
               className="flex items-center gap-4 p-4 bg-bg-card rounded-xl border border-divider hover:border-primary/30 transition-colors group text-left"
@@ -332,6 +330,7 @@ export default function AccountDashboardSr({ user }: Props) {
               </svg>
             </button>
 
+            {/* Prijavi Problem */}
             <button
               onClick={() => setFeedbackModal({ isOpen: true, type: 'problem' })}
               className="flex items-center gap-4 p-4 bg-bg-card rounded-xl border border-divider hover:border-danger/30 transition-colors group text-left"
@@ -343,7 +342,7 @@ export default function AccountDashboardSr({ user }: Props) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-medium group-hover:text-danger transition-colors">Prijavi Problem</p>
-                <p className="text-text-muted text-sm">Javite nam ako nešto ne radi kako treba</p>
+                <p className="text-text-muted text-sm">Let us know if something isn&apos;t working</p>
               </div>
               <svg className="w-5 h-5 text-text-muted group-hover:text-danger transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -352,11 +351,12 @@ export default function AccountDashboardSr({ user }: Props) {
           </div>
         </div>
 
-        {/* Account Settings */}
+        {/* Podešavanja Naloga */}
         <div className="mt-6 sm:mt-8">
           <h2 className="text-lg font-semibold text-white mb-3 sm:mb-4">Podešavanja Naloga</h2>
           
           <div className="bg-bg-card rounded-xl border border-divider divide-y divide-divider">
+            {/* Member Since */}
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
                 <svg className="w-5 h-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -372,6 +372,7 @@ export default function AccountDashboardSr({ user }: Props) {
               </span>
             </div>
 
+            {/* Email */}
             <div className="flex items-center justify-between gap-4 p-4">
               <div className="flex items-center gap-3 flex-shrink-0">
                 <svg className="w-5 h-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -382,6 +383,7 @@ export default function AccountDashboardSr({ user }: Props) {
               <span className="text-white text-sm sm:text-base truncate">{user.email}</span>
             </div>
 
+            {/* Odjavi se */}
             <div className="p-4">
               <button
                 onClick={() => signOut({ callbackUrl: '/sr' })}
@@ -396,7 +398,7 @@ export default function AccountDashboardSr({ user }: Props) {
           </div>
         </div>
 
-        {/* Danger Zone */}
+        {/* Opasna Zona */}
         <div className="mt-6 sm:mt-8">
           <h2 className="text-lg font-semibold text-white mb-4">Opasna Zona</h2>
           
