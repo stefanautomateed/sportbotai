@@ -100,32 +100,43 @@ export default function Header() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const isAdmin = session?.user?.email && ADMIN_EMAILS.includes(session.user.email);
-  const { isVisible } = useHideOnScroll({ threshold: 15, mobileOnly: true });
+  const { isVisible, scrollY } = useHideOnScroll({ threshold: 15, mobileOnly: true });
   
   // Determine current locale from pathname
   const locale: Locale = pathname?.startsWith('/sr') ? 'sr' : 'en';
+  
+  // Scroll-aware styling
+  const isScrolled = scrollY > 20;
 
   return (
     <header 
       className={`
-        bg-bg/95 backdrop-blur-md border-b border-divider 
         fixed top-0 left-0 right-0 z-50
-        transition-transform duration-300 ease-out
+        transition-all duration-300 ease-out
         ${isVisible ? 'translate-y-0' : '-translate-y-full md:translate-y-0'}
+        ${isScrolled 
+          ? 'bg-bg/80 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.3)]' 
+          : 'bg-transparent border-b border-transparent'
+        }
       `}
     >
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
+      {/* Subtle gradient glow when scrolled */}
+      {isScrolled && (
+        <div className="absolute inset-0 bg-gradient-to-r from-violet/5 via-transparent to-accent/5 pointer-events-none" />
+      )}
+      
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className={`flex justify-between items-center transition-all duration-300 ${isScrolled ? 'h-14' : 'h-16'}`}>
+          {/* Logo - scales down when scrolled */}
+          <Link href="/" className={`flex items-center gap-2.5 group transition-all duration-300 ${isScrolled ? 'scale-95' : 'scale-100'}`}>
             <Image 
               src="/favicon.svg" 
               alt="SportBot AI" 
               width={36} 
               height={36}
-              className="rounded-lg"
+              className={`rounded-lg transition-all duration-300 ${isScrolled ? 'w-8 h-8' : 'w-9 h-9'}`}
             />
-            <span className="text-xl font-bold text-text-primary group-hover:text-accent transition-colors">
+            <span className={`font-bold text-text-primary group-hover:text-accent transition-all duration-300 ${isScrolled ? 'text-lg' : 'text-xl'}`}>
               Sport<span className="text-accent">Bot</span>
               <span className="ml-1.5 text-xs font-semibold bg-accent text-bg px-1.5 py-0.5 rounded">AI</span>
             </span>
