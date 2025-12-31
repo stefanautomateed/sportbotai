@@ -1350,6 +1350,14 @@ const SOCCER_TEAM_LOGOS: Record<string, string> = {
   'Basel': 'https://a.espncdn.com/i/teamlogos/soccer/500/989.png',
   'FC Basel': 'https://a.espncdn.com/i/teamlogos/soccer/500/989.png',
   'FC Basel 1893': 'https://a.espncdn.com/i/teamlogos/soccer/500/989.png',
+  'Ferencvaros': 'https://media.api-sports.io/football/teams/651.png',
+  'Ferencvarosi TC': 'https://media.api-sports.io/football/teams/651.png',
+  'Ferencvárosi TC': 'https://media.api-sports.io/football/teams/651.png',
+  'Ferencváros': 'https://media.api-sports.io/football/teams/651.png',
+  'FTC': 'https://media.api-sports.io/football/teams/651.png',
+  'Panathinaikos': 'https://media.api-sports.io/football/teams/617.png',
+  'Panathinaikos FC': 'https://media.api-sports.io/football/teams/617.png',
+  'PAO': 'https://media.api-sports.io/football/teams/617.png',
 };
 
 /**
