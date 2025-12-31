@@ -174,14 +174,14 @@ export default function PricingTeaser() {
 
               {/* Plan header */}
               <div className="text-center mb-4 pt-2">
-                <h3 className={`text-xl font-bold mb-3 ${isPremium ? 'text-slate-200' : 'text-white'}`}>
+                <h3 className={`text-xl font-bold mb-3 ${isPremium ? 'text-white' : 'text-white'}`}>
                   {plan.name}
                 </h3>
 
                 {/* Price */}
                 <div className="mb-2">
-                  <span className={`text-4xl font-bold ${
-                    plan.highlighted ? 'text-primary' : isPremium ? 'text-slate-200' : 'text-white'
+                  <span className={`text-4xl font-extrabold ${
+                    plan.highlighted ? 'text-violet-light' : isPremium ? 'text-accent' : 'text-white'
                   }`}>
                     {yearly ? plan.yearlyPrice : plan.monthlyPrice}
                   </span>
@@ -189,7 +189,7 @@ export default function PricingTeaser() {
                     {yearly ? '/year' : '/month'}
                   </span>
                 </div>
-                <p className={`text-sm ${isPremium ? 'text-slate-400' : 'text-gray-400'}`}>
+                <p className="text-sm text-text-muted">
                   {yearly ? plan.yearlyDescription : plan.description}
                 </p>
               </div>
@@ -200,7 +200,7 @@ export default function PricingTeaser() {
                   <li key={index} className="flex items-start gap-3">
                     <svg
                       className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                        plan.highlighted ? 'text-primary' : isPremium ? 'text-slate-300' : 'text-accent'
+                        plan.highlighted ? 'text-violet-light' : isPremium ? 'text-accent' : 'text-accent'
                       }`}
                       fill="currentColor"
                       viewBox="0 0 20 20"
@@ -211,7 +211,7 @@ export default function PricingTeaser() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className={`text-sm ${isPremium ? 'text-slate-300' : 'text-gray-300'}`}>{feature}</span>
+                    <span className="text-sm text-gray-300">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -221,9 +221,9 @@ export default function PricingTeaser() {
                 href="/pricing"
                 className={`block w-full py-3 px-6 rounded-btn font-semibold transition-all duration-200 min-h-[48px] text-center ${
                   plan.highlighted
-                    ? 'bg-primary text-white hover:bg-primary/80'
+                    ? 'btn-violet'
                     : isPremium
-                    ? 'bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-200 hover:to-slate-300'
+                    ? 'bg-gradient-to-r from-accent to-accent-dark text-bg hover:shadow-glow-accent'
                     : 'bg-bg-elevated text-white hover:bg-bg-elevated/80 border border-divider'
                 }`}
               >
@@ -235,9 +235,9 @@ export default function PricingTeaser() {
       </div>
 
       <div className="text-center mt-10">
-        <Link href="/pricing" className="inline-flex items-center gap-2 text-blue-400 font-medium hover:text-accent transition-colors">
+        <Link href="/pricing" className="inline-flex items-center gap-2 text-violet-light font-semibold hover:text-accent transition-colors group">
           View full pricing details
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </Link>
