@@ -258,7 +258,7 @@ export default function VideoTestimonialsCarousel() {
   };
 
   return (
-    <section className="py-12 sm:py-16 overflow-hidden">
+    <section className="py-12 sm:py-16 overflow-hidden bg-bg-primary">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-10">

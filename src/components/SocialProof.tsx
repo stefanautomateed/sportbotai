@@ -140,7 +140,7 @@ export function StatsStrip({ className = '' }: StatsStripProps) {
   ];
 
   return (
-    <div className={`py-8 border-y border-white/5 bg-bg ${className}`}>
+    <div className={`py-8 border-y border-white/5 bg-bg-primary ${className}`}>
       <div className="max-w-5xl mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {stats.map((stat, i) => (

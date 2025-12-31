@@ -105,7 +105,7 @@ export default function TrendingSection({ maxMatches = 6 }: TrendingSectionProps
   }
 
   return (
-    <section id="trending" className="py-12 sm:py-16 bg-bg scroll-mt-20 relative overflow-hidden">
+    <section id="trending" className="py-12 sm:py-16 bg-bg-primary scroll-mt-20 relative overflow-hidden">
       {/* Subtle ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-violet/3 rounded-full blur-[150px] pointer-events-none" />
       

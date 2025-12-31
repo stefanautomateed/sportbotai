@@ -50,7 +50,7 @@ export default function Features() {
   ];
 
   return (
-    <section className="bg-bg section-container relative overflow-hidden">
+    <section className="bg-bg-primary section-container relative overflow-hidden">
       {/* Ambient background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
       
