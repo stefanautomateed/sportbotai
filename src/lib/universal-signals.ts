@@ -131,7 +131,7 @@ const SPORT_CONFIGS: Record<SportType, SportConfig> = {
   basketball: {
     hasDraw: false,
     tempoThresholds: { low: 100, high: 115 },  // Points per game
-    homeAdvantage: 0.03,
+    homeAdvantage: 0.055,  // NBA home teams win ~55-58% - increased from 0.03
     efficiencyThreshold: 3,
     scoringUnit: 'points',
   },
@@ -255,13 +255,16 @@ function calculateStrengthEdge(
   const winRateDiff = (homeWinRate - awayWinRate) * 0.2;
   
   // 3. Scoring differential per game (15% of edge)
+  // Scale factor varies by sport to normalize the impact
   const homeGD = homeStats.played > 0 
     ? (homeStats.scored - homeStats.conceded) / homeStats.played 
     : 0;
   const awayGD = awayStats.played > 0 
     ? (awayStats.scored - awayStats.conceded) / awayStats.played 
     : 0;
-  const gdDiff = (homeGD - awayGD) * 0.015; // Scale down scoring diff
+  // Sport-specific scaling: NBA ~5-10 pts/game diff is significant, Soccer ~0.5-1.5 goals
+  const gdScale = config.scoringUnit === 'points' ? 0.008 : 0.015; // Lower for high-scoring sports
+  const gdDiff = (homeGD - awayGD) * gdScale;
   
   // 4. H2H factor (10% of edge)
   const h2hFactor = h2h.total >= 3
