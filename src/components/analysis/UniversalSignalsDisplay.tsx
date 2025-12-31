@@ -19,12 +19,59 @@ import {
   VerdictBadge,
 } from './VisualSignals';
 
+// i18n translations for signals
+const signalTranslations = {
+  en: {
+    loadingSignals: 'Loading match signals...',
+    form: 'Form',
+    strengthEdge: 'Strength Edge',
+    tempo: 'Tempo',
+    efficiency: 'Efficiency',
+    advantage: 'advantage',
+    availabilityImpact: 'Availability Impact',
+    players: 'players',
+    out: 'Out',
+    suspension: 'Suspended',
+    doubtful: 'Doubtful',
+    noInjuries: 'No injuries reported • Full squads expected',
+    disclaimer: 'Signals calculated from recent performance. Not betting advice.',
+    noData: 'No data available',
+    edge: 'Edge',
+    data: 'Data',
+    rich: 'Rich',
+    standard: 'Standard',
+    limited: 'Limited',
+  },
+  sr: {
+    loadingSignals: 'Učitavamo signale meča...',
+    form: 'Forma',
+    strengthEdge: 'Prednost u Snazi',
+    tempo: 'Tempo',
+    efficiency: 'Efikasnost',
+    advantage: 'prednost',
+    availabilityImpact: 'Uticaj Raspoloživosti',
+    players: 'igrača',
+    out: 'Ne igra',
+    suspension: 'Suspendovan',
+    doubtful: 'Pod znakom pitanja',
+    noInjuries: 'Nema prijavljenih povreda • Očekuju se kompletni timovi',
+    disclaimer: 'Signali izračunati na osnovu nedavnih performansi. Nije savet za klađenje.',
+    noData: 'Nema dostupnih podataka',
+    edge: 'Prednost',
+    data: 'Podaci',
+    rich: 'Bogato',
+    standard: 'Standardno',
+    limited: 'Ograničeno',
+  },
+};
+
 interface UniversalSignalsDisplayProps {
   signals: UniversalSignals;
   homeTeam: string;
   awayTeam: string;
   homeForm?: string;
   awayForm?: string;
+  locale?: 'en' | 'sr';
 }
 
 export default function UniversalSignalsDisplay({
@@ -33,12 +80,15 @@ export default function UniversalSignalsDisplay({
   awayTeam,
   homeForm = '-----',
   awayForm = '-----',
+  locale = 'en',
 }: UniversalSignalsDisplayProps) {
+  const t = signalTranslations[locale];
+  
   // Guard against undefined signals or display
   if (!signals || !signals.display) {
     return (
       <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800 text-center text-zinc-500 text-sm">
-        Loading match signals...
+        {t.loadingSignals}
       </div>
     );
   }
@@ -70,7 +120,7 @@ export default function UniversalSignalsDisplay({
     <div className="space-y-4">
       {/* Main Verdict Card with Confidence Ring */}
       <VerdictBadge 
-        favored={favoredSide || 'No Clear Edge'}
+        favored={favoredSide || (locale === 'sr' ? 'Nema Jasne Prednosti' : 'No Clear Edge')}
         confidence={confidence}
         clarityScore={clarity_score}
         edgePercentage={edgePercentage}
@@ -82,7 +132,7 @@ export default function UniversalSignalsDisplay({
         {/* Form - Visual dots */}
         <SignalCard 
           icon="📊" 
-          label="Form"
+          label={t.form}
           rightContent={
             <span className={`text-xs font-medium ${
               display.form.trend === 'home_better' ? 'text-emerald-400' :
@@ -100,7 +150,7 @@ export default function UniversalSignalsDisplay({
         </SignalCard>
 
         {/* Strength Edge - Visual bar */}
-        <SignalCard icon="⚡" label="Strength Edge">
+        <SignalCard icon="⚡" label={t.strengthEdge}>
           <div className="mt-3">
             <EdgeBar
               direction={display.edge?.direction || 'even'}
@@ -118,7 +168,7 @@ export default function UniversalSignalsDisplay({
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm">🎯</span>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Tempo</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{t.tempo}</span>
               </div>
               <TempoIndicator level={display.tempo.level} />
             </div>
@@ -135,7 +185,7 @@ export default function UniversalSignalsDisplay({
           <div className="p-4 rounded-xl bg-[#0a0a0b] border border-white/[0.04]">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm">📈</span>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Efficiency</span>
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{t.efficiency}</span>
             </div>
             <p className={`text-sm font-medium ${
               display.efficiency.winner === 'home' ? 'text-emerald-400' :
@@ -146,7 +196,7 @@ export default function UniversalSignalsDisplay({
             </p>
             {display.efficiency.aspect && (
               <p className="text-[10px] text-zinc-600 mt-0.5">
-                {display.efficiency.aspect} advantage
+                {display.efficiency.aspect} {t.advantage}
               </p>
             )}
           </div>
@@ -157,12 +207,13 @@ export default function UniversalSignalsDisplay({
           display={display}
           homeTeam={homeTeam}
           awayTeam={awayTeam}
+          locale={locale}
         />
       </div>
 
       {/* Minimal disclaimer */}
       <p className="text-[9px] text-zinc-700 text-center">
-        Signals calculated from recent performance. Not betting advice.
+        {t.disclaimer}
       </p>
     </div>
   );
@@ -175,11 +226,14 @@ function ExpandableAvailability({
   display,
   homeTeam,
   awayTeam,
+  locale = 'en',
 }: {
   display: UniversalSignals['display'];
   homeTeam: string;
   awayTeam: string;
+  locale?: 'en' | 'sr';
 }) {
+  const t = signalTranslations[locale];
   const [expanded, setExpanded] = useState(false);
   const homeInjuries = display.availability.homeInjuries || [];
   const awayInjuries = display.availability.awayInjuries || [];
@@ -194,10 +248,10 @@ function ExpandableAvailability({
       >
         <div className="flex items-center gap-2">
           <span className="text-sm">🏥</span>
-          <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Availability Impact</span>
+          <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{t.availabilityImpact}</span>
           {hasInjuries && (
             <span className="text-[9px] text-zinc-600">
-              ({homeInjuries.length + awayInjuries.length} players)
+              ({homeInjuries.length + awayInjuries.length} {t.players})
             </span>
           )}
         </div>
@@ -239,7 +293,7 @@ function ExpandableAvailability({
                       injury.reason === 'doubtful' ? 'bg-amber-500/20 text-amber-400' :
                       'bg-zinc-500/20 text-zinc-400'
                     }`}>
-                      {injury.details || injury.reason || 'Out'}
+                      {injury.details || injury.reason || t.out}
                     </span>
                   </div>
                 ))}
@@ -262,7 +316,7 @@ function ExpandableAvailability({
                       injury.reason === 'doubtful' ? 'bg-amber-500/20 text-amber-400' :
                       'bg-zinc-500/20 text-zinc-400'
                     }`}>
-                      {injury.details || injury.reason || 'Out'}
+                      {injury.details || injury.reason || t.out}
                     </span>
                   </div>
                 ))}
@@ -274,7 +328,7 @@ function ExpandableAvailability({
 
       {!hasInjuries && (
         <p className="text-[10px] text-zinc-600 mt-2">
-          No injuries reported • Full squads expected
+          {t.noInjuries}
         </p>
       )}
     </div>
@@ -312,7 +366,8 @@ function SignalCard({
 /**
  * Compact Signal Pills - For summary/header areas
  */
-export function SignalPills({ signals }: { signals: UniversalSignals }) {
+export function SignalPills({ signals, locale = 'en' }: { signals: UniversalSignals; locale?: 'en' | 'sr' }) {
+  const t = signalTranslations[locale];
   const { display, confidence } = signals;
   
   // Handle undefined display or edge
@@ -321,9 +376,9 @@ export function SignalPills({ signals }: { signals: UniversalSignals }) {
   
   // Convert clarity score to user-friendly label
   const getDataQualityLabel = (score: number): { label: string; color: 'emerald' | 'amber' | 'zinc' } => {
-    if (score >= 75) return { label: 'Rich', color: 'emerald' };
-    if (score >= 50) return { label: 'Standard', color: 'zinc' };
-    return { label: 'Limited', color: 'amber' };
+    if (score >= 75) return { label: t.rich, color: 'emerald' };
+    if (score >= 50) return { label: t.standard, color: 'zinc' };
+    return { label: t.limited, color: 'amber' };
   };
   
   const dataQuality = getDataQualityLabel(signals.clarity_score);
@@ -331,17 +386,17 @@ export function SignalPills({ signals }: { signals: UniversalSignals }) {
   return (
     <div className="flex flex-wrap gap-2">
       <Pill 
-        label="Edge" 
+        label={t.edge} 
         value={signals.strength_edge}
         color={edgeDirection === 'home' ? 'emerald' : edgeDirection === 'away' ? 'blue' : 'zinc'}
       />
       <Pill 
-        label="Tempo" 
+        label={t.tempo} 
         value={signals.tempo}
         color={tempoLevel === 'high' ? 'amber' : 'zinc'}
       />
       <Pill 
-        label="Data" 
+        label={t.data} 
         value={dataQuality.label}
         color={dataQuality.color}
       />

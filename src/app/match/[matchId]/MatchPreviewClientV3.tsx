@@ -299,6 +299,7 @@ const translations = {
     helpFriends: 'Help your friends prepare for the match',
     copyLink: 'Copy Link',
     disclaimer: 'SportBot AI provides match intelligence for educational purposes only. This is not betting advice. If you gamble, please do so responsibly.',
+    limitedDataMessage: 'Limited historical data available for this sport. Analysis based on AI estimation.',
   },
   sr: {
     allMatches: 'Svi Mečevi',
@@ -381,6 +382,7 @@ const translations = {
     helpFriends: 'Pomozi prijateljima da se pripreme za meč',
     copyLink: 'Kopiraj Link',
     disclaimer: 'SportBot AI pruža informacije o mečevima samo u edukativne svrhe. Ovo nije savet za klađenje. Ako se kladite, činite to odgovorno.',
+    limitedDataMessage: 'Ograničeni istorijski podaci dostupni za ovaj sport. Analiza zasnovana na AI proceni.',
   },
 };
 
@@ -538,7 +540,7 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
 
   // Fallback skeleton if we can't parse matchId
   if (loading) {
-    return <PremiumSkeleton message={loadingMessage} />;
+    return <PremiumSkeleton message={loadingMessage} locale={locale} />;
   }
 
   // Match is too far in the future - show friendly message
@@ -854,7 +856,7 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
             <div className="flex items-center gap-2">
               <span className="text-blue-400 text-sm">ℹ️</span>
               <p className="text-xs text-blue-400/80">
-                {data.dataAvailability.message || 'Limited historical data available for this sport. Analysis based on AI estimation.'}
+                {data.dataAvailability.message || t.limitedDataMessage}
               </p>
             </div>
           </div>
@@ -884,6 +886,7 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
                 awayTeam={data.matchInfo.awayTeam}
                 homeForm={data.viralStats?.form?.home || '-----'}
                 awayForm={data.viralStats?.form?.away || '-----'}
+                locale={locale}
               />
             </div>
           )}
@@ -1048,7 +1051,9 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
 /**
  * Premium Loading Skeleton with progress indicator
  */
-function PremiumSkeleton({ message = 'Analyzing match data...' }: { message?: string }) {
+function PremiumSkeleton({ message, locale = 'en' }: { message?: string; locale?: 'en' | 'sr' }) {
+  const skeletonT = translations[locale];
+  const displayMessage = message || skeletonT.analyzing;
   return (
     <div className="min-h-screen bg-[#050506]">
       <div className="max-w-2xl mx-auto px-4 py-10">
@@ -1077,8 +1082,8 @@ function PremiumSkeleton({ message = 'Analyzing match data...' }: { message?: st
         {/* Loading indicator - visible and informative */}
         <div className="flex flex-col items-center justify-center py-8 mb-6">
           <div className="w-10 h-10 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin mb-4" />
-          <span className="text-zinc-300 text-sm font-medium">{message}</span>
-          <span className="text-zinc-600 text-xs mt-1">This may take a few seconds</span>
+          <span className="text-zinc-300 text-sm font-medium">{displayMessage}</span>
+          <span className="text-zinc-600 text-xs mt-1">{skeletonT.thisMayTake}</span>
         </div>
 
         {/* Analysis skeleton */}
