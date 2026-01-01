@@ -133,7 +133,7 @@ export default function HeaderI18n({ locale: propLocale }: HeaderI18nProps) {
         ${isVisible ? 'translate-y-0' : '-translate-y-full md:translate-y-0'}
         ${isScrolled 
           ? 'bg-black/50 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.3)]' 
-          : 'bg-transparent border-b border-transparent'
+          : 'bg-black/20 backdrop-blur-md border-b border-transparent'
         }
       `}
     >
