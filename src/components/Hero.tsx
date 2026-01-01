@@ -18,7 +18,7 @@ export default function Hero() {
       {/* Video Background (desktop) / Static Image (mobile) */}
       <VideoBackground
         videoSrc="/videos/hero-bg.mp4"
-        overlayOpacity={0.55}
+        overlayOpacity={0.35}
       />
       
       {/* Additional decorative elements - Accent ambient glows */}

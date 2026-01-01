@@ -27,7 +27,7 @@ export default function HeroI18n({ t, locale }: HeroI18nProps) {
       {/* Video Background (desktop) / Static Image (mobile) */}
       <VideoBackground
         videoSrc="/videos/hero-bg.mp4"
-        overlayOpacity={0.7}
+        overlayOpacity={0.45}
       />
       
       {/* Extra dark overlay for better text readability */}
