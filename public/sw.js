@@ -130,7 +130,8 @@ async function staleWhileRevalidate(request, cacheName) {
 
   // Fetch in background
   const fetchPromise = fetch(request).then((response) => {
-    if (response.ok) {
+    // Only cache successful full responses (not partial 206 responses)
+    if (response.ok && response.status !== 206) {
       cache.put(request, response.clone());
     }
     return response;
