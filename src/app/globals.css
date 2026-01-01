@@ -1437,13 +1437,13 @@ button:focus-visible {
 
 /* Blog links */
 .blog-content a {
-  @apply text-accent hover:text-accent-green underline underline-offset-4 transition-colors;
+  @apply text-emerald-700 hover:text-emerald-800 no-underline font-medium transition-colors;
 }
 
 /* Team links - auto-linked team names */
 .blog-content a.team-link {
-  @apply text-emerald-400 hover:text-emerald-300 no-underline font-medium 
-         bg-emerald-500/10 px-1.5 py-0.5 rounded hover:bg-emerald-500/20 transition-all;
+  @apply text-emerald-700 hover:text-emerald-800 no-underline font-medium 
+         bg-emerald-50 px-1.5 py-0.5 rounded hover:bg-emerald-100 transition-all;
 }
 
 /* Blog lists */
