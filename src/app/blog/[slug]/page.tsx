@@ -415,18 +415,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                           <span className="text-3xl">📊</span>
                         </div>
                       )}
-                      {/* Gradient overlay - always visible */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
-                      
-                      {/* Content overlay */}
-                      <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                        <span className="inline-block px-2 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-2">
-                          {related.category}
-                        </span>
-                        <h3 className="text-white font-bold text-sm line-clamp-2 leading-tight">
-                          {related.title}
-                        </h3>
-                      </div>
+                    </div>
+                    
+                    {/* Content below image */}
+                    <div className="p-4">
+                      <span className="inline-block px-2 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-2">
+                        {related.category}
+                      </span>
+                      <h3 className="text-slate-900 font-bold text-sm line-clamp-2 leading-tight">
+                        {related.title}
+                      </h3>
                     </div>
                   </Link>
                 ))}

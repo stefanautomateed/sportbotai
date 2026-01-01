@@ -446,9 +446,9 @@ export default async function SerbianBlogPostPage({ params }: BlogPostPageProps)
                   <Link
                     key={article.slug}
                     href={`/sr/blog/${article.slug}`}
-                    className="bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700 hover:border-emerald-500/50 transition-all"
+                    className="group bg-white/95 rounded-xl overflow-hidden border-2 border-slate-900/20 hover:border-emerald-600/60 transition-all hover:shadow-xl"
                   >
-                    <div className="aspect-video relative bg-slate-700">
+                    <div className="aspect-video relative bg-slate-200">
                       {article.featuredImage && (
                         <Image
                           src={article.featuredImage}
@@ -460,11 +460,11 @@ export default async function SerbianBlogPostPage({ params }: BlogPostPageProps)
                     </div>
                     <div className="p-4">
                       {article.category && (
-                        <span className="text-emerald-400 text-xs font-medium">
+                        <span className="inline-block px-2 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-2">
                           {CATEGORY_TRANSLATIONS[article.category] || article.category}
                         </span>
                       )}
-                      <h3 className="font-semibold text-white hover:text-emerald-300 transition-colors line-clamp-2 mt-1">
+                      <h3 className="text-slate-900 font-bold text-sm line-clamp-2 leading-tight">
                         {article.titleSr || article.title}
                       </h3>
                       {article.publishedAt && (
