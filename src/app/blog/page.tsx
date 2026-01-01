@@ -189,11 +189,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                 {posts.map((post) => (
                   <article
                     key={post.id}
-                    className="group bg-slate-800/50 rounded-2xl overflow-hidden border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10 hover:transform hover:scale-[1.02]"
+                    className="group bg-white/95 rounded-2xl overflow-hidden border-2 border-slate-900/20 hover:border-emerald-600/60 transition-all duration-300 hover:shadow-2xl hover:shadow-slate-900/20 hover:transform hover:scale-[1.02]"
                   >
                     <Link href={`/blog/${post.slug}`}>
                       {/* Image Container */}
-                      <div className="aspect-video relative bg-gradient-to-br from-slate-700 to-slate-800 overflow-hidden">
+                      <div className="aspect-video relative bg-gradient-to-br from-slate-200 to-slate-300 overflow-hidden">
                         {post.featuredImage ? (
                           <Image
                             src={post.featuredImage}
@@ -211,10 +211,10 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                       </div>
                       
                       {/* Content */}
-                      <div className="p-6">
+                      <div className="p-6 bg-white">
                         {/* Category Badge */}
                         {post.category && (
-                          <span className="inline-block px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-semibold rounded-full mb-3">
+                          <span className="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-3">
                             {post.category}
                           </span>
                         )}
@@ -230,7 +230,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                         </p>
                         
                         {/* Meta Footer */}
-                        <div className="flex items-center justify-between pt-4 border-t border-slate-700/50">
+                        <div className="flex items-center justify-between pt-4 border-t-2 border-slate-900/10">
                           <span className="text-slate-600 text-sm flex items-center gap-1.5">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
