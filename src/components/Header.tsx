@@ -181,7 +181,7 @@ export default function Header() {
             <LanguageSwitcher currentLocale={locale} />
             <button
               type="button"
-              className="p-2 rounded-btn text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
+              className="p-2 rounded-btn text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors relative"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
             >
