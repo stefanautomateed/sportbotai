@@ -1881,3 +1881,21 @@ html, body, main, section, article, div {
   background: var(--color-bg-hover);
 }
 
+/* === LEAGUE SCROLL ANIMATION === */
+@keyframes league-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% / 3));
+  }
+}
+
+.animate-league-scroll {
+  animation: league-scroll 15s linear infinite;
+  will-change: transform;
+}
+
+.animate-league-scroll:hover {
+  animation-play-state: paused;
+}

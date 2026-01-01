@@ -44,7 +44,7 @@ export default function LeagueScroll() {
           <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-bg-primary to-transparent z-10 pointer-events-none" />
 
           {/* Scrolling track */}
-          <div className="flex gap-8 animate-scroll will-change-transform">
+          <div className="flex gap-8 animate-league-scroll">
             {duplicatedLeagues.map((league, index) => (
               <Link
                 key={`${league.name}-${index}`}
@@ -70,26 +70,6 @@ export default function LeagueScroll() {
           </div>
         </div>
       </div>
-
-      {/* CSS Animation */}
-      <style jsx>{`
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(calc(-100% / 3));
-          }
-        }
-
-        .animate-scroll {
-          animation: scroll 15s linear infinite;
-        }
-
-        .animate-scroll:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
     </section>
   );
 }
