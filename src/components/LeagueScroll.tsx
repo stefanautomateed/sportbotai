@@ -1,8 +1,9 @@
 /**
- * Infinite League Logos Scroll
+ * Infinite League Logos Scroll - v2.0
  * 
  * Displays supported sports leagues in an infinite horizontal scroll animation.
  * Uses real league logos from our app's logo library.
+ * Updated: 2026-01-02 - Seamless 15s animation with -50% transform
  */
 
 'use client';
