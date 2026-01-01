@@ -267,7 +267,7 @@ export default function PricingCardsI18n({ locale }: PricingCardsI18nProps) {
           aria-checked={isYearlyBilling}
           aria-label="Toggle between monthly and yearly billing"
           className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
-            isYearlyBilling ? 'bg-primary' : 'bg-gray-600'
+            isYearlyBilling ? 'bg-accent-dark' : 'bg-gray-600'
           }`}
         >
           <span
@@ -278,7 +278,7 @@ export default function PricingCardsI18n({ locale }: PricingCardsI18nProps) {
         </button>
         <span className={`text-sm font-medium transition-colors ${isYearlyBilling ? 'text-white' : 'text-gray-400'}`}>
           {t.yearly}
-          <span className="ml-2 text-xs bg-primary/30 text-white px-2 py-0.5 rounded-full">{t.saveUpTo}</span>
+          <span className="ml-2 text-xs bg-accent-dark/30 text-white px-2 py-0.5 rounded-full">{t.saveUpTo}</span>
         </span>
       </div>
 
@@ -358,9 +358,9 @@ export default function PricingCardsI18n({ locale }: PricingCardsI18nProps) {
                 isCurrentPlan
                   ? 'border-2 border-accent shadow-glow-accent'
                   : plan.highlighted && canUpgrade
-                  ? 'border-2 border-primary/50 md:scale-105'
+                  ? 'border-2 border-accent/50 md:scale-105'
                   : isPremium && canUpgrade
-                  ? 'border-2 border-slate-500/30'
+                  ? 'border-2 border-accent/30'
                   : ''
               }`}
             >
@@ -370,11 +370,11 @@ export default function PricingCardsI18n({ locale }: PricingCardsI18nProps) {
                   {t.yourPlan}
                 </div>
               ) : plan.highlighted && canUpgrade ? (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent-dark text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
                   {t.mostPopular}
                 </div>
               ) : isPremium && canUpgrade && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-500 text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent-dark text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
                   {t.bestValue}
                 </div>
               )}
@@ -406,9 +406,7 @@ export default function PricingCardsI18n({ locale }: PricingCardsI18nProps) {
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <svg
-                      className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                        plan.highlighted ? 'text-primary' : isPremium ? 'text-slate-400' : 'text-accent'
-                      }`}
+                      className="w-5 h-5 flex-shrink-0 mt-0.5 text-accent"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -433,9 +431,9 @@ export default function PricingCardsI18n({ locale }: PricingCardsI18nProps) {
                     : isDowngrade
                     ? 'btn-gradient-border'
                     : plan.highlighted
-                    ? 'bg-primary hover:bg-primary-hover text-white'
+                    ? 'bg-accent-dark hover:bg-accent text-white'
                     : isPremium
-                    ? 'bg-slate-600/50 hover:bg-slate-600/70 text-white border border-slate-500/30'
+                    ? 'bg-accent-dark/80 hover:bg-accent-dark text-white border border-accent/30'
                     : 'btn-gradient-border'
                 } ${loading === checkoutId ? 'opacity-50 cursor-not-allowed' : ''}`}
               >

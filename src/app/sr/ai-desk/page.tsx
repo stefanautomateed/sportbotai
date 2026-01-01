@@ -70,7 +70,7 @@ export default function AIDeskPageSR() {
           {/* Page Header */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary/30 to-accent/30 rounded-xl flex items-center justify-center border border-white/10">
+              <div className="w-12 h-12 bg-gradient-to-br from-accent/30 to-accent-dark/30 rounded-xl flex items-center justify-center border border-white/10">
                 <span className="text-2xl">🧠</span>
               </div>
               <div>
@@ -85,13 +85,13 @@ export default function AIDeskPageSR() {
 
           {/* Mobile: Feature badges (visible on mobile, hidden on desktop) */}
           <div className="flex flex-wrap gap-2 mt-6 lg:hidden">
-            <span className="px-3 py-1.5 bg-purple-500/10 text-purple-400 text-xs font-medium rounded-full border border-purple-500/20 flex items-center gap-1.5">
+            <span className="px-3 py-1.5 bg-accent/10 text-accent text-xs font-medium rounded-full border border-accent/20 flex items-center gap-1.5">
               <span>⚡</span> {t.aiDesk.realTimeData}
             </span>
-            <span className="px-3 py-1.5 bg-blue-500/10 text-blue-400 text-xs font-medium rounded-full border border-blue-500/20 flex items-center gap-1.5">
+            <span className="px-3 py-1.5 bg-accent/10 text-accent text-xs font-medium rounded-full border border-accent/20 flex items-center gap-1.5">
               <span>🤖</span> {t.aiDesk.gptPerplexity}
             </span>
-            <span className="px-3 py-1.5 bg-green-500/10 text-green-400 text-xs font-medium rounded-full border border-green-500/20 flex items-center gap-1.5">
+            <span className="px-3 py-1.5 bg-accent/10 text-accent text-xs font-medium rounded-full border border-accent/20 flex items-center gap-1.5">
               <span>📡</span> {t.aiDesk.autoIntelFeed}
             </span>
           </div>

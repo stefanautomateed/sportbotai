@@ -171,14 +171,14 @@ export default async function SerbianNewsPage({ searchParams }: NewsPageProps) {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                Sportske <span className="text-emerald-400">Vesti</span>
+                Sportske <span className="text-accent">Vesti</span>
               </h1>
               <p className="text-slate-400">
                 Najnovije sportske vesti, najave utakmica i ekskluzivni uvidi
               </p>
             </div>
             <div className="text-sm text-slate-500">
-              <Link href="/news" className="hover:text-emerald-400 transition-colors">
+              <Link href="/news" className="hover:text-accent transition-colors">
                 🌐 English
               </Link>
             </div>
@@ -196,7 +196,7 @@ export default async function SerbianNewsPage({ searchParams }: NewsPageProps) {
                 href={filter.key === 'all' ? '/sr/news' : `/sr/news?sport=${filter.key}`}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   (sport === filter.key || (!sport && filter.key === 'all'))
-                    ? 'bg-emerald-500 text-white'
+                    ? 'bg-accent-dark text-white'
                     : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                 }`}
               >
@@ -221,7 +221,7 @@ export default async function SerbianNewsPage({ searchParams }: NewsPageProps) {
               {posts[0] && (
                 <article className="mb-8">
                   <Link href={`/sr/news/${posts[0].slug}`} className="group block">
-                    <div className="grid md:grid-cols-5 gap-6 bg-slate-800/50 rounded-2xl overflow-hidden border border-slate-700/50 hover:border-emerald-500/50 transition-all">
+                    <div className="grid md:grid-cols-5 gap-6 bg-slate-800/50 rounded-2xl overflow-hidden border border-slate-700/50 hover:border-accent/50 transition-all">
                       {/* Image container */}
                       <div className="md:col-span-2 aspect-[4/3] md:aspect-auto relative bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center p-4 min-h-[200px] md:min-h-[280px]">
                         {posts[0].featuredImage ? (
@@ -240,7 +240,7 @@ export default async function SerbianNewsPage({ searchParams }: NewsPageProps) {
                       <div className="md:col-span-3 p-6 flex flex-col justify-center">
                         <div className="flex items-center gap-3 mb-3">
                           {posts[0].league && (
-                            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-semibold rounded-full">
+                            <span className="px-3 py-1 bg-accent/10 text-accent text-xs font-semibold rounded-full">
                               {posts[0].league}
                             </span>
                           )}
@@ -248,7 +248,7 @@ export default async function SerbianNewsPage({ searchParams }: NewsPageProps) {
                             {posts[0].publishedAt && formatTimeAgo(new Date(posts[0].publishedAt))}
                           </span>
                         </div>
-                        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3 group-hover:text-emerald-300 transition-colors line-clamp-2">
+                        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3 group-hover:text-accent transition-colors line-clamp-2">
                           {getDisplayTitle(posts[0])}
                         </h2>
                         <p className="text-slate-400 line-clamp-2 md:line-clamp-3 mb-4 text-sm md:text-base">
@@ -277,7 +277,7 @@ export default async function SerbianNewsPage({ searchParams }: NewsPageProps) {
                 {posts.slice(1).map((post) => (
                   <article
                     key={post.id}
-                    className="group bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/50 hover:border-emerald-500/50 transition-all"
+                    className="group bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/50 hover:border-accent/50 transition-all"
                   >
                     <Link href={`/sr/news/${post.slug}`}>
                       <div className="aspect-video relative bg-gradient-to-br from-slate-700 to-slate-800">
@@ -302,11 +302,11 @@ export default async function SerbianNewsPage({ searchParams }: NewsPageProps) {
                       </div>
                       <div className="p-4">
                         {post.league && (
-                          <span className="inline-block px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-semibold rounded mb-2">
+                          <span className="inline-block px-2 py-0.5 bg-accent/10 text-accent text-xs font-semibold rounded mb-2">
                             {post.league}
                           </span>
                         )}
-                        <h3 className="font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2 mb-2">
+                        <h3 className="font-bold text-white group-hover:text-accent transition-colors line-clamp-2 mb-2">
                           {getDisplayTitle(post)}
                         </h3>
                         <p className="text-slate-400 text-sm line-clamp-2">

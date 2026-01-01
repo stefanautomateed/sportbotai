@@ -62,7 +62,7 @@ export default function AIDeskClientI18n({ locale }: AIDeskClientI18nProps) {
               <div className="bg-bg-card border border-border rounded-2xl overflow-hidden">
                 <div className="p-4 border-b border-border">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary/20 rounded-lg" />
+                    <div className="w-8 h-8 bg-accent/20 rounded-lg" />
                     <div className="h-4 bg-white/10 rounded w-32" />
                   </div>
                 </div>
@@ -73,8 +73,8 @@ export default function AIDeskClientI18n({ locale }: AIDeskClientI18nProps) {
                     <div className="flex-1 bg-white/5 rounded-xl p-4 h-20" />
                   </div>
                   <div className="flex gap-3 justify-end">
-                    <div className="flex-1 bg-primary/10 rounded-xl p-4 h-16 max-w-md" />
-                    <div className="w-8 h-8 bg-primary/20 rounded-full" />
+                    <div className="flex-1 bg-accent/10 rounded-xl p-4 h-16 max-w-md" />
+                    <div className="w-8 h-8 bg-accent/20 rounded-full" />
                   </div>
                   <div className="flex gap-3">
                     <div className="w-8 h-8 bg-white/10 rounded-full" />
@@ -102,7 +102,7 @@ export default function AIDeskClientI18n({ locale }: AIDeskClientI18nProps) {
         <div className="absolute inset-0 flex items-center justify-center px-4">
           <div className="bg-[#0a0a0b]/95 backdrop-blur-md border border-white/10 rounded-xl sm:rounded-2xl p-5 sm:p-8 max-w-md text-center shadow-2xl">
             {/* Icon */}
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500/20 to-violet-600/10 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-5 border border-purple-500/20">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-accent/30 to-accent-dark/30 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-5 border border-white/10">
               <span className="text-2xl sm:text-3xl">🧠</span>
             </div>
 
@@ -118,13 +118,13 @@ export default function AIDeskClientI18n({ locale }: AIDeskClientI18nProps) {
 
             {/* Features List */}
             <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-4 sm:mb-6">
-              <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-500/10 text-purple-400 text-[10px] sm:text-xs font-medium rounded-full border border-purple-500/20 flex items-center gap-1">
+              <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-accent/10 text-accent text-[10px] sm:text-xs font-medium rounded-full border border-accent/20 flex items-center gap-1">
                 <span>💬</span> {t.aiDesk.askAnything}
               </span>
-              <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-500/10 text-blue-400 text-[10px] sm:text-xs font-medium rounded-full border border-blue-500/20 flex items-center gap-1">
+              <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-accent/10 text-accent text-[10px] sm:text-xs font-medium rounded-full border border-accent/20 flex items-center gap-1">
                 <span>⚡</span> {t.aiDesk.realTime}
               </span>
-              <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-green-500/10 text-green-400 text-[10px] sm:text-xs font-medium rounded-full border border-green-500/20 flex items-center gap-1">
+              <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-accent/10 text-accent text-[10px] sm:text-xs font-medium rounded-full border border-accent/20 flex items-center gap-1">
                 <span>📡</span> {t.aiDesk.liveIntel}
               </span>
             </div>
@@ -132,7 +132,7 @@ export default function AIDeskClientI18n({ locale }: AIDeskClientI18nProps) {
             {/* CTA Button */}
             <Link
               href={`${localePath}/register`}
-              className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg shadow-emerald-500/20 w-full justify-center"
+              className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-accent-dark text-white text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl hover:bg-accent transition-all shadow-lg shadow-accent/20 w-full justify-center"
             >
               <span>{t.aiDesk.createFreeAccount}</span>
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -143,7 +143,7 @@ export default function AIDeskClientI18n({ locale }: AIDeskClientI18nProps) {
             {/* Sign in link */}
             <p className="mt-3 sm:mt-4 text-[10px] sm:text-xs text-zinc-500">
               {t.aiDesk.alreadyHaveAccount}{' '}
-              <Link href={`${localePath}/login`} className="text-emerald-400 hover:text-emerald-300 transition-colors">
+              <Link href={`${localePath}/login`} className="text-accent hover:text-accent-light transition-colors">
                 {t.aiDesk.signIn}
               </Link>
             </p>
