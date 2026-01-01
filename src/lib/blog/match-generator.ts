@@ -14,6 +14,7 @@ import {
   type UnifiedMatchData,
   type ComputedAnalysis,
 } from '@/lib/unified-match-service';
+import { translateBlogPost } from '@/lib/translate';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -1439,6 +1440,39 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
         newsContent,
       },
     });
+
+    // Step 8: Automatically translate to Serbian
+    console.log('[Match Preview] Step 8: Translating to Serbian...');
+    try {
+      const translations = await translateBlogPost({
+        title: post.title,
+        excerpt: post.excerpt,
+        content: post.content,
+        metaTitle: post.metaTitle,
+        metaDescription: post.metaDescription,
+        newsTitle: post.newsTitle,
+        newsContent: post.newsContent,
+        postType: post.postType,
+      });
+
+      // Update post with Serbian translations
+      await prisma.blogPost.update({
+        where: { id: post.id },
+        data: {
+          titleSr: translations.titleSr,
+          excerptSr: translations.excerptSr,
+          contentSr: translations.contentSr,
+          metaTitleSr: translations.metaTitleSr,
+          metaDescriptionSr: translations.metaDescriptionSr,
+          newsTitleSr: translations.newsTitleSr,
+          newsContentSr: translations.newsContentSr,
+        },
+      });
+      
+      console.log('[Match Preview] ✅ Serbian translation complete!');
+    } catch (translationError) {
+      console.error('[Match Preview] ⚠️ Translation failed (post still created):', translationError);
+    }
 
     const duration = Date.now() - startTime;
     console.log(`[Match Preview] ✅ Complete! Post ID: ${post.id}, Duration: ${duration}ms`);
