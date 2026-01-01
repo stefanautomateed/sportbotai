@@ -80,7 +80,7 @@ export default function LanguageSwitcher({ currentLocale, className = '', showLa
         aria-label="Change language"
         aria-expanded={isOpen}
       >
-        <span className="text-xl leading-none">{currentLanguage.flag}</span>
+        <span className="text-lg leading-none">{currentLanguage.flag}</span>
         {showLabel && <span className="text-sm text-white">{currentLanguage.name}</span>}
         <svg 
           className={`w-3 h-3 text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
