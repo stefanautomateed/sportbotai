@@ -19,6 +19,7 @@ import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 
 interface MatchBrowserProps {
   initialSport?: string;
+  initialLeague?: string;
   maxMatches?: number;
 }
 
@@ -71,9 +72,9 @@ const SPORTS = [
   },
 ];
 
-export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 }: MatchBrowserProps) {
+export default function MatchBrowser({ initialSport = 'soccer', initialLeague, maxMatches = 12 }: MatchBrowserProps) {
   const [selectedSport, setSelectedSport] = useState<string>(initialSport);
-  const [selectedLeague, setSelectedLeague] = useState<string>('soccer_epl');
+  const [selectedLeague, setSelectedLeague] = useState<string>(initialLeague || 'soccer_epl');
   const [matches, setMatches] = useState<MatchData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,13 +92,27 @@ export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 
     'americanfootball_ncaaf',
   ];
 
+  // Set initial sport from league param
+  useEffect(() => {
+    if (initialLeague) {
+      // Find which sport contains this league
+      const sportWithLeague = SPORTS.find(s => 
+        s.leagues.some(l => l.key === initialLeague)
+      );
+      if (sportWithLeague) {
+        setSelectedSport(sportWithLeague.id);
+        setSelectedLeague(initialLeague);
+      }
+    }
+  }, [initialLeague]);
+
   // When sport changes, select first league of that sport
   useEffect(() => {
     const sport = SPORTS.find(s => s.id === selectedSport);
-    if (sport && sport.leagues.length > 0) {
+    if (sport && sport.leagues.length > 0 && !initialLeague) {
       setSelectedLeague(sport.leagues[0].key);
     }
-  }, [selectedSport]);
+  }, [selectedSport, initialLeague]);
 
   // Pre-fetch match counts for all leagues in current sport (for badges)
   useEffect(() => {

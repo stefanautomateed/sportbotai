@@ -39,7 +39,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function MatchesPage() {
+export default function MatchesPage({
+  searchParams,
+}: {
+  searchParams: { league?: string };
+}) {
   const jsonLd = getMatchAnalyzerSchema();
   const breadcrumbSchema = getMatchesBreadcrumb();
   
@@ -84,7 +88,7 @@ export default function MatchesPage() {
         </section>
 
         {/* Match Browser */}
-        <MatchBrowser maxMatches={24} />
+        <MatchBrowser maxMatches={24} initialLeague={searchParams.league} />
       </div>
     </>
   );
