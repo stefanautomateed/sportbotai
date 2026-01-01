@@ -74,7 +74,8 @@ export default function HomePage() {
       <TrendingSectionServer maxMatches={6} />
 
       {/* Video Testimonials - UGC style carousel */}
-      <VideoTestimonialsCarousel />
+      {/* <VideoTestimonialsCarousel /> */}
+      {/* TODO: Uncomment when UGC videos are ready */}
 
       {/* How it works - 3 steps */}
       <HowItWorks />
