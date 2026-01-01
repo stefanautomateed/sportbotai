@@ -10,14 +10,15 @@
 import { Metadata } from 'next';
 import HeroABTest from '@/components/HeroABTest';
 import TrendingSectionServer from '@/components/TrendingSectionServer';
-import VideoTestimonialsCarousel from '@/components/VideoTestimonialsCarousel';
 import HowItWorks from '@/components/HowItWorks';
 import WhyNotTipster from '@/components/WhyNotTipster';
 import Features from '@/components/Features';
 import PricingTeaser from '@/components/PricingTeaser';
 import FAQ from '@/components/FAQ';
 import ResponsibleGamblingBlock from '@/components/ResponsibleGamblingBlock';
-import { StatsStrip, TrustBadges } from '@/components/SocialProof';
+import { TrustBadges } from '@/components/SocialProof';
+import LeagueScroll from '@/components/LeagueScroll';
+import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import { getOrganizationSchema, getWebsiteSchema, getMatchAnalyzerSchema, getAIDeskSchema, getHomepageFAQSchema, getHomeBreadcrumb } from '@/lib/seo';
 
 // Homepage metadata with canonical
@@ -67,11 +68,14 @@ export default function HomePage() {
       {/* Hero section - A/B TEST ACTIVE */}
       <HeroABTest />
 
-      {/* Stats strip - social proof */}
-      <StatsStrip />
+      {/* League logos - infinite scroll */}
+      <LeagueScroll />
 
       {/* Trending matches - server-rendered for fast LCP */}
       <TrendingSectionServer maxMatches={6} />
+
+      {/* Testimonials - social proof */}
+      <TestimonialsCarousel />
 
       {/* Video Testimonials - UGC style carousel */}
       {/* <VideoTestimonialsCarousel /> */}

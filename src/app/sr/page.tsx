@@ -14,7 +14,9 @@ import FeaturesI18n from '@/components/FeaturesI18n';
 import PricingTeaserI18n from '@/components/PricingTeaserI18n';
 import ResponsibleGamblingBlockI18n from '@/components/ResponsibleGamblingBlockI18n';
 import FAQI18n from '@/components/FAQI18n';
-import { StatsStripI18n, TrustBadgesI18n } from '@/components/SocialProofI18n';
+import { TrustBadgesI18n } from '@/components/SocialProofI18n';
+import LeagueScroll from '@/components/LeagueScroll';
+import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import { getTranslations } from '@/lib/i18n';
 import { getOrganizationSchema, getWebsiteSchema, getMatchAnalyzerSchema, getAIDeskSchema, getHomepageFAQSchema, getHomeBreadcrumb } from '@/lib/seo';
 
@@ -77,11 +79,14 @@ export default function SerbianHomePage() {
       {/* Hero section */}
       <HeroI18n t={t} locale="sr" />
 
-      {/* Stats strip - social proof */}
-      <StatsStripI18n t={t} />
+      {/* League logos - infinite scroll */}
+      <LeagueScroll />
 
       {/* Trending matches - server-rendered for fast LCP */}
       <TrendingSectionServer maxMatches={6} locale="sr" />
+
+      {/* Testimonials - social proof */}
+      <TestimonialsCarousel />
 
       {/* How it works - 4 steps */}
       <HowItWorksI18n t={t} />
