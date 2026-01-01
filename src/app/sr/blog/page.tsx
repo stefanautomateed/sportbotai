@@ -182,7 +182,7 @@ export default async function SerbianBlogPage({ searchParams }: BlogPageProps) {
       </section>
 
       {/* Categories */}
-      <section className="pb-8">
+      <section className="pb-8 relative z-10">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-2">
             <Link
@@ -213,7 +213,7 @@ export default async function SerbianBlogPage({ searchParams }: BlogPageProps) {
       </section>
 
       {/* Posts Grid */}
-      <section className="py-8 pb-16">
+      <section className="py-8 pb-16 relative z-10">
         <div className="container mx-auto px-4">
           {posts.length === 0 ? (
             <div className="text-center py-16">
