@@ -192,7 +192,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                     className="group bg-white/95 rounded-2xl overflow-hidden border-2 border-slate-900/20 hover:border-emerald-600/60 transition-all duration-300 hover:shadow-2xl hover:shadow-slate-900/20 hover:transform hover:scale-[1.02]"
                   >
                     <Link href={`/blog/${post.slug}`}>
-                      {/* Image Container */}
+                      {/* Image Container */}  
                       <div className="aspect-video relative bg-gradient-to-br from-slate-200 to-slate-300 overflow-hidden">
                         {post.featuredImage ? (
                           <Image
@@ -207,48 +207,48 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                           </div>
                         )}
                         {/* Gradient Overlay - always visible */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
-                      </div>
-                      
-                      {/* Content */}
-                      <div className="p-6 bg-white">
-                        {/* Category Badge */}
-                        {post.category && (
-                          <span className="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-3">
-                            {post.category}
-                          </span>
-                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
                         
-                        {/* Title */}
-                        <h2 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 leading-tight">
-                          {post.title}
-                        </h2>
-                        
-                        {/* Excerpt */}
-                        <p className="text-slate-600 text-sm line-clamp-3 leading-relaxed mb-4">
-                          {post.excerpt}
-                        </p>
-                        
-                        {/* Meta Footer */}
-                        <div className="flex items-center justify-between pt-4 border-t-2 border-slate-900/10">
-                          <span className="text-slate-600 text-sm flex items-center gap-1.5">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            {post.publishedAt
-                              ? new Date(post.publishedAt).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })
-                              : 'Draft'}
-                          </span>
-                          <span className="text-slate-500 text-sm flex items-center gap-1.5">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            {post.views}
-                          </span>
+                        {/* Content overlaid on image - always visible */}
+                        <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
+                          {/* Category Badge */}
+                          {post.category && (
+                            <span className="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-3">
+                              {post.category}
+                            </span>
+                          )}
+                          
+                          {/* Title */}
+                          <h2 className="text-xl font-bold text-white mb-3 line-clamp-2 leading-tight">
+                            {post.title}
+                          </h2>
+                          
+                          {/* Excerpt */}
+                          <p className="text-gray-200 text-sm line-clamp-2 leading-relaxed mb-3">
+                            {post.excerpt}
+                          </p>
+                          
+                          {/* Meta Footer */}
+                          <div className="flex items-center gap-4 text-gray-300 text-xs">
+                            <span className="flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              {post.publishedAt
+                                ? new Date(post.publishedAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                  })
+                                : 'Draft'}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              {post.views}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </Link>
