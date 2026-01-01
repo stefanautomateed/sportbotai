@@ -125,10 +125,10 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
       <section className="py-16 md:py-24 relative z-10">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Sports Analytics <span className="text-emerald-400">Blog</span>
+            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+              Sports Analytics <span className="text-emerald-600">Blog</span>
             </h1>
-            <p className="text-xl text-slate-300">
+            <p className="text-xl text-slate-700">
               Educational insights on sports data analysis, probability theory, and responsible approaches to sports analytics.
             </p>
           </div>
@@ -211,18 +211,18 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                         )}
                         
                         {/* Title */}
-                        <h2 className="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-emerald-300 transition-colors leading-tight">
+                        <h2 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-emerald-600 transition-colors leading-tight">
                           {post.title}
                         </h2>
                         
                         {/* Excerpt */}
-                        <p className="text-slate-400 text-sm line-clamp-3 leading-relaxed mb-4">
+                        <p className="text-slate-600 text-sm line-clamp-3 leading-relaxed mb-4">
                           {post.excerpt}
                         </p>
                         
                         {/* Meta Footer */}
                         <div className="flex items-center justify-between pt-4 border-t border-slate-700/50">
-                          <span className="text-slate-500 text-sm flex items-center gap-1.5">
+                          <span className="text-slate-600 text-sm flex items-center gap-1.5">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>

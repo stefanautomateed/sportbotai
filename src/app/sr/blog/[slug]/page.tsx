@@ -259,7 +259,7 @@ export default async function SerbianBlogPostPage({ params }: BlogPostPageProps)
                   <Link href="/sr/blog" className="hover:text-white">Blog</Link>
                 </li>
                 <li>/</li>
-                <li className="text-slate-300 truncate max-w-[200px]">{articleTitle}</li>
+                <li className="text-slate-700 truncate max-w-[200px]">{articleTitle}</li>
               </ol>
             </nav>
 
@@ -269,7 +269,7 @@ export default async function SerbianBlogPostPage({ params }: BlogPostPageProps)
                 {post.category && (
                   <Link
                     href={`/sr/blog?category=${encodeURIComponent(post.category)}`}
-                    className="text-emerald-400 text-sm font-medium hover:text-emerald-300"
+                    className="text-emerald-600 text-sm font-medium hover:text-emerald-700"
                   >
                     {CATEGORY_TRANSLATIONS[post.category] || post.category}
                   </Link>
@@ -292,12 +292,12 @@ export default async function SerbianBlogPostPage({ params }: BlogPostPageProps)
               )}
 
               {/* Title */}
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-6 leading-tight">
                 {articleTitle}
               </h1>
 
               {/* Meta */}
-              <div className="flex flex-wrap items-center gap-4 text-slate-400 text-sm mb-8">
+              <div className="flex flex-wrap items-center gap-4 text-slate-600 text-sm mb-8">
                 <Link href="/about" className="flex items-center gap-2 hover:text-emerald-400 transition-colors">
                   <Image
                     src={AUTHOR.photo}
