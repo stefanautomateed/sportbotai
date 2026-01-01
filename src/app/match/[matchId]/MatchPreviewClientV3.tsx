@@ -31,6 +31,74 @@ import StandingsTable from '@/components/StandingsTable';
 import type { UniversalSignals } from '@/lib/universal-signals';
 import type { MarketIntel, OddsData } from '@/lib/value-detection';
 
+/**
+ * Translate analysis text fields to Serbian
+ */
+async function translateAnalysisToSerbian(data: any): Promise<any> {
+  try {
+    // Collect all text that needs translation
+    const textsToTranslate: string[] = [];
+    const textMap: { field: string; index: number }[] = [];
+    
+    // Story narrative and snapshot
+    if (data.story?.narrative) {
+      textMap.push({ field: 'story.narrative', index: textsToTranslate.length });
+      textsToTranslate.push(data.story.narrative);
+    }
+    if (data.story?.snapshot) {
+      data.story.snapshot.forEach((text: string, i: number) => {
+        textMap.push({ field: `story.snapshot.${i}`, index: textsToTranslate.length });
+        textsToTranslate.push(text);
+      });
+    }
+    if (data.story?.riskFactors) {
+      data.story.riskFactors.forEach((text: string, i: number) => {
+        textMap.push({ field: `story.riskFactors.${i}`, index: textsToTranslate.length });
+        textsToTranslate.push(text);
+      });
+    }
+    
+    // Universal signals descriptions
+    if (data.universalSignals) {
+      ['form', 'edge', 'tempo', 'efficiency', 'availability'].forEach((signal) => {
+        if (data.universalSignals[signal]?.description) {
+          textMap.push({ field: `universalSignals.${signal}.description`, index: textsToTranslate.length });
+          textsToTranslate.push(data.universalSignals[signal].description);
+        }
+      });
+    }
+    
+    if (textsToTranslate.length === 0) return data;
+    
+    // Batch translate all texts
+    const translations = await Promise.all(
+      textsToTranslate.map(text => 
+        fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, context: 'analysis', preserveHtml: false }),
+        }).then(res => res.json()).then(r => r.translated || text)
+      )
+    );
+    
+    // Apply translations back to data
+    const translatedData = JSON.parse(JSON.stringify(data));
+    textMap.forEach(({ field, index }) => {
+      const parts = field.split('.');
+      let obj = translatedData;
+      for (let i = 0; i < parts.length - 1; i++) {
+        obj = obj[parts[i]];
+      }
+      obj[parts[parts.length - 1]] = translations[index];
+    });
+    
+    return translatedData;
+  } catch (error) {
+    console.error('Translation failed:', error);
+    return data; // Return original on error
+  }
+}
+
 // League name to API-Sports ID mapping
 const LEAGUE_NAME_TO_ID: Record<string, { id: number; sport: 'soccer' | 'basketball' | 'hockey' | 'nfl' }> = {
   // Soccer
@@ -476,7 +544,14 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
           showToast(t.creditUsed, 'info');
         }
         
-        setData(result);
+        // Translate to Serbian if needed
+        if (locale === 'sr' && result.story) {
+          setLoadingMessage('Prevođenje na srpski...');
+          const translatedResult = await translateAnalysisToSerbian(result);
+          setData(translatedResult);
+        } else {
+          setData(result);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : t.somethingWrong);
       } finally {
