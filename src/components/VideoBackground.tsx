@@ -18,6 +18,8 @@ interface VideoBackgroundProps {
   videoSrc: string;
   /** WebM source for better compression (optional) */
   webmSrc?: string;
+  /** Mobile-optimized video source (lower quality, smaller file) */
+  mobileSrc?: string;
   /** Poster image shown while loading (optional) */
   posterSrc?: string;
   /** Overlay opacity (0-1) */
@@ -31,9 +33,10 @@ interface VideoBackgroundProps {
 export default function VideoBackground({
   videoSrc,
   webmSrc,
+  mobileSrc,
   posterSrc,
   overlayOpacity = 0.6,
-  disableOnMobile = true,
+  disableOnMobile = false,
   className = '',
 }: VideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -63,10 +66,10 @@ export default function VideoBackground({
     motionQuery.addEventListener('change', handleMotionChange);
     
     // Defer video loading until after initial render (LCP optimization)
-    // Wait 2 seconds to ensure LCP has completed
+    // Shorter delay on desktop (500ms), longer on mobile (1500ms) to save data
     const timer = setTimeout(() => {
       setShouldLoadVideo(true);
-    }, 2000);
+    }, isMobile ? 1500 : 500);
     
     return () => {
       window.removeEventListener('resize', checkMobile);
@@ -113,7 +116,7 @@ export default function VideoBackground({
         />
       )}
       
-      {/* Video (only on desktop with no reduced motion, deferred 2s after page load) */}
+      {/* Video (loads on both desktop and mobile, optimized by device) */}
       {showVideo && (
         <video
           ref={videoRef}
@@ -124,13 +127,14 @@ export default function VideoBackground({
           muted
           loop
           playsInline
-          preload="metadata"
+          preload={isMobile ? "none" : "metadata"}
           poster={posterSrc}
           onLoadedData={() => setIsVideoLoaded(true)}
           onError={() => setHasError(true)}
         >
           {webmSrc && <source src={webmSrc} type="video/webm" />}
-          <source src={videoSrc} type="video/mp4" />
+          {/* Use mobile-optimized video on mobile if provided */}
+          <source src={isMobile && mobileSrc ? mobileSrc : videoSrc} type="video/mp4" />
         </video>
       )}
       
