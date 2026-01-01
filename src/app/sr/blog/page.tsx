@@ -243,30 +243,29 @@ export default async function SerbianBlogPage({ searchParams }: BlogPageProps) {
                             <span className="text-5xl opacity-50">📊</span>
                           </div>
                         )}
-                        {/* Gradient Overlay - always visible */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
+                      </div>
+                      
+                      {/* Content below image */}
+                      <div className="p-6">
+                        {/* Category Badge */}
+                        {post.category && (
+                          <span className="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-3">
+                            {getDisplayCategory(post.category)}
+                          </span>
+                        )}
                         
-                        {/* Content overlaid on image - always visible */}
-                        <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
-                          {/* Category Badge */}
-                          {post.category && (
-                            <span className="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-3">
-                              {getDisplayCategory(post.category)}
-                            </span>
-                          )}
-                          
-                          {/* Title */}
-                          <h2 className="text-xl font-bold text-white mb-3 line-clamp-2 leading-tight">
-                            {getDisplayTitle(post)}
-                          </h2>
-                          
-                          {/* Excerpt */}
-                          <p className="text-gray-200 text-sm line-clamp-2 leading-relaxed mb-3">
-                            {getDisplayExcerpt(post)}
-                          </p>
-                          
-                          {/* Meta Footer */}
-                          <div className="flex items-center gap-4 text-gray-300 text-xs">
+                        {/* Title */}
+                        <h2 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 leading-tight">
+                          {getDisplayTitle(post)}
+                        </h2>
+                        
+                        {/* Excerpt */}
+                        <p className="text-slate-600 text-sm line-clamp-2 leading-relaxed mb-3">
+                          {getDisplayExcerpt(post)}
+                        </p>
+                        
+                        {/* Meta Footer */}
+                        <div className="flex items-center gap-4 text-slate-500 text-xs">
                             <span className="flex items-center gap-1.5">
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -287,7 +286,6 @@ export default async function SerbianBlogPage({ searchParams }: BlogPageProps) {
                             </span>
                           </div>
                         </div>
-                      </div>
                     </Link>
                   </article>
                 ))}
