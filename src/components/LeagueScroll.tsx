@@ -83,7 +83,7 @@ export default function LeagueScroll() {
         }
 
         .animate-scroll {
-          animation: scroll 20s linear infinite;
+          animation: scroll 15s linear infinite;
         }
 
         .animate-scroll:hover {
