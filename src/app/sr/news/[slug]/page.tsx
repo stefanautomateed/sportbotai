@@ -269,61 +269,73 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        {/* Hero Section */}
-        <header className="pt-8 pb-12">
+      <article className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 relative">
+        {/* Glass morphism overlay with newspaper texture */}
+        <div 
+          className="absolute inset-0 bg-white/40 z-0"
+          style={{
+            backgroundImage: `
+              url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E"),
+              radial-gradient(circle, rgba(0,0,0,0.12) 1px, transparent 1px)
+            `,
+            backgroundSize: 'auto, 3px 3px'
+          }}
+        />
+        {/* Hero Section - matches blog structure */}
+        <header className="pt-8 pb-12 relative z-10">
           <div className="container mx-auto px-4">
             {/* Breadcrumb */}
             <nav className="mb-8">
-              <ol className="flex items-center gap-2 text-sm text-slate-400">
+              <ol className="flex items-center gap-2 text-sm text-slate-600">
                 <li>
-                  <Link href="/sr" className="hover:text-white">Početna</Link>
+                  <Link href="/sr" className="hover:text-slate-900">Početna</Link>
                 </li>
                 <li>/</li>
                 <li>
-                  <Link href="/sr/news" className="hover:text-white">Vesti</Link>
+                  <Link href="/sr/news" className="hover:text-slate-900">Vesti</Link>
                 </li>
                 <li>/</li>
-                <li className="text-slate-300 truncate max-w-[200px]">{articleTitle}</li>
+                <li className="text-slate-900 truncate max-w-[200px] font-medium">{articleTitle}</li>
               </ol>
             </nav>
 
             <div className="max-w-4xl mx-auto">
-              {/* Language switch notice */}
+              {/* Language switch and League Badge */}
               <div className="flex items-center justify-between mb-4">
                 {post.league && (
                   <Link
                     href={`/sr/news?sport=${post.sport?.toLowerCase() || ''}`}
-                    className="text-emerald-400 text-sm font-medium hover:text-emerald-300"
+                    className="text-emerald-700 text-sm font-bold hover:text-emerald-800"
                   >
                     {post.league}
                   </Link>
                 )}
                 <Link 
                   href={`/news/${slug}`} 
-                  className="text-sm text-slate-500 hover:text-emerald-400 transition-colors"
+                  className="text-sm text-slate-600 hover:text-emerald-600 transition-colors"
                 >
                   🌐 English
                 </Link>
+              </div>
               </div>
 
               {/* Translation notice if not translated */}
               {!hasSerbian && (
                 <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                  <p className="text-amber-300 text-sm">
+                  <p className="text-amber-700 text-sm">
                     ⚠️ Ovaj članak još nije preveden na srpski. Prikazuje se originalna engleska verzija.
                   </p>
                 </div>
               )}
 
               {/* Title */}
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-6 leading-tight">
                 {articleTitle}
               </h1>
 
-              {/* Meta */}
-              <div className="flex flex-wrap items-center gap-4 text-slate-400 text-sm mb-8">
-                <Link href="/about" className="flex items-center gap-2 hover:text-emerald-400 transition-colors">
+              {/* Meta - with author link */}
+              <div className="flex flex-wrap items-center gap-4 text-slate-700 text-sm mb-8 font-medium">
+                <Link href="/about" className="flex items-center gap-2 hover:text-emerald-600 transition-colors">
                   <Image
                     src={AUTHOR.photo}
                     alt={AUTHOR.name}
@@ -375,29 +387,31 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
         </header>
 
         {/* Article Content */}
-        <article className="container mx-auto px-4 pb-16">
-          <div className="max-w-3xl mx-auto">
-            <div
-              className="blog-content"
-              dangerouslySetInnerHTML={{ __html: autoLinkTeamsSimple(articleContent) }}
-            />
+        <section className="pb-16 relative z-10">
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto">
+              <article
+                className="blog-content bg-white rounded-2xl shadow-lg p-8 md:p-12 border border-slate-200"
+                dangerouslySetInnerHTML={{ __html: autoLinkTeamsSimple(articleContent) }}
+              />
+            </div>
           </div>
-        </article>
+        </section>
 
         {/* Content Footer - Tags & Share */}
-        <section className="pb-16">
+        <section className="pb-16 relative z-10">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto">
               {/* Tags */}
               {post.tags.length > 0 && (
-                <div className="mt-12 pt-8 border-t border-slate-700">
-                  <h3 className="text-sm font-medium text-slate-400 mb-4">Tagovi</h3>
+                <div className="mt-8 pt-8 border-t border-slate-300 bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
+                  <h3 className="text-sm font-medium text-slate-600 mb-4">Tagovi</h3>
                   <div className="flex flex-wrap gap-2">
                     {post.tags.map((tag: string) => (
                       <Link
                         key={tag}
                         href={`/sr/news?tag=${encodeURIComponent(tag)}`}
-                        className="px-3 py-1 bg-slate-800 text-slate-300 text-sm rounded-full hover:bg-slate-700"
+                        className="px-3 py-1 bg-white border border-slate-300 text-slate-700 text-sm rounded-full hover:border-emerald-600 hover:text-emerald-700"
                       >
                         #{tag}
                       </Link>
@@ -407,14 +421,14 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
               )}
 
               {/* Share Section */}
-              <div className="mt-8 p-6 bg-slate-800/50 rounded-xl border border-slate-700">
-                <p className="text-slate-300 text-center">
+              <div className="mt-8 p-6 bg-white rounded-xl shadow-lg border-2 border-slate-200">
+                <p className="text-slate-700 text-center">
                   Budite u toku sa najnovijim sportskim vestima i AI analizama
                 </p>
               </div>
 
               {/* Author Box */}
-              <div className="mt-8 p-6 bg-slate-800/50 rounded-xl border border-slate-700">
+              <div className="mt-8 p-6 bg-white rounded-xl shadow-lg border-2 border-slate-200">
                 <div className="flex items-start gap-4">
                   <Link href="/about" className="flex-shrink-0">
                     <Image
@@ -426,11 +440,11 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
                     />
                   </Link>
                   <div className="flex-1">
-                    <Link href="/about" className="text-lg font-semibold text-white hover:text-emerald-400 transition-colors">
+                    <Link href="/about" className="text-lg font-semibold text-slate-900 hover:text-emerald-600 transition-colors">
                       {AUTHOR.name}
                     </Link>
-                    <p className="text-emerald-400 text-sm mb-2">{AUTHOR.jobTitle}</p>
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <p className="text-emerald-600 text-sm mb-2">{AUTHOR.jobTitle}</p>
+                    <p className="text-slate-600 text-sm leading-relaxed">
                       Sportski analitičar sa ekspertizom u analizi utakmica zasnovanih na podacima i tržištima klađenja. 
                       Kombinovanje AI tehnologije sa dubokim poznavanjem sporta za pružanje korisnih uvida.
                     </p>
@@ -439,7 +453,7 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
                         href={AUTHOR.sameAs[0]} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-slate-400 hover:text-emerald-400 transition-colors text-sm"
+                        className="text-slate-600 hover:text-emerald-600 transition-colors text-sm"
                       >
                         Upwork
                       </a>
@@ -447,7 +461,7 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
                         href={AUTHOR.sameAs[1]} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-slate-400 hover:text-emerald-400 transition-colors text-sm"
+                        className="text-slate-600 hover:text-emerald-600 transition-colors text-sm"
                       >
                         LinkedIn
                       </a>
@@ -461,9 +475,9 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
 
         {/* Related Articles */}
         {relatedArticles.length > 0 && (
-          <section className="py-16 bg-slate-800/30">
+          <section className="py-16 relative z-10">
             <div className="container mx-auto px-4">
-              <h2 className="text-2xl font-bold text-white mb-8 text-center">
+              <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">
                 Povezani Članci
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -471,9 +485,9 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
                   <Link
                     key={article.slug}
                     href={`/sr/news/${article.slug}`}
-                    className="bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700 hover:border-emerald-500/50 transition-all"
+                    className="bg-white rounded-2xl overflow-hidden border-2 border-slate-900/20 hover:border-emerald-600/60 transition-all hover:shadow-2xl shadow-lg"
                   >
-                    <div className="aspect-video relative bg-slate-700">
+                    <div className="aspect-video relative bg-slate-200">
                       {article.featuredImage && (
                         <Image
                           src={article.featuredImage}
@@ -485,11 +499,11 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
                     </div>
                     <div className="p-4">
                       {article.league && (
-                        <span className="text-emerald-400 text-xs font-medium">
+                        <span className="inline-block px-2 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-2">
                           {article.league}
                         </span>
                       )}
-                      <h3 className="font-semibold text-white hover:text-emerald-300 transition-colors line-clamp-2 mt-1">
+                      <h3 className="text-slate-900 font-bold text-sm line-clamp-2 leading-tight">
                         {article.titleSr || article.title}
                       </h3>
                       {article.publishedAt && (
@@ -508,7 +522,7 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
             </div>
           </section>
         )}
-      </div>
+      </article>
     </>
   );
 }
