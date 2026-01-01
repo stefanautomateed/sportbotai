@@ -80,8 +80,6 @@ async function getNewsPosts(page: number, sport?: string) {
       { category: 'Match Previews' },
       { postType: 'MATCH_PREVIEW' },
     ],
-    // Must have Serbian translation
-    titleSr: { not: null },
   };
 
   if (sport && sport !== 'all') {

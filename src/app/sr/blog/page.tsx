@@ -78,8 +78,6 @@ async function getBlogPosts(page: number, category?: string) {
 
   const where: Record<string, unknown> = {
     status: 'PUBLISHED',
-    // Must have Serbian translation
-    titleSr: { not: null },
     // Exclude match previews (those go to /sr/news)
     NOT: {
       OR: [
