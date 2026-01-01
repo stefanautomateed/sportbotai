@@ -12,7 +12,7 @@ const openai = new OpenAI({
 
 interface TranslateOptions {
   preserveHtml?: boolean;
-  context?: 'news' | 'blog' | 'match_preview';
+  context?: 'news' | 'blog' | 'match_preview' | 'analysis';
 }
 
 /**
@@ -56,7 +56,7 @@ CRITICAL RULES:
    - "home" → "domaćin"
    - "away" → "gost"
 
-CONTEXT: This is ${context === 'news' ? 'a sports news article' : context === 'match_preview' ? 'a match preview article' : 'a sports blog post'}.
+CONTEXT: This is ${context === 'news' ? 'a sports news article' : context === 'match_preview' ? 'a match preview article' : context === 'analysis' ? 'a match analysis report' : 'a sports blog post'}.
 
 Return ONLY the translated text, no explanations.`;
 
