@@ -305,7 +305,7 @@ export default async function SerbianBlogPostPage({ params }: BlogPostPageProps)
                 {articleTitle}
               </h1>
 
-              {/* Meta */}
+              {/* Meta - with author link */}
               <div className="flex flex-wrap items-center gap-4 text-slate-700 text-sm mb-8 font-medium">
                 <Link href="/about" className="flex items-center gap-2 hover:text-emerald-600 transition-colors">
                   <Image
@@ -389,6 +389,13 @@ export default async function SerbianBlogPostPage({ params }: BlogPostPageProps)
                 </div>
               )}
 
+              {/* Share Section */}
+              <div className="mt-8 p-6 bg-white rounded-xl shadow-lg border-2 border-slate-200">
+                <p className="text-slate-700 text-center">
+                  Da li ti je ovo bilo korisno? Podeli sa prijateljima zainteresovanim za sportsku analitiku!
+                </p>
+              </div>
+
               {/* CTA */}
               <div className="mt-8 p-6 bg-white rounded-xl shadow-lg border-2 border-slate-200 text-center">
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
@@ -429,6 +436,24 @@ export default async function SerbianBlogPostPage({ params }: BlogPostPageProps)
                       Sportski analitičar sa ekspertizom u analizi utakmica zasnovanih na podacima i tržištima klađenja. 
                       Kombinovanje AI tehnologije sa dubokim poznavanjem sporta za pružanje korisnih uvida.
                     </p>
+                    <div className="flex gap-3 mt-3">
+                      <a 
+                        href={AUTHOR.sameAs[0]} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-slate-600 hover:text-emerald-600 transition-colors text-sm"
+                      >
+                        Upwork
+                      </a>
+                      <a 
+                        href={AUTHOR.sameAs[1]} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-slate-600 hover:text-emerald-600 transition-colors text-sm"
+                      >
+                        LinkedIn
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -438,7 +463,7 @@ export default async function SerbianBlogPostPage({ params }: BlogPostPageProps)
 
         {/* Related Posts */}
         {relatedPosts.length > 0 && (
-          <section className="py-16">
+          <section className="py-16 relative z-10">
             <div className="container mx-auto px-4">
               <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">
                 Povezani Članci
