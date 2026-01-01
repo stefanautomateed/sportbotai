@@ -80,9 +80,9 @@ button:focus-visible {
   --color-primary-dark: #0F3A6D;
   
   /* Accent Colors */
-  --color-accent: #2AF6A0;
-  --color-accent-dark: #1EC77E;
-  --color-accent-light: #D6FFEC;
+  --color-accent: #0D9488;
+  --color-accent-dark: #0F766E;
+  --color-accent-light: #99F6E4;
   
   /* Secondary Colors (Violet/Purple) */
   --color-violet: #8B5CF6;
@@ -561,7 +561,7 @@ button:focus-visible {
     inset: 0;
     padding: 2px;
     border-radius: var(--radius-btn);
-    background: linear-gradient(135deg, #8B5CF6, #2AF6A0);
+    background: linear-gradient(135deg, #0D9488, #0F766E);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -570,7 +570,7 @@ button:focus-visible {
   }
   
   .btn-gradient-border:hover {
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(13, 148, 136, 0.1);
   }
 }
 

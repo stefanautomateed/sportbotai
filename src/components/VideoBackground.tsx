@@ -96,9 +96,9 @@ export default function VideoBackground({
           {/* Subtle grid pattern */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#2A3036_1px,transparent_1px),linear-gradient(to_bottom,#2A3036_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-30" />
           {/* Gradient orbs */}
-          <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-primary/20 rounded-full blur-[80px]" />
-          <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-accent/15 rounded-full blur-[60px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-primary/10 rounded-full blur-[100px]" />
+          <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-accent/20 rounded-full blur-[80px]" />
+          <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-accent/10 rounded-full blur-[60px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-accent/10 rounded-full blur-[100px]" />
         </div>
       )}
       

@@ -68,7 +68,7 @@ export default function HeroVariantB() {
               </Link>
               <Link 
                 href="/ai-desk" 
-                className="inline-flex items-center justify-center gap-2 text-center text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 w-full sm:w-auto bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold rounded-lg hover:from-violet-400 hover:to-purple-500 transition-all shadow-lg shadow-purple-500/20"
+                className="inline-flex items-center justify-center gap-2 text-center text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 w-full sm:w-auto bg-accent hover:bg-accent-dark text-white font-semibold rounded-lg transition-all shadow-lg shadow-accent/20"
               >
                 <span>🧠</span>
                 Ask AI Agent

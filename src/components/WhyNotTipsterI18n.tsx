@@ -24,7 +24,7 @@ export default function WhyNotTipsterI18n({ t }: WhyNotTipsterI18nProps) {
     </svg>,
   ];
   
-  const colors = ['primary', 'accent', 'warning'];
+  const colors = ['accent', 'accent', 'warning'];
 
   return (
     <section className="bg-bg-primary text-white section-container">
@@ -45,7 +45,7 @@ export default function WhyNotTipsterI18n({ t }: WhyNotTipsterI18nProps) {
           {t.whyNotTipster.features.map((feature, index) => (
             <div 
               key={feature.title}
-              className="bg-bg-card border border-divider rounded-card p-6 hover:border-primary/30 transition-all duration-300"
+              className="bg-bg-card border border-divider rounded-card p-6 hover:border-accent/30 transition-all duration-300"
             >
               <div className={`w-12 h-12 bg-${colors[index]}/10 rounded-xl flex items-center justify-center mb-4 text-${colors[index]}`}>
                 {featureIcons[index]}

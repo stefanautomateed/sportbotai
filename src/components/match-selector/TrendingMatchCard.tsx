@@ -64,8 +64,8 @@ export function TrendingMatchCard({
         className={`
           w-full p-3 rounded-card border text-left transition-all duration-200 active:scale-[0.98]
           ${isSelected 
-            ? 'bg-primary border-primary shadow-lg' 
-            : 'bg-bg-card border-divider hover:border-primary/30 hover:shadow-sm'
+            ? 'bg-accent border-accent shadow-lg' 
+            : 'bg-bg-card border-divider hover:border-accent/30 hover:shadow-sm'
           }
         `}
       >
@@ -132,7 +132,7 @@ export function TrendingMatchCard({
       className={`
         snap-start flex-shrink-0 w-[220px] p-4 rounded-card border text-left transition-all duration-200
         ${isSelected 
-          ? 'bg-primary border-primary shadow-lg shadow-primary/20' 
+          ? 'bg-accent border-accent shadow-lg shadow-accent/20' 
           : 'bg-bg-card border-divider hover:border-primary/30 hover:shadow-md'
         }
       `}

@@ -109,7 +109,7 @@ export default function AIDeskClient() {
 
             {/* Features List */}
             <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-4 sm:mb-6">
-              <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-violet/10 text-violet-light text-[10px] sm:text-xs font-semibold rounded-full border border-violet/20 flex items-center gap-1">
+              <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-accent/10 text-accent text-[10px] sm:text-xs font-semibold rounded-full border border-accent/20 flex items-center gap-1">
                 <span>💬</span> Ask Anything
               </span>
               <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-500/10 text-blue-400 text-[10px] sm:text-xs font-semibold rounded-full border border-blue-500/20 flex items-center gap-1">
@@ -123,7 +123,7 @@ export default function AIDeskClient() {
             {/* CTA Button */}
             <Link
               href="/register"
-              className="btn-primary w-full justify-center text-xs sm:text-sm"
+              className="btn-primary w-full justify-center text-xs sm:text-sm flex items-center gap-2"
             >
               <span>Create Free Account</span>
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,7 +134,7 @@ export default function AIDeskClient() {
             {/* Sign in link */}
             <p className="mt-3 sm:mt-4 text-[10px] sm:text-xs text-zinc-500">
               Already have an account?{' '}
-              <Link href="/login" className="text-violet-light hover:text-violet transition-colors">
+              <Link href="/login" className="text-accent hover:text-accent-dark transition-colors">
                 Sign in
               </Link>
             </p>

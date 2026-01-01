@@ -171,7 +171,7 @@ export default function LiveIntelCardI18n({ locale = 'en' }: LiveIntelCardI18nPr
         {/* Header */}
         <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-violet-500/20 to-purple-600/10 rounded-lg sm:rounded-xl flex items-center justify-center border border-violet-500/20">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent/20 rounded-lg sm:rounded-xl flex items-center justify-center border border-accent/30">
               <span className="text-base sm:text-lg">🧠</span>
             </div>
             <div>

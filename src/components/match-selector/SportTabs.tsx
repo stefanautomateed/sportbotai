@@ -43,8 +43,8 @@ export default function SportTabs({
                 transition-all duration-200 whitespace-nowrap border
                 touch-manipulation
                 ${isSelected
-                  ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
-                  : 'bg-bg-card text-text-secondary border-divider hover:border-primary/30 hover:bg-bg-hover'
+                  ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20'
+                  : 'bg-bg-card text-text-secondary border-divider hover:border-accent/30 hover:bg-bg-hover'
                 }
                 ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-[0.97]'}
               `}

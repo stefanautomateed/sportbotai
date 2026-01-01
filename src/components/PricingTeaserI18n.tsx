@@ -170,7 +170,7 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
       </div>
 
       <div className="text-center mt-10">
-        <Link href={pricingHref} className="inline-flex items-center gap-2 text-violet-light font-semibold hover:text-accent transition-colors group">
+        <Link href={pricingHref} className="inline-flex items-center gap-2 text-accent font-semibold hover:text-accent-dark transition-colors group">
           {t.pricing.viewAll}
           <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

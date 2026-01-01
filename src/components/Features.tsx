@@ -52,13 +52,13 @@ export default function Features() {
   return (
     <section className="bg-bg-primary section-container relative overflow-hidden">
       {/* Ambient background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
       
       <ScrollReveal animation="fade-up">
         <div className="text-center mb-14 relative">
-          <p className="text-violet font-semibold text-sm uppercase tracking-wider mb-3">Features</p>
+          <p className="text-accent font-semibold text-sm uppercase tracking-wider mb-3">Features</p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tight">
-            Everything you need for <span className="text-gradient-violet-accent">smarter analysis</span>
+            Everything you need for <span className="text-gradient-accent">smarter analysis</span>
           </h2>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
             Professional-grade analytics tools designed for informed decision-making.
@@ -70,11 +70,11 @@ export default function Features() {
         {features.map((feature, index) => (
           <ScrollReveal key={feature.title} animation="fade-up" delay={index * 80}>
             <div 
-              className="card-glass p-6 hover:border-violet/30 hover:shadow-glow-violet transition-all duration-300 group h-full"
+              className="card-glass p-6 hover:border-accent/30 hover:shadow-glow-accent transition-all duration-300 group h-full"
             >
               <div className="flex items-start justify-between mb-4">
                 <span className="text-3xl">{feature.icon}</span>
-                <span className="text-xs font-medium px-2.5 py-1 bg-violet/15 text-violet-light rounded-full">
+                <span className="text-xs font-medium px-2.5 py-1 bg-accent/15 text-accent rounded-full">
                   {feature.badge}
                 </span>
               </div>

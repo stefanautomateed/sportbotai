@@ -224,11 +224,11 @@ export function TestimonialsSection() {
   return (
     <section className="py-16 px-4 bg-bg relative overflow-hidden">
       {/* Ambient glow */}
-      <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
       
       <div className="max-w-6xl mx-auto relative">
         <div className="text-center mb-10">
-          <p className="text-violet font-semibold text-sm uppercase tracking-wider mb-3">Testimonials</p>
+          <p className="text-accent font-semibold text-sm uppercase tracking-wider mb-3">Testimonials</p>
           <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-3 tracking-tight">What Users Are Saying</h2>
           <p className="text-white/40">Join thousands who understand matches better</p>
         </div>

@@ -78,12 +78,12 @@ export default function PricingTeaser() {
   return (
     <section className="bg-bg section-container relative overflow-hidden">
       {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
       
       <div className="text-center mb-8 relative">
-        <p className="text-violet font-semibold text-sm uppercase tracking-wider mb-3">Pricing</p>
+        <p className="text-accent font-semibold text-sm uppercase tracking-wider mb-3">Pricing</p>
         <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tight">
-          Simple, <span className="text-gradient-violet-accent">transparent pricing</span>
+          Simple, <span className="text-gradient-accent">transparent pricing</span>
         </h2>
         <p className="text-lg text-gray-400 max-w-2xl mx-auto">
           Start free, upgrade when you need more. No hidden fees.
@@ -99,7 +99,7 @@ export default function PricingTeaser() {
           aria-checked={isYearlyBilling}
           aria-label="Toggle between monthly and yearly billing"
           className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
-            isYearlyBilling ? 'bg-violet' : 'bg-gray-600'
+            isYearlyBilling ? 'bg-accent' : 'bg-gray-600'
           }`}
         >
           <span
@@ -110,13 +110,13 @@ export default function PricingTeaser() {
         </button>
         <span className={`text-sm font-medium transition-colors ${isYearlyBilling ? 'text-white' : 'text-gray-400'}`}>
           Yearly
-          <span className="ml-2 text-xs bg-violet/30 text-white px-2 py-0.5 rounded-full">Save up to 52%</span>
+          <span className="ml-2 text-xs bg-accent/30 text-white px-2 py-0.5 rounded-full">Save up to 52%</span>
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto relative">
         {/* Free Plan Card */}
-        <div className="card-glass p-5 sm:p-6">
+        <div className="card-glass p-5 sm:p-6 border border-accent/20">
           <div className="text-center mb-6">
             <h3 className="text-xl font-bold mb-2 text-white">Free</h3>
             <div className="mb-2">
@@ -154,20 +154,18 @@ export default function PricingTeaser() {
               key={plan.id}
               className={`card-glass p-5 sm:p-6 relative ${
                 plan.highlighted
-                  ? 'border-2 border-primary/50 md:scale-105'
-                  : isPremium
-                  ? 'border-2 border-slate-500/30'
-                  : ''
+                  ? 'border-2 border-accent/50 md:scale-105'
+                  : 'border-2 border-accent/30'
               }`}
             >
               {/* Badge */}
               {plan.highlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent-dark text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
                   MOST POPULAR
                 </div>
               )}
               {isPremium && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-500 text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent-dark text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
                   BEST VALUE
                 </div>
               )}
@@ -180,16 +178,14 @@ export default function PricingTeaser() {
 
                 {/* Price */}
                 <div className="mb-2">
-                  <span className={`text-4xl font-extrabold ${
-                    plan.highlighted ? 'text-white' : isPremium ? 'text-slate-400' : 'text-white'
-                  }`}>
+                  <span className="text-4xl font-extrabold text-white">
                     {yearly ? plan.yearlyPrice : plan.monthlyPrice}
                   </span>
-                  <span className={`text-sm ${isPremium ? 'text-slate-400' : 'text-gray-400'}`}>
+                  <span className="text-sm text-gray-400">
                     {yearly ? '/year' : '/month'}
                   </span>
                 </div>
-                <p className="text-sm text-text-muted">
+                <p className="text-sm text-gray-400">
                   {yearly ? plan.yearlyDescription : plan.description}
                 </p>
               </div>
@@ -199,9 +195,7 @@ export default function PricingTeaser() {
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <svg
-                      className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                        plan.highlighted ? 'text-primary' : isPremium ? 'text-slate-400' : 'text-accent'
-                      }`}
+                      className="w-5 h-5 flex-shrink-0 mt-0.5 text-accent"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -221,10 +215,8 @@ export default function PricingTeaser() {
                 href="/pricing"
                 className={`block w-full py-3 px-6 rounded-btn font-semibold transition-all duration-200 min-h-[48px] text-center ${
                   plan.highlighted
-                    ? 'bg-primary hover:bg-primary-hover text-white'
-                    : isPremium
-                    ? 'bg-slate-600/50 hover:bg-slate-600/70 text-white border border-slate-500/30'
-                    : 'bg-bg-elevated text-white hover:bg-bg-elevated/80 border border-divider'
+                    ? 'bg-accent-dark hover:bg-accent text-white'
+                    : 'bg-accent-dark hover:bg-accent/90 text-white'
                 }`}
               >
                 {plan.buttonText}
@@ -235,7 +227,7 @@ export default function PricingTeaser() {
       </div>
 
       <div className="text-center mt-10">
-        <Link href="/pricing" className="inline-flex items-center gap-2 text-violet-light font-semibold hover:text-accent transition-colors group">
+        <Link href="/pricing" className="inline-flex items-center gap-2 text-accent font-semibold hover:text-accent-dark transition-colors group">
           View full pricing details
           <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

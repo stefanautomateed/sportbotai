@@ -115,14 +115,14 @@ export default function Header() {
         transition-all duration-300 ease-out
         ${isVisible ? 'translate-y-0' : '-translate-y-full md:translate-y-0'}
         ${isScrolled 
-          ? 'bg-black/50 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.3)]' 
+          ? 'bg-black/80 backdrop-blur-xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.3)]' 
           : 'bg-transparent border-b border-transparent'
         }
       `}
     >
       {/* Subtle gradient glow when scrolled */}
       {isScrolled && (
-        <div className="absolute inset-0 bg-gradient-to-r from-violet/5 via-transparent to-accent/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-transparent to-accent/5 pointer-events-none" />
       )}
       
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">

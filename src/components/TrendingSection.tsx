@@ -107,19 +107,19 @@ export default function TrendingSection({ maxMatches = 6 }: TrendingSectionProps
   return (
     <section id="trending" className="py-12 sm:py-16 bg-bg-primary scroll-mt-20 relative overflow-hidden">
       {/* Subtle ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-violet/3 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-accent/3 rounded-full blur-[150px] pointer-events-none" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Section Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <span className="text-violet-light text-xs font-semibold uppercase tracking-wider mb-1 block">Live Now</span>
+            <span className="text-accent text-xs font-semibold uppercase tracking-wider mb-1 block">Live Now</span>
             <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Trending Matches</h2>
             <p className="text-sm text-text-muted mt-0.5">Top matches happening now</p>
           </div>
           <Link 
             href="/matches"
-            className="text-sm text-violet-light hover:text-violet font-semibold hidden sm:flex items-center gap-1.5 transition-colors group"
+            className="text-sm text-accent hover:text-accent-dark font-semibold hidden sm:flex items-center gap-1.5 transition-colors group"
           >
             View all
             <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

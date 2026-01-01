@@ -178,7 +178,7 @@ export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 
               onClick={() => setSelectedSport(sport.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
                 selectedSport === sport.id
-                  ? 'bg-gradient-to-r from-violet to-violet-dark text-white shadow-lg shadow-violet/20'
+                  ? 'bg-accent text-white shadow-lg shadow-accent/20'
                   : 'bg-white/5 backdrop-blur-sm text-gray-300 hover:bg-white/10 border border-white/5'
               }`}
             >
@@ -203,7 +203,7 @@ export default function MatchBrowser({ initialSport = 'soccer', maxMatches = 12 
                   onClick={() => setSelectedLeague(league.key)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     selectedLeague === league.key
-                      ? 'bg-white/20 text-white border border-violet/30 shadow-sm shadow-violet/10'
+                      ? 'bg-white/20 text-white border border-accent/30 shadow-sm shadow-accent/10'
                       : hasNoMatches
                         ? 'bg-white/5 text-gray-500 hover:bg-white/10 opacity-60 border border-transparent'
                         : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300 border border-white/5'

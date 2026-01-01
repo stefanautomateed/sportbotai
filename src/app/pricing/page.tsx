@@ -59,7 +59,7 @@ export default function PricingPage() {
   return (
     <div className="bg-bg min-h-screen relative overflow-hidden">
       {/* Ambient background glows */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-1/3 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
       
       {/* Breadcrumb Schema */}
@@ -80,9 +80,9 @@ export default function PricingPage() {
       {/* Header section */}
       <section className="relative text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-violet font-semibold text-sm uppercase tracking-wider mb-3">Pricing</p>
+          <p className="text-accent font-semibold text-sm uppercase tracking-wider mb-3">Pricing</p>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
-            Simple, <span className="text-gradient-violet-accent">Transparent Pricing</span>
+            Simple, <span className="text-gradient-accent">Transparent Pricing</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
             No hidden fees. Cancel anytime. Start free and upgrade when you&apos;re ready.

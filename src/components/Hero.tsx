@@ -24,7 +24,7 @@ export default function Hero() {
       
       {/* Additional decorative elements - Violet + Accent ambient glows */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-violet/10 rounded-full blur-[80px] sm:blur-[120px]" />
+        <div className="absolute top-0 right-0 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-accent/10 rounded-full blur-[80px] sm:blur-[120px]" />
         <div className="absolute bottom-0 left-0 w-[200px] sm:w-[400px] h-[200px] sm:h-[400px] bg-accent/8 rounded-full blur-[60px] sm:blur-[100px]" />
         <div className="absolute top-1/2 left-1/3 w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] bg-violet/5 rounded-full blur-[100px]" />
       </div>
@@ -46,7 +46,7 @@ export default function Hero() {
             <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-[1.05] tracking-tight mb-4 sm:mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
               Know Any Match
               <br className="hidden xs:block" />
-              <span className="text-gradient-violet-accent drop-shadow-[0_0_30px_rgba(139,92,246,0.4)]">Before It Happens</span>
+              <span className="text-gradient-accent drop-shadow-[0_0_30px_rgba(16,185,129,0.4)]">Before It Happens</span>
             </h1>
 
             {/* Subheadline - Glassmorphism card */}

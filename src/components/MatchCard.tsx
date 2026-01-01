@@ -142,7 +142,7 @@ export default function MatchCard({
     <Link
       href={`/match/${encodedMatchId}`}
       scroll={false}
-      className={`group relative card-glass rounded-xl ${isLive ? 'border-red-500/40 ring-1 ring-red-500/20' : isFinished ? 'border-gray-600/40' : 'border-white/10'} p-3 sm:p-4 hover:border-violet/40 hover:bg-white/[0.08] transition-all duration-300 ease-out block hover:scale-[1.02] hover:shadow-xl hover:shadow-violet/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg touch-manipulation ${isFinished ? 'opacity-80' : ''}`}
+      className={`group relative card-glass rounded-xl ${isLive ? 'border-red-500/40 ring-1 ring-red-500/20' : isFinished ? 'border-gray-600/40' : 'border-white/10'} p-3 sm:p-4 hover:border-accent/40 hover:bg-white/[0.08] transition-all duration-300 ease-out block hover:scale-[1.02] hover:shadow-xl hover:shadow-accent/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg touch-manipulation ${isFinished ? 'opacity-80' : ''}`}
       data-card
     >
       {/* Live Badge */}
@@ -165,7 +165,7 @@ export default function MatchCard({
       
       {/* Hot Score Badge (only if not live or finished) */}
       {!isLive && !isFinished && hotScore >= 8 && (
-        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-violet to-violet-dark rounded-full text-[10px] font-bold text-white shadow-lg shadow-violet/30">
+        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-accent rounded-full text-[10px] font-bold text-white shadow-lg shadow-accent/30">
           HOT
         </div>
       )}

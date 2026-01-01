@@ -179,7 +179,7 @@ export default function PricingCards() {
           aria-checked={isYearlyBilling}
           aria-label="Toggle between monthly and yearly billing"
           className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
-            isYearlyBilling ? 'bg-violet' : 'bg-gray-600'
+            isYearlyBilling ? 'bg-accent' : 'bg-gray-600'
           }`}
         >
           <span
@@ -190,13 +190,13 @@ export default function PricingCards() {
         </button>
         <span className={`text-sm font-medium transition-colors ${isYearlyBilling ? 'text-white' : 'text-gray-400'}`}>
           Yearly
-          <span className="ml-2 text-xs bg-violet/30 text-white px-2 py-0.5 rounded-full">Save up to 52%</span>
+          <span className="ml-2 text-xs bg-accent/30 text-white px-2 py-0.5 rounded-full">Save up to 52%</span>
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
         {/* Free Plan Card */}
-        <div className={`card-glass p-5 sm:p-6 ${
+        <div className={`card-glass p-5 sm:p-6 border border-accent/20 ${
           currentPlan === 'FREE' ? 'border-2 border-accent shadow-glow-accent' : ''
         } relative`}>
           {currentPlan === 'FREE' && (
@@ -273,9 +273,9 @@ export default function PricingCards() {
                 isCurrentPlan
                   ? 'border-2 border-accent shadow-glow-accent'
                   : plan.highlighted && canUpgrade
-                  ? 'border-2 border-primary/50 md:scale-105'
-                  : isPremium && canUpgrade
-                  ? 'border-2 border-slate-500/30'
+                  ? 'border-2 border-accent/50 md:scale-105'
+                  : canUpgrade
+                  ? 'border-2 border-accent/30'
                   : ''
               }`}
             >
@@ -285,11 +285,11 @@ export default function PricingCards() {
                   YOUR PLAN
                 </div>
               ) : plan.highlighted && canUpgrade ? (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent-dark text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
                   MOST POPULAR
                 </div>
               ) : isPremium && canUpgrade && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-500 text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent-dark text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
                   BEST VALUE
                 </div>
               )}
@@ -302,16 +302,14 @@ export default function PricingCards() {
 
                 {/* Price */}
                 <div className="mb-2">
-                  <span className={`text-4xl font-extrabold ${
-                    plan.highlighted ? 'text-white' : isPremium ? 'text-slate-400' : 'text-white'
-                  }`}>
+                  <span className="text-4xl font-extrabold text-white">
                     {yearly ? plan.yearlyPrice : plan.monthlyPrice}
                   </span>
                   <span className="text-sm text-gray-400">
                     {yearly ? '/year' : '/month'}
                   </span>
                 </div>
-                <p className="text-sm text-text-muted">
+                <p className="text-sm text-gray-400">
                   {yearly ? plan.yearlyDescription : plan.description}
                 </p>
               </div>
@@ -321,9 +319,7 @@ export default function PricingCards() {
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <svg
-                      className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                        plan.highlighted ? 'text-primary' : isPremium ? 'text-slate-400' : 'text-accent'
-                      }`}
+                      className="w-5 h-5 flex-shrink-0 mt-0.5 text-accent"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -348,10 +344,8 @@ export default function PricingCards() {
                     : isDowngrade
                     ? 'btn-gradient-border'
                     : plan.highlighted
-                    ? 'bg-primary hover:bg-primary-hover text-white'
-                    : isPremium
-                    ? 'bg-slate-600/50 hover:bg-slate-600/70 text-white border border-slate-500/30'
-                    : 'btn-gradient-border'
+                    ? 'bg-accent-dark hover:bg-accent text-white'
+                    : 'bg-accent-dark hover:bg-accent/90 text-white'
                 } ${loading === checkoutId ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {loading === checkoutId ? (

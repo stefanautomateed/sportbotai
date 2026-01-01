@@ -35,11 +35,11 @@ export default function FeaturesI18n({ t }: FeaturesI18nProps) {
         {t.features.items.map((feature, index) => (
           <ScrollReveal key={feature.title} animation="fade-up" delay={index * 80}>
             <div 
-              className="bg-bg-elevated rounded-card p-6 border border-divider hover:border-primary/30 hover:shadow-glow-primary transition-all duration-300 group h-full"
+              className="bg-bg-elevated rounded-card p-6 border border-divider hover:border-accent/30 hover:shadow-glow-accent transition-all duration-300 group h-full"
             >
               <div className="flex items-start justify-between mb-4">
                 <span className="text-3xl">{featureIcons[index]}</span>
-                <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full">
+                <span className="text-xs font-medium px-2 py-1 bg-accent/10 text-accent rounded-full">
                   {feature.badge}
                 </span>
               </div>

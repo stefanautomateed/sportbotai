@@ -144,12 +144,12 @@ export default function FAQ({
   return (
     <section className="py-16 sm:py-24 bg-bg-primary relative overflow-hidden">
       {/* Subtle ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
       
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <span className="text-violet-light text-xs font-semibold uppercase tracking-wider mb-2 block">
+          <span className="text-accent text-xs font-semibold uppercase tracking-wider mb-2 block">
             {label}
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">

@@ -392,7 +392,7 @@ export default function MatchSelector({ onResult, onLoading }: MatchSelectorProp
               </p>
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-dark text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -467,8 +467,8 @@ export default function MatchSelector({ onResult, onLoading }: MatchSelectorProp
                     px-3 sm:px-4 py-2 rounded-btn text-xs sm:text-sm font-medium transition-all duration-200
                     border active:scale-95
                     ${isSelected
-                      ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                      : 'bg-bg-card text-text-secondary border-divider hover:border-primary/30 hover:bg-bg-hover'
+                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                      : 'bg-bg-card text-text-secondary border-divider hover:border-accent/30 hover:bg-bg-hover'
                     }
                     ${loadingEvents ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
@@ -537,7 +537,7 @@ export default function MatchSelector({ onResult, onLoading }: MatchSelectorProp
                 <div className="text-center py-16 bg-bg-card rounded-card border border-divider">
                   <div className="relative w-12 h-12 mx-auto mb-4">
                     <div className="absolute inset-0 border-3 border-divider rounded-full"></div>
-                    <div className="absolute inset-0 border-3 border-primary rounded-full animate-spin border-t-transparent"></div>
+                    <div className="absolute inset-0 border-3 border-accent rounded-full animate-spin border-t-transparent"></div>
                   </div>
                   <p className="text-text-primary font-medium mb-1">Loading matches...</p>
                   <p className="text-text-muted text-sm">Fetching live odds data</p>
