@@ -390,7 +390,7 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
         <section className="pb-16 relative z-10">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto">
-              <article
+              <div
                 className="blog-content bg-white rounded-2xl shadow-lg p-8 md:p-12 border border-slate-200"
                 dangerouslySetInnerHTML={{ __html: autoLinkTeamsSimple(articleContent) }}
               />
