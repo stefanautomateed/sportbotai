@@ -13,7 +13,8 @@ import WhyNotTipsterI18n from '@/components/WhyNotTipsterI18n';
 import FeaturesI18n from '@/components/FeaturesI18n';
 import PricingTeaserI18n from '@/components/PricingTeaserI18n';
 import ResponsibleGamblingBlockI18n from '@/components/ResponsibleGamblingBlockI18n';
-import { StatsStripI18n, TestimonialsSectionI18n, TrustBadgesI18n } from '@/components/SocialProofI18n';
+import FAQI18n from '@/components/FAQI18n';
+import { StatsStripI18n, TrustBadgesI18n } from '@/components/SocialProofI18n';
 import { getTranslations } from '@/lib/i18n';
 import { getOrganizationSchema, getWebsiteSchema, getMatchAnalyzerSchema, getAIDeskSchema, getHomepageFAQSchema, getHomeBreadcrumb } from '@/lib/seo';
 
@@ -91,14 +92,14 @@ export default function SerbianHomePage() {
       {/* Main features */}
       <FeaturesI18n t={t} />
 
-      {/* Testimonials - social proof */}
-      <TestimonialsSectionI18n t={t} />
-
       {/* Pricing teaser */}
       <PricingTeaserI18n t={t} locale="sr" />
 
+      {/* FAQ section */}
+      <FAQI18n t={t} />
+
       {/* Trust badges */}
-      <div className="py-8 bg-bg">
+      <div className="py-8 bg-bg-primary">
         <TrustBadgesI18n className="max-w-4xl mx-auto px-4" t={t} />
       </div>
 
