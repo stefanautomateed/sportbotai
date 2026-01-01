@@ -8,18 +8,19 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 const leagues = [
-  { name: 'Premier League', logo: 'https://media.api-sports.io/football/leagues/39.png' },
-  { name: 'La Liga', logo: 'https://media.api-sports.io/football/leagues/140.png' },
-  { name: 'Serie A', logo: 'https://media.api-sports.io/football/leagues/135.png' },
-  { name: 'Bundesliga', logo: 'https://media.api-sports.io/football/leagues/78.png' },
-  { name: 'Ligue 1', logo: 'https://media.api-sports.io/football/leagues/61.png' },
-  { name: 'Champions League', logo: 'https://media.api-sports.io/football/leagues/2.png' },
-  { name: 'NBA', logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nba.png' },
-  { name: 'NFL', logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png' },
-  { name: 'NHL', logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png' },
-  { name: 'EuroLeague', logo: 'https://media.api-sports.io/basketball/leagues/120.png' },
+  { name: 'Premier League', logo: 'https://media.api-sports.io/football/leagues/39.png', key: 'soccer_epl' },
+  { name: 'La Liga', logo: 'https://media.api-sports.io/football/leagues/140.png', key: 'soccer_spain_la_liga' },
+  { name: 'Serie A', logo: 'https://media.api-sports.io/football/leagues/135.png', key: 'soccer_italy_serie_a' },
+  { name: 'Bundesliga', logo: 'https://media.api-sports.io/football/leagues/78.png', key: 'soccer_germany_bundesliga' },
+  { name: 'Ligue 1', logo: 'https://media.api-sports.io/football/leagues/61.png', key: 'soccer_france_ligue_one' },
+  { name: 'Champions League', logo: 'https://media.api-sports.io/football/leagues/2.png', key: 'soccer_uefa_champs_league' },
+  { name: 'NBA', logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nba.png', key: 'basketball_nba' },
+  { name: 'NFL', logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png', key: 'americanfootball_nfl' },
+  { name: 'NHL', logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png', key: 'icehockey_nhl' },
+  { name: 'EuroLeague', logo: 'https://media.api-sports.io/basketball/leagues/120.png', key: 'basketball_euroleague' },
 ];
 
 export default function LeagueScroll() {
@@ -45,9 +46,10 @@ export default function LeagueScroll() {
           {/* Scrolling track */}
           <div className="flex gap-8 animate-scroll will-change-transform">
             {duplicatedLeagues.map((league, index) => (
-              <div
+              <Link
                 key={`${league.name}-${index}`}
-                className="flex-shrink-0 flex items-center gap-4 px-6 py-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-accent/30 transition-all duration-300 group"
+                href={`/matches?league=${league.key}`}
+                className="flex-shrink-0 flex items-center gap-4 px-6 py-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-accent/30 hover:bg-white/10 transition-all duration-300 group cursor-pointer"
               >
                 {/* League logo with white background for visibility */}
                 <div className="relative w-12 h-12 flex-shrink-0 bg-white rounded-lg p-1.5">
@@ -63,7 +65,7 @@ export default function LeagueScroll() {
                 <span className="text-base font-semibold text-gray-300 whitespace-nowrap group-hover:text-white transition-colors">
                   {league.name}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
