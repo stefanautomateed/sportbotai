@@ -110,6 +110,7 @@ export default function LiveIntelCardI18n({ locale = 'en' }: LiveIntelCardI18nPr
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
+  const [translatedContent, setTranslatedContent] = useState<Record<string, string>>({});
   
   const t = translations[locale];
   const dateLocale = locale === 'sr' ? sr : enUS;
@@ -127,6 +128,25 @@ export default function LiveIntelCardI18n({ locale = 'en' }: LiveIntelCardI18nPr
     });
   };
 
+  const translatePostContent = async (postId: string, content: string) => {
+    if (locale !== 'sr' || translatedContent[postId]) return;
+    
+    try {
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content, context: 'news', preserveHtml: false }),
+      });
+      const data = await response.json();
+      
+      if (data.translated) {
+        setTranslatedContent(prev => ({ ...prev, [postId]: data.translated }));
+      }
+    } catch (error) {
+      console.error('Translation failed:', error);
+    }
+  };
+
   const fetchPosts = async () => {
     try {
       const response = await fetch('/api/agent?limit=3');
@@ -135,6 +155,13 @@ export default function LiveIntelCardI18n({ locale = 'en' }: LiveIntelCardI18nPr
       if (data.success && data.posts) {
         setPosts(data.posts);
         setLastUpdate(new Date());
+        
+        // Translate posts if Serbian
+        if (locale === 'sr') {
+          data.posts.forEach((post: IntelPost) => {
+            translatePostContent(post.id, post.content);
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to fetch intel posts:', error);
@@ -239,7 +266,7 @@ export default function LiveIntelCardI18n({ locale = 'en' }: LiveIntelCardI18nPr
                     
                     {/* Content - Expandable */}
                     <p className={`text-zinc-300 text-xs sm:text-sm leading-relaxed ${!isPostExpanded && isLongContent ? 'line-clamp-2' : ''}`}>
-                      {post.content}
+                      {translatedContent[post.id] || post.content}
                     </p>
                     
                     {/* Read more/less toggle */}
