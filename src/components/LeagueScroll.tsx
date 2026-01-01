@@ -23,8 +23,8 @@ const leagues = [
 ];
 
 export default function LeagueScroll() {
-  // Duplicate leagues for seamless infinite scroll
-  const duplicatedLeagues = [...leagues, ...leagues];
+  // Triple duplicate for smoother infinite scroll
+  const duplicatedLeagues = [...leagues, ...leagues, ...leagues];
 
   return (
     <section className="py-8 bg-bg-primary border-y border-white/5 overflow-hidden">
@@ -37,13 +37,13 @@ export default function LeagueScroll() {
         </div>
 
         {/* Infinite Scroll Container */}
-        <div className="relative">
+        <div className="relative overflow-hidden">
           {/* Fade edges */}
           <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-bg-primary to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-bg-primary to-transparent z-10 pointer-events-none" />
 
           {/* Scrolling track */}
-          <div className="flex gap-8 animate-scroll">
+          <div className="flex gap-8 animate-scroll will-change-transform">
             {duplicatedLeagues.map((league, index) => (
               <div
                 key={`${league.name}-${index}`}
@@ -76,12 +76,12 @@ export default function LeagueScroll() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-50%);
+            transform: translateX(calc(-100% / 3));
           }
         }
 
         .animate-scroll {
-          animation: scroll 15s linear infinite;
+          animation: scroll 20s linear infinite;
         }
 
         .animate-scroll:hover {
