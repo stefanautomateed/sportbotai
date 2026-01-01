@@ -317,7 +317,6 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
                   🌐 English
                 </Link>
               </div>
-              </div>
 
               {/* Translation notice if not translated */}
               {!hasSerbian && (
