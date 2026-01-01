@@ -20,6 +20,7 @@ import { Locale, getTranslations } from '@/lib/i18n/translations';
 
 interface MatchBrowserI18nProps {
   initialSport?: string;
+  initialLeague?: string;
   maxMatches?: number;
   locale: Locale;
 }
@@ -82,12 +83,12 @@ const SEASONAL_LEAGUES = [
   'icehockey_nhl',
 ];
 
-export default function MatchBrowserI18n({ initialSport, maxMatches = 12, locale }: MatchBrowserI18nProps) {
+export default function MatchBrowserI18n({ initialSport, initialLeague, maxMatches = 12, locale }: MatchBrowserI18nProps) {
   const t = getTranslations(locale);
   const SPORTS = getSports(locale);
   
   const [selectedSport, setSelectedSport] = useState(initialSport || 'soccer');
-  const [selectedLeague, setSelectedLeague] = useState(SPORTS[0].leagues[0].key);
+  const [selectedLeague, setSelectedLeague] = useState(initialLeague || SPORTS[0].leagues[0].key);
   const [matches, setMatches] = useState<MatchData[] | null>(null);
   const [leagueMatchCounts, setLeagueMatchCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -99,13 +100,27 @@ export default function MatchBrowserI18n({ initialSport, maxMatches = 12, locale
   const currentSport = SPORTS.find(s => s.id === selectedSport) || SPORTS[0];
   const currentLeague = currentSport.leagues.find(l => l.key === selectedLeague) || currentSport.leagues[0];
 
+  // Set initial sport from league param
+  useEffect(() => {
+    if (initialLeague) {
+      // Find which sport contains this league
+      const sportWithLeague = SPORTS.find(s => 
+        s.leagues.some(l => l.key === initialLeague)
+      );
+      if (sportWithLeague) {
+        setSelectedSport(sportWithLeague.id);
+        setSelectedLeague(initialLeague);
+      }
+    }
+  }, [initialLeague]);
+
   // When sport changes, select first league of that sport
   useEffect(() => {
     const sport = SPORTS.find(s => s.id === selectedSport);
-    if (sport) {
+    if (sport && !initialLeague) {
       setSelectedLeague(sport.leagues[0].key);
     }
-  }, [selectedSport]);
+  }, [selectedSport, initialLeague]);
 
   // Fetch match counts for all leagues of current sport
   useEffect(() => {

@@ -89,7 +89,7 @@ export default function MatchesPageSr({
         </section>
 
         {/* Match Browser */}
-        <MatchBrowser maxMatches={24} locale="sr" initialLeague={searchParams.league} />
+        <MatchBrowserI18n maxMatches={24} locale="sr" initialLeague={searchParams.league} />
       </div>
     </>
   );
