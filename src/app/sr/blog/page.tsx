@@ -257,7 +257,7 @@ export default async function SerbianBlogPage({ searchParams }: BlogPageProps) {
                         )}
                         
                         {/* Title */}
-                        <h2 className="text-xl font-bold text-emerald-600 mb-3 line-clamp-2 hover:text-emerald-700 transition-colors leading-tight">
+                        <h2 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 leading-tight">
                           {getDisplayTitle(post)}
                         </h2>
                         
