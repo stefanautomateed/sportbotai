@@ -350,7 +350,7 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
                   {page < pagination.totalPages && (
                     <Link
                       href={`/news?page=${page + 1}${sport ? `&sport=${sport}` : ''}`}
-                      className="px-4 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg hover:border-emerald-600 hover:text-emerald-700">
+                      className="px-4 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg hover:border-emerald-600 hover:text-emerald-700"
                     >
                       Next
                     </Link>
