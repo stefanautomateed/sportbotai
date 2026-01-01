@@ -24,8 +24,8 @@ const leagues = [
 ];
 
 export default function LeagueScroll() {
-  // Triple duplicate for smoother infinite scroll
-  const duplicatedLeagues = [...leagues, ...leagues, ...leagues];
+  // Double duplicate for seamless infinite scroll (animates -50%)
+  const duplicatedLeagues = [...leagues, ...leagues];
 
   return (
     <section className="py-8 bg-bg-primary border-y border-white/5 overflow-hidden">
