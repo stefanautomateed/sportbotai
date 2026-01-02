@@ -7,9 +7,9 @@
  * - Images: Cache first with long expiry
  */
 
-const CACHE_NAME = 'sportbot-v1';
-const STATIC_CACHE = 'sportbot-static-v1';
-const IMAGE_CACHE = 'sportbot-images-v1';
+const CACHE_NAME = 'sportbot-v2';
+const STATIC_CACHE = 'sportbot-static-v2';
+const IMAGE_CACHE = 'sportbot-images-v2';
 
 // Static assets to cache immediately
 const STATIC_ASSETS = [
