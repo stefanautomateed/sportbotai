@@ -361,6 +361,7 @@ model Prediction {
   valueBetOutcome   CallOutcome?
   valueBetProfit    Float?
   valueBetSide      String?
+  modelVersion      String           @default("v2")  // v1 = legacy, v2 = new model
 
   @@index([matchId])
   @@index([outcome])
@@ -370,6 +371,7 @@ model Prediction {
   @@index([conviction])
   @@index([clvFetched])
   @@index([valueBetOutcome])
+  @@index([modelVersion])
 }
 
 model ScheduledPost {
