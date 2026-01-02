@@ -188,7 +188,9 @@ function escapeRegex(str: string): string {
 export function autoLinkTeamsSimple(html: string): string {
   if (!html) return html;
   
-  let result = html;
+  // Fix invalid Tailwind-style colors in inline styles (e.g., #fff/90 -> rgba)
+  let result = html.replace(/color:\s*#fff\/90/gi, 'color: rgba(255,255,255,0.9)');
+  
   const linkedTeams = new Set<string>();
   
   for (const teamName of SORTED_TEAMS) {
