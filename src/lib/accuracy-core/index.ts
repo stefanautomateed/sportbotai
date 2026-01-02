@@ -79,6 +79,16 @@ import {
   logPrediction,
 } from './prediction-logging';
 
+import {
+  SituationalFactors,
+  calculateSituationalAdjustment,
+  blendEnsemble,
+  adjustConvictionForHistory,
+  detectTrapGame,
+  TrapGameFactors,
+  EnsembleInput,
+} from './advanced-features';
+
 // ============================================
 // PIPELINE CONFIGURATION
 // ============================================
@@ -150,6 +160,12 @@ export interface PipelineInput {
   // Odds data
   odds: BookmakerOdds[];
   
+  // Situational factors (optional)
+  situational?: Partial<SituationalFactors>;
+  
+  // Trap game detection (optional)
+  trapFactors?: Partial<TrapGameFactors>;
+  
   // Optional overrides
   config?: Partial<PipelineConfig>;
 }
@@ -219,12 +235,82 @@ export async function runAccuracyPipeline(
   const expectedScores = getExpectedScores(modelInput);
   
   // ========================================
+  // STEP 2.5: Situational Adjustments (NEW)
+  // ========================================
+  let situationalAdjust = { homeAdjust: 0, awayAdjust: 0, reasons: [] as string[] };
+  
+  if (input.situational) {
+    const situationalInput: SituationalFactors = {
+      homeRestDays: input.situational.homeRestDays ?? 3,
+      awayRestDays: input.situational.awayRestDays ?? 3,
+      homeGamesLast7Days: input.situational.homeGamesLast7Days ?? 2,
+      awayGamesLast7Days: input.situational.awayGamesLast7Days ?? 2,
+      isHomeBackToBack: input.situational.isHomeBackToBack ?? false,
+      isAwayBackToBack: input.situational.isAwayBackToBack ?? false,
+      travelDistance: input.situational.travelDistance,
+      isPlayoffs: input.situational.isPlayoffs,
+      isDerby: input.situational.isDerby,
+      isRevenge: input.situational.isRevenge,
+      motivationLevel: input.situational.motivationLevel,
+    };
+    situationalAdjust = calculateSituationalAdjustment(sportType, situationalInput);
+  }
+  
+  // ========================================
+  // STEP 2.6: Trap Game Detection (NEW)
+  // ========================================
+  let trapGameInfo = { isTrap: false, trapType: null as string | null, warning: null as string | null, convictionAdjust: 0 };
+  
+  if (input.trapFactors) {
+    const trapInput: TrapGameFactors = {
+      isHeavyFavorite: input.trapFactors.isHeavyFavorite ?? false,
+      hadEmotionalWinLast: input.trapFactors.hadEmotionalWinLast ?? false,
+      hasLookaheadGame: input.trapFactors.hasLookaheadGame ?? false,
+      opponentQuality: input.trapFactors.opponentQuality ?? 'average',
+      trendDirection: input.trapFactors.trendDirection ?? 'fair',
+    };
+    trapGameInfo = detectTrapGame(trapInput);
+  }
+  
+  // ========================================
+  // STEP 2.7: Ensemble Blending (NEW)
+  // ========================================
+  // Apply situational adjustments to raw probabilities
+  let adjustedRaw = { ...rawProbabilities };
+  if (situationalAdjust.homeAdjust !== 0 || situationalAdjust.awayAdjust !== 0) {
+    const homeAdj = adjustedRaw.home + situationalAdjust.homeAdjust - situationalAdjust.awayAdjust;
+    const awayAdj = adjustedRaw.away - situationalAdjust.homeAdjust + situationalAdjust.awayAdjust;
+    
+    // Renormalize
+    const total = homeAdj + awayAdj + (adjustedRaw.draw || 0);
+    adjustedRaw = {
+      ...adjustedRaw,
+      home: Math.max(0.05, Math.min(0.95, homeAdj / total)),
+      away: Math.max(0.05, Math.min(0.95, awayAdj / total)),
+      draw: adjustedRaw.draw ? adjustedRaw.draw / total : undefined,
+    };
+  }
+  
+  // Blend with market consensus
+  const ensembleInput: EnsembleInput = {
+    ourModel: adjustedRaw,
+    marketImplied: {
+      home: marketProbabilities.impliedProbabilitiesNoVig.home,
+      away: marketProbabilities.impliedProbabilitiesNoVig.away,
+      draw: marketProbabilities.impliedProbabilitiesNoVig.draw,
+      method: 'market',
+    },
+  };
+  const blendedProbabilities = blendEnsemble(sportType, ensembleInput);
+  
+  // ========================================
   // STEP 3: Calibration
   // ========================================
   const dataQuality = assessDataQuality(modelInput, marketProbabilities.bookmakerCount);
   
+  // Use blended probabilities for calibration
   const calibratedProbabilities = calibrateProbabilities(
-    rawProbabilities,
+    blendedProbabilities, // Changed from rawProbabilities
     sportType,
     {
       method: config.calibrationMethod,
@@ -247,6 +333,8 @@ export async function runAccuracyPipeline(
   
   const edge = qualityCheck.edge;
   
+  // Note: trapGameInfo.convictionAdjust is applied in the LLM layer, not here
+  
   // ========================================
   // STEP 5: Build LLM Output
   // ========================================
@@ -257,7 +345,9 @@ export async function runAccuracyPipeline(
     volatility,
     marketProbabilities,
     config,
-    hasDraw
+    hasDraw,
+    situationalAdjust.reasons,
+    trapGameInfo.warning
   );
   
   // ========================================
@@ -274,7 +364,7 @@ export async function runAccuracyPipeline(
         homeTeam: input.homeTeam,
         awayTeam: input.awayTeam,
         kickoff: input.kickoff,
-        rawProbabilities,
+        rawProbabilities: adjustedRaw, // Log situational-adjusted raw
         calibratedProbabilities,
         marketProbabilities,
         edge,
@@ -327,7 +417,9 @@ function buildPipelineOutput(
   volatility: VolatilityMetrics,
   market: MarketProbabilities,
   config: PipelineConfig,
-  hasDraw: boolean
+  hasDraw: boolean,
+  situationalReasons: string[] = [],
+  trapWarning: string | null = null
 ): PipelineOutput {
   // Determine favored outcome
   let favored: 'home' | 'away' | 'draw' | 'even';
@@ -380,6 +472,11 @@ function buildPipelineOutput(
     suppressReasons.push('Data quality below threshold');
   }
   
+  // Add trap game warning if present
+  if (trapWarning) {
+    suppressReasons.push(trapWarning);
+  }
+  
   return {
     probabilities: calibrated,
     edge: {
@@ -395,6 +492,7 @@ function buildPipelineOutput(
     suppressReasons,
     marketMargin: market.marketMargin,
     bookmakerCount: market.bookmakerCount,
+    situationalFactors: situationalReasons.length > 0 ? situationalReasons : undefined,
   };
 }
 
@@ -464,3 +562,4 @@ export * from './edge-quality';
 export * from './prediction-logging';
 export * from './llm-integration';
 export * from './api-adapter';
+export * from './advanced-features';

@@ -338,4 +338,7 @@ export interface PipelineOutput {
   // Market context
   marketMargin: number;
   bookmakerCount: number;
+  
+  // Situational context (NEW)
+  situationalFactors?: string[];
 }

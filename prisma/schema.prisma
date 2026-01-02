@@ -571,3 +571,94 @@ model ShareLink {
   @@index([code])
   @@index([createdAt])
 }
+
+// Edge Tracking for A/B Testing Model Accuracy
+model EdgeTracking {
+  id              String        @id @default(cuid())
+  predictionId    String
+  matchId         String
+  sport           String
+  league          String
+  kickoff         DateTime
+  
+  // Model outputs
+  ourModelHome    Float         // Our model home prob
+  ourModelAway    Float         // Our model away prob
+  ourModelDraw    Float?        // Our model draw prob
+  marketHome      Float         // Market implied home
+  marketAway      Float         // Market implied away
+  marketDraw      Float?        // Market implied draw
+  
+  // Ensemble weights used
+  ensembleMethod  String        @default("default")  // e.g., "default", "market_heavy", "model_heavy"
+  finalHome       Float         // Final blended home prob
+  finalAway       Float         // Final blended away prob
+  finalDraw       Float?        // Final blended draw prob
+  
+  // Edge identified
+  edgeSide        String        // "home", "away", "draw"
+  edgeValue       Float         // Edge percentage
+  conviction      Int           // 1-10
+  
+  // Situational factors used
+  situationalAdj  Float         @default(0)  // Net situational adjustment
+  trapGameFlag    Boolean       @default(false)
+  
+  // Outcome tracking
+  outcome         CallOutcome   @default(PENDING)
+  actualResult    String?
+  
+  // CLV tracking
+  clvPercentage   Float?
+  beatingMarket   Boolean?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([sport])
+  @@index([ensembleMethod])
+  @@index([outcome])
+  @@index([createdAt])
+}
+
+// Line Movement Tracking & Alerts
+model LineMovement {
+  id              String        @id @default(cuid())
+  matchId         String
+  matchName       String
+  sport           String
+  league          String
+  kickoff         DateTime
+  
+  // Opening snapshot
+  openingHome     Float
+  openingAway     Float
+  openingDraw     Float?
+  openingTime     DateTime
+  
+  // Current/Latest snapshot  
+  currentHome     Float
+  currentAway     Float
+  currentDraw     Float?
+  updatedTime     DateTime
+  
+  // Movement analysis
+  homeMovement    Float         // Percentage change
+  awayMovement    Float
+  drawMovement    Float?
+  
+  // Alerts
+  isSharpMove     Boolean       @default(false)  // 3%+ move detected
+  sharpSide       String?       // Which side moved sharply
+  alertSent       Boolean       @default(false)
+  alertSentAt     DateTime?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@unique([matchId])
+  @@index([sport])
+  @@index([kickoff])
+  @@index([isSharpMove])
+  @@index([alertSent])
+}
