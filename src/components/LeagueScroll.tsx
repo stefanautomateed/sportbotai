@@ -1,9 +1,9 @@
 /**
- * Infinite League Logos Scroll - v2.0
+ * Infinite League Logos Scroll - v3.0
  * 
  * Displays supported sports leagues in an infinite horizontal scroll animation.
  * Uses real league logos from our app's logo library.
- * Updated: 2026-01-02 - Seamless 15s animation with -50% transform
+ * Updated: 2026-01-02 - Fast GPU-accelerated animation, no glitches
  */
 
 'use client';
@@ -41,29 +41,36 @@ export default function LeagueScroll() {
         {/* Infinite Scroll Container */}
         <div className="relative overflow-hidden">
           {/* Fade edges */}
-          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-bg-primary to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-bg-primary to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-20 bg-gradient-to-r from-bg-primary to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-20 bg-gradient-to-l from-bg-primary to-transparent z-10 pointer-events-none" />
 
-          {/* Scrolling track */}
-          <div className="flex gap-8 animate-league-scroll">
+          {/* Scrolling track - inline styles ensure GPU acceleration */}
+          <div 
+            className="flex gap-4 sm:gap-8"
+            style={{
+              animation: 'league-scroll 12s linear infinite',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+            }}
+          >
             {duplicatedLeagues.map((league, index) => (
               <Link
                 key={`${league.name}-${index}`}
                 href={`/matches?league=${league.key}`}
-                className="flex-shrink-0 flex items-center gap-4 px-6 py-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-accent/30 hover:bg-white/10 transition-all duration-300 group cursor-pointer"
+                className="flex-shrink-0 flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-accent/30 hover:bg-white/10 transition-all duration-300 group cursor-pointer"
               >
                 {/* League logo with white background for visibility */}
-                <div className="relative w-12 h-12 flex-shrink-0 bg-white rounded-lg p-1.5">
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 bg-white rounded-lg p-1.5">
                   <Image
                     src={league.logo}
                     alt={`${league.name} logo`}
                     fill
-                    className="object-contain group-hover:scale-110 transition-transform duration-300 p-0.5"
+                    className="object-contain p-0.5"
                     unoptimized
                   />
                 </div>
                 {/* League name */}
-                <span className="text-base font-semibold text-gray-300 whitespace-nowrap group-hover:text-white transition-colors">
+                <span className="text-sm sm:text-base font-semibold text-gray-300 whitespace-nowrap group-hover:text-white transition-colors">
                   {league.name}
                 </span>
               </Link>

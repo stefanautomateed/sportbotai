@@ -1881,24 +1881,23 @@ html, body, main, section, article, div {
   background: var(--color-bg-hover);
 }
 
-/* === LEAGUE SCROLL ANIMATION v3.0 FORCE DEPLOY === */
-/* Last updated: 2026-01-02T00:45:00Z */
-/* 15s speed, seamless loop with -50% transform, no glitches */
-/* CRITICAL: THIS MUST BE LIVE ON PRODUCTION */
+/* === LEAGUE SCROLL ANIMATION v4.0 - GPU OPTIMIZED === */
+/* Last updated: 2026-01-02 - Fast & smooth, no glitches */
+/* Uses translate3d for GPU acceleration, 8s duration for speed */
 @keyframes league-scroll {
-  from {
-    transform: translateX(0);
+  0% {
+    transform: translate3d(0, 0, 0);
   }
-  to {
-    transform: translateX(-50%);
+  100% {
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
 .animate-league-scroll {
-  animation: league-scroll 15s linear infinite;
-  will-change: transform;
-}
-
-.animate-league-scroll:hover {
-  animation-play-state: paused;
+  animation: league-scroll 8s linear infinite;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  perspective: 1000px;
+  transform: translate3d(0, 0, 0);
 }
