@@ -284,17 +284,17 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-slate-800/50">
+      <section className="py-16 bg-bg-primary">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
             Ready to Analyze Matches?
           </h2>
-          <p className="text-slate-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
             Put your knowledge into practice with our AI-powered sports analytics tool.
           </p>
           <Link
             href="/matches"
-            className="inline-flex items-center px-6 py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-accent/90 transition-colors"
           >
             Browse Matches
             <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
