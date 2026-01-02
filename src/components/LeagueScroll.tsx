@@ -1,9 +1,9 @@
 /**
- * Infinite League Logos Scroll - v3.0
+ * Infinite League Logos Scroll - v4.0
  * 
  * Displays supported sports leagues in an infinite horizontal scroll animation.
- * Uses real league logos from our app's logo library.
- * Updated: 2026-01-02 - Fast GPU-accelerated animation, no glitches
+ * Uses Tailwind animation class for proper bundling.
+ * Updated: 2026-01-02 - Uses Tailwind config animation (10s speed)
  */
 
 'use client';
@@ -44,15 +44,8 @@ export default function LeagueScroll() {
           <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-20 bg-gradient-to-r from-bg-primary to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-20 bg-gradient-to-l from-bg-primary to-transparent z-10 pointer-events-none" />
 
-          {/* Scrolling track - inline styles ensure GPU acceleration */}
-          <div 
-            className="flex gap-4 sm:gap-8"
-            style={{
-              animation: 'league-scroll 12s linear infinite',
-              WebkitBackfaceVisibility: 'hidden',
-              backfaceVisibility: 'hidden',
-            }}
-          >
+          {/* Scrolling track - uses Tailwind animate-league-scroll class */}
+          <div className="flex gap-4 sm:gap-8 animate-league-scroll">
             {duplicatedLeagues.map((league, index) => (
               <Link
                 key={`${league.name}-${index}`}

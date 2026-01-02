@@ -156,6 +156,7 @@ module.exports = {
         'slide-down': 'slideDown 0.2s ease-out',
         'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
         'shimmer': 'shimmer 1.5s ease-in-out infinite',
+        'league-scroll': 'leagueScroll 10s linear infinite',
       },
       
       keyframes: {
@@ -182,6 +183,10 @@ module.exports = {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        leagueScroll: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
         },
       },
     },

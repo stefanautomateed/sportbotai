@@ -1881,23 +1881,4 @@ html, body, main, section, article, div {
   background: var(--color-bg-hover);
 }
 
-/* === LEAGUE SCROLL ANIMATION v4.0 - GPU OPTIMIZED === */
-/* Last updated: 2026-01-02 - Fast & smooth, no glitches */
-/* Uses translate3d for GPU acceleration, 8s duration for speed */
-@keyframes league-scroll {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-.animate-league-scroll {
-  animation: league-scroll 8s linear infinite;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -webkit-perspective: 1000px;
-  perspective: 1000px;
-  transform: translate3d(0, 0, 0);
-}
+/* League scroll animation now in tailwind.config.js */
