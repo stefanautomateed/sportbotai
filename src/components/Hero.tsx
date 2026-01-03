@@ -36,16 +36,16 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row items-center gap-3 mb-4 sm:mb-6 justify-center lg:justify-start">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl rounded-full text-xs sm:text-sm font-medium text-gray-200 border border-white/10 shadow-glass">
                 <span className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-glow-accent" />
-                Find where the market is wrong
+                Know any match before it happens
               </div>
               <LiveStatsCounter className="hidden sm:flex" />
             </div>
 
             {/* Headline - H1 for SEO - Bolder with gradient */}
             <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-[1.05] tracking-tight mb-4 sm:mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-              Know Any Match
+              Find Where
               <br className="hidden xs:block" />
-              <span className="text-gradient-accent drop-shadow-[0_0_30px_rgba(16,185,129,0.4)]">Before It Happens</span>
+              <span className="text-gradient-accent drop-shadow-[0_0_30px_rgba(16,185,129,0.4)]">The Market Is Wrong</span>
             </h1>
 
             {/* Subheadline - Glassmorphism card */}

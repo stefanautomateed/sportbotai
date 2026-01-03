@@ -34,10 +34,10 @@ export const translations = {
     
     // Hero Section
     hero: {
-      badge: 'Find where the market is wrong',
+      badge: 'Know any match before it happens',
 
-      title: 'Know Any Match',
-      titleHighlight: 'Before It Happens',
+      title: 'Find Where',
+      titleHighlight: 'The Market Is Wrong',
       subtitle: 'Pre-match intelligence: headlines, form, H2H history & AI insights.',
       subtitleHighlight: ' Soccer, NBA, NFL, NHL & UFC—all in 60 seconds.',
       ctaPrimary: 'Browse Matches',
@@ -372,9 +372,9 @@ export const translations = {
     
     // Hero Section
     hero: {
-      badge: 'Pronađi gde tržište greši',
-      title: 'Poznaj Svaki Meč',
-      titleHighlight: 'Pre Nego Što Se Desi',
+      badge: 'Poznaj svaki meč pre nego što se desi',
+      title: 'Pronađi Gde',
+      titleHighlight: 'Tržište Greši',
       subtitle: 'Pred-utakmična inteligencija: naslovi, forma, H2H istorija i AI uvidi.',
       subtitleHighlight: ' Fudbal, NBA, NFL, NHL i UFC—sve za 60 sekundi.',
       ctaPrimary: 'Pregledaj Mečeve',
