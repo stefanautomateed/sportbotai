@@ -351,6 +351,8 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
                   </>
                 )}
                 <span>•</span>
+                <span>{post.views} views</span>
+                <span>•</span>
                 <span>{Math.ceil((post.newsContent || post.content).split(' ').length / 200)} min read</span>
               </div>
 

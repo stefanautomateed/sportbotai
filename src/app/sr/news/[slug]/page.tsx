@@ -366,6 +366,8 @@ export default async function SerbianNewsArticlePage({ params }: NewsArticlePage
                   </>
                 )}
                 <span>•</span>
+                <span>{post.views} pregleda</span>
+                <span>•</span>
                 <span>{Math.ceil(articleContent.split(' ').length / 200)} min čitanja</span>
               </div>
 
