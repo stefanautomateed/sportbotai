@@ -3,14 +3,14 @@
  * 
  * Main page of the SportBot AI application in Serbian.
  * Contains all sections for presenting the platform.
+ * 
+ * SYNCED with English homepage structure.
  */
 
 import { Metadata } from 'next';
 import HeroI18n from '@/components/HeroI18n';
 import TrendingSectionServer from '@/components/TrendingSectionServer';
-import HowItWorksI18n from '@/components/HowItWorksI18n';
-import WhyNotTipsterI18n from '@/components/WhyNotTipsterI18n';
-import FeaturesI18n from '@/components/FeaturesI18n';
+import HowItWorksStripI18n from '@/components/HowItWorksStripI18n';
 import PricingTeaserI18n from '@/components/PricingTeaserI18n';
 import ResponsibleGamblingBlockI18n from '@/components/ResponsibleGamblingBlockI18n';
 import FAQI18n from '@/components/FAQI18n';
@@ -22,8 +22,8 @@ import { getOrganizationSchema, getWebsiteSchema, getMatchAnalyzerSchema, getAID
 
 // Homepage metadata with canonical for Serbian
 export const metadata: Metadata = {
-  title: 'SportBot AI - AI Analiza Mečeva za 60 Sekundi',
-  description: 'Pred-utakmična inteligencija sa AI uvidima. Naslovi, forma timova, H2H statistika. Fudbal, NBA, NFL, NHL i UFC analiza.',
+  title: 'SportBot AI - Pronađi Gde Tržište Greši',
+  description: 'Pred-utakmična inteligencija sa AI analizom. Upoređujemo AI verovatnoće sa kvotama da otkrijemo edge. Fudbal, NBA, NFL, NHL i UFC.',
   alternates: {
     canonical: '/sr',
     languages: {
@@ -85,20 +85,14 @@ export default function SerbianHomePage() {
       {/* Trending matches - server-rendered for fast LCP */}
       <TrendingSectionServer maxMatches={6} locale="sr" />
 
+      {/* Pricing - moved up for faster conversion path */}
+      <PricingTeaserI18n t={t} locale="sr" />
+
+      {/* How it works - minimal 1-row strip */}
+      <HowItWorksStripI18n locale="sr" />
+
       {/* Testimonials - social proof */}
       <TestimonialsCarousel />
-
-      {/* How it works - 4 steps */}
-      <HowItWorksI18n t={t} />
-
-      {/* Why we're not a tipster - IMPORTANT positioning section */}
-      <WhyNotTipsterI18n t={t} />
-
-      {/* Main features */}
-      <FeaturesI18n t={t} />
-
-      {/* Pricing teaser */}
-      <PricingTeaserI18n t={t} locale="sr" />
 
       {/* FAQ section */}
       <FAQI18n t={t} />
