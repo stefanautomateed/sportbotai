@@ -315,12 +315,12 @@ async function fetchOurPrediction(message: string): Promise<string> {
     // Format predictions for context
     let context = '=== SPORTBOT\'S PAST PREDICTIONS ===\n';
     for (const pred of predictions) {
-      const outcomeEmoji = pred.outcome === 'WIN' ? '✅' : pred.outcome === 'LOSS' ? '❌' : '⏳';
+      const outcomeEmoji = pred.outcome === 'HIT' ? '✅' : pred.outcome === 'MISS' ? '❌' : '⏳';
       context += `\nMatch: ${pred.matchName}`;
       context += `\nDate: ${pred.kickoff.toLocaleDateString()}`;
       context += `\nOur Prediction: ${pred.prediction}`;
       context += `\nReasoning: ${pred.reasoning}`;
-      context += `\nConviction: ${pred.conviction}/5`;
+      context += `\nConviction: ${pred.conviction}/10`;
       context += `\nOutcome: ${outcomeEmoji} ${pred.outcome}`;
       if (pred.actualResult) {
         context += `\nActual Result: ${pred.actualResult}`;
@@ -1198,8 +1198,8 @@ ${ourPredictionContext}
 
 INSTRUCTIONS:
 1. If we found a prediction, summarize it naturally: what we predicted, our reasoning, and the outcome
-2. If outcome is WIN ✅, acknowledge we got it right
-3. If outcome is LOSS ❌, acknowledge we got it wrong and what actually happened
+2. If outcome is HIT ✅, acknowledge we got it right
+3. If outcome is MISS ❌, acknowledge we got it wrong and what actually happened
 4. If outcome is PENDING ⏳, note that the match hasn't been played yet or result not updated
 5. If no prediction was found (⚠️ NO PREDICTION FOUND), say: "I don't have a stored analysis for that specific match"
 6. DO NOT make up an analysis if we don't have one`;
