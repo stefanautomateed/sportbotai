@@ -114,7 +114,10 @@ async function translateToEnglish(message: string): Promise<{
     let originalLanguage = 'unknown';
     if (hasCyrillic || /\b(je|da|li|koliko|postigao|utakmic)\b/i.test(message)) {
       originalLanguage = 'sr';
-    } else if (/\b(porque|qué|cómo|goles|cuántos)\b/i.test(message)) {
+    } else if (/\b(como|foi|sua|jogo|partida|entre|análise|você|quando|onde|quem)\b/i.test(message)) {
+      // Portuguese detection - check before Spanish as they share some words
+      originalLanguage = 'pt';
+    } else if (/\b(porque|qué|cómo|goles|cuántos|partido|jugador)\b/i.test(message)) {
       originalLanguage = 'es';
     } else if (/\b(wie|wann|warum|spiel|spielen|mannschaft|gegen)\b/i.test(message)) {
       // Note: removed "was" and "wo" as they conflict with English words
@@ -1068,7 +1071,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
           // Add language instruction
           if (translation.needsTranslation && originalLanguage !== 'en') {
             const langNames: Record<string, string> = {
-              'sr': 'Serbian/Croatian', 'es': 'Spanish', 'de': 'German', 'fr': 'French', 'unknown': 'the user\'s language'
+              'sr': 'Serbian/Croatian', 'es': 'Spanish', 'de': 'German', 'fr': 'French', 'pt': 'Portuguese', 'unknown': 'the user\'s language'
             };
             systemPrompt += `\n\nIMPORTANT: Respond in ${langNames[originalLanguage] || langNames['unknown']}, not English.`;
           }
