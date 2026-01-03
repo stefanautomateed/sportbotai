@@ -10,9 +10,7 @@
 import { Metadata } from 'next';
 import HeroABTest from '@/components/HeroABTest';
 import TrendingSectionServer from '@/components/TrendingSectionServer';
-import HowItWorks from '@/components/HowItWorks';
-import WhyNotTipster from '@/components/WhyNotTipster';
-import Features from '@/components/Features';
+import HowItWorksStrip from '@/components/HowItWorksStrip';
 import PricingTeaser from '@/components/PricingTeaser';
 import FAQ from '@/components/FAQ';
 import ResponsibleGamblingBlock from '@/components/ResponsibleGamblingBlock';
@@ -74,24 +72,14 @@ export default function HomePage() {
       {/* Trending matches - server-rendered for fast LCP */}
       <TrendingSectionServer maxMatches={6} />
 
+      {/* Pricing - moved up for faster conversion path */}
+      <PricingTeaser />
+
+      {/* How it works - minimal 1-row strip */}
+      <HowItWorksStrip />
+
       {/* Testimonials - social proof */}
       <TestimonialsCarousel />
-
-      {/* Video Testimonials - UGC style carousel */}
-      {/* <VideoTestimonialsCarousel /> */}
-      {/* TODO: Uncomment when UGC videos are ready */}
-
-      {/* How it works - 3 steps */}
-      <HowItWorks />
-
-      {/* Why we're not a tipster - IMPORTANT positioning section */}
-      <WhyNotTipster />
-
-      {/* Main features */}
-      <Features />
-
-      {/* Pricing teaser */}
-      <PricingTeaser />
 
       {/* FAQ section */}
       <FAQ />
