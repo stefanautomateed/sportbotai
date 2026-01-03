@@ -482,6 +482,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           ),
         ]);
         console.log(`[Match-Preview] Soccer extras fetched in ${Date.now() - startTime}ms`);
+        console.log(`[Match-Preview] Soccer injuries - Home: ${injuries.home.length}, Away: ${injuries.away.length}`, 
+          injuries.home.length > 0 ? JSON.stringify(injuries.home.slice(0, 2)) : 'none');
       } catch (soccerExtrasError) {
         console.error(`[Match-Preview] Soccer extras error (non-fatal):`, soccerExtrasError);
         // Continue with empty extras - core data from DataLayer is more important

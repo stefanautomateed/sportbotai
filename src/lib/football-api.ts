@@ -910,12 +910,21 @@ interface PlayerInjury {
 export async function getTeamInjuries(teamId: number): Promise<PlayerInjury[]> {
   const cacheKey = `injuries:${teamId}`;
   const cached = getCached<PlayerInjury[]>(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    console.log(`[Football-API] Injuries cache HIT for team ${teamId}: ${cached.length} injuries`);
+    return cached;
+  }
 
   const season = getCurrentSeason();
+  console.log(`[Football-API] Fetching injuries for team ${teamId}, season ${season}`);
   const response = await apiRequest<any>(`/injuries?team=${teamId}&season=${season}`);
   
-  if (!response?.response) return [];
+  if (!response?.response) {
+    console.log(`[Football-API] No injuries response for team ${teamId}`);
+    return [];
+  }
+  
+  console.log(`[Football-API] Raw injuries response for team ${teamId}: ${response.response.length} items`);
 
   const injuries: PlayerInjury[] = response.response
     .filter((item: any) => item.player?.reason)
@@ -932,6 +941,7 @@ export async function getTeamInjuries(teamId: number): Promise<PlayerInjury[]> {
       expectedReturn: item.fixture?.date,
     }));
 
+  console.log(`[Football-API] Processed injuries for team ${teamId}: ${injuries.length} (after filter)`);
   setCache(cacheKey, injuries);
   return injuries;
 }
