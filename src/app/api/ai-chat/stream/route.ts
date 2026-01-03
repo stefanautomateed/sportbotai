@@ -899,19 +899,34 @@ If their favorite team has a match today/tonight, lead with that information.`;
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: statusMsg })}\n\n`));
               console.log('[AI-Chat-Stream] Fetching real-time context...');
               
-              // Detect "last game" type queries that need very recent data
+              // Detect query types that need different recency windows
               const isLastGameQuery = /last (game|match|night)|yesterday|most recent|tonight|scored last|played last/i.test(searchMessage);
+              const isInjuryQuery = /injur|injured|injury|is .+ (out|hurt|playing|available)|status|health/i.test(searchMessage);
               
               // Add current date to search for recency context
               const today = new Date();
               const dateStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-              const enhancedSearch = isLastGameQuery 
-                ? `${searchMessage} (as of ${dateStr}, get the most recent game data only)`
-                : searchMessage;
+              
+              // For injury queries, ask for CURRENT STATUS (not just news)
+              // This helps find ongoing injuries that aren't in recent news
+              let enhancedSearch = searchMessage;
+              if (isLastGameQuery) {
+                enhancedSearch = `${searchMessage} (as of ${dateStr}, get the most recent game data only)`;
+              } else if (isInjuryQuery) {
+                // Extract player name if present for better search
+                const playerMatch = searchMessage.match(/(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:still\s+)?(?:injured|hurt|out|playing)/i);
+                const playerName = playerMatch ? playerMatch[1] : '';
+                enhancedSearch = `${playerName || searchMessage} current injury status ${dateStr} - is player injured, out, or available to play? Check official injury reports and team news.`;
+              }
+              
+              // Determine recency filter:
+              // - Last game queries: 'day' (very recent)
+              // - Injury queries: 'month' (injuries can last weeks without new articles)
+              // - Default: 'week'
+              const recencyFilter = isLastGameQuery ? 'day' : isInjuryQuery ? 'month' : 'week';
               
               const searchResult = await perplexity.search(enhancedSearch, {
-                // Use 'day' for last game queries to get fresher data, 'week' otherwise
-                recency: isLastGameQuery ? 'day' : 'week',
+                recency: recencyFilter,
                 model: 'sonar-pro',
                 maxTokens: 1000,
               });
