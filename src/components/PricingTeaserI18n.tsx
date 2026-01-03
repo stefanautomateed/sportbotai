@@ -23,11 +23,18 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
   const analyzerHref = locale === 'sr' ? '/sr/analyzer' : '/analyzer';
 
   return (
-    <section className="bg-bg-primary section-container">
-      <div className="text-center mb-8">
+    <section className="bg-bg section-container relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
+      
+      <div className="text-center mb-8 relative">
         <p className="text-accent font-semibold text-sm uppercase tracking-wider mb-3">{t.pricing.label}</p>
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-          {t.pricing.title}
+        <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tight">
+          {locale === 'sr' ? (
+            <>Jednostavne, <span className="text-gradient-accent">transparentne cene</span></>
+          ) : (
+            <>Simple, <span className="text-gradient-accent">transparent pricing</span></>
+          )}
         </h2>
         <p className="text-lg text-gray-400 max-w-2xl mx-auto">
           {t.pricing.subtitle}
@@ -43,7 +50,7 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
           aria-checked={isYearlyBilling}
           aria-label="Toggle between monthly and yearly billing"
           className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
-            isYearlyBilling ? 'bg-accent-dark' : 'bg-gray-600'
+            isYearlyBilling ? 'bg-accent' : 'bg-gray-600'
           }`}
         >
           <span
@@ -54,17 +61,17 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
         </button>
         <span className={`text-sm font-medium transition-colors ${isYearlyBilling ? 'text-white' : 'text-gray-400'}`}>
           {t.pricing.yearly}
-          <span className="ml-2 text-xs bg-accent-dark/30 text-white px-2 py-0.5 rounded-full">{t.pricing.saveUpTo}</span>
+          <span className="ml-2 text-xs bg-accent/30 text-white px-2 py-0.5 rounded-full">{t.pricing.saveUpTo}</span>
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto relative">
         {/* Free Plan Card */}
-        <div className="card-glass p-5 sm:p-6">
+        <div className="card-glass p-5 sm:p-6 border border-accent/20">
           <div className="text-center mb-6">
             <h3 className="text-xl font-bold mb-2 text-white">{t.pricing.free}</h3>
             <div className="mb-2">
-              <span className="text-4xl font-bold text-white">$0</span>
+              <span className="text-4xl font-extrabold text-white">$0</span>
             </div>
             <p className="text-sm text-gray-400">{locale === 'sr' ? 'Probaj jednom besplatno' : 'Try it once for free'}</p>
           </div>
@@ -82,7 +89,7 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
 
           <Link
             href={analyzerHref}
-            className="block w-full py-3 px-6 rounded-btn font-semibold transition-all duration-200 bg-bg-elevated text-white hover:bg-bg-elevated/80 border border-divider min-h-[48px] text-center"
+            className="btn-gradient-border block w-full py-3 px-6 text-center font-semibold min-h-[48px]"
           >
             {t.pricing.getStarted}
           </Link>
@@ -104,7 +111,7 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
                 {isYearlyBilling ? (locale === 'sr' ? '/godišnje' : '/year') : t.pricing.perMonth}
               </span>
             </div>
-            <p className="text-sm text-gray-400">
+            <p className={`text-sm font-semibold ${isYearlyBilling ? 'text-gray-400' : 'text-gradient-gold'}`}>
               {isYearlyBilling ? t.pricing.pro.yearlyDescription : t.pricing.pro.description}
             </p>
           </div>
@@ -144,7 +151,7 @@ export default function PricingTeaserI18n({ t, locale }: PricingTeaserI18nProps)
                 {isYearlyBilling ? (locale === 'sr' ? '/godišnje' : '/year') : t.pricing.perMonth}
               </span>
             </div>
-            <p className="text-sm text-text-muted">
+            <p className={`text-sm font-semibold ${isYearlyBilling ? 'text-gray-400' : 'text-gradient-gold'}`}>
               {isYearlyBilling ? t.pricing.premium.yearlyDescription : t.pricing.premium.description}
             </p>
           </div>
