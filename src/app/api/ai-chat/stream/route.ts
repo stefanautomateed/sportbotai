@@ -923,6 +923,18 @@ If their favorite team has a match today/tonight, lead with that information.`;
                 if (queryCategory === 'STATS') {
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '✅ Found current stats, analyzing...' })}\n\n`));
                 }
+                if (queryCategory === 'INJURY') {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '✅ Found injury info, analyzing...' })}\n\n`));
+                }
+              } else {
+                // Search returned nothing - log it and signal to AI to be cautious
+                console.log('[AI-Chat-Stream] ⚠️ Perplexity search returned no data for:', searchMessage.slice(0, 50));
+                if (queryCategory === 'INJURY') {
+                  // For injury queries with no data, add explicit warning
+                  perplexityContext = '⚠️ REAL-TIME SEARCH RETURNED NO INJURY DATA. Do not assume the player is healthy. Say you could not verify their current injury status.';
+                } else if (queryCategory === 'STATS') {
+                  perplexityContext = '⚠️ REAL-TIME SEARCH RETURNED NO STATS. Do not invent statistics. Say you could not find verified current stats.';
+                }
               }
             }
           }

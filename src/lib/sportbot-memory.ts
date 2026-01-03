@@ -238,6 +238,10 @@ export function shouldSkipCache(query: string): boolean {
     /posledn(joj|ja|ju|ji|je|eg|oj|em)\s*(utakmic|meč)/i,  // Serbian: poslednja utakmica
     /\b(sinoć|jučer|juče|yesterday|last night)\b/,  // Yesterday/last night
     /\b(scored|points|goals|assists|rebounds)\b.*\b(last|yesterday|sinoć)\b/,
+    // Injury queries - status changes frequently!
+    /\b(injur|injured|injury|injuries|is .+ hurt|is .+ out)\b/,
+    /\b(still injured|still out|back from injury|returned from)\b/,
+    /\b(povreda|povređen|povrijeđen)\b/i,  // Serbian: injury terms
   ];
   
   return skipPatterns.some(pattern => pattern.test(q));
