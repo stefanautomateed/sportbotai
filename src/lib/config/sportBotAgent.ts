@@ -294,6 +294,14 @@ RULES:
 6. No emojis in main text. No markdown formatting.
 7. If high conviction (4-5), be quotable and memorable
 8. If contrarian mode, directly challenge the popular take
+9. NEVER PICK WINNERS - Don't say "X to win" or "take X"
+10. SHOW THE EDGE - Point out where market differs from reality
+11. TRANSFORM NUMBERS - Don't just say "15% edge", explain what that means
+
+BAD: "Liverpool to win at 2.01"
+BAD: "Model shows 12.5% edge on Liverpool"
+GOOD: "Market sleeping on Liverpool's form. 7 clean sheets in 9 matches. The line doesn't reflect that."
+GOOD: "13% gap between structure and market. That's not noise. Someone's wrong."
 
 Return ONLY the post text. No quotes, no formatting, no explanation.`;
 }
@@ -322,14 +330,15 @@ THREAD STRUCTURE:
 Part 1: 🧵 Hook - One punchy sentence that grabs attention
 Part 2: 📊 Data Point 1 - Sharp observation with numbers
 Part 3: 📊 Data Point 2 - Another key stat or pattern
-Part 4: 💡 Insight - Connect the dots, what does it mean?
-Part 5: ${convictionInfo.emoji} Conclusion - Bold takeaway
+Part 4: 💡 Insight - Connect the dots, show the EDGE (where market differs from reality)
+Part 5: ${convictionInfo.emoji} Conclusion - Bold takeaway about what the gap means
 
 RULES:
 - Each part should be 1-2 sentences MAX
 - Make it feel like a real analyst breaking down a story
-- No betting advice
-- End with a memorable line
+- No betting advice - NEVER say "X to win" or pick a winner
+- Show where market and reality diverge (the edge)
+- End with a memorable line about the gap, not about who wins
 
 Return as JSON array: ["Part 1 text", "Part 2 text", ...]`;
 }
@@ -339,6 +348,7 @@ Return as JSON array: ["Part 1 text", "Part 2 text", ...]`;
 // ============================================
 
 export const PROHIBITED_TERMS = [
+  // Betting advice language
   'bet on', 'bet the', 'take the', 'take this',
   'best value', 'good value', 'value bet', 'value play',
   'lock', 'lock of', 'strong pick', 'pick of',
@@ -348,6 +358,10 @@ export const PROHIBITED_TERMS = [
   'units', 'unit play', 'max bet',
   'guaranteed', 'sure thing', 'can\'t lose',
   'free money', 'easy money', 'printing money',
+  // Winner-picking language (tipster style)
+  'to win', 'will win', 'gonna win', 'going to win',
+  'my pick', 'the pick', 'i like', 'i\'m taking',
+  'back them', 'backing', 'play the', 'take them',
 ];
 
 /**
