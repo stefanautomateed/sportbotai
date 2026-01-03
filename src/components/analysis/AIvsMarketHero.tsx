@@ -44,6 +44,8 @@ const translations = {
     exactProbDiff: 'Exact probability difference',
     oddsDrift: 'Whether odds drift creates late value',
     altMarkets: 'Alternative markets (O/U, AH)',
+    // Value tooltip
+    valueTooltip: 'Value ≠ Favorite. A team can be the underdog while offering betting value if the market underprices their chances.',
   },
   sr: {
     aiVsMarket: 'AI vs Tržište',
@@ -71,6 +73,8 @@ const translations = {
     exactProbDiff: 'Tačnu razliku verovatnoća',
     oddsDrift: 'Da li pomeranje kvota stvara kasnu vrednost',
     altMarkets: 'Alternativna tržišta (O/U, AH)',
+    // Value tooltip
+    valueTooltip: 'Vrednost ≠ Favorit. Tim može biti autsajder, a ipak nuditi vrednost za klađenje ako tržište potcenjuje njihove šanse.',
   },
 };
 
@@ -182,8 +186,16 @@ export function AIvsMarketHero({
         <div className="text-center py-2">
           {hasSignificantEdge && favoredTeam ? (
             <>
-              <p className="text-xl font-semibold text-white mb-1">
+              <p className="text-xl font-semibold text-white mb-1 inline-flex items-center gap-1.5">
                 {t.modelFavors} <span className="text-violet-400">{favoredTeam}</span>
+                <span className="group relative cursor-help">
+                  <svg className="w-4 h-4 text-zinc-500 hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-800 text-xs text-zinc-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-normal w-64 text-left z-50 shadow-xl border border-zinc-700">
+                    {t.valueTooltip}
+                  </span>
+                </span>
               </p>
               <p className="text-sm text-zinc-400">
                 {t.modelDisagrees}
@@ -322,7 +334,17 @@ function HeroContent({
       {/* Main Edge Display */}
       {hasSignificantEdge && favoredTeam ? (
         <div className="text-center mb-5">
-          <p className="text-sm text-zinc-400 mb-1">{t.modelFavors}</p>
+          <p className="text-sm text-zinc-400 mb-1 inline-flex items-center gap-1.5">
+            {t.modelFavors}
+            <span className="group relative cursor-help">
+              <svg className="w-3.5 h-3.5 text-zinc-500 hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-800 text-xs text-zinc-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-normal w-64 text-left z-50 shadow-xl border border-zinc-700">
+                {t.valueTooltip}
+              </span>
+            </span>
+          </p>
           <p className="text-2xl font-bold text-white mb-2">{favoredTeam}</p>
           
           {/* Edge Badge */}
