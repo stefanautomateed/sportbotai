@@ -8,6 +8,20 @@ SportBot AI is an AI-powered sports analytics platform built with **Next.js 14 (
 
 "Find where the market is wrong" - We sell edge-finding, not winning.
 
+## 🚨 CRITICAL: Serbian Language Sync
+
+**ALWAYS update Serbian (`/sr`) when updating English:**
+
+1. **Pages**: If you edit `src/app/xyz/page.tsx`, also edit `src/app/sr/xyz/page.tsx`
+2. **Components**: If you edit `ComponentX.tsx`, also edit `ComponentXI18n.tsx` if it exists
+3. **Translations**: Update `src/lib/i18n/translations.ts` for any new/changed text
+4. **Structure**: If page structure changes (add/remove sections), mirror in Serbian
+
+**Key i18n files:**
+- `src/lib/i18n/translations.ts` - Main translation strings
+- `src/components/*I18n.tsx` - Localized component versions
+- `src/app/sr/` - Serbian page routes
+
 ## Architecture
 
 ```
