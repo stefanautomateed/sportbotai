@@ -240,8 +240,30 @@ interface OddsDisplayProps {
   locale?: Locale;
 }
 
+// Helper to check if odds are valid (reasonable range for betting odds)
+function isValidOdds(odds: number | undefined): boolean {
+  if (odds === undefined || odds === null) return false;
+  // Valid decimal odds typically range from 1.01 to ~100
+  // Odds of 1.00 (100% prob) or 400+ are clearly errors
+  return odds > 1.00 && odds <= 100;
+}
+
 export function OddsDisplay({ odds, homeTeam, awayTeam, hasDraw = true, locale = 'en' }: OddsDisplayProps) {
   const t = translations[locale];
+  
+  // Validate odds - if any are invalid, show unavailable message
+  const hasValidOdds = isValidOdds(odds.homeOdds) && isValidOdds(odds.awayOdds) && 
+    (!hasDraw || !odds.drawOdds || isValidOdds(odds.drawOdds));
+  
+  if (!hasValidOdds) {
+    return (
+      <div className="p-3 bg-zinc-800/30 rounded-lg text-center">
+        <p className="text-zinc-500 text-sm">
+          {locale === 'sr' ? 'Kvote trenutno nedostupne' : 'Odds currently unavailable'}
+        </p>
+      </div>
+    );
+  }
   
   return (
     <div className="flex items-center justify-between gap-2 text-sm">

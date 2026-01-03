@@ -77,10 +77,13 @@ export function oddsToImpliedProb(decimalOdds: number): number {
 
 /**
  * Convert probability to fair decimal odds
+ * Clamps extreme values to reasonable betting odds range
  */
 export function probToFairOdds(probability: number): number {
-  if (probability <= 0) return 999;
-  if (probability >= 100) return 1;
+  // Clamp probability to reasonable range (1% - 99%)
+  // This prevents impossible odds like 1.00 or 999
+  if (probability <= 1) return 100;    // 1% = 100.00 odds (very long shot)
+  if (probability >= 99) return 1.01;  // 99% = 1.01 odds (heavy favorite)
   return Math.round((100 / probability) * 100) / 100;
 }
 
