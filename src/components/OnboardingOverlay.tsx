@@ -62,7 +62,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
   const steps = [
     {
       title: 'Welcome to SportBot AI',
-      subtitle: 'Understand any match in 60 seconds',
+      subtitle: 'Find where the market is wrong',
       content: (
         <div className="text-center">
           <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-6">

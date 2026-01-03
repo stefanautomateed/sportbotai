@@ -23,7 +23,7 @@ Hosting: Vercel
 Payments: Stripe
 
 /* MISSION */
-"Understand any match in 60 seconds"
+"Find where the market is wrong"
 We sell understanding, not winning.
 
 /* ACKNOWLEDGMENTS */

@@ -1,6 +1,6 @@
 # SportBot AI
 
-AI-powered sports analytics platform. Understand any match in 60 seconds.
+AI-powered sports analytics platform. Find where the market is wrong.
 
 <!-- Last updated: December 2025 -->
 

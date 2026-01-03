@@ -1,7 +1,7 @@
 # SportBot AI - Pre-Match Analyzer Roadmap
 
 > **Business Model:** Premium Pre-Match Intelligence Platform  
-> **Mission:** "Understand any match in 60 seconds"  
+> **Mission:** "Find where the market is wrong"  
 > **Positioning:** We sell UNDERSTANDING, not winning.
 
 ---

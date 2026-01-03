@@ -6,7 +6,7 @@ SportBot AI is an AI-powered sports analytics platform built with **Next.js 14 (
 
 ## Mission
 
-"Understand any match in 60 seconds" - We sell understanding, not winning.
+"Find where the market is wrong" - We sell edge-finding, not winning.
 
 ## Architecture
 

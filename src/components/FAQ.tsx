@@ -19,7 +19,7 @@ export interface FAQItem {
 export const defaultFAQData: FAQItem[] = [
   {
     question: "What is SportBot AI?",
-    answer: "SportBot AI is an AI-powered sports analytics platform that helps you understand any match in 60 seconds. We provide real-time analysis including team form, injuries, key stats, and contextual insights — so you can make smarter decisions as a fan, creator, or analyst."
+    answer: "SportBot AI is an AI-powered sports analytics platform that helps you find where the market is wrong. We provide real-time analysis including team form, injuries, key stats, and probability estimates — so you can spot edges and make smarter decisions."
   },
   {
     question: "How will it help me?",

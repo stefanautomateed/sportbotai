@@ -1,7 +1,7 @@
 {
   "name": "SportBot AI",
   "short_name": "SportBot",
-  "description": "AI-powered sports analysis - understand any match in 60 seconds",
+  "description": "AI-powered sports analysis - find where the market is wrong",
   "start_url": "/?source=pwa",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],

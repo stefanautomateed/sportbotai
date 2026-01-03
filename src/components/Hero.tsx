@@ -36,7 +36,7 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row items-center gap-3 mb-4 sm:mb-6 justify-center lg:justify-start">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl rounded-full text-xs sm:text-sm font-medium text-gray-200 border border-white/10 shadow-glass">
                 <span className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-glow-accent" />
-                Understand any match in 60 seconds
+                Find where the market is wrong
               </div>
               <LiveStatsCounter className="hidden sm:flex" />
             </div>

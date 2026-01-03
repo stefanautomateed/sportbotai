@@ -1,6 +1,6 @@
 # SportBot AI - Complete Documentation for LLMs
 
-> AI-Powered Sports Analytics Platform - "Understand any match in 60 seconds"
+> AI-Powered Sports Analytics Platform - "Find where the market is wrong"
 
 ## Executive Summary
 

@@ -1,6 +1,6 @@
 # SportBot AI
 
-> AI-Powered Sports Analytics Platform - Understand any match in 60 seconds
+> AI-Powered Sports Analytics Platform - Find where the market is wrong
 
 SportBot AI is an educational sports analytics platform that provides AI-driven match analysis with probability estimates, value detection, and risk assessment. We help users understand sports matches better through data-driven insights.
 

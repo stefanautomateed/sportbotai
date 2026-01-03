@@ -34,7 +34,8 @@ export const translations = {
     
     // Hero Section
     hero: {
-      badge: 'Understand any match in 60 seconds',
+      badge: 'Find where the market is wrong',
+
       title: 'Know Any Match',
       titleHighlight: 'Before It Happens',
       subtitle: 'Pre-match intelligence: headlines, form, H2H history & AI insights.',
