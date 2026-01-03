@@ -100,7 +100,7 @@ export default function AboutPage() {
               About SportBot AI
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed">
-              Combining cutting-edge AI technology with expert sports analysis to help you understand any match in 60 seconds.
+              Combining cutting-edge AI technology with expert sports analysis to help you find where the market is wrong.
             </p>
           </div>
         </header>

@@ -5,7 +5,7 @@
  * Clean design that works across ALL sports.
  * Zero betting advice. Pure understanding.
  * 
- * "Understand any match in 60 seconds"
+ * "Find where the market is wrong"
  */
 
 import { Metadata } from 'next';
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   
   return {
     title: `Match Analysis | SportBot AI`,
-    description: 'Premium match intelligence powered by AI. Understand any match in 60 seconds.',
+    description: 'Premium match intelligence powered by AI. Find where the market is wrong.',
     openGraph: {
       title: `Match Analysis | SportBot AI`,
       description: 'Premium match intelligence powered by AI',

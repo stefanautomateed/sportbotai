@@ -442,7 +442,7 @@ export function getHomepageFAQSchema() {
         name: 'What is SportBot AI?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'SportBot AI is a free AI-powered sports analysis platform that helps you understand any match in 60 seconds. It provides probability estimates, value detection, and risk assessment for Soccer, NBA, NFL, Tennis, UFC and more.',
+          text: 'SportBot AI is a free AI-powered sports analysis platform that helps you find where the market is wrong. It provides probability estimates, value detection, and edge identification for Soccer, NBA, NFL, Tennis, UFC and more.'
         },
       },
       {
