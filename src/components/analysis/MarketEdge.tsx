@@ -266,22 +266,22 @@ export function OddsDisplay({ odds, homeTeam, awayTeam, hasDraw = true, locale =
   }
   
   return (
-    <div className="flex items-center justify-between gap-2 text-sm">
-      <div className="flex-1 text-center p-2 bg-zinc-800/40 rounded-lg">
-        <div className="text-zinc-500 text-xs mb-1">{homeTeam}</div>
-        <div className="text-zinc-300 font-mono font-medium">{formatOdds(odds.homeOdds)}</div>
+    <div className="flex items-center justify-between gap-1.5 sm:gap-2 text-sm">
+      <div className="flex-1 text-center p-2 bg-zinc-800/40 rounded-lg min-w-0">
+        <div className="text-zinc-500 text-[10px] sm:text-xs mb-1 truncate">{homeTeam}</div>
+        <div className="text-zinc-300 font-mono font-medium text-sm sm:text-base">{formatOdds(odds.homeOdds)}</div>
       </div>
       
       {hasDraw && odds.drawOdds && (
-        <div className="flex-1 text-center p-2 bg-zinc-800/40 rounded-lg">
-          <div className="text-zinc-500 text-xs mb-1">{t.draw}</div>
-          <div className="text-zinc-300 font-mono font-medium">{formatOdds(odds.drawOdds)}</div>
+        <div className="flex-1 text-center p-2 bg-zinc-800/40 rounded-lg min-w-0">
+          <div className="text-zinc-500 text-[10px] sm:text-xs mb-1">{t.draw}</div>
+          <div className="text-zinc-300 font-mono font-medium text-sm sm:text-base">{formatOdds(odds.drawOdds)}</div>
         </div>
       )}
       
-      <div className="flex-1 text-center p-2 bg-zinc-800/40 rounded-lg">
-        <div className="text-zinc-500 text-xs mb-1">{awayTeam}</div>
-        <div className="text-zinc-300 font-mono font-medium">{formatOdds(odds.awayOdds)}</div>
+      <div className="flex-1 text-center p-2 bg-zinc-800/40 rounded-lg min-w-0">
+        <div className="text-zinc-500 text-[10px] sm:text-xs mb-1 truncate">{awayTeam}</div>
+        <div className="text-zinc-300 font-mono font-medium text-sm sm:text-base">{formatOdds(odds.awayOdds)}</div>
       </div>
     </div>
   );

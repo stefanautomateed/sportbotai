@@ -810,11 +810,11 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
           )}
 
           {/* Upgrade Card - Conversion optimized */}
-          <div className={`mt-8 card-glass ${usageLimit.plan === 'FREE' ? 'border-violet/30' : 'border-violet-light/30'} p-8 text-center`}>
-            <div className="text-4xl mb-3 opacity-80">🔒</div>
+          <div className={`mt-6 sm:mt-8 card-glass ${usageLimit.plan === 'FREE' ? 'border-violet/30' : 'border-violet-light/30'} p-5 sm:p-8 text-center`}>
+            <div className="text-3xl sm:text-4xl mb-3 opacity-80">🔒</div>
             
             {/* Headline - value-focused, larger */}
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h1 className="text-2xl sm:text-4xl font-bold text-white mb-3 sm:mb-4">
               {t.reachLimit}
             </h1>
             
@@ -837,9 +837,9 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
             </p>
             
             {/* Time until next free - urgency */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-4">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-4 text-xs sm:text-sm">
               <span className="text-zinc-500">⏳</span>
-              <span className="text-zinc-400 text-sm">{t.limitResetsAt}</span>
+              <span className="text-zinc-400">{t.limitResetsAt}</span>
               <TimeUntilMidnight />
             </div>
 
@@ -853,10 +853,10 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
               {t.proUnlocksShort}
             </p>
 
-            {/* CTA Button - premium feel */}
+            {/* CTA Button - premium feel, mobile-friendly touch target */}
             <Link 
               href={`${localePath}/pricing`}
-              className="btn-secondary inline-block text-lg px-8 py-3 font-medium"
+              className="btn-secondary inline-block text-base sm:text-lg px-6 sm:px-8 py-3.5 font-medium"
             >
               {t.upgradeToPro}
             </Link>

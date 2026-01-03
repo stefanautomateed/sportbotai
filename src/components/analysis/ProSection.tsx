@@ -111,11 +111,11 @@ export function ProSection({
           </div>
         )}
 
-        {/* Unlock CTA */}
-        <div className="pt-2">
+        {/* Unlock CTA - larger touch target for mobile */}
+        <div className="pt-3">
           <Link
             href={`${localePath}/pricing`}
-            className="inline-flex items-center gap-1.5 text-xs text-violet-400/80 hover:text-violet-400 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-violet-400/80 hover:text-violet-400 transition-colors py-2 -my-2"
           >
             {t.unlockPro}
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
