@@ -74,8 +74,8 @@ async function fetchNBAResult(searchHome: string, searchAway: string, dateStr: s
 
       if (!['FT', 'AOT', 'AP'].includes(status)) continue;
 
-      // Try normal match
-      if (teamsMatch(home, searchHome) && teamsMatch(away, searchAway)) {
+      // Try normal match using fuzzy matching
+      if (teamsMatchFuzzy(home, searchHome) && teamsMatchFuzzy(away, searchAway)) {
         console.log(`  Matched: ${home} vs ${away}`);
         return {
           homeTeam: home,
@@ -87,7 +87,7 @@ async function fetchNBAResult(searchHome: string, searchAway: string, dateStr: s
       }
       
       // Try swapped match (prediction had home/away reversed)
-      if (teamsMatch(home, searchAway) && teamsMatch(away, searchHome)) {
+      if (teamsMatchFuzzy(home, searchAway) && teamsMatchFuzzy(away, searchHome)) {
         console.log(`  Matched (swapped): ${home} vs ${away}`);
         return {
           homeTeam: home,
@@ -104,6 +104,63 @@ async function fetchNBAResult(searchHome: string, searchAway: string, dateStr: s
     console.error('NBA fetch error:', error);
     return null;
   }
+}
+
+// Helper to normalize team names (remove accents, common variations)
+function normalizeTeamName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/wolverhampton wanderers/g, 'wolves')
+    .replace(/wolverhampton/g, 'wolves')
+    .replace(/tottenham hotspur/g, 'tottenham')
+    .replace(/manchester united/g, 'man united')
+    .replace(/manchester city/g, 'man city')
+    .replace(/newcastle united/g, 'newcastle')
+    .replace(/west ham united/g, 'west ham')
+    .replace(/brighton.*albion/g, 'brighton')
+    .replace(/nottingham forest/g, 'forest')
+    .replace(/crystal palace/g, 'palace')
+    .replace(/athletic bilbao/g, 'athletic club')
+    .replace(/montreal canadiens/g, 'canadiens')
+    .replace(/st\.?\s*louis/g, 'st louis')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Helper to check if teams match with fuzzy matching
+function teamsMatchFuzzy(apiTeam: string, searchTeam: string): boolean {
+  const api = normalizeTeamName(apiTeam);
+  const search = normalizeTeamName(searchTeam);
+  
+  // Direct match
+  if (api === search) return true;
+  if (api.includes(search) || search.includes(api)) return true;
+  
+  // Keyword match (last word, e.g., "Bulls" from "Chicago Bulls")
+  const apiWords = api.split(' ');
+  const searchWords = search.split(' ');
+  
+  // Check if any significant word (>3 chars) matches
+  for (const apiWord of apiWords) {
+    if (apiWord.length > 3) {
+      for (const searchWord of searchWords) {
+        if (searchWord.length > 3 && (apiWord === searchWord || apiWord.includes(searchWord) || searchWord.includes(apiWord))) {
+          return true;
+        }
+      }
+    }
+  }
+  
+  // Check last words (team nicknames)
+  const apiLast = apiWords[apiWords.length - 1];
+  const searchLast = searchWords[searchWords.length - 1];
+  if (apiLast && searchLast && apiLast.length > 3 && searchLast.length > 3) {
+    if (apiLast === searchLast) return true;
+  }
+  
+  return false;
 }
 
 async function fetchNHLResult(searchHome: string, searchAway: string, dateStr: string): Promise<MatchResult | null> {
@@ -127,25 +184,40 @@ async function fetchNHLResult(searchHome: string, searchAway: string, dateStr: s
       }
     );
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.log(`  NHL API error: ${response.status}`);
+      return null;
+    }
 
     const data = await response.json();
     const games = data.response || [];
+    console.log(`  Found ${games.length} NHL games`);
 
     for (const game of games) {
-      const home = game.teams?.home?.name?.toLowerCase() || '';
-      const away = game.teams?.away?.name?.toLowerCase() || '';
+      const home = game.teams?.home?.name || '';
+      const away = game.teams?.away?.name || '';
       const status = game.status?.short || '';
 
       if (!['FT', 'AOT', 'AP', 'POST'].includes(status)) continue;
 
-      if (
-        (home.includes(searchHome) || searchHome.includes(home)) &&
-        (away.includes(searchAway) || searchAway.includes(away))
-      ) {
+      // Use fuzzy matching for team names
+      if (teamsMatchFuzzy(home, searchHome) && teamsMatchFuzzy(away, searchAway)) {
+        console.log(`  Matched: ${home} vs ${away}`);
         return {
-          homeTeam: game.teams.home.name,
-          awayTeam: game.teams.away.name,
+          homeTeam: home,
+          awayTeam: away,
+          homeScore: game.scores?.home ?? 0,
+          awayScore: game.scores?.away ?? 0,
+          completed: true,
+        };
+      }
+      
+      // Try swapped match (prediction had home/away reversed)
+      if (teamsMatchFuzzy(home, searchAway) && teamsMatchFuzzy(away, searchHome)) {
+        console.log(`  Matched (swapped): ${home} vs ${away}`);
+        return {
+          homeTeam: home,
+          awayTeam: away,
           homeScore: game.scores?.home ?? 0,
           awayScore: game.scores?.away ?? 0,
           completed: true,
@@ -189,20 +261,15 @@ async function fetchFootballResult(searchHome: string, searchAway: string, dateS
     console.log(`  Found ${fixtures.length} finished fixtures`);
 
     for (const fixture of fixtures) {
-      const home = fixture.teams?.home?.name?.toLowerCase() || '';
-      const away = fixture.teams?.away?.name?.toLowerCase() || '';
+      const home = fixture.teams?.home?.name || '';
+      const away = fixture.teams?.away?.name || '';
 
-      // Fuzzy match team names
-      if (
-        (home.includes(searchHome) || searchHome.includes(home) || 
-         home.split(' ').some((w: string) => searchHome.includes(w) && w.length > 3)) &&
-        (away.includes(searchAway) || searchAway.includes(away) ||
-         away.split(' ').some((w: string) => searchAway.includes(w) && w.length > 3))
-      ) {
-        console.log(`  Matched: ${fixture.teams.home.name} vs ${fixture.teams.away.name}`);
+      // Use improved fuzzy matching
+      if (teamsMatchFuzzy(home, searchHome) && teamsMatchFuzzy(away, searchAway)) {
+        console.log(`  Matched: ${home} vs ${away}`);
         return {
-          homeTeam: fixture.teams.home.name,
-          awayTeam: fixture.teams.away.name,
+          homeTeam: home,
+          awayTeam: away,
           homeScore: fixture.goals?.home ?? 0,
           awayScore: fixture.goals?.away ?? 0,
           completed: true,
@@ -514,24 +581,29 @@ async function updatePredictionResults() {
     console.log(`\nChecking: ${prediction.matchName} (${dateStr}) - Sport: ${prediction.sport}`);
     
     // Detect sport - check explicit sport field FIRST (takes priority), then team names as fallback
-    // NFL must be checked before NHL because team name detection can overlap (e.g., "wild" matches both Vikings and Wild)
-    const isNFL = sportLower.includes('americanfootball') || sportLower.includes('nfl') ||
-      (!sportLower.includes('hockey') && !sportLower.includes('nhl') && 
-       NFL_TEAMS.some(t => searchHome.includes(t) || searchAway.includes(t)));
+    // If sport field explicitly says soccer/football, NEVER fall back to NHL/NBA/NFL team name detection
+    const isSoccerExplicit = sportLower.includes('soccer') || sportLower.includes('epl') || 
+      sportLower.includes('la_liga') || sportLower.includes('serie_a') || 
+      sportLower.includes('bundesliga') || sportLower.includes('ligue_1') ||
+      sportLower.includes('spl') || sportLower.includes('primeira') || 
+      sportLower.includes('eredivisie') || sportLower.includes('uefa');
     
-    const isNHL = !isNFL && (sportLower.includes('hockey') || sportLower.includes('nhl') || 
+    // NFL must be checked before NHL because team name detection can overlap (e.g., "wild" matches both Vikings and Wild)
+    const isNFL = !isSoccerExplicit && (sportLower.includes('americanfootball') || sportLower.includes('nfl') ||
+      (!sportLower.includes('hockey') && !sportLower.includes('nhl') && 
+       NFL_TEAMS.some(t => searchHome.includes(t) || searchAway.includes(t))));
+    
+    const isNHL = !isSoccerExplicit && !isNFL && (sportLower.includes('hockey') || sportLower.includes('nhl') || 
       NHL_TEAMS.some(t => searchHome.includes(t) || searchAway.includes(t)));
     
     const isEuroleague = sportLower.includes('euroleague') || 
-      EUROLEAGUE_TEAMS.some(t => searchHome.includes(t) || searchAway.includes(t));
+      (!isSoccerExplicit && EUROLEAGUE_TEAMS.some(t => searchHome.includes(t) || searchAway.includes(t)));
     
-    const isNBA = !isEuroleague && ((sportLower.includes('basketball') && !sportLower.includes('euroleague')) || 
+    const isNBA = !isEuroleague && !isSoccerExplicit && ((sportLower.includes('basketball') && !sportLower.includes('euroleague')) || 
       sportLower.includes('nba') || 
       NBA_TEAMS.some(t => searchHome.includes(t) || searchAway.includes(t)));
     
-    const isFootball = sportLower.includes('soccer') || sportLower.includes('epl') || 
-      sportLower.includes('la_liga') || sportLower.includes('serie_a') || 
-      sportLower.includes('bundesliga') || sportLower.includes('ligue_1');
+    const isFootball = isSoccerExplicit;
     
     const isMMA = sportLower.includes('mma') || sportLower.includes('ufc') || 
       sportLower.includes('mixed_martial_arts') ||
@@ -541,63 +613,53 @@ async function updatePredictionResults() {
     
     let result: MatchResult | null = null;
     
-    // Helper to get next day date string
-    const getNextDay = (d: string) => {
+    // Helper to get date offset string
+    const getDateOffset = (d: string, days: number) => {
       const date = new Date(d);
-      date.setDate(date.getDate() + 1);
+      date.setDate(date.getDate() + days);
       return date.toISOString().split('T')[0];
     };
     
-    // Check in order of specificity, also try next day if not found
+    // Try fetching result for multiple days (predictions dates can be off by 1-3 days)
+    const tryFetchWithDateRange = async (
+      fetchFn: (home: string, away: string, date: string) => Promise<MatchResult | null>,
+      apiName: string
+    ): Promise<MatchResult | null> => {
+      // Try original date first
+      let result = await fetchFn(searchHome, searchAway, dateStr);
+      if (result) return result;
+      
+      // Try +1, +2, +3 days, and also -1 day in case prediction date is after match
+      const daysToTry = [1, 2, 3, -1];
+      for (const offset of daysToTry) {
+        const tryDate = getDateOffset(dateStr, offset);
+        console.log(`  -> Trying ${offset > 0 ? '+' : ''}${offset} day (${tryDate})...`);
+        result = await fetchFn(searchHome, searchAway, tryDate);
+        if (result) return result;
+      }
+      return null;
+    };
+    
+    // Check in order of specificity
     // NFL is checked first since its detection already excludes NHL conflicts
     if (isNFL) {
       console.log('  -> Checking NFL API...');
-      result = await fetchNFLResult(searchHome, searchAway, dateStr);
-      if (!result) {
-        const nextDay = getNextDay(dateStr);
-        console.log(`  -> Trying next day (${nextDay})...`);
-        result = await fetchNFLResult(searchHome, searchAway, nextDay);
-      }
+      result = await tryFetchWithDateRange(fetchNFLResult, 'NFL');
     } else if (isNHL) {
       console.log('  -> Checking NHL API...');
-      result = await fetchNHLResult(searchHome, searchAway, dateStr);
-      if (!result) {
-        const nextDay = getNextDay(dateStr);
-        console.log(`  -> Trying next day (${nextDay})...`);
-        result = await fetchNHLResult(searchHome, searchAway, nextDay);
-      }
+      result = await tryFetchWithDateRange(fetchNHLResult, 'NHL');
     } else if (isEuroleague) {
       console.log('  -> Checking Euroleague API...');
-      result = await fetchEuroleagueResult(searchHome, searchAway, dateStr);
-      if (!result) {
-        const nextDay = getNextDay(dateStr);
-        console.log(`  -> Trying next day (${nextDay})...`);
-        result = await fetchEuroleagueResult(searchHome, searchAway, nextDay);
-      }
+      result = await tryFetchWithDateRange(fetchEuroleagueResult, 'Euroleague');
     } else if (isNBA) {
       console.log('  -> Checking NBA API...');
-      result = await fetchNBAResult(searchHome, searchAway, dateStr);
-      if (!result) {
-        const nextDay = getNextDay(dateStr);
-        console.log(`  -> Trying next day (${nextDay})...`);
-        result = await fetchNBAResult(searchHome, searchAway, nextDay);
-      }
+      result = await tryFetchWithDateRange(fetchNBAResult, 'NBA');
     } else if (isFootball) {
       console.log('  -> Checking Football API...');
-      result = await fetchFootballResult(searchHome, searchAway, dateStr);
-      if (!result) {
-        const nextDay = getNextDay(dateStr);
-        console.log(`  -> Trying next day (${nextDay})...`);
-        result = await fetchFootballResult(searchHome, searchAway, nextDay);
-      }
+      result = await tryFetchWithDateRange(fetchFootballResult, 'Football');
     } else if (isMMA) {
       console.log('  -> Checking MMA API...');
-      result = await fetchMMAResult(searchHome, searchAway, dateStr);
-      if (!result) {
-        const nextDay = getNextDay(dateStr);
-        console.log(`  -> Trying next day (${nextDay})...`);
-        result = await fetchMMAResult(searchHome, searchAway, nextDay);
-      }
+      result = await tryFetchWithDateRange(fetchMMAResult, 'MMA');
     } else {
       // Unknown sport - skip
       console.log('  ⚠️ Unknown sport, skipping');

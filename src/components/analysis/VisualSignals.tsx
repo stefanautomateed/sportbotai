@@ -101,9 +101,10 @@ interface EdgeBarProps {
   percentage: number;  // 0-15
   homeTeam: string;
   awayTeam: string;
+  canSeeExactNumbers?: boolean; // PRO only - show exact percentages
 }
 
-export function EdgeBar({ direction, percentage, homeTeam, awayTeam }: EdgeBarProps) {
+export function EdgeBar({ direction, percentage, homeTeam, awayTeam, canSeeExactNumbers = false }: EdgeBarProps) {
   // Calculate bar position (50 = center, 0 = full home, 100 = full away)
   const position = direction === 'even' 
     ? 50 
@@ -149,7 +150,12 @@ export function EdgeBar({ direction, percentage, homeTeam, awayTeam }: EdgeBarPr
           direction === 'away' ? 'text-blue-400' : 
           'text-zinc-500'
         }`}>
-          {direction === 'even' ? 'Even' : `${direction === 'home' ? homeTeam : awayTeam} +${percentage}%`}
+          {direction === 'even' 
+            ? 'Even' 
+            : canSeeExactNumbers 
+              ? `${direction === 'home' ? homeTeam : awayTeam} +${percentage}%`
+              : `${direction === 'home' ? homeTeam : awayTeam} favored`
+          }
         </span>
       </div>
     </div>
@@ -281,19 +287,25 @@ interface VerdictBadgeProps {
   confidence: 'high' | 'medium' | 'low';
   clarityScore?: number; // Optional - no longer displayed
   edgePercentage?: number; // e.g. 52 for 52%
+  canSeeExactNumbers?: boolean; // PRO only - show exact percentages
 }
 
-export function VerdictBadge({ favored, confidence, edgePercentage }: VerdictBadgeProps) {
+export function VerdictBadge({ favored, confidence, edgePercentage, canSeeExactNumbers = false }: VerdictBadgeProps) {
   const colors = {
     high: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/30 text-emerald-400',
     medium: 'from-amber-500/20 to-amber-500/5 border-amber-500/30 text-amber-400',
     low: 'from-zinc-500/20 to-zinc-500/5 border-zinc-500/30 text-zinc-400',
   };
 
-  const confidenceLabels = {
+  // PRO users see "Strong Signal", FREE users see "Directional Signal"
+  const confidenceLabels = canSeeExactNumbers ? {
     high: 'Strong Signal',
     medium: 'Moderate Signal',
     low: 'Weak Signal',
+  } : {
+    high: 'Directional Signal',
+    medium: 'Model Lean',
+    low: 'Slight Lean',
   };
 
   // For low confidence matches, show "Slight edge to X (52%)" instead of "No Clear Edge"
@@ -304,8 +316,8 @@ export function VerdictBadge({ favored, confidence, edgePercentage }: VerdictBad
       ? `Slight edge to ${favored}`
       : favored || 'No Clear Edge';
   
-  // Show percentage for low confidence with a lean
-  const showPercentage = confidence === 'low' && favored && favored !== 'No Clear Edge' && edgePercentage;
+  // Show percentage ONLY for PRO users (canSeeExactNumbers)
+  const showPercentage = canSeeExactNumbers && confidence === 'low' && favored && favored !== 'No Clear Edge' && edgePercentage;
 
   return (
     <div className={`

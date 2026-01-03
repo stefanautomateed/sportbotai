@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const sportFilter = searchParams.get('sport') || 'all';
-    const limit = parseInt(searchParams.get('limit') || '30');
+    const limit = parseInt(searchParams.get('limit') || '100');
 
     // Get pending predictions (matches not yet played)
     const predictions = await prisma.prediction.findMany({

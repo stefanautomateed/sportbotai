@@ -26,6 +26,8 @@ import {
   MarketIntelSection,
   RegistrationBlur,
   PremiumBlur,
+  AIvsMarketHero,
+  ProSection,
 } from '@/components/analysis';
 import StandingsTable from '@/components/StandingsTable';
 import type { UniversalSignals } from '@/lib/universal-signals';
@@ -284,6 +286,34 @@ interface UsageLimitData {
   };
 }
 
+// Time until midnight UTC component
+function TimeUntilMidnight() {
+  const [timeLeft, setTimeLeft] = useState('');
+  
+  useEffect(() => {
+    function calculateTimeLeft() {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setUTCHours(24, 0, 0, 0);
+      const diff = midnight.getTime() - now.getTime();
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      return `${hours}h ${minutes}m`;
+    }
+    
+    setTimeLeft(calculateTimeLeft());
+    const interval = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  return <span className="text-white font-medium">{timeLeft}</span>;
+}
+
 // i18n translations for MatchPreviewClient
 const translations = {
   en: {
@@ -305,10 +335,17 @@ const translations = {
     weNeed48h: 'We need at least 48 hours before kickoff to gather reliable data.',
     setReminder: 'Set Reminder',
     backToMatches: 'Back to Matches',
-    reachLimit: 'You\'ve reached your daily analysis limit',
-    usedAllCredits: 'You\'ve used all {used} of your {limit} daily analysis credits.',
-    upgradeToPro: 'Upgrade to Pro',
-    limitResetsAt: 'Your limit resets at midnight.',
+    reachLimit: 'Exact edge locked',
+    usedAllCredits: 'You\'ve used today\'s free analysis.',
+    upgradeToPro: 'Unlock Pro precision — $0.66/day',
+    limitResetsAt: 'Next free analysis in',
+    orViewAnother: 'or view another match',
+    exactWinProb: 'Exact win probabilities',
+    marketEdgeMagnitude: 'Market edge magnitude',
+    oddsThresholds: 'Odds thresholds & execution',
+    noLimits: 'No daily limits',
+    proReassurance: 'Pro users use exact edges to avoid bad bets — not force action.',
+    proUnlocksShort: 'Pro unlocks unlimited precision & execution tools.',
     errorLoading: 'Unable to load match analysis',
     tryAgain: 'Try Again',
     goBack: 'Go Back',
@@ -323,9 +360,9 @@ const translations = {
     notAvailable: 'Standings not available for this league',
     leagueTable: 'League Table',
     whatYouGet: 'What you get:',
-    analysesPerDay: '30 analyses per day',
-    marketIntel: 'Market Intel & Value Detection',
-    earlyAccess: 'Early access to new features',
+    analysesPerDay: 'Unlimited analyses',
+    marketIntel: 'Exact probabilities & edge %',
+    earlyAccess: 'No daily limits',
     prioritySupport: 'Priority customer support',
     unlimitedAnalyses: 'Unlimited analyses',
     priorityAI: 'Priority AI processing',
@@ -388,10 +425,17 @@ const translations = {
     weNeed48h: 'Potrebno nam je najmanje 48 sati pre početka da prikupimo pouzdane podatke.',
     setReminder: 'Postavi Podsetnik',
     backToMatches: 'Nazad na Mečeve',
-    reachLimit: 'Dostigli ste dnevni limit analiza',
-    usedAllCredits: 'Iskoristili ste svih {used} od {limit} dnevnih kredita za analizu.',
-    upgradeToPro: 'Nadogradi na Pro',
-    limitResetsAt: 'Vaš limit se resetuje u ponoć.',
+    reachLimit: 'Tačna ivica zaključana',
+    usedAllCredits: 'Iskoristili ste današnju besplatnu analizu.',
+    upgradeToPro: 'Otključaj Pro preciznost — $0.66/dan',
+    limitResetsAt: 'Sledeća besplatna analiza za',
+    orViewAnother: 'ili pogledaj drugi meč',
+    exactWinProb: 'Tačne verovatnoće pobede',
+    marketEdgeMagnitude: 'Veličina tržišne ivice',
+    oddsThresholds: 'Pragovi kvota i izvršenje',
+    noLimits: 'Bez dnevnih limita',
+    proReassurance: 'Pro korisnici koriste tačne ivice da izbegnu loše opklade — ne da forsiraju akciju.',
+    proUnlocksShort: 'Pro otključava neograničenu preciznost i alate za izvršenje.',
     errorLoading: 'Nije moguće učitati analizu meča',
     tryAgain: 'Pokušaj Ponovo',
     goBack: 'Nazad',
@@ -765,82 +809,66 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
             />
           )}
 
-          {/* Upgrade Card - Pro uses violet, Premium uses violet gradient */}
+          {/* Upgrade Card - Conversion optimized */}
           <div className={`mt-8 card-glass ${usageLimit.plan === 'FREE' ? 'border-violet/30' : 'border-violet-light/30'} p-8 text-center`}>
-            <div className="text-6xl mb-6">🔒</div>
+            <div className="text-4xl mb-3 opacity-80">🔒</div>
             
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-              {usageLimit.plan === 'FREE' ? 'Upgrade to Pro' : 'Upgrade to Premium'}
+            {/* Headline - value-focused, larger */}
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              {t.reachLimit}
             </h1>
             
-            {/* Usage Counter */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-4">
-              <span className="text-zinc-400 text-sm">Daily Credits:</span>
-              <span className="text-white font-semibold">{usageLimit.usage.remaining}/{usageLimit.usage.limit}</span>
-              <span className="text-red-400 text-xs">(used)</span>
+            {/* What you're missing - locked value reminder */}
+            <div className="flex flex-col items-center gap-1.5 mb-4 text-sm">
+              <span className="text-zinc-500 flex items-center gap-2">
+                <span>🔒</span> {t.exactWinProb}
+              </span>
+              <span className="text-zinc-500 flex items-center gap-2">
+                <span>🔒</span> {t.marketEdgeMagnitude}
+              </span>
+              <span className="text-zinc-500 flex items-center gap-2">
+                <span>🔒</span> {t.oddsThresholds}
+              </span>
             </div>
             
-            <p className="text-zinc-400 text-lg mb-6">
-              {usageLimit.message}
+            {/* Status message */}
+            <p className="text-zinc-400 mb-2">
+              {t.usedAllCredits}
             </p>
-
-            {/* Plan Benefits */}
-            <div className="bg-[#0A0D10]/50 rounded-xl p-6 mb-8 text-left max-w-md mx-auto">
-              <h3 className="font-semibold text-white mb-4 text-center">{t.whatYouGet}</h3>
-              <ul className="space-y-3 text-zinc-300">
-                {usageLimit.plan === 'FREE' ? (
-                  <>
-                    <li className="flex items-center gap-3">
-                      <span className="text-violet-light">✓</span>
-                      {t.analysesPerDay}
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <span className="text-violet-light">✓</span>
-                      {t.marketIntel}
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <span className="text-violet-light">✓</span>
-                      {t.earlyAccess}
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <span className="text-violet-light">✓</span>
-                      {t.prioritySupport}
-                    </li>
-                  </>
-                ) : (
-                  <>
-                    <li className="flex items-center gap-3">
-                      <span className="text-zinc-300">✓</span>
-                      {t.unlimitedAnalyses}
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <span className="text-zinc-300">✓</span>
-                      {t.priorityAI}
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <span className="text-zinc-300">✓</span>
-                      {t.fullHistory}
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <span className="text-zinc-300">✓</span>
-                      {t.marketAlerts}
-                    </li>
-                  </>
-                )}
-              </ul>
+            
+            {/* Time until next free - urgency */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-4">
+              <span className="text-zinc-500">⏳</span>
+              <span className="text-zinc-400 text-sm">{t.limitResetsAt}</span>
+              <TimeUntilMidnight />
             </div>
 
-            {/* CTA Button - Uses violet theming */}
+            {/* Emotional reassurance - discipline positioning */}
+            <p className="text-zinc-500 text-sm mb-6 max-w-xs mx-auto">
+              {t.proReassurance}
+            </p>
+
+            {/* Pro Benefits - condensed, no duplication */}
+            <p className="text-zinc-400 text-sm mb-6">
+              {t.proUnlocksShort}
+            </p>
+
+            {/* CTA Button - premium feel */}
             <Link 
               href={`${localePath}/pricing`}
-              className="btn-secondary inline-block text-lg px-8 py-3"
+              className="btn-secondary inline-block text-lg px-8 py-3 font-medium"
             >
-              {usageLimit.plan === 'FREE' ? t.upgradeToPro : t.upgradeToPremium}
+              {t.upgradeToPro}
             </Link>
 
-            {/* Secondary info */}
-            <p className="mt-4 text-zinc-500 text-sm">
-              {t.creditsResetDaily}
+            {/* Secondary action - keep user in funnel */}
+            <p className="mt-4 text-zinc-600 text-sm">
+              <Link 
+                href={`${localePath}/matches`}
+                className="text-zinc-500 hover:text-zinc-400 transition-colors underline underline-offset-2"
+              >
+                {t.orViewAnother}
+              </Link>
             </p>
           </div>
         </div>
@@ -896,14 +924,26 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
     (data.requestedMatch.homeTeam !== data.matchInfo.homeTeam || 
      data.requestedMatch.awayTeam !== data.matchInfo.awayTeam);
 
-  // Determine if user has access to premium content
-  // Logic: If user got a 200 response with real data (not demo), they have access
-  // This includes: PRO/PREMIUM users, OR FREE users who used their 1 credit
-  const hasPremiumAccess = Boolean(
+  // 3-TIER ACCESS MODEL:
+  // Guest (not logged in): canSeeAnalysis = false, canSeeExactNumbers = false
+  // Registered FREE: canSeeAnalysis = true, canSeeExactNumbers = false  
+  // PRO/PREMIUM: canSeeAnalysis = true, canSeeExactNumbers = true
+
+  // canSeeAnalysis: Can see full explanations (logged in + used credit OR is PRO)
+  const canSeeAnalysis = Boolean(
     session?.user?.plan === 'PRO' || 
     session?.user?.plan === 'PREMIUM' ||
     (session && !isDemo) // FREE user with valid session who got real data = used their credit
   );
+
+  // canSeeExactNumbers: Can see exact Win Prob %, Edge %, etc (PRO/PREMIUM ONLY)
+  const canSeeExactNumbers = Boolean(
+    session?.user?.plan === 'PRO' || 
+    session?.user?.plan === 'PREMIUM'
+  );
+
+  // Legacy alias for backwards compatibility
+  const hasPremiumAccess = canSeeAnalysis;
 
   return (
     <div className="min-h-screen bg-bg relative overflow-hidden">
@@ -935,6 +975,20 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
           kickoff={data.matchInfo.kickoff}
           venue={data.matchInfo.venue}
         />
+
+        {/* AI vs MARKET HERO - THE HOOK - Always visible, above the fold */}
+        {/* This is the conversion driver: shows market mispricing immediately */}
+        {data.marketIntel && (
+          <AIvsMarketHero
+            marketIntel={data.marketIntel}
+            homeTeam={data.matchInfo.homeTeam}
+            awayTeam={data.matchInfo.awayTeam}
+            hasDraw={data.matchInfo.hasDraw}
+            isAuthenticated={!!session}
+            canSeeExactNumbers={canSeeExactNumbers}
+            locale={locale}
+          />
+        )}
 
         {/* Data Availability Notice - Show when limited data */}
         {data.dataAvailability && !data.dataAvailability.hasFormData && (
@@ -973,6 +1027,7 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
                 homeForm={data.viralStats?.form?.home || '-----'}
                 awayForm={data.viralStats?.form?.away || '-----'}
                 locale={locale}
+                canSeeExactNumbers={canSeeExactNumbers}
               />
             </div>
           )}
@@ -1013,12 +1068,17 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
         >
           {/* Match Snapshot - Premium */}
           {snapshot && snapshot.length > 0 && (
-            <div className="mt-3 sm:mt-4 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-4 sm:p-5">
-              <h3 className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <span className="text-violet-400">✦</span>
-                {t.matchSnapshot}
-                <span className="ml-auto text-[9px] px-2 py-0.5 bg-violet-500/10 text-violet-400 rounded-full border border-violet-500/20">PRO</span>
-              </h3>
+            <ProSection
+              isPro={canSeeExactNumbers}
+              title={t.matchSnapshot}
+              teaserBullets={
+                locale === 'sr' 
+                  ? ['Rezime AI modela', 'Obrazloženje ivice i analiza', 'Kalibracija rizika']
+                  : ['AI model summary', 'Edge reasoning & pattern analysis', 'Risk calibration']
+              }
+              locale={locale}
+              className="mt-3 sm:mt-4"
+            >
               <ul className="space-y-2.5">
                 {snapshot.slice(0, 4).map((insight, index) => (
                   <li key={index} className="flex items-start gap-3">
@@ -1027,21 +1087,22 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
                   </li>
                 ))}
               </ul>
-            </div>
+            </ProSection>
           )}
 
           {/* Game Flow - Premium */}
           {gameFlow && (
-            <div className="mt-3 sm:mt-4 rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-4 sm:p-5">
-              <h3 className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <span className="text-violet-400">✦</span>
-                {t.gameFlow}
-                <span className="ml-auto text-[9px] px-2 py-0.5 bg-violet-500/10 text-violet-400 rounded-full border border-violet-500/20">PRO</span>
-              </h3>
+            <ProSection
+              isPro={canSeeExactNumbers}
+              title={t.gameFlow}
+              teaserText={gameFlow.substring(0, 60) + '...'}
+              locale={locale}
+              className="mt-3 sm:mt-4"
+            >
               <p className="text-sm text-zinc-400 leading-relaxed">
                 {gameFlow}
               </p>
-            </div>
+            </ProSection>
           )}
 
           {/* Market Edge - Premium */}
@@ -1053,7 +1114,8 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
                 homeTeam={data.matchInfo.homeTeam}
                 awayTeam={data.matchInfo.awayTeam}
                 hasDraw={data.matchInfo.hasDraw}
-                isPro={true}
+                canSeeAnalysis={canSeeAnalysis}
+                canSeeExactNumbers={canSeeExactNumbers}
                 locale={locale}
               />
             </div>

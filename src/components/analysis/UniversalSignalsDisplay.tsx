@@ -72,6 +72,7 @@ interface UniversalSignalsDisplayProps {
   homeForm?: string;
   awayForm?: string;
   locale?: 'en' | 'sr';
+  canSeeExactNumbers?: boolean; // If false, hide percentages in VerdictBadge and EdgeBar
 }
 
 export default function UniversalSignalsDisplay({
@@ -81,6 +82,7 @@ export default function UniversalSignalsDisplay({
   homeForm = '-----',
   awayForm = '-----',
   locale = 'en',
+  canSeeExactNumbers = true, // Default to true for backwards compatibility
 }: UniversalSignalsDisplayProps) {
   const t = signalTranslations[locale];
   
@@ -123,7 +125,8 @@ export default function UniversalSignalsDisplay({
         favored={favoredSide || (locale === 'sr' ? 'Nema Jasne Prednosti' : 'No Clear Edge')}
         confidence={confidence}
         clarityScore={clarity_score}
-        edgePercentage={edgePercentage}
+        edgePercentage={canSeeExactNumbers ? edgePercentage : undefined}
+        canSeeExactNumbers={canSeeExactNumbers}
       />
 
       {/* Visual Signals Grid */}
@@ -157,6 +160,7 @@ export default function UniversalSignalsDisplay({
               percentage={display.edge?.percentage || 50}
               homeTeam={homeTeam}
               awayTeam={awayTeam}
+              canSeeExactNumbers={canSeeExactNumbers}
             />
           </div>
         </SignalCard>

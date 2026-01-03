@@ -62,6 +62,13 @@ self.addEventListener('fetch', (event) => {
   // Skip _next/static in development (causes caching issues)
   if (url.pathname.startsWith('/_next/')) return;
 
+  // Skip requests that don't support following redirects
+  // This fixes "redirect mode is not follow" errors
+  if (request.mode === 'navigate') {
+    // For navigation requests, just let the browser handle it
+    return;
+  }
+
   // API requests - network first, cache fallback for GET
   if (url.pathname.startsWith('/api/')) {
     // Don't cache most API routes - they need fresh data
@@ -79,6 +86,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Static assets and pages - stale while revalidate
+  // Skip if this could be a redirect
+  if (request.redirect !== 'follow') {
+    return;
+  }
   event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
 });
 

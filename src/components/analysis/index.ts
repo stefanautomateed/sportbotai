@@ -24,6 +24,10 @@ export * from './VisualSignals';
 
 // Premium Edge Features - Value Detection
 export * from './MarketEdge';
+export { AIvsMarketHero } from './AIvsMarketHero';
+
+// Pro Section Wrappers
+export { ProSection, ProSectionPlaceholder } from './ProSection';
 
 // Two-Layer Blur System
 export { RegistrationBlur } from './RegistrationBlur';
