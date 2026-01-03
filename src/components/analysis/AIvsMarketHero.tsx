@@ -20,7 +20,7 @@ type Locale = 'en' | 'sr';
 const translations = {
   en: {
     aiVsMarket: 'AI vs Market',
-    modelFavors: 'Model favors',
+    modelFavors: 'Edge detected on',
     overMarket: 'over market',
     modelAgrees: 'Model agrees with market',
     marketMispricing: 'Market Mispricing Detected',
@@ -47,7 +47,7 @@ const translations = {
   },
   sr: {
     aiVsMarket: 'AI vs Tržište',
-    modelFavors: 'Model favorizuje',
+    modelFavors: 'Prednost otkrivena na',
     overMarket: 'u odnosu na tržište',
     modelAgrees: 'Model se slaže sa tržištem',
     marketMispricing: 'Otkrivena Tržišna Greška',

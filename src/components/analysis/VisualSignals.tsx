@@ -309,12 +309,12 @@ export function VerdictBadge({ favored, confidence, edgePercentage, canSeeExactN
   };
 
   // For low confidence matches, show "Slight edge to X (52%)" instead of "No Clear Edge"
-  const isNoEdge = !favored || favored === 'No Clear Edge';
+  const isNoEdge = !favored || favored === 'No Clear Edge' || favored === 'Nema Jasne Prednosti';
   const displayText = isNoEdge && confidence === 'low' 
     ? 'Too Close to Call'
-    : confidence === 'low' && favored && edgePercentage
+    : confidence === 'low' && favored && !isNoEdge && edgePercentage
       ? `Slight edge to ${favored}`
-      : favored || 'No Clear Edge';
+      : isNoEdge ? (favored === 'Nema Jasne Prednosti' ? 'Preblizu da se Odredi' : 'No Clear Edge') : favored;
   
   // Show percentage ONLY for PRO users (canSeeExactNumbers)
   const showPercentage = canSeeExactNumbers && confidence === 'low' && favored && favored !== 'No Clear Edge' && edgePercentage;
