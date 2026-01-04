@@ -522,6 +522,163 @@ const TEAM_NAME_MAPPINGS: Record<string, { id?: number; leagueId?: number; searc
   'FC Metz': { id: 112, leagueId: 62 },
   'Clermont': { id: 99, leagueId: 62 },
   'Clermont Foot': { id: 99, leagueId: 62 },
+
+  // ============================================
+  // EREDIVISIE (league 88) - Netherlands
+  // ============================================
+  'Ajax': { id: 194, leagueId: 88 },
+  'AFC Ajax': { id: 194, leagueId: 88 },
+  'PSV': { id: 197, leagueId: 88 },
+  'PSV Eindhoven': { id: 197, leagueId: 88 },
+  'Feyenoord': { id: 215, leagueId: 88 },
+  'Feyenoord Rotterdam': { id: 215, leagueId: 88 },
+  'AZ': { id: 201, leagueId: 88 },
+  'AZ Alkmaar': { id: 201, leagueId: 88 },
+  'FC Twente': { id: 195, leagueId: 88 },
+  'Twente': { id: 195, leagueId: 88 },
+  'FC Utrecht': { id: 196, leagueId: 88 },
+  'Utrecht': { id: 196, leagueId: 88 },
+  'Vitesse': { id: 198, leagueId: 88 },
+  'Vitesse Arnhem': { id: 198, leagueId: 88 },
+  'Groningen': { id: 200, leagueId: 88 },
+  'FC Groningen': { id: 200, leagueId: 88 },
+  'SC Heerenveen': { id: 202, leagueId: 88 },
+  'Heerenveen': { id: 202, leagueId: 88 },
+  'Sparta Rotterdam': { id: 203, leagueId: 88 },
+  'Go Ahead Eagles': { id: 199, leagueId: 88 },
+  'NEC Nijmegen': { id: 204, leagueId: 88 },
+  'NEC': { id: 204, leagueId: 88 },
+  'RKC Waalwijk': { id: 207, leagueId: 88 },
+  'Fortuna Sittard': { id: 209, leagueId: 88 },
+  'Almere City FC': { id: 1909, leagueId: 88 },
+  'Almere City': { id: 1909, leagueId: 88 },
+  'Heracles Almelo': { id: 206, leagueId: 88 },
+  'Heracles': { id: 206, leagueId: 88 },
+  'NAC Breda': { id: 205, leagueId: 88 },
+  'PEC Zwolle': { id: 208, leagueId: 88 },
+  'Willem II': { id: 210, leagueId: 88 },
+
+  // ============================================
+  // PRIMEIRA LIGA (league 94) - Portugal
+  // ============================================
+  'Benfica': { id: 211, leagueId: 94 },
+  'SL Benfica': { id: 211, leagueId: 94 },
+  'Porto': { id: 212, leagueId: 94 },
+  'FC Porto': { id: 212, leagueId: 94 },
+  'Sporting CP': { id: 228, leagueId: 94 },
+  'Sporting Lisbon': { id: 228, leagueId: 94 },
+  'Sporting': { id: 228, leagueId: 94 },
+  'Braga': { id: 217, leagueId: 94 },
+  'SC Braga': { id: 217, leagueId: 94 },
+  'Vitoria Guimaraes': { id: 222, leagueId: 94 },
+  'Vitória SC': { id: 222, leagueId: 94 },
+  'Boavista': { id: 214, leagueId: 94 },
+  'Boavista FC': { id: 214, leagueId: 94 },
+  'Gil Vicente': { id: 224, leagueId: 94 },
+  'Rio Ave': { id: 226, leagueId: 94 },
+  'Rio Ave FC': { id: 226, leagueId: 94 },
+  'Famalicao': { id: 3893, leagueId: 94 },
+  'FC Famalicao': { id: 3893, leagueId: 94 },
+  'Casa Pia': { id: 4282, leagueId: 94 },
+  'Casa Pia AC': { id: 4282, leagueId: 94 },
+  'Arouca': { id: 247, leagueId: 94 },
+  'FC Arouca': { id: 247, leagueId: 94 },
+  'Estoril': { id: 234, leagueId: 94 },
+  'Estoril Praia': { id: 234, leagueId: 94 },
+  'Santa Clara': { id: 225, leagueId: 94 },
+  'CD Santa Clara': { id: 225, leagueId: 94 },
+  'Moreirense': { id: 231, leagueId: 94 },
+  'Moreirense FC': { id: 231, leagueId: 94 },
+  'Nacional': { id: 235, leagueId: 94 },
+  'CD Nacional': { id: 235, leagueId: 94 },
+  'Farense': { id: 242, leagueId: 94 },
+  'SC Farense': { id: 242, leagueId: 94 },
+  'Estrela Amadora': { id: 4281, leagueId: 94 },
+  'AVS Futebol SAD': { id: 15629, leagueId: 94 },
+
+  // ============================================
+  // SUPER LIG (league 203) - Turkey
+  // ============================================
+  'Galatasaray': { id: 645, leagueId: 203 },
+  'Fenerbahce': { id: 611, leagueId: 203 },
+  'Fenerbahçe': { id: 611, leagueId: 203 },
+  'Besiktas': { id: 549, leagueId: 203 },
+  'Beşiktaş': { id: 549, leagueId: 203 },
+  'Trabzonspor': { id: 607, leagueId: 203 },
+  'Basaksehir': { id: 549, leagueId: 203 },
+  'Istanbul Basaksehir': { id: 549, leagueId: 203 },
+  'Alanyaspor': { id: 3574, leagueId: 203 },
+  'Antalyaspor': { id: 606, leagueId: 203 },
+  'Kayserispor': { id: 605, leagueId: 203 },
+  'Konyaspor': { id: 604, leagueId: 203 },
+  'Sivasspor': { id: 610, leagueId: 203 },
+  'Kasimpasa': { id: 3564, leagueId: 203 },
+  'Kasımpaşa': { id: 3564, leagueId: 203 },
+  'Hatayspor': { id: 3568, leagueId: 203 },
+  'Rizespor': { id: 3575, leagueId: 203 },
+  'Caykur Rizespor': { id: 3575, leagueId: 203 },
+  'Gaziantep FK': { id: 3563, leagueId: 203 },
+  'Adana Demirspor': { id: 3578, leagueId: 203 },
+  'Samsunspor': { id: 3565, leagueId: 203 },
+  'Eyupspor': { id: 3571, leagueId: 203 },
+  'Bodrumspor': { id: 18892, leagueId: 203 },
+  'Goztepe': { id: 3569, leagueId: 203 },
+  'Pendikspor': { id: 18893, leagueId: 203 },
+
+  // ============================================
+  // BELGIAN PRO LEAGUE (league 144)
+  // ============================================
+  'Club Brugge': { id: 569, leagueId: 144 },
+  'Club Bruges': { id: 569, leagueId: 144 },
+  'Anderlecht': { id: 554, leagueId: 144 },
+  'RSC Anderlecht': { id: 554, leagueId: 144 },
+  'KAA Gent': { id: 559, leagueId: 144 },
+  'Gent': { id: 559, leagueId: 144 },
+  'Union Saint-Gilloise': { id: 571, leagueId: 144 },
+  'Union SG': { id: 571, leagueId: 144 },
+  'Antwerp': { id: 556, leagueId: 144 },
+  'Royal Antwerp': { id: 556, leagueId: 144 },
+  'Standard Liege': { id: 560, leagueId: 144 },
+  'Standard': { id: 560, leagueId: 144 },
+  'Genk': { id: 564, leagueId: 144 },
+  'KRC Genk': { id: 564, leagueId: 144 },
+  'Cercle Brugge': { id: 569, leagueId: 144 },
+  'KV Mechelen': { id: 558, leagueId: 144 },
+  'Mechelen': { id: 558, leagueId: 144 },
+  'OH Leuven': { id: 570, leagueId: 144 },
+  'Oud-Heverlee Leuven': { id: 570, leagueId: 144 },
+  'Sint-Truiden': { id: 573, leagueId: 144 },
+  'STVV': { id: 573, leagueId: 144 },
+  'Charleroi': { id: 566, leagueId: 144 },
+  'Sporting Charleroi': { id: 566, leagueId: 144 },
+  'Westerlo': { id: 575, leagueId: 144 },
+  'KV Kortrijk': { id: 567, leagueId: 144 },
+  'Kortrijk': { id: 567, leagueId: 144 },
+  'FCV Dender EH': { id: 18840, leagueId: 144 },
+  'KV Oostende': { id: 562, leagueId: 144 },
+  'Oostende': { id: 562, leagueId: 144 },
+  'Beerschot': { id: 16198, leagueId: 144 },
+
+  // ============================================
+  // SCOTTISH PREMIERSHIP (league 179)
+  // ============================================
+  'Celtic': { id: 247, leagueId: 179 },
+  'Celtic FC': { id: 247, leagueId: 179 },
+  'Rangers': { id: 257, leagueId: 179 },
+  'Rangers FC': { id: 257, leagueId: 179 },
+  'Aberdeen': { id: 248, leagueId: 179 },
+  'Aberdeen FC': { id: 248, leagueId: 179 },
+  'Hearts': { id: 250, leagueId: 179 },
+  'Heart of Midlothian': { id: 250, leagueId: 179 },
+  'Hibernian': { id: 251, leagueId: 179 },
+  'Dundee United': { id: 253, leagueId: 179 },
+  'Motherwell': { id: 254, leagueId: 179 },
+  'Dundee': { id: 255, leagueId: 179 },
+  'Dundee FC': { id: 255, leagueId: 179 },
+  'St Mirren': { id: 256, leagueId: 179 },
+  'Kilmarnock': { id: 258, leagueId: 179 },
+  'Ross County': { id: 252, leagueId: 179 },
+  'St Johnstone': { id: 259, leagueId: 179 },
 };
 
 /**
@@ -579,9 +736,32 @@ async function findTeam(teamName: string, league?: string): Promise<number | nul
     }
   }
 
-  // Fallback to API search
+  // Fallback to API search with multiple variations
   const searchName = mapping?.searchName || teamName;
-  const response = await apiRequest<any>(`/teams?search=${encodeURIComponent(searchName)}`);
+  console.log(`[Football-API] findTeam API searching for: "${searchName}"`);
+  
+  let response = await apiRequest<any>(`/teams?search=${encodeURIComponent(searchName)}`);
+  
+  // If no results, try removing common suffixes/prefixes
+  if (!response?.response?.length) {
+    const simplifiedName = searchName
+      .replace(/\s*(FC|CF|SC|AC|AS|CD|UD|SD|SV|VfL|VfB|1\.|SK|KV|KRC|KAA|RSC|RCD|RC)\s*/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (simplifiedName !== searchName && simplifiedName.length >= 3) {
+      console.log(`[Football-API] Retrying with simplified name: "${simplifiedName}"`);
+      response = await apiRequest<any>(`/teams?search=${encodeURIComponent(simplifiedName)}`);
+    }
+  }
+  
+  // If still no results, try first word only (for long names)
+  if (!response?.response?.length && searchName.includes(' ')) {
+    const firstWord = searchName.split(' ')[0];
+    if (firstWord.length >= 4) {
+      console.log(`[Football-API] Retrying with first word: "${firstWord}"`);
+      response = await apiRequest<any>(`/teams?search=${encodeURIComponent(firstWord)}`);
+    }
+  }
   
   if (response?.response?.length > 0) {
     // Try to find exact match first
