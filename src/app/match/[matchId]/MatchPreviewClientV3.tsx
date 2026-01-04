@@ -701,6 +701,18 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
           throw new Error(result.error || 'Failed to load match preview');
         }
         
+        // DEBUG: Log what we got from API
+        console.log('[MatchPreview] API Response:', {
+          hasInjuries: !!result.injuries,
+          homeInjuries: result.injuries?.home?.length || 0,
+          awayInjuries: result.injuries?.away?.length || 0,
+          hasUniversalSignals: !!result.universalSignals,
+          signalsHasDisplay: !!result.universalSignals?.display,
+          signalsHasAvailability: !!result.universalSignals?.display?.availability,
+          signalsHomeInjuries: result.universalSignals?.display?.availability?.homeInjuries?.length || 0,
+          signalsAwayInjuries: result.universalSignals?.display?.availability?.awayInjuries?.length || 0,
+        });
+        
         // Successful analysis - show toast for FREE users
         if (result.creditUsed) {
           showToast(t.creditUsed, 'info');
