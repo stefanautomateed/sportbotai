@@ -110,20 +110,40 @@ function normalizeSignalsWithInjuries(
   signals: any,
   injuries?: { home: any[]; away: any[] }
 ): any {
+  // Debug log - what are we receiving?
+  console.log('[normalizeSignalsWithInjuries] Input:', {
+    hasSignals: !!signals,
+    hasDisplay: !!signals?.display,
+    hasAvailability: !!signals?.display?.availability,
+    signalsHomeInjuries: signals?.display?.availability?.homeInjuries?.length || 0,
+    signalsAwayInjuries: signals?.display?.availability?.awayInjuries?.length || 0,
+    topLevelHomeInjuries: injuries?.home?.length || 0,
+    topLevelAwayInjuries: injuries?.away?.length || 0,
+  });
+
   // If signals already has display property with proper structure, just merge injuries
   if (signals?.display?.availability) {
+    // ALWAYS prefer top-level injuries if they have data (they're fresher)
+    const finalHomeInjuries = (injuries?.home?.length || 0) > 0 
+      ? injuries.home 
+      : signals.display.availability.homeInjuries || [];
+    const finalAwayInjuries = (injuries?.away?.length || 0) > 0 
+      ? injuries.away 
+      : signals.display.availability.awayInjuries || [];
+    
+    console.log('[normalizeSignalsWithInjuries] Using injuries:', {
+      finalHome: finalHomeInjuries.length,
+      finalAway: finalAwayInjuries.length,
+    });
+    
     return {
       ...signals,
       display: {
         ...signals.display,
         availability: {
           ...signals.display.availability,
-          homeInjuries: signals.display.availability.homeInjuries?.length 
-            ? signals.display.availability.homeInjuries 
-            : injuries?.home || [],
-          awayInjuries: signals.display.availability.awayInjuries?.length 
-            ? signals.display.availability.awayInjuries 
-            : injuries?.away || [],
+          homeInjuries: finalHomeInjuries,
+          awayInjuries: finalAwayInjuries,
         },
       },
     };
