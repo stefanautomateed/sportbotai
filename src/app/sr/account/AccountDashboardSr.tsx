@@ -129,8 +129,10 @@ export default function AccountDashboardSr({ user }: Props) {
                   className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-divider flex-shrink-0"
                 />
               ) : (
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg sm:text-xl font-bold text-bg">{userInitials}</span>
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center flex-shrink-0 border-2 border-violet-500/30">
+                  <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                  </svg>
                 </div>
               )}
               <div className="min-w-0 flex-1">
