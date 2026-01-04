@@ -384,7 +384,7 @@ function HeroContent({
 
       {/* Probability Comparison Grid */}
       {canSeeExactNumbers && modelProbability && impliedProbability && (
-        <div className="grid grid-cols-2 gap-3 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
           {/* Home */}
           <ProbabilityCard
             label={homeTeam || 'Home'}
@@ -403,7 +403,7 @@ function HeroContent({
           
           {/* Draw (if applicable) */}
           {hasDraw && modelProbability.draw !== undefined && impliedProbability.draw !== undefined && (
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <ProbabilityCard
                 label="Draw"
                 modelProb={modelProbability.draw}
