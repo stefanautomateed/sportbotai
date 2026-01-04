@@ -541,6 +541,11 @@ async function runQuickAnalysis(
   universalSignals: any;
   headlines: Array<{ icon: string; text: string; favors: string; viral: boolean }>;
   marketIntel: MarketIntel | null;
+  // Include structured injuries for UI availability section
+  injuries: {
+    home: Array<{ player: string; type: string; reason: string; photo?: string }>;
+    away: Array<{ player: string; type: string; reason: string; photo?: string }>;
+  };
   // NEW: Include enriched data for building rich UI components
   enrichedData: {
     homeFormStr: string;
