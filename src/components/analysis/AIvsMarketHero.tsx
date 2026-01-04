@@ -360,7 +360,7 @@ function HeroContent({
             </span>
           </p>
           {/* Primary verdict text - the ONE thing that stands out */}
-          <p className="text-3xl font-bold text-white mb-4">{favoredTeam}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-white mb-4">{favoredTeam}</p>
           
           {/* Edge Badge - colored only when meaningful */}
           <div className={`inline-flex items-center gap-3 px-5 py-2.5 rounded-full border ${edgeBgColor}`}>
@@ -377,7 +377,7 @@ function HeroContent({
             <span className="text-indigo-400 text-base">⚖️</span>
             <span className="text-indigo-300 font-semibold text-base">DISCIPLINE SIGNAL</span>
           </div>
-          <p className="text-2xl font-bold text-white mb-2">No Exploitable Edge</p>
+          <p className="text-xl sm:text-2xl font-bold text-white mb-2">No Exploitable Edge</p>
           <p className="text-base text-zinc-400">{t.fairlyPriced}</p>
         </div>
       )}
@@ -443,26 +443,26 @@ function ProbabilityCard({ label, modelProb, marketProb, t, isFullWidth }: Proba
   const modelProbColor = isValue ? 'text-green-400' : isOverpriced ? 'text-red-400' : 'text-stone-200';
   
   return (
-    <div className={`p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/50 ${isFullWidth ? 'text-center' : ''}`}>
+    <div className={`p-3 sm:p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/50 ${isFullWidth ? 'text-center' : ''}`}>
       {/* Label - muted meta text */}
-      <p className="text-xs text-zinc-400 uppercase tracking-wider mb-3 font-semibold">{label}</p>
+      <p className="text-[10px] sm:text-xs text-zinc-400 uppercase tracking-wider mb-2 sm:mb-3 font-semibold truncate">{label}</p>
       
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-2 sm:gap-3">
         {/* Model Probability */}
         <div>
-          <p className="text-xs text-zinc-500 mb-1">{t.winProb}</p>
-          <p className={`text-xl font-bold ${modelProbColor}`}>
+          <p className="text-[10px] sm:text-xs text-zinc-500 mb-1">{t.winProb}</p>
+          <p className={`text-lg sm:text-xl font-bold ${modelProbColor}`}>
             {modelProb.toFixed(1)}%
           </p>
         </div>
         
         {/* vs - structural text */}
-        <span className="text-zinc-600 text-sm">vs</span>
+        <span className="text-zinc-600 text-xs sm:text-sm">vs</span>
         
         {/* Market Implied - always neutral */}
         <div className="text-right">
-          <p className="text-xs text-zinc-500 mb-1">{t.marketImplied}</p>
-          <p className="text-xl font-semibold text-zinc-500">
+          <p className="text-[10px] sm:text-xs text-zinc-500 mb-1">{t.marketImplied}</p>
+          <p className="text-lg sm:text-xl font-semibold text-zinc-500">
             {marketProb.toFixed(1)}%
           </p>
         </div>
