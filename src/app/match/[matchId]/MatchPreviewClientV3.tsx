@@ -125,10 +125,10 @@ function normalizeSignalsWithInjuries(
   if (signals?.display?.availability) {
     // ALWAYS prefer top-level injuries if they have data (they're fresher)
     const finalHomeInjuries = (injuries?.home?.length || 0) > 0 
-      ? injuries.home 
+      ? injuries!.home 
       : signals.display.availability.homeInjuries || [];
     const finalAwayInjuries = (injuries?.away?.length || 0) > 0 
-      ? injuries.away 
+      ? injuries!.away 
       : signals.display.availability.awayInjuries || [];
     
     console.log('[normalizeSignalsWithInjuries] Using injuries:', {
