@@ -1,6 +1,7 @@
 /**
- * Serbian Account Dashboard Client Component
- * Interaktivna kontrolna tabla sa upravljanjem pretplatom
+ * Serbian Account Dashboard - Premium Redesign
+ * 
+ * Clean, modern account page with mobile-first design
  */
 
 'use client';
@@ -9,7 +10,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { signOut } from 'next-auth/react';
-import ProBadge from '@/components/ProBadge';
 import FeedbackModal from '@/components/FeedbackModal';
 
 interface UserData {
@@ -38,12 +38,6 @@ const PLAN_LIMITS: Record<string, number> = {
   PREMIUM: -1,
 };
 
-const PLAN_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  FREE: { bg: 'bg-gray-500/20', text: 'text-gray-400', border: 'border-gray-500/30' },
-  PRO: { bg: 'bg-primary/20', text: 'text-primary', border: 'border-primary/30' },
-  PREMIUM: { bg: 'bg-slate-400/20', text: 'text-slate-300', border: 'border-slate-400/30' },
-};
-
 export default function AccountDashboardSr({ user }: Props) {
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [usageData, setUsageData] = useState<{ used: number; limit: number; remaining: number } | null>(null);
@@ -52,7 +46,6 @@ export default function AccountDashboardSr({ user }: Props) {
     type: 'feature',
   });
 
-  // Fetch real-time usage on mount
   useEffect(() => {
     const fetchUsage = async () => {
       try {
@@ -72,15 +65,13 @@ export default function AccountDashboardSr({ user }: Props) {
     fetchUsage();
   }, [user.analysisCount, user.plan]);
 
-  const planColors = PLAN_COLORS[user.plan] || PLAN_COLORS.FREE;
   const limit = usageData?.limit ?? PLAN_LIMITS[user.plan] ?? 1;
   const used = usageData?.used ?? user.analysisCount;
   const remaining = usageData?.remaining ?? (limit === -1 ? Infinity : Math.max(0, limit - used));
-  const usagePercent = limit === -1 ? 0 : (used / limit) * 100;
+  const usagePercent = limit === -1 ? 0 : Math.min((used / limit) * 100, 100);
 
   const handleManageSubscription = async () => {
     if (!user.stripeCustomerId) {
-      // No subscription - redirect to pricing
       window.location.href = '/sr/pricing';
       return;
     }
@@ -91,337 +82,305 @@ export default function AccountDashboardSr({ user }: Props) {
         method: 'POST',
       });
       const data = await response.json();
-      
       if (data.url) {
         window.location.href = data.url;
-      } else {
-        throw new Error(data.error || 'Failed to create portal session');
       }
     } catch (error) {
       console.error('Error opening customer portal:', error);
-      alert('Failed to open billing portal. Please try again.');
+      alert('Nije moguće otvoriti portal za plaćanje. Pokušajte ponovo.');
     } finally {
       setIsLoadingPortal(false);
     }
   };
 
-  const userInitials = user.name
-    ?.split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2) || user.email?.[0].toUpperCase() || 'U';
+  const planConfig = {
+    FREE: { color: 'zinc', label: 'Besplatno', icon: '🌱' },
+    PRO: { color: 'violet', label: 'Pro', icon: '⚡' },
+    PREMIUM: { color: 'amber', label: 'Premium', icon: '👑' },
+  }[user.plan] || { color: 'zinc', label: 'Besplatno', icon: '🌱' };
+
+  const memberSince = new Date(user.createdAt).toLocaleDateString('sr-RS', { 
+    month: 'short', 
+    year: 'numeric' 
+  });
 
   return (
-    <div className="min-h-screen bg-bg">
-      {/* Header */}
-      <section className="bg-bg-card border-b border-divider">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          {/* Mobile: Stack vertically, Desktop: Horizontal */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center gap-4 flex-1 min-w-0">
+    <div className="min-h-screen bg-[#0a0a0b]">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden">
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-violet-600/10 via-transparent to-transparent" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-violet-600/5 rounded-full blur-[100px]" />
+        
+        <div className="relative max-w-2xl mx-auto px-4 pt-8 pb-6">
+          {/* Language Toggle */}
+          <div className="flex justify-end mb-4">
+            <Link href="/account" className="text-xs text-zinc-500 hover:text-violet-400 transition-colors">
+              🌐 English
+            </Link>
+          </div>
+          
+          {/* Profile Section */}
+          <div className="flex flex-col items-center text-center">
+            {/* Avatar */}
+            <div className="relative mb-4">
               {user.image ? (
                 <Image
                   src={user.image}
                   alt={user.name || 'Korisnik'}
-                  width={64}
-                  height={64}
-                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-divider flex-shrink-0"
+                  width={88}
+                  height={88}
+                  className="w-20 h-20 sm:w-22 sm:h-22 rounded-full border-3 border-violet-500/30 shadow-xl shadow-violet-500/10"
                 />
               ) : (
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center flex-shrink-0 border-2 border-violet-500/30">
-                  <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center border-3 border-violet-500/30 shadow-xl shadow-violet-500/10">
+                  <svg className="w-9 h-9 sm:w-10 sm:h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                   </svg>
                 </div>
               )}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{user.name || 'Korisnik'}</h1>
-                  <Link href="/account" className="text-xs text-slate-500 hover:text-primary transition-colors">
-                    🌐 English
-                  </Link>
-                </div>
-                <p className="text-text-secondary text-sm sm:text-base truncate">{user.email}</p>
+              {/* Plan Badge */}
+              <div className={`absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-sm ${
+                user.plan === 'PRO' ? 'bg-violet-600' : 
+                user.plan === 'PREMIUM' ? 'bg-amber-500' : 
+                'bg-zinc-700'
+              } border-2 border-[#0a0a0b]`}>
+                {planConfig.icon}
               </div>
             </div>
-            <div className="sm:ml-auto sm:flex-shrink-0">
-              <ProBadge variant="default" showUpgrade={user.plan === 'FREE'} />
+
+            {/* Name & Email */}
+            <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">
+              {user.name || 'Dobrodošli'}
+            </h1>
+            <p className="text-zinc-500 text-sm mb-3">{user.email}</p>
+            
+            {/* Plan & Member Since */}
+            <div className="flex items-center gap-3 text-xs">
+              <span className={`px-2.5 py-1 rounded-full font-semibold ${
+                user.plan === 'PRO' ? 'bg-violet-500/20 text-violet-400' : 
+                user.plan === 'PREMIUM' ? 'bg-amber-500/20 text-amber-400' : 
+                'bg-zinc-800 text-zinc-400'
+              }`}>
+                {planConfig.label}
+              </span>
+              <span className="text-zinc-600">•</span>
+              <span className="text-zinc-500">Član od {memberSince}</span>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Main Content */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          
-          {/* Usage Card */}
-          <div className="bg-bg-card rounded-xl border border-divider p-6">
-            <h3 className="text-sm font-medium text-text-muted mb-4 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              Today&apos;s Usage
-            </h3>
-            
-            <div className="mb-4">
-              <div className="flex items-end justify-between mb-2">
-                <span className="text-3xl font-bold text-white">
-                  {limit === -1 ? '∞' : `${used} / ${limit}`}
-                </span>
-                <span className="text-text-muted text-sm">
-                  {limit === -1 ? 'neograničeno' : `iskorišćeno danas`}
-                </span>
-              </div>
-              
-              {limit !== -1 && (
-                <>
-                  <div className="h-2 bg-bg rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all ${usagePercent > 80 ? 'bg-danger' : usagePercent > 50 ? 'bg-warning' : 'bg-accent'}`}
-                      style={{ width: `${Math.min(usagePercent, 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-text-muted mt-2">
-                    {remaining > 0 ? `${remaining} ${remaining === 1 ? 'analysis' : 'analyses'} remaining` : 'Limit dostignut – resetuje se u ponoć'}
-                  </p>
-                </>
-              )}
-            </div>
-            
-            <Link 
-              href="/sr/matches"
-              className="btn-primary w-full text-center text-sm py-2"
-            >
-              Pregledaj Mečeve
-            </Link>
-          </div>
-
-          {/* Ukupno Analiza Card */}
-          <div className="bg-bg-card rounded-xl border border-divider p-6">
-            <h3 className="text-sm font-medium text-text-muted mb-4 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              Ukupno Analiza
-            </h3>
-            
-            <div className="mb-4">
-              <span className="text-3xl font-bold text-white">{user._count.analyses}</span>
-              <span className="text-text-muted text-sm ml-2">svih vremena</span>
-            </div>
-            
-            <Link 
-              href="/sr/history"
-              className="btn-secondary w-full text-center text-sm py-2"
-            >
-              Pogledaj Istoriju
-            </Link>
-          </div>
-
-          {/* Pretplata Card */}
-          <div className={`bg-bg-card rounded-xl border ${planColors.border} p-6`}>
-            <h3 className="text-sm font-medium text-text-muted mb-4 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-              Pretplata
-            </h3>
-            
-            <div className="mb-4">
-              <span className={`text-2xl font-bold ${planColors.text}`}>{user.plan}</span>
-              {user.plan === 'FREE' && (
-                <p className="text-text-muted text-sm mt-1">Nadogradite za više analiza</p>
-              )}
-              {user.plan !== 'FREE' && (
-                <p className="text-text-muted text-sm mt-1">Aktivna pretplata</p>
-              )}
-            </div>
-            
-            <button
-              onClick={handleManageSubscription}
-              disabled={isLoadingPortal}
-              className={`w-full text-center text-sm py-2 rounded-lg font-medium transition-colors ${
-                user.plan === 'FREE' 
-                  ? 'bg-accent text-bg hover:bg-accent-green' 
-                  : 'bg-bg border border-divider text-text-secondary hover:bg-bg-hover'
-              }`}
-            >
-              {isLoadingPortal ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Učitavanje...
-                </span>
-              ) : user.plan === 'FREE' ? (
-                'Nadogradi Plan'
-              ) : (
-                'Upravljaj Naplatom'
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Links */}
-        <div className="mt-6 sm:mt-8 space-y-3">
-          <Link 
-            href="/sr/history"
-            className="flex items-center justify-between p-4 bg-bg-card rounded-xl border border-divider hover:border-primary/30 transition-colors group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <div className="max-w-2xl mx-auto px-4 pb-8 space-y-4">
+        
+        {/* Usage Card - Prominent */}
+        <div className="bg-zinc-900/80 rounded-2xl border border-zinc-800/80 p-5 backdrop-blur-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <div>
-                <p className="text-white font-medium">Istorija Analiza</p>
-                <p className="text-text-muted text-sm">Pogledajte sve vaše prethodne analize</p>
-              </div>
+              <span className="text-sm font-medium text-zinc-400">Današnje Analize</span>
             </div>
-            <svg className="w-5 h-5 text-text-muted group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <span className="text-xs text-zinc-600">Resetuje se u ponoć</span>
+          </div>
+          
+          {/* Usage Display */}
+          <div className="flex items-baseline gap-2 mb-3">
+            <span className="text-4xl font-bold text-white">
+              {limit === -1 ? '∞' : used}
+            </span>
+            {limit !== -1 && (
+              <span className="text-zinc-500 text-lg">/ {limit}</span>
+            )}
+          </div>
+          
+          {/* Progress Bar */}
+          {limit !== -1 && (
+            <div className="mb-4">
+              <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    usagePercent >= 100 ? 'bg-red-500' : 
+                    usagePercent >= 80 ? 'bg-amber-500' : 
+                    'bg-emerald-500'
+                  }`}
+                  style={{ width: `${usagePercent}%` }}
+                />
+              </div>
+              <p className="text-xs text-zinc-600 mt-2">
+                {remaining > 0 
+                  ? `Preostalo ${remaining} ${remaining === 1 ? 'analiza' : 'analiza'}`
+                  : 'Dnevni limit je dostignut'
+                }
+              </p>
+            </div>
+          )}
+          
+          {/* CTA */}
+          <Link 
+            href="/sr/matches"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Pregledaj Utakmice
+          </Link>
+        </div>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Total Analyses */}
+          <div className="bg-zinc-900/60 rounded-xl border border-zinc-800/60 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span className="text-xs text-zinc-500">Ukupno</span>
+            </div>
+            <p className="text-2xl font-bold text-white">{user._count.analyses}</p>
+            <p className="text-xs text-zinc-600 mt-1">analiza</p>
+          </div>
+          
+          {/* Subscription */}
+          <button
+            onClick={handleManageSubscription}
+            disabled={isLoadingPortal}
+            className="bg-zinc-900/60 rounded-xl border border-zinc-800/60 p-4 text-left hover:border-violet-500/30 transition-colors group"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <span className="text-xs text-zinc-500">Plan</span>
+            </div>
+            <p className={`text-2xl font-bold ${
+              user.plan === 'PRO' ? 'text-violet-400' : 
+              user.plan === 'PREMIUM' ? 'text-amber-400' : 
+              'text-white'
+            }`}>
+              {isLoadingPortal ? '...' : planConfig.label}
+            </p>
+            <p className="text-xs text-zinc-600 mt-1 group-hover:text-violet-400 transition-colors">
+              {user.plan === 'FREE' ? 'Nadogradi →' : 'Upravljaj →'}
+            </p>
+          </button>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-zinc-600 uppercase tracking-wider px-1">Brze Akcije</p>
+          
+          <Link 
+            href="/sr/history"
+            className="flex items-center gap-4 p-4 bg-zinc-900/60 rounded-xl border border-zinc-800/60 hover:border-zinc-700 transition-colors group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-medium text-sm">Istorija Analiza</p>
+              <p className="text-zinc-600 text-xs">Pregledaj prethodne analize</p>
+            </div>
+            <svg className="w-4 h-4 text-zinc-700 group-hover:text-zinc-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </Link>
 
           <Link 
             href="/sr/my-teams"
-            className="flex items-center justify-between p-4 bg-bg-card rounded-xl border border-divider hover:border-accent/30 transition-colors group"
+            className="flex items-center gap-4 p-4 bg-zinc-900/60 rounded-xl border border-zinc-800/60 hover:border-zinc-700 transition-colors group"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-medium">Moji Timovi</p>
-                <p className="text-text-muted text-sm">Pratite vaše omiljene timove</p>
-              </div>
+            <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
             </div>
-            <svg className="w-5 h-5 text-text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-medium text-sm">Moji Timovi</p>
+              <p className="text-zinc-600 text-xs">Prati omiljene timove</p>
+            </div>
+            <svg className="w-4 h-4 text-zinc-700 group-hover:text-zinc-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </Link>
         </div>
 
         {/* Feedback Section */}
-        <div className="mt-6 sm:mt-8">
-          <h2 className="text-lg font-semibold text-white mb-3 sm:mb-4">Pomozite Nam da Poboljšamo</h2>
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-zinc-600 uppercase tracking-wider px-1">Povratne Informacije</p>
           
-          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-            {/* Predloži Funkciju */}
+          <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setFeedbackModal({ isOpen: true, type: 'feature' })}
-              className="flex items-center gap-4 p-4 bg-bg-card rounded-xl border border-divider hover:border-primary/30 transition-colors group text-left"
+              className="flex flex-col items-center gap-2 p-4 bg-zinc-900/60 rounded-xl border border-zinc-800/60 hover:border-emerald-500/30 transition-colors group"
             >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-medium group-hover:text-primary transition-colors">Predloži Funkciju</p>
-                <p className="text-text-muted text-sm">Podelite vaše ideje za poboljšanje SportBot-a</p>
-              </div>
-              <svg className="w-5 h-5 text-text-muted group-hover:text-primary transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
+              <span className="text-xs text-zinc-400 group-hover:text-emerald-400 transition-colors">Predloži Funkciju</span>
             </button>
 
-            {/* Prijavi Problem */}
             <button
               onClick={() => setFeedbackModal({ isOpen: true, type: 'problem' })}
-              className="flex items-center gap-4 p-4 bg-bg-card rounded-xl border border-divider hover:border-danger/30 transition-colors group text-left"
+              className="flex flex-col items-center gap-2 p-4 bg-zinc-900/60 rounded-xl border border-zinc-800/60 hover:border-amber-500/30 transition-colors group"
             >
-              <div className="w-10 h-10 rounded-lg bg-danger/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-medium group-hover:text-danger transition-colors">Prijavi Problem</p>
-                <p className="text-text-muted text-sm">Let us know if something isn&apos;t working</p>
-              </div>
-              <svg className="w-5 h-5 text-text-muted group-hover:text-danger transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
+              <span className="text-xs text-zinc-400 group-hover:text-amber-400 transition-colors">Prijavi Problem</span>
             </button>
           </div>
         </div>
 
-        {/* Podešavanja Naloga */}
-        <div className="mt-6 sm:mt-8">
-          <h2 className="text-lg font-semibold text-white mb-3 sm:mb-4">Podešavanja Naloga</h2>
+        {/* Account Settings */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-zinc-600 uppercase tracking-wider px-1">Nalog</p>
           
-          <div className="bg-bg-card rounded-xl border border-divider divide-y divide-divider">
-            {/* Member Since */}
+          <div className="bg-zinc-900/60 rounded-xl border border-zinc-800/60 divide-y divide-zinc-800/60">
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span className="text-text-secondary">Član od</span>
-              </div>
-              <span className="text-white">
-                {new Date(user.createdAt).toLocaleDateString('sr-RS', { 
-                  month: 'long', 
-                  year: 'numeric' 
-                })}
-              </span>
-            </div>
-
-            {/* Email */}
-            <div className="flex items-center justify-between gap-4 p-4">
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <svg className="w-5 h-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4 h-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span className="text-text-secondary">Email</span>
+                <span className="text-sm text-zinc-500">Email</span>
               </div>
-              <span className="text-white text-sm sm:text-base truncate">{user.email}</span>
+              <span className="text-sm text-zinc-400 truncate max-w-[180px]">{user.email}</span>
             </div>
 
-            {/* Odjavi se */}
-            <div className="p-4">
-              <button
-                onClick={() => signOut({ callbackUrl: '/sr' })}
-                className="flex items-center gap-3 text-danger hover:text-danger/80 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Odjavi se
-              </button>
-            </div>
+            <button
+              onClick={() => signOut({ callbackUrl: '/sr' })}
+              className="flex items-center gap-3 p-4 w-full text-left hover:bg-zinc-800/30 transition-colors"
+            >
+              <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span className="text-sm text-red-500">Odjavi se</span>
+            </button>
           </div>
         </div>
 
-        {/* Opasna Zona */}
-        <div className="mt-6 sm:mt-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Opasna Zona</h2>
-          
-          <div className="bg-bg-card rounded-xl border border-danger/30 p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div>
-                <h3 className="text-white font-medium">Obriši Nalog</h3>
-                <p className="text-text-muted text-sm mt-1">
-                  Trajno obrišite vaš nalog i sve podatke. Ova akcija se ne može poništiti.
-                </p>
-              </div>
-              <Link
-                href="/sr/account/delete"
-                className="px-4 py-2 text-sm font-medium text-danger border border-danger/30 rounded-lg hover:bg-danger/10 transition-colors text-center sm:text-left flex-shrink-0"
-              >
-                Obriši Nalog
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Danger Zone - Minimal */}
+        <Link
+          href="/sr/account/delete"
+          className="flex items-center justify-center gap-2 p-3 text-xs text-zinc-700 hover:text-red-500 transition-colors"
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Obriši Nalog
+        </Link>
+      </div>
 
       {/* Feedback Modal */}
       <FeedbackModal
