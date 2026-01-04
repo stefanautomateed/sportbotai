@@ -722,6 +722,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       homeStats,
       awayStats,
       h2h,
+      // Pass injuries directly for simple string[] format (player names only)
+      injuries: {
+        home: injuries.home.map(i => i.player || 'Unknown player'),
+        away: injuries.away.map(i => i.player || 'Unknown player'),
+      },
       enrichedContext: {
         homeFormDetails: enrichedData.homeForm?.map(m => ({
           result: m.result,

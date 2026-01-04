@@ -242,6 +242,15 @@ function ExpandableAvailability({
   const homeInjuries = display.availability.homeInjuries || [];
   const awayInjuries = display.availability.awayInjuries || [];
   const hasInjuries = homeInjuries.length > 0 || awayInjuries.length > 0;
+  
+  // Debug: log what we received
+  console.log('[UniversalSignalsDisplay] Availability data:', {
+    hasDisplay: !!display,
+    hasAvailability: !!display?.availability,
+    homeInjuriesCount: homeInjuries.length,
+    awayInjuriesCount: awayInjuries.length,
+    level: display?.availability?.level,
+  });
 
   return (
     <div className="p-4 rounded-xl bg-[#0a0a0b] border border-white/[0.04]">

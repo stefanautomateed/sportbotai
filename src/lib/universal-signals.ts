@@ -365,8 +365,9 @@ function calculateAvailabilityImpact(
 ): { level: 'low' | 'medium' | 'high' | 'critical'; note: string | null } {
   const homeKeyOut = input.homeKeyOut || [];
   const awayKeyOut = input.awayKeyOut || [];
-  const homeInjuries = input.homeInjuries || [];
-  const awayInjuries = input.awayInjuries || [];
+  // Use injury details if available (has full data), fallback to simple injuries array
+  const homeInjuries = input.homeInjuryDetails || input.homeInjuries || [];
+  const awayInjuries = input.awayInjuryDetails || input.awayInjuries || [];
   
   const totalKeyOut = homeKeyOut.length + awayKeyOut.length;
   const totalInjuries = homeInjuries.length + awayInjuries.length;
