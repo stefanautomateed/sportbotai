@@ -33,8 +33,8 @@ const LeagueItem = ({ league }: { league: typeof leagues[0] }) => (
         src={league.logo}
         alt={`${league.name} logo`}
         fill
+        sizes="48px"
         className="object-contain p-0.5"
-        unoptimized
       />
     </div>
     <span className="text-sm sm:text-base font-semibold text-gray-300 whitespace-nowrap">

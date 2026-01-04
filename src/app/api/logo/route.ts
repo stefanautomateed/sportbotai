@@ -1,9 +1,10 @@
 /**
  * Logo Proxy API
  * 
- * Proxies external team logo images with proper caching.
- * - Caches for 7 days (immutable logos rarely change)
- * - Uses ESPN's combiner service to resize images (saves bandwidth)
+ * Proxies external team logo images with proper caching and optimization.
+ * - Caches for 30 days (immutable logos rarely change)
+ * - Converts to WebP for 25-35% smaller file sizes
+ * - Resizes to requested dimensions (saves bandwidth)
  * - Reduces payload by serving through CDN
  * - Avoids CORS issues
  * 
@@ -11,6 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import sharp from 'sharp';
 
 // Allow these domains for logos
 const ALLOWED_DOMAINS = [
@@ -25,32 +27,24 @@ const ALLOWED_DOMAINS = [
   'resources.premierleague.com',
 ];
 
-/**
- * Transform ESPN URLs to use their combiner service for resizing
- * ESPN combiner: https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/nyj.png&w=100&h=100
- */
-function getOptimizedUrl(originalUrl: string, size: number): string {
-  const url = new URL(originalUrl);
-  
-  // For ESPN images, use their combiner service for resizing
-  if (url.hostname === 'a.espncdn.com' && originalUrl.includes('/i/teamlogos/')) {
-    // Extract the path after the domain
-    const imagePath = url.pathname;
-    return `https://a.espncdn.com/combiner/i?img=${imagePath}&w=${size}&h=${size}&scale=crop&transparent=true`;
-  }
-  
-  // For other sources, return as-is (we can't resize them server-side without Sharp)
-  return originalUrl;
-}
+// In-memory cache for processed images (edge runtime compatible)
+const imageCache = new Map<string, { buffer: Buffer; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour in-memory cache
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const logoUrl = searchParams.get('url');
-  const size = parseInt(searchParams.get('size') || '100', 10); // Default to 100px
+  const size = Math.min(parseInt(searchParams.get('size') || '100', 10), 200); // Max 200px
+  const format = searchParams.get('format') || 'webp'; // Default to WebP
 
   if (!logoUrl) {
     return new NextResponse('Missing url parameter', { status: 400 });
   }
+
+  // Check Accept header for WebP support
+  const acceptHeader = request.headers.get('accept') || '';
+  const supportsWebP = acceptHeader.includes('image/webp');
+  const outputFormat = supportsWebP && format !== 'png' ? 'webp' : 'png';
 
   try {
     const url = new URL(logoUrl);
@@ -60,11 +54,25 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Domain not allowed', { status: 403 });
     }
 
-    // Get optimized URL (resized for ESPN)
-    const optimizedUrl = getOptimizedUrl(logoUrl, Math.min(size, 200));
+    // Create cache key
+    const cacheKey = `${logoUrl}-${size}-${outputFormat}`;
+    
+    // Check in-memory cache
+    const cached = imageCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return new NextResponse(new Uint8Array(cached.buffer), {
+        headers: {
+          'Content-Type': outputFormat === 'webp' ? 'image/webp' : 'image/png',
+          'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, immutable', // 30 days
+          'CDN-Cache-Control': 'public, max-age=2592000, immutable',
+          'Vercel-CDN-Cache-Control': 'public, max-age=2592000, immutable',
+          'X-Cache': 'HIT',
+        },
+      });
+    }
 
-    // Fetch the image
-    const response = await fetch(optimizedUrl, {
+    // Fetch the original image
+    const response = await fetch(logoUrl, {
       headers: {
         'User-Agent': 'SportBot-AI/1.0',
       },
@@ -74,16 +82,50 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Failed to fetch logo', { status: response.status });
     }
 
-    const imageBuffer = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'image/png';
+    const imageBuffer = Buffer.from(await response.arrayBuffer());
 
-    // Return with long cache lifetime (7 days)
-    return new NextResponse(imageBuffer, {
+    // Process image with Sharp: resize and convert to WebP
+    let processedImage: Buffer;
+    try {
+      const sharpInstance = sharp(imageBuffer)
+        .resize(size, size, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }, // Transparent background
+        });
+      
+      if (outputFormat === 'webp') {
+        processedImage = await sharpInstance
+          .webp({ quality: 85, effort: 4 })
+          .toBuffer();
+      } else {
+        processedImage = await sharpInstance
+          .png({ compressionLevel: 9 })
+          .toBuffer();
+      }
+    } catch {
+      // If Sharp fails, return original image
+      processedImage = imageBuffer;
+    }
+
+    // Store in cache
+    imageCache.set(cacheKey, { buffer: processedImage, timestamp: Date.now() });
+    
+    // Limit cache size (remove oldest entries if > 500)
+    if (imageCache.size > 500) {
+      const oldestKey = imageCache.keys().next().value;
+      if (oldestKey) imageCache.delete(oldestKey);
+    }
+
+    // Return with long cache lifetime (30 days)
+    return new NextResponse(new Uint8Array(processedImage), {
       headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=604800, s-maxage=604800, immutable',
-        'CDN-Cache-Control': 'public, max-age=604800, immutable',
-        'Vercel-CDN-Cache-Control': 'public, max-age=604800, immutable',
+        'Content-Type': outputFormat === 'webp' ? 'image/webp' : 'image/png',
+        'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, immutable', // 30 days
+        'CDN-Cache-Control': 'public, max-age=2592000, immutable',
+        'Vercel-CDN-Cache-Control': 'public, max-age=2592000, immutable',
+        'X-Original-Size': imageBuffer.length.toString(),
+        'X-Optimized-Size': processedImage.length.toString(),
+        'X-Cache': 'MISS',
       },
     });
   } catch (error) {

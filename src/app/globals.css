@@ -439,6 +439,14 @@ button:focus-visible {
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  
+  /* Accent Gradient Text (Alias for LCP element - Hero headline) */
+  .text-gradient-accent {
+    background: linear-gradient(135deg, #10B981 0%, #2AF6A0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
   /* ---- PROPS.CASH INSPIRED EFFECTS ---- */
   
