@@ -931,13 +931,40 @@ export async function getTeamInjuries(teamId: number): Promise<PlayerInjury[]> {
   }
   
   console.log(`[Football-API] Raw injuries response for team ${teamId}: ${response.response.length} items`);
-  if (response.response.length > 0) {
-    console.log(`[Football-API] Sample injury item:`, JSON.stringify(response.response[0]));
+  
+  // Filter for UPCOMING fixtures only (today onwards) to get current injuries
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  
+  const upcomingInjuries = response.response
+    .filter((item: any) => {
+      if (!item.player?.reason) return false;
+      const fixtureDate = item.fixture?.date ? new Date(item.fixture.date).getTime() : 0;
+      return fixtureDate >= today;
+    })
+    // Sort by fixture date ascending (soonest first)
+    .sort((a: any, b: any) => {
+      const dateA = new Date(a.fixture?.date || 0).getTime();
+      const dateB = new Date(b.fixture?.date || 0).getTime();
+      return dateA - dateB;
+    });
+  
+  // Deduplicate by player name (same player might be listed for multiple upcoming fixtures)
+  const seenPlayers = new Set<string>();
+  const uniqueInjuries = upcomingInjuries.filter((item: any) => {
+    const playerName = item.player?.name?.toLowerCase();
+    if (seenPlayers.has(playerName)) return false;
+    seenPlayers.add(playerName);
+    return true;
+  });
+  
+  console.log(`[Football-API] Filtered injuries for team ${teamId}: ${upcomingInjuries.length} upcoming, ${uniqueInjuries.length} unique`);
+  if (uniqueInjuries.length > 0) {
+    console.log(`[Football-API] Sample upcoming injury:`, JSON.stringify(uniqueInjuries[0]));
   }
 
-  const injuries: PlayerInjury[] = response.response
-    .filter((item: any) => item.player?.reason)
-    .slice(0, 5) // Top 5 most recent
+  const injuries: PlayerInjury[] = uniqueInjuries
+    .slice(0, 5) // Top 5 unique injured players
     .map((item: any) => ({
       player: item.player?.name || 'Unknown',
       position: item.player?.type || 'Unknown',

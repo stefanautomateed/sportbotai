@@ -91,9 +91,14 @@ export default function SignalAnalysis({
       {/* Match Snapshot - The Key Insights */}
       {snapshot && snapshot.length > 0 && (
         <div className="rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-7">
-          <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-5">
-            Match Snapshot
-          </h3>
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">
+              Match Snapshot
+            </h3>
+            <span className="text-[10px] px-2.5 py-0.5 text-violet-400/60 rounded-full border border-violet-500/20 font-medium uppercase tracking-wider">
+              PRO
+            </span>
+          </div>
           <ul className="space-y-4">
             {snapshot.slice(0, 5).map((insight, index) => (
               <li key={index} className="flex items-start gap-3">
@@ -108,9 +113,14 @@ export default function SignalAnalysis({
       {/* Game Flow - How it unfolds */}
       {gameFlow && (
         <div className="rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-7">
-          <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-5">
-            Game Flow Expectation
-          </h3>
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">
+              Game Flow Expectation
+            </h3>
+            <span className="text-[10px] px-2.5 py-0.5 text-violet-400/60 rounded-full border border-violet-500/20 font-medium uppercase tracking-wider">
+              PRO
+            </span>
+          </div>
           <p className="text-base text-zinc-300 leading-relaxed">
             {gameFlow}
           </p>

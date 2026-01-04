@@ -212,7 +212,8 @@ export default function UniversalSignalsDisplay({
 }
 
 /**
- * Expandable Availability Section
+ * Two-Column Availability Display
+ * Always visible side-by-side team comparison with injury counts
  */
 function ExpandableAvailability({
   display,
@@ -226,111 +227,147 @@ function ExpandableAvailability({
   locale?: 'en' | 'sr';
 }) {
   const t = signalTranslations[locale];
-  const [expanded, setExpanded] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const homeInjuries = display.availability.homeInjuries || [];
   const awayInjuries = display.availability.awayInjuries || [];
   const hasInjuries = homeInjuries.length > 0 || awayInjuries.length > 0;
   
-  // Debug: log what we received
-  console.log('[UniversalSignalsDisplay] Availability data:', {
-    hasDisplay: !!display,
-    hasAvailability: !!display?.availability,
-    homeInjuriesCount: homeInjuries.length,
-    awayInjuriesCount: awayInjuries.length,
-    level: display?.availability?.level,
-  });
+  // Show first 3 injuries per team, rest behind "show more"
+  const maxVisible = 3;
+  const homeVisible = showAll ? homeInjuries : homeInjuries.slice(0, maxVisible);
+  const awayVisible = showAll ? awayInjuries : awayInjuries.slice(0, maxVisible);
+  const hasMore = homeInjuries.length > maxVisible || awayInjuries.length > maxVisible;
+
+  // Get status badge styling
+  const getStatusStyle = (reason: string) => {
+    if (reason === 'suspension') return 'bg-red-500/20 text-red-400 border-red-500/30';
+    if (reason === 'doubtful') return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    return 'bg-zinc-600/20 text-zinc-400 border-zinc-600/30';
+  };
+
+  const getStatusLabel = (injury: { reason?: string; details?: string }) => {
+    if (injury.reason === 'suspension') return locale === 'sr' ? 'Suspendovan' : 'Suspended';
+    if (injury.reason === 'doubtful') return locale === 'sr' ? 'Neizvestan' : 'Doubtful';
+    return injury.details || (locale === 'sr' ? 'Ne igra' : 'Out');
+  };
 
   return (
     <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
-      <button
-        onClick={() => hasInjuries && setExpanded(!expanded)}
-        className={`w-full flex items-center justify-between ${hasInjuries ? 'cursor-pointer' : 'cursor-default'}`}
-        disabled={!hasInjuries}
-      >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <span className="text-lg">🏥</span>
-          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">{t.availabilityImpact}</span>
-          {hasInjuries && (
-            <span className="text-xs text-zinc-500">
-              ({homeInjuries.length + awayInjuries.length} {t.players})
-            </span>
-          )}
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+            {locale === 'sr' ? 'Raspoloživost Tima' : 'Squad Availability'}
+          </span>
         </div>
-        <div className="flex items-center gap-3">
-          <AvailabilityDots level={display.availability.level} />
-          {hasInjuries && (
-            <svg
-              className={`w-4 h-4 text-zinc-500 transition-transform ${expanded ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        <AvailabilityDots level={display.availability.level} />
+      </div>
+
+      {hasInjuries ? (
+        <>
+          {/* Two-Column Team Split */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Home Team Column */}
+            <div className="p-3 rounded-lg bg-zinc-800/30 border border-zinc-700/30">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-zinc-300 truncate">{homeTeam}</span>
+                {homeInjuries.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-medium">
+                    {homeInjuries.length} {locale === 'sr' ? 'van' : 'out'}
+                  </span>
+                )}
+              </div>
+              {homeInjuries.length > 0 ? (
+                <div className="space-y-2">
+                  {homeVisible.map((injury, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500/60 mt-1.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white truncate">{injury.player}</p>
+                        <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded border mt-0.5 ${getStatusStyle(injury.reason || '')}`}>
+                          {getStatusLabel(injury)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500">
+                  {locale === 'sr' ? 'Nema prijavljenih' : 'No absences'}
+                </p>
+              )}
+            </div>
+
+            {/* Away Team Column */}
+            <div className="p-3 rounded-lg bg-zinc-800/30 border border-zinc-700/30">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-zinc-300 truncate">{awayTeam}</span>
+                {awayInjuries.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-medium">
+                    {awayInjuries.length} {locale === 'sr' ? 'van' : 'out'}
+                  </span>
+                )}
+              </div>
+              {awayInjuries.length > 0 ? (
+                <div className="space-y-2">
+                  {awayVisible.map((injury, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500/60 mt-1.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white truncate">{injury.player}</p>
+                        <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded border mt-0.5 ${getStatusStyle(injury.reason || '')}`}>
+                          {getStatusLabel(injury)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500">
+                  {locale === 'sr' ? 'Nema prijavljenih' : 'No absences'}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Show More Button */}
+          {hasMore && (
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="w-full mt-3 py-2 text-xs text-zinc-400 hover:text-zinc-300 transition-colors flex items-center justify-center gap-1"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+              {showAll ? (
+                <>
+                  {locale === 'sr' ? 'Prikaži manje' : 'Show less'}
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                </>
+              ) : (
+                <>
+                  {locale === 'sr' ? 'Prikaži sve' : 'Show all'} ({homeInjuries.length + awayInjuries.length})
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </>
+              )}
+            </button>
           )}
+
+          {/* Availability Note */}
+          {display.availability.note && (
+            <p className="text-[10px] text-zinc-500 mt-3 text-center">
+              {display.availability.note}
+            </p>
+          )}
+        </>
+      ) : (
+        <div className="text-center py-2">
+          <p className="text-xs text-zinc-500">
+            {t.noInjuries}
+          </p>
         </div>
-      </button>
-      
-      {display.availability.note && !expanded && (
-        <p className="text-xs text-zinc-500 mt-2">
-          {display.availability.note}
-        </p>
-      )}
-
-      {expanded && hasInjuries && (
-        <div className="mt-3 pt-3 border-t border-white/[0.04] space-y-3">
-          {/* Home Team Injuries */}
-          {homeInjuries.length > 0 && (
-            <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
-                {homeTeam}
-              </p>
-              <div className="space-y-1.5">
-                {homeInjuries.map((injury, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs">
-                    <span className="text-white">{injury.player}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                      injury.reason === 'suspension' ? 'bg-red-500/20 text-red-400' :
-                      injury.reason === 'doubtful' ? 'bg-amber-500/20 text-amber-400' :
-                      'bg-zinc-500/20 text-zinc-400'
-                    }`}>
-                      {injury.details || injury.reason || t.out}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Away Team Injuries */}
-          {awayInjuries.length > 0 && (
-            <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
-                {awayTeam}
-              </p>
-              <div className="space-y-1.5">
-                {awayInjuries.map((injury, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs">
-                    <span className="text-white">{injury.player}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                      injury.reason === 'suspension' ? 'bg-red-500/20 text-red-400' :
-                      injury.reason === 'doubtful' ? 'bg-amber-500/20 text-amber-400' :
-                      'bg-zinc-500/20 text-zinc-400'
-                    }`}>
-                      {injury.details || injury.reason || t.out}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {!hasInjuries && (
-        <p className="text-[10px] text-zinc-600 mt-2">
-          {t.noInjuries}
-        </p>
       )}
     </div>
   );

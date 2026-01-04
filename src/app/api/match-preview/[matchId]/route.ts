@@ -197,8 +197,60 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       // If no cache but analysis exists, try to return the stored analysis
       if (existingAnalysis.fullResponse) {
         console.log(`[Match-Preview] Returning stored analysis from DB for repeat view`);
+        let responseData = existingAnalysis.fullResponse as any;
+        
+        // For soccer: Check if we need to fetch fresh injuries (old analyses may have stale/missing data)
+        const storedSport = responseData.matchInfo?.sport || matchInfo.sport;
+        const isSoccerStored = storedSport?.toLowerCase()?.includes('soccer') || 
+                               !['basketball', 'nba', 'americanfootball', 'nfl', 'icehockey', 'nhl', 'hockey', 'baseball', 'mlb', 'mma', 'ufc']
+                                 .some(s => storedSport?.toLowerCase()?.includes(s));
+        
+        const storedHomeInjuries = responseData.injuries?.home?.length || 0;
+        const storedAwayInjuries = responseData.injuries?.away?.length || 0;
+        const signalHomeInjuries = responseData.universalSignals?.display?.availability?.homeInjuries?.length || 0;
+        const signalAwayInjuries = responseData.universalSignals?.display?.availability?.awayInjuries?.length || 0;
+        const hasAnyInjuries = storedHomeInjuries > 0 || storedAwayInjuries > 0 || signalHomeInjuries > 0 || signalAwayInjuries > 0;
+        
+        if (isSoccerStored && !hasAnyInjuries) {
+          console.log(`[Match-Preview] DB stored analysis has no injuries - fetching fresh for soccer match...`);
+          try {
+            const freshInjuries = await getMatchInjuries(
+              responseData.matchInfo?.homeTeam || matchInfo.homeTeam,
+              responseData.matchInfo?.awayTeam || matchInfo.awayTeam,
+              responseData.matchInfo?.league || matchInfo.league
+            );
+            
+            if (freshInjuries.home.length > 0 || freshInjuries.away.length > 0) {
+              console.log(`[Match-Preview] Fetched fresh injuries for DB response - home: ${freshInjuries.home.length}, away: ${freshInjuries.away.length}`);
+              
+              // Merge into response
+              responseData = {
+                ...responseData,
+                injuries: freshInjuries,
+              };
+              
+              // Also update universalSignals if present
+              if (responseData.universalSignals?.display?.availability) {
+                responseData.universalSignals = {
+                  ...responseData.universalSignals,
+                  display: {
+                    ...responseData.universalSignals.display,
+                    availability: {
+                      ...responseData.universalSignals.display.availability,
+                      homeInjuries: freshInjuries.home,
+                      awayInjuries: freshInjuries.away,
+                    },
+                  },
+                };
+              }
+            }
+          } catch (injuryError) {
+            console.error(`[Match-Preview] Failed to fetch fresh injuries for DB response:`, injuryError);
+          }
+        }
+        
         return NextResponse.json({
-          ...(existingAnalysis.fullResponse as object),
+          ...responseData,
           creditUsed: false,
           repeatView: true,
         });
@@ -318,12 +370,43 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         
         // CRITICAL: Ensure injuries are merged into universalSignals.display.availability
         // This handles old cached data that may have injuries separately from universalSignals
-        if (responseData.universalSignals?.display?.availability && responseData.injuries) {
-          const existingHomeInjuries = responseData.universalSignals.display.availability.homeInjuries || [];
-          const existingAwayInjuries = responseData.universalSignals.display.availability.awayInjuries || [];
-          const topLevelHomeInjuries = responseData.injuries.home || [];
-          const topLevelAwayInjuries = responseData.injuries.away || [];
-          
+        // Also fetch FRESH injuries if cache has none (fixes bug where old cache had stale data)
+        const existingHomeInjuries = responseData.universalSignals?.display?.availability?.homeInjuries || [];
+        const existingAwayInjuries = responseData.universalSignals?.display?.availability?.awayInjuries || [];
+        const topLevelHomeInjuries = responseData.injuries?.home || [];
+        const topLevelAwayInjuries = responseData.injuries?.away || [];
+        
+        // Check if this is a soccer match needing fresh injury fetch
+        const cachedSport = responseData.matchInfo?.sport || matchInfo.sport;
+        const isSoccerCached = !['basketball', 'basketball_nba', 'nba', 'americanfootball', 'nfl', 'icehockey', 'nhl', 'hockey', 'baseball', 'mlb', 'mma', 'ufc']
+          .includes(cachedSport?.toLowerCase() || '');
+        
+        // If NO injuries in cache and it's soccer, try fetching fresh
+        if (isSoccerCached && 
+            existingHomeInjuries.length === 0 && existingAwayInjuries.length === 0 &&
+            topLevelHomeInjuries.length === 0 && topLevelAwayInjuries.length === 0) {
+          console.log(`[Match-Preview] Cache has no injuries - fetching fresh injury data...`);
+          try {
+            const freshInjuries = await getMatchInjuries(
+              responseData.matchInfo?.homeTeam || matchInfo.homeTeam,
+              responseData.matchInfo?.awayTeam || matchInfo.awayTeam,
+              responseData.matchInfo?.league || matchInfo.league
+            );
+            
+            if (freshInjuries.home.length > 0 || freshInjuries.away.length > 0) {
+              console.log(`[Match-Preview] Fetched fresh injuries - home: ${freshInjuries.home.length}, away: ${freshInjuries.away.length}`);
+              
+              // Merge into response
+              responseData.injuries = freshInjuries;
+              if (responseData.universalSignals?.display?.availability) {
+                responseData.universalSignals.display.availability.homeInjuries = freshInjuries.home;
+                responseData.universalSignals.display.availability.awayInjuries = freshInjuries.away;
+              }
+            }
+          } catch (injuryError) {
+            console.error(`[Match-Preview] Failed to fetch fresh injuries:`, injuryError);
+          }
+        } else if (responseData.universalSignals?.display?.availability && responseData.injuries) {
           // Use whichever has more data
           if (topLevelHomeInjuries.length > existingHomeInjuries.length || 
               topLevelAwayInjuries.length > existingAwayInjuries.length) {

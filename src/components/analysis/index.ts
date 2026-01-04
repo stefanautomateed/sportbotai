@@ -32,3 +32,6 @@ export { ProSection, ProSectionPlaceholder } from './ProSection';
 // Two-Layer Blur System
 export { RegistrationBlur } from './RegistrationBlur';
 export { PremiumBlur } from './PremiumBlur';
+
+// Progressive Disclosure
+export { CollapsibleSection } from './CollapsibleSection';

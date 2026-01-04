@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -44,6 +44,64 @@ export default function AccountDashboard({ user }: Props) {
     isOpen: false,
     type: 'feature',
   });
+  const [avatarImage, setAvatarImage] = useState<string | null>(user.image);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle avatar upload
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (500KB)
+    if (file.size > 500000) {
+      alert('Image too large. Please use an image under 500KB.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64 = event.target?.result as string;
+        
+        // Upload to API
+        const res = await fetch('/api/user/avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64 }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setAvatarImage(data.image);
+          // Trigger session refresh
+          window.location.reload();
+        } else {
+          const error = await res.json();
+          alert(error.error || 'Failed to upload avatar');
+        }
+        setIsUploadingAvatar(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Failed to upload avatar');
+      setIsUploadingAvatar(false);
+    }
+  };
 
   useEffect(() => {
     const fetchUsage = async () => {
@@ -114,13 +172,41 @@ export default function AccountDashboard({ user }: Props) {
         <div className="relative max-w-2xl mx-auto px-4 pt-8 pb-6">
           {/* Profile Section */}
           <div className="flex flex-col items-center text-center">
-            {/* Avatar */}
+            {/* Avatar - Clickable to upload */}
             <div className="relative mb-4">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center border-2 border-violet-500/30 shadow-xl shadow-violet-500/10">
-                <svg className="w-14 h-14 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
-                </svg>
-              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <button
+                onClick={handleAvatarClick}
+                disabled={isUploadingAvatar}
+                className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center border-2 border-violet-500/30 shadow-xl shadow-violet-500/10 overflow-hidden group relative transition-all hover:scale-105 hover:border-violet-400/50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0b]"
+              >
+                {isUploadingAvatar ? (
+                  <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : avatarImage ? (
+                  <img 
+                    src={avatarImage} 
+                    alt={user.name || 'User'} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <svg className="w-14 h-14 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                  </svg>
+                )}
+                {/* Upload hint overlay */}
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+              </button>
               {/* Plan Badge */}
               <div className={`absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-sm ${
                 user.plan === 'PRO' ? 'bg-violet-600' : 
@@ -130,6 +216,9 @@ export default function AccountDashboard({ user }: Props) {
                 {planConfig.icon}
               </div>
             </div>
+            
+            {/* Upload hint text */}
+            <p className="text-[10px] text-zinc-600 mb-2">Tap to change photo</p>
 
             {/* Name & Email */}
             <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">

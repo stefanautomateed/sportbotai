@@ -567,13 +567,18 @@ async function runQuickAnalysis(
     
     // Get enriched match data through UNIFIED SERVICE (consistent 4-layer data across app)
     // Also get injuries, referee, and roster context in parallel
-    const [unifiedData, injuryInfo, refereeContext, rosterContext] = await Promise.all([
+    // For soccer: fetch STRUCTURED injuries (for UI) AND string format (for AI prompt)
+    const isSoccerMatch = sport.startsWith('soccer_');
+    const [unifiedData, injuryInfo, structuredInjuries, refereeContext, rosterContext] = await Promise.all([
       getUnifiedMatchData(matchId, { odds: oddsInfo, includeOdds: false }),
       getInjuryInfo(homeTeam, awayTeam, sport, league),
+      isSoccerMatch ? getMatchInjuries(homeTeam, awayTeam, league) : Promise.resolve({ home: [], away: [] }),
       getRefereeContext(homeTeam, awayTeam, sport, league),
       // Fetch real-time roster context for NBA/NHL/NFL to avoid outdated AI training data
       rosterSport ? getRosterContextCached(homeTeam, awayTeam, rosterSport, league) : Promise.resolve(null),
     ]);
+    
+    console.log(`[Pre-Analyze] Structured injuries fetched - home: ${structuredInjuries?.home?.length || 0}, away: ${structuredInjuries?.away?.length || 0}`);
     
     // Use enriched data from unified service for cross-sport compatibility
     const enrichedData = unifiedData.enrichedData as any;
@@ -614,6 +619,21 @@ async function runQuickAnalysis(
         awayWins: enrichedData.h2h?.awayWins || 0,
         draws: enrichedData.h2h?.draws || 0,
       },
+      // Include structured injury data for availability signals
+      homeInjuries: structuredInjuries?.home?.map((i: any) => i.player) || [],
+      awayInjuries: structuredInjuries?.away?.map((i: any) => i.player) || [],
+      homeInjuryDetails: structuredInjuries?.home?.map((i: any) => ({
+        player: i.player || 'Unknown',
+        reason: i.reason,
+        details: i.details,
+        position: i.position,
+      })) || [],
+      awayInjuryDetails: structuredInjuries?.away?.map((i: any) => ({
+        player: i.player || 'Unknown',
+        reason: i.reason,
+        details: i.details,
+        position: i.position,
+      })) || [],
     };
     
     // Normalize to universal signals
@@ -786,6 +806,11 @@ ${!hasDraw ? 'NO DRAWS in this sport. Pick a winner.' : ''}`;
       marketIntel,
       // Include universalSignals for UI
       universalSignals: signals,
+      // Include structured injuries for UI availability section
+      injuries: {
+        home: structuredInjuries?.home || [],
+        away: structuredInjuries?.away || [],
+      },
       // Include headlines
       headlines: [
         { icon: '📊', text: `${homeTeam} vs ${awayTeam}: Pre-analyzed`, favors: aiResponse.favored || 'neutral', viral: false }

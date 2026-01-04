@@ -131,12 +131,22 @@ export function UserMenu() {
   }
 
   // Authenticated
-  const userInitials = session.user?.name
-    ?.split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2) || session.user?.email?.[0].toUpperCase() || 'U';
+  // Calculate initials - handle empty strings properly
+  const userName = session.user?.name?.trim();
+  const userEmail = session.user?.email?.trim();
+  
+  let userInitials = 'U';
+  if (userName && userName.length > 0) {
+    userInitials = userName
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  } else if (userEmail && userEmail.length > 0) {
+    // Use first letter of email
+    userInitials = userEmail[0].toUpperCase();
+  }
 
   const plan = livePlan;
   const isPro = plan === 'PRO' || plan === 'PREMIUM';
@@ -160,7 +170,13 @@ export function UserMenu() {
           />
         ) : (
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-            <span className="text-sm font-bold text-bg-primary">{userInitials}</span>
+            {userInitials && userInitials !== 'U' ? (
+              <span className="text-sm font-bold text-bg-primary">{userInitials}</span>
+            ) : (
+              <svg className="w-5 h-5 text-bg-primary" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            )}
           </div>
         )}
         <svg

@@ -28,6 +28,7 @@ import {
   PremiumBlur,
   AIvsMarketHero,
   ProSection,
+  CollapsibleSection,
 } from '@/components/analysis';
 import StandingsTable from '@/components/StandingsTable';
 import type { UniversalSignals } from '@/lib/universal-signals';
@@ -442,17 +443,17 @@ const translations = {
     weNeed48h: 'We need at least 48 hours before kickoff to gather reliable data.',
     setReminder: 'Set Reminder',
     backToMatches: 'Back to Matches',
-    reachLimit: 'Exact edge locked',
-    usedAllCredits: 'You\'ve used today\'s free analysis.',
-    upgradeToPro: 'Unlock Pro precision — $0.66/day',
+    reachLimit: 'Precision locked',
+    usedAllCredits: 'Free tier shows direction. Pro shows magnitude.',
+    upgradeToPro: 'See exact edges — from $0.66/day',
     limitResetsAt: 'Next free analysis in',
     orViewAnother: 'or view another match',
     exactWinProb: 'Exact win probabilities',
-    marketEdgeMagnitude: 'Market edge magnitude',
-    oddsThresholds: 'Odds thresholds & execution',
+    marketEdgeMagnitude: 'Edge magnitude & confidence',
+    oddsThresholds: 'Execution thresholds',
     noLimits: 'No daily limits',
-    proReassurance: 'Pro users use exact edges to avoid bad bets — not force action.',
-    proUnlocksShort: 'Pro unlocks unlimited precision & execution tools.',
+    proReassurance: 'Pro shows exactly when to pass — discipline builds edge.',
+    proUnlocksShort: 'Pro unlocks precision & execution tools.',
     errorLoading: 'Unable to load match analysis',
     tryAgain: 'Try Again',
     goBack: 'Go Back',
@@ -532,17 +533,17 @@ const translations = {
     weNeed48h: 'Potrebno nam je najmanje 48 sati pre početka da prikupimo pouzdane podatke.',
     setReminder: 'Postavi Podsetnik',
     backToMatches: 'Nazad na Mečeve',
-    reachLimit: 'Tačna ivica zaključana',
-    usedAllCredits: 'Iskoristili ste današnju besplatnu analizu.',
-    upgradeToPro: 'Otključaj Pro preciznost — $0.66/dan',
+    reachLimit: 'Preciznost zaključana',
+    usedAllCredits: 'Besplatan nivo pokazuje smer. Pro pokazuje magnitude.',
+    upgradeToPro: 'Vidi tačne ivice — od $0.66/dan',
     limitResetsAt: 'Sledeća besplatna analiza za',
     orViewAnother: 'ili pogledaj drugi meč',
     exactWinProb: 'Tačne verovatnoće pobede',
-    marketEdgeMagnitude: 'Veličina tržišne ivice',
-    oddsThresholds: 'Pragovi kvota i izvršenje',
+    marketEdgeMagnitude: 'Veličina ivice i pouzdanost',
+    oddsThresholds: 'Pragovi izvršenja',
     noLimits: 'Bez dnevnih limita',
-    proReassurance: 'Pro korisnici koriste tačne ivice da izbegnu loše opklade — ne da forsiraju akciju.',
-    proUnlocksShort: 'Pro otključava neograničenu preciznost i alate za izvršenje.',
+    proReassurance: 'Pro pokazuje tačno kada preskočiti — disciplina gradi prednost.',
+    proUnlocksShort: 'Pro otključava preciznost i alate za izvršenje.',
     errorLoading: 'Nije moguće učitati analizu meča',
     tryAgain: 'Pokušaj Ponovo',
     goBack: 'Nazad',
@@ -1162,22 +1163,24 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
             </div>
           )}
 
-          {/* Risk Factors - Free with registration */}
+          {/* Risk Factors - Collapsible for progressive disclosure */}
           {riskFactors && riskFactors.length > 0 && (
-            <div className="mt-4 sm:mt-6 rounded-2xl bg-gradient-to-br from-amber-500/5 to-transparent border border-amber-500/10 p-5 sm:p-6">
-              <h3 className="text-xs font-semibold text-amber-400/90 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <span className="text-base">⚠️</span>
-                {t.riskFactors}
-              </h3>
+            <CollapsibleSection
+              title={t.riskFactors}
+              icon="⚠️"
+              defaultExpanded={true}
+              badge={riskFactors.length}
+              className="mt-4 sm:mt-6 !bg-gradient-to-br !from-amber-500/5 !to-transparent !border-amber-500/10"
+            >
               <ul className="space-y-3">
                 {riskFactors.map((risk, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 mt-2 flex-shrink-0" />
-                    <span className="text-base text-zinc-300 leading-relaxed">{risk}</span>
+                    <span className="text-sm text-zinc-300 leading-relaxed">{risk}</span>
                   </li>
                 ))}
               </ul>
-            </div>
+            </CollapsibleSection>
           )}
         </RegistrationBlur>
 
@@ -1196,43 +1199,76 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
             upgradeToProPrice: t.upgradeToProPrice,
           }}
         >
-          {/* Match Snapshot - Premium */}
+          {/* Match Snapshot - Progressive disclosure with collapsible detail */}
           {snapshot && snapshot.length > 0 && (
-            <ProSection
-              isPro={canSeeExactNumbers}
+            <CollapsibleSection
               title={t.matchSnapshot}
-              teaserBullets={
-                locale === 'sr' 
-                  ? ['Rezime AI modela', 'Obrazloženje ivice i analiza', 'Kalibracija rizika']
-                  : ['AI model summary', 'Edge reasoning & pattern analysis', 'Risk calibration']
-              }
-              locale={locale}
+              icon="📋"
+              defaultExpanded={true}
+              badge="PRO"
               className="mt-3 sm:mt-4"
             >
-              <ul className="space-y-4">
-                {snapshot.slice(0, 4).map((insight, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <span className="w-2 h-2 rounded-full bg-violet-500/40 mt-2 flex-shrink-0" />
-                    <span className="text-base text-stone-200 leading-relaxed">{insight}</span>
-                  </li>
-                ))}
-              </ul>
-            </ProSection>
+              {canSeeExactNumbers ? (
+                <ul className="space-y-4">
+                  {snapshot.slice(0, 4).map((insight, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <span className="w-2 h-2 rounded-full bg-violet-500/40 mt-2 flex-shrink-0" />
+                      <span className="text-sm text-stone-200 leading-relaxed">{insight}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ProSection
+                  isPro={canSeeExactNumbers}
+                  title=""
+                  teaserBullets={
+                    locale === 'sr' 
+                      ? ['Rezime AI modela', 'Obrazloženje ivice i analiza', 'Kalibracija rizika']
+                      : ['AI model summary', 'Edge reasoning & pattern analysis', 'Risk calibration']
+                  }
+                  locale={locale}
+                  className="!bg-transparent !border-0 !p-0"
+                >
+                  <ul className="space-y-4">
+                    {snapshot.slice(0, 4).map((insight, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <span className="w-2 h-2 rounded-full bg-violet-500/40 mt-2 flex-shrink-0" />
+                        <span className="text-sm text-stone-200 leading-relaxed">{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </ProSection>
+              )}
+            </CollapsibleSection>
           )}
 
-          {/* Game Flow - Premium */}
+          {/* Game Flow - Progressive disclosure */}
           {gameFlow && (
-            <ProSection
-              isPro={canSeeExactNumbers}
+            <CollapsibleSection
               title={t.gameFlow}
-              teaserText={gameFlow.substring(0, 60) + '...'}
-              locale={locale}
+              icon="⚡"
+              defaultExpanded={false}
+              badge="PRO"
               className="mt-3 sm:mt-4"
             >
-              <p className="text-base text-stone-300 leading-relaxed">
-                {gameFlow}
-              </p>
-            </ProSection>
+              {canSeeExactNumbers ? (
+                <p className="text-sm text-stone-300 leading-relaxed">
+                  {gameFlow}
+                </p>
+              ) : (
+                <ProSection
+                  isPro={canSeeExactNumbers}
+                  title=""
+                  teaserText={gameFlow.substring(0, 60) + '...'}
+                  locale={locale}
+                  className="!bg-transparent !border-0 !p-0"
+                >
+                  <p className="text-sm text-stone-300 leading-relaxed">
+                    {gameFlow}
+                  </p>
+                </ProSection>
+              )}
+            </CollapsibleSection>
           )}
 
           {/* Market Edge - Premium */}

@@ -133,45 +133,52 @@ export function ProbabilityCompare({ modelProb, marketProb, label, teamName, loc
   const isOverpriced = diff < -3;
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-between items-center">
-        <span className="text-gray-400 text-base font-medium">{teamName || label}</span>
-        <div className="flex items-center gap-4">
-          {canSeeExactNumbers ? (
-            <>
-              <span className="text-gray-500 text-sm">{t.market}: {marketProb}%</span>
-              <span className={`font-bold text-base ${isValue ? 'text-green-400' : isOverpriced ? 'text-red-400' : 'text-white'}`}>
-                {t.model}: {modelProb}%
-              </span>
-            </>
-          ) : (
-            <span className={`font-semibold text-base ${isValue ? 'text-green-400' : isOverpriced ? 'text-red-400' : 'text-zinc-400'}`}>
-              {isValue ? 'Value detected' : isOverpriced ? 'Overpriced' : 'Fair price'}
-            </span>
-          )}
+    <div className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/30">
+      {/* Team/Outcome Name */}
+      <div className="text-sm font-semibold text-zinc-200 mb-3">{teamName || label}</div>
+      
+      {/* Vertical Stack: Market → Model */}
+      <div className="space-y-2">
+        {/* Market Row */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-zinc-500 uppercase tracking-wide">{t.market}</span>
+          <span className="text-sm font-mono text-zinc-400">
+            {canSeeExactNumbers ? `${marketProb}%` : '—'}
+          </span>
+        </div>
+        
+        {/* Model Row */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-zinc-500 uppercase tracking-wide">{t.model}</span>
+          <span className={`text-sm font-mono font-bold ${
+            isValue ? 'text-emerald-400' : isOverpriced ? 'text-red-400' : 'text-zinc-200'
+          }`}>
+            {canSeeExactNumbers ? `${modelProb}%` : (isValue ? '▲' : isOverpriced ? '▼' : '—')}
+          </span>
         </div>
       </div>
       
-      {/* Comparison bar */}
-      <div className="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
-        {/* Market probability (gray) */}
-        <div 
-          className="absolute top-0 left-0 h-full bg-zinc-700 rounded-full"
-          style={{ width: `${marketProb}%` }}
-        />
-        {/* Model probability (colored) */}
-        <div 
-          className={`absolute top-0 left-0 h-full rounded-full transition-all ${
-            isValue ? 'bg-emerald-600/80' : isOverpriced ? 'bg-red-600/80' : 'bg-zinc-500'
-          }`}
-          style={{ width: `${modelProb}%` }}
-        />
-      </div>
-
-      {/* Edge indicator - PRO only */}
+      {/* Edge Badge */}
       {canSeeExactNumbers && Math.abs(diff) > 3 && (
-        <div className={`text-sm font-semibold ${isValue ? 'text-green-400' : 'text-red-400'}`}>
-          {isValue ? `+${diff.toFixed(1)}% ${t.value}` : `${diff.toFixed(1)}% ${t.overpriced}`}
+        <div className={`mt-3 pt-3 border-t border-zinc-700/30 text-center`}>
+          <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${
+            isValue 
+              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+          }`}>
+            {isValue ? `+${diff.toFixed(1)}% value` : `${diff.toFixed(1)}% overpriced`}
+          </span>
+        </div>
+      )}
+      
+      {/* Direction indicator for non-PRO */}
+      {!canSeeExactNumbers && (
+        <div className={`mt-3 pt-3 border-t border-zinc-700/30 text-center`}>
+          <span className={`text-xs font-medium ${
+            isValue ? 'text-emerald-400' : isOverpriced ? 'text-red-400' : 'text-zinc-500'
+          }`}>
+            {isValue ? 'Value detected' : isOverpriced ? 'Overpriced' : 'Fair price'}
+          </span>
         </div>
       )}
     </div>
@@ -195,8 +202,11 @@ export function ModelVsMarket({ marketIntel, homeTeam, awayTeam, hasDraw = true,
   const t = translations[locale];
   const { modelProbability, impliedProbability } = marketIntel;
 
+  // Determine grid columns based on whether draw exists
+  const gridCols = hasDraw && modelProbability.draw !== undefined ? 'grid-cols-3' : 'grid-cols-2';
+
   return (
-    <div className="space-y-4">
+    <div className={`grid ${gridCols} gap-3`}>
       <ProbabilityCompare
         modelProb={modelProbability.home}
         marketProb={impliedProbability.home}
@@ -507,7 +517,12 @@ function MarketIntelContent({
           <span className="text-base opacity-60">📊</span>
           {t.marketEdge}
         </h3>
-        <ValueBadge valueEdge={marketIntel.valueEdge} locale={locale} />
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] px-2.5 py-0.5 text-violet-400/60 rounded-full border border-violet-500/20 font-medium uppercase tracking-wider">
+            PRO
+          </span>
+          <ValueBadge valueEdge={marketIntel.valueEdge} locale={locale} />
+        </div>
       </div>
       
       {/* No Edge Explanation - discipline signal */}

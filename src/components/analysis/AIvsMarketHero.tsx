@@ -108,18 +108,16 @@ export function AIvsMarketHero({
 
   const { modelProbability, impliedProbability, valueEdge } = marketIntel;
   
-  // Determine which side has the edge (positive edge = value)
-  const homeEdge = modelProbability.home - impliedProbability.home;
-  const awayEdge = modelProbability.away - impliedProbability.away;
-  const hasSignificantEdge = Math.abs(homeEdge) > 5 || Math.abs(awayEdge) > 5;
+  // Use valueEdge from marketIntel for consistency across the page
+  // valueEdge.edgePercent already includes bookmaker quality adjustment
+  const hasSignificantEdge = valueEdge.strength !== 'none' && valueEdge.edgePercent > 3;
   
-  // Who has VALUE? (positive edge means underpriced by market)
-  // If home is negative (overpriced) and away is positive (underpriced), away has value
-  const favoredSide = awayEdge > homeEdge ? 'away' : homeEdge > awayEdge ? 'home' : 'even';
+  // Who has VALUE? Use valueEdge.outcome for consistency
+  const favoredSide = valueEdge.outcome || 'even';
   const favoredTeam = favoredSide === 'home' ? homeTeam : favoredSide === 'away' ? awayTeam : null;
   
-  // Edge magnitude should be the POSITIVE edge of the favored team, not the max absolute
-  const edgeMagnitude = favoredSide === 'home' ? homeEdge : favoredSide === 'away' ? awayEdge : 0;
+  // Edge magnitude from the unified valueEdge calculation
+  const edgeMagnitude = valueEdge.edgePercent || 0;
 
   // ============================================
   // STATE 1: GUEST (Not logged in) - Teaser skeleton (NO real numbers)
@@ -339,7 +337,7 @@ function HeroContent({
           <span className="text-lg opacity-60">🧠</span>
           <span className="text-xs text-zinc-400 uppercase tracking-widest font-semibold">{t.aiVsMarket}</span>
         </div>
-        <span className="text-xs px-3 py-1 bg-violet-500/10 text-violet-400 rounded-full border border-violet-500/20 font-semibold">
+        <span className="text-[10px] px-2.5 py-0.5 text-violet-400/60 rounded-full border border-violet-500/20 font-medium uppercase tracking-wider">
           {t.pro}
         </span>
       </div>
@@ -347,9 +345,14 @@ function HeroContent({
       {/* Main Verdict - Primary text, used sparingly */}
       {hasSignificantEdge && favoredTeam ? (
         <div className="text-center mb-6">
-          {/* Secondary explanatory */}
-          <p className="text-base text-zinc-400 mb-2 inline-flex items-center gap-2">
-            {t.modelFavors}
+          {/* Primary verdict text - the ONE thing that stands out */}
+          <p className="text-2xl sm:text-3xl font-bold text-white mb-3">{favoredTeam}</p>
+          
+          {/* Edge Badge - qualitative, not numeric, with info tooltip */}
+          <div className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border ${edgeBgColor} mb-3`}>
+            <span className={`text-base font-semibold ${edgeTextColor}`}>
+              {isStrongEdge ? '🎯 Strong Edge Detected' : '📊 Edge Detected'}
+            </span>
             <span className="group relative cursor-help">
               <svg className="w-4 h-4 text-zinc-500 hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -358,17 +361,12 @@ function HeroContent({
                 {t.valueTooltip}
               </span>
             </span>
-          </p>
-          {/* Primary verdict text - the ONE thing that stands out */}
-          <p className="text-2xl sm:text-3xl font-bold text-white mb-4">{favoredTeam}</p>
-          
-          {/* Edge Badge - colored only when meaningful */}
-          <div className={`inline-flex items-center gap-3 px-5 py-2.5 rounded-full border ${edgeBgColor}`}>
-            <span className={`text-xl font-bold ${edgeTextColor}`}>
-              +{edgeMagnitude.toFixed(1)}%
-            </span>
-            <span className="text-base text-zinc-400">{t.edgeDetected}</span>
           </div>
+          
+          {/* Guidance line - turns insight into action */}
+          <p className="text-sm text-zinc-500">
+            Only one outcome shows positive expected value
+          </p>
         </div>
       ) : (
         <div className="text-center mb-6">
@@ -382,39 +380,54 @@ function HeroContent({
         </div>
       )}
 
-      {/* Probability Comparison Grid */}
-      {canSeeExactNumbers && modelProbability && impliedProbability && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-          {/* Home */}
-          <ProbabilityCard
-            label={homeTeam || 'Home'}
-            modelProb={modelProbability.home}
-            marketProb={impliedProbability.home}
-            t={t}
-          />
-          
-          {/* Away */}
-          <ProbabilityCard
-            label={awayTeam || 'Away'}
-            modelProb={modelProbability.away}
-            marketProb={impliedProbability.away}
-            t={t}
-          />
-          
-          {/* Draw (if applicable) */}
-          {hasDraw && modelProbability.draw !== undefined && impliedProbability.draw !== undefined && (
-            <div className="sm:col-span-2">
+      {/* Probability Comparison Grid - Vertical Cards in Row */}
+      {canSeeExactNumbers && modelProbability && impliedProbability && (() => {
+        // Calculate which outcome has the best value edge
+        const edges = {
+          home: modelProbability.home - impliedProbability.home,
+          away: modelProbability.away - impliedProbability.away,
+          draw: hasDraw && modelProbability.draw !== undefined && impliedProbability.draw !== undefined 
+            ? modelProbability.draw - impliedProbability.draw 
+            : -Infinity
+        };
+        const maxEdge = Math.max(edges.home, edges.away, edges.draw);
+        const bestValue = maxEdge > 5 
+          ? (edges.home === maxEdge ? 'home' : edges.away === maxEdge ? 'away' : 'draw')
+          : null;
+        
+        return (
+          <div className={`grid gap-3 mt-4 ${hasDraw && modelProbability.draw !== undefined ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            {/* Home */}
+            <ProbabilityCard
+              label={homeTeam || 'Home'}
+              modelProb={modelProbability.home}
+              marketProb={impliedProbability.home}
+              t={t}
+              isBestValue={bestValue === 'home'}
+            />
+            
+            {/* Draw (if applicable) - in middle */}
+            {hasDraw && modelProbability.draw !== undefined && impliedProbability.draw !== undefined && (
               <ProbabilityCard
                 label="Draw"
                 modelProb={modelProbability.draw}
                 marketProb={impliedProbability.draw}
                 t={t}
-                isFullWidth
+                isBestValue={bestValue === 'draw'}
               />
-            </div>
-          )}
-        </div>
-      )}
+            )}
+            
+            {/* Away */}
+            <ProbabilityCard
+              label={awayTeam || 'Away'}
+              modelProb={modelProbability.away}
+              marketProb={impliedProbability.away}
+              t={t}
+              isBestValue={bestValue === 'away'}
+            />
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -428,10 +441,10 @@ interface ProbabilityCardProps {
   modelProb: number;
   marketProb: number;
   t: typeof translations['en'];
-  isFullWidth?: boolean;
+  isBestValue?: boolean;
 }
 
-function ProbabilityCard({ label, modelProb, marketProb, t, isFullWidth }: ProbabilityCardProps) {
+function ProbabilityCard({ label, modelProb, marketProb, t, isBestValue = false }: ProbabilityCardProps) {
   const diff = modelProb - marketProb;
   
   // Only color numbers when edge is meaningful (>5%)
@@ -439,41 +452,74 @@ function ProbabilityCard({ label, modelProb, marketProb, t, isFullWidth }: Proba
   const isOverpriced = diff < -5;
   const isNeutral = !isValue && !isOverpriced;
   
-  // Text colors based on edge magnitude
-  const modelProbColor = isValue ? 'text-green-400' : isOverpriced ? 'text-red-400' : 'text-stone-200';
+  // Edge badge styling - muted for non-best-value, calm red for overpriced
+  const edgeBadgeClass = isValue 
+    ? isBestValue 
+      ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+      : 'bg-green-500/10 text-green-400/70 border-green-500/20'
+    : isOverpriced 
+      ? 'bg-zinc-800/50 text-red-400/50 border-zinc-700/40' // Calmer - "avoid quietly"
+      : 'bg-zinc-700/30 text-zinc-400 border-zinc-600/30';
+  
+  // Card styling - best value gets strong glow, others dimmed
+  const cardClass = isBestValue
+    ? 'bg-zinc-900/70 border-green-500/40 shadow-[0_0_30px_rgba(34,197,94,0.2),0_0_60px_rgba(34,197,94,0.1)] ring-1 ring-green-500/20'
+    : 'bg-zinc-900/40 border-zinc-800/40 opacity-[0.65]'; // Noticeably dimmed
   
   return (
-    <div className={`p-3 sm:p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/50 ${isFullWidth ? 'text-center' : ''}`}>
-      {/* Label - muted meta text */}
-      <p className="text-[10px] sm:text-xs text-zinc-400 uppercase tracking-wider mb-2 sm:mb-3 font-semibold truncate">{label}</p>
+    <div className={`flex flex-col p-4 rounded-xl border ${cardClass}`}>
+      {/* Team/Outcome Name - Header */}
+      <p className="text-sm font-semibold text-white mb-3 truncate">{label}</p>
       
-      <div className="flex items-center justify-between gap-2 sm:gap-3">
-        {/* Model Probability */}
-        <div>
-          <p className="text-[10px] sm:text-xs text-zinc-500 mb-1">{t.winProb}</p>
-          <p className={`text-lg sm:text-xl font-bold ${modelProbColor}`}>
-            {modelProb.toFixed(1)}%
-          </p>
+      {/* Market Row */}
+      <div className="flex justify-between items-center py-2 border-b border-zinc-800/50">
+        <span className="text-xs text-zinc-500">Market</span>
+        <span className="text-base font-medium text-zinc-400">{marketProb.toFixed(1)}%</span>
+      </div>
+      
+      {/* Model Row */}
+      <div className="flex justify-between items-center py-2">
+        <span className="text-xs text-zinc-500">Model Est.</span>
+        <span className="text-base font-bold text-white">{modelProb.toFixed(1)}%</span>
+      </div>
+      
+      {/* Grouped Bar Chart - Market vs Model */}
+      <div className="mt-4 mb-3">
+        {/* Labels instead of numbers */}
+        <div className="flex justify-center gap-3 mb-1.5">
+          <span className="text-[9px] text-zinc-600 uppercase tracking-wider">Market</span>
+          <span className="text-[9px] text-zinc-500 uppercase tracking-wider font-medium">Model</span>
         </div>
-        
-        {/* vs - structural text */}
-        <span className="text-zinc-600 text-xs sm:text-sm">vs</span>
-        
-        {/* Market Implied - always neutral */}
-        <div className="text-right">
-          <p className="text-[10px] sm:text-xs text-zinc-500 mb-1">{t.marketImplied}</p>
-          <p className="text-lg sm:text-xl font-semibold text-zinc-500">
-            {marketProb.toFixed(1)}%
-          </p>
+        {/* Bars - model dominant, market muted */}
+        <div className="flex justify-center items-end gap-2 h-20">
+          {/* Market Bar - Very muted reference */}
+          <div 
+            className="w-4 bg-zinc-700/35 transition-all duration-300 ease-out"
+            style={{ height: `${Math.max(marketProb * 0.75, 4)}px` }}
+          />
+          {/* Model Bar - Dominant, wider, rounded, colored based on edge */}
+          <div 
+            className={`w-6 rounded-sm transition-all duration-300 ease-out ${
+              isValue 
+                ? isBestValue ? 'bg-green-500' : 'bg-green-500/70'
+                : isOverpriced 
+                  ? 'bg-red-400/45' // Calmer red - "avoid quietly"
+                  : 'bg-slate-400'
+            }`}
+            style={{ height: `${Math.max(modelProb * 0.85, 4)}px` }}
+          />
         </div>
       </div>
       
-      {/* Edge indicator - only show when meaningful (>5%) */}
-      {!isNeutral && (
-        <div className={`text-sm mt-3 font-semibold ${isValue ? 'text-green-400' : 'text-red-400'}`}>
-          {isValue ? `+${diff.toFixed(1)}% ${t.value}` : `${diff.toFixed(1)}% overpriced`}
-        </div>
-      )}
+      {/* Edge Badge - Footer */}
+      <div className={`px-2 py-1.5 rounded-lg border text-center text-xs font-semibold ${edgeBadgeClass}`}>
+        {isNeutral 
+          ? 'Fair price' 
+          : isValue 
+            ? `+${diff.toFixed(1)}% ${t.value}`
+            : `${diff.toFixed(1)}% overpriced`
+        }
+      </div>
     </div>
   );
 }
