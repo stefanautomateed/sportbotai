@@ -8,7 +8,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { signOut } from 'next-auth/react';
 import FeedbackModal from '@/components/FeedbackModal';
 
@@ -124,21 +123,11 @@ export default function AccountDashboardSr({ user }: Props) {
           <div className="flex flex-col items-center text-center">
             {/* Avatar */}
             <div className="relative mb-4">
-              {user.image ? (
-                <Image
-                  src={user.image}
-                  alt={user.name || 'Korisnik'}
-                  width={96}
-                  height={96}
-                  className="w-24 h-24 rounded-full border-2 border-violet-500/30 shadow-xl shadow-violet-500/10"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center border-2 border-violet-500/30 shadow-xl shadow-violet-500/10">
-                  <svg className="w-12 h-12 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                  </svg>
-                </div>
-              )}
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center border-2 border-violet-500/30 shadow-xl shadow-violet-500/10">
+                <svg className="w-14 h-14 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                </svg>
+              </div>
               {/* Plan Badge */}
               <div className={`absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-sm ${
                 user.plan === 'PRO' ? 'bg-violet-600' : 
