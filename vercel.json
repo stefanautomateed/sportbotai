@@ -29,7 +29,7 @@
     },
     {
       "path": "/api/cron/live-intel",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 */2 * * *"
     },
     {
       "path": "/api/cron/track-predictions",
