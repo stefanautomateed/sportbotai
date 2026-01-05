@@ -68,7 +68,7 @@ export const translations = {
         {
           number: '01',
           title: 'Choose Your Match',
-          description: 'Pick from trending matches or search any fixture across 7 major sports.',
+          description: 'Pick from trending matches or search any fixture across 4 major sports.',
         },
         {
           number: '02',
@@ -254,7 +254,7 @@ export const translations = {
     matches: {
       pageTitle: 'Browse Matches',
       pageSubtitle: 'Select any upcoming match to get your pre-match intelligence briefing.',
-      pageDescription: 'Live data from 7 major sports',
+      pageDescription: 'Live data from 4 major sports',
       leagues: 'Leagues',
       loadingMatches: 'Loading matches...',
       upcomingMatches: 'upcoming matches',
@@ -424,7 +424,7 @@ export const translations = {
         {
           number: '01',
           title: 'Izaberi Svoj Meč',
-          description: 'Izaberi iz trending mečeva ili pretraži bilo koji meč iz 7 glavnih sportova.',
+          description: 'Izaberi iz trending mečeva ili pretraži bilo koji meč iz 4 glavna sporta.',
         },
         {
           number: '02',
@@ -610,7 +610,7 @@ export const translations = {
     matches: {
       pageTitle: 'Pregledaj Mečeve',
       pageSubtitle: 'Izaberi bilo koji predstojeći meč da dobiješ pred-utakmični obaveštajni brifing.',
-      pageDescription: 'Podaci uživo iz 7 glavnih sportova',
+      pageDescription: 'Podaci uživo iz 4 glavna sporta',
       leagues: 'Lige',
       loadingMatches: 'Učitavanje mečeva...',
       upcomingMatches: 'predstojećih mečeva',

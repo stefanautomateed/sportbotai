@@ -87,7 +87,7 @@ export default function MatchesPageSr({
               </div>
               <div className="flex items-center gap-2 text-sm text-text-secondary">
                 <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                <span>Podaci uživo iz 7 glavnih sportova</span>
+                <span>Podaci uživo iz 4 glavna sporta</span>
               </div>
             </div>
           </div>
