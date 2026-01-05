@@ -627,6 +627,11 @@ WRITING RULES:
 - If confidence is low, state WHY clearly (don't just hedge)
 - No markdown (no ** or ##). No emojis in analysis.
 - Be quotable - your best lines should be screenshot-worthy
+- STAT CLARITY: When mentioning "combined" stats (e.g., total points), always clarify whose totals
+  - WRONG: "Detroit averaging 233.3 combined points" (sounds like Detroit scores 233)
+  - RIGHT: "Detroit's games averaging 233.3 total points (both teams combined)"
+  - RIGHT: "Detroit games: 233 points combined per game"
+- AVOID AMBIGUITY: Numbers like totals, averages should specify the unit and scope clearly
 
 TONE CALIBRATION:
 - When data is clear: Be confident, even bold
