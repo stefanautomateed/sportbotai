@@ -1278,6 +1278,43 @@ export async function GET(request: NextRequest) {
                 draws: analysisEnrichedData.h2h.draws || 0,
               } : undefined,
               odds: pipelineOdds,
+              // PASS SITUATIONAL FACTORS FOR PROPER EDGE CALCULATION
+              situational: (() => {
+                // Calculate rest days for NBA/NHL/NFL
+                const isFatigueSport = sport.key.includes('basketball') || sport.key.includes('hockey') || sport.key.includes('football');
+                if (!isFatigueSport) return undefined;
+                
+                const matchTime = new Date(event.commence_time).getTime();
+                const oneDayMs = 24 * 60 * 60 * 1000;
+                
+                const getRestDays = (formData: any[] | null): number => {
+                  if (!formData || formData.length === 0) return 3;
+                  const lastGameDate = formData
+                    .map((g: any) => new Date(g.date).getTime())
+                    .filter((d: number) => d < matchTime)
+                    .sort((a: number, b: number) => b - a)[0];
+                  if (!lastGameDate) return 3;
+                  return Math.floor((matchTime - lastGameDate) / oneDayMs);
+                };
+                
+                const homeRestDays = getRestDays(analysis.enrichedData?.homeForm);
+                const awayRestDays = getRestDays(analysis.enrichedData?.awayForm);
+                
+                return {
+                  homeRestDays,
+                  awayRestDays,
+                  isHomeBackToBack: homeRestDays <= 1,
+                  isAwayBackToBack: awayRestDays <= 1,
+                  homeGamesLast7Days: (analysis.enrichedData?.homeForm || []).filter((g: any) => {
+                    const gameTime = new Date(g.date).getTime();
+                    return gameTime > (matchTime - 7 * oneDayMs) && gameTime < matchTime;
+                  }).length,
+                  awayGamesLast7Days: (analysis.enrichedData?.awayForm || []).filter((g: any) => {
+                    const gameTime = new Date(g.date).getTime();
+                    return gameTime > (matchTime - 7 * oneDayMs) && gameTime < matchTime;
+                  }).length,
+                };
+              })(),
               config: {
                 logPredictions: false, // We'll log separately
                 minEdgeToShow: 0.02,
