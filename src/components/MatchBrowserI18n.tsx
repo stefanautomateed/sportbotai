@@ -526,12 +526,12 @@ export default function MatchBrowserI18n({ initialSport, initialLeague, maxMatch
             </div>
             <div 
               id="hot-matches-scroll-sr"
-              className="flex gap-4 overflow-x-auto pb-3 px-[calc(50%-140px)] sm:px-[calc(50%-160px)] scrollbar-hide snap-x snap-mandatory overflow-y-visible pt-3 scroll-px-[calc(50%-140px)] sm:scroll-px-[calc(50%-160px)]"
+              className="flex gap-4 overflow-x-auto pb-3 px-4 md:px-0 scrollbar-hide snap-x snap-mandatory overflow-y-visible pt-3 scroll-px-4 md:scroll-px-0"
             >
               {hotMatches.map((match, index) => (
                 <div 
                   key={match.matchId} 
-                  className="flex-shrink-0 w-[280px] sm:w-[320px] snap-center"
+                  className="flex-shrink-0 w-[280px] sm:w-[320px] snap-start md:snap-start"
                 >
                   <MatchCardI18n
                     matchId={match.matchId}

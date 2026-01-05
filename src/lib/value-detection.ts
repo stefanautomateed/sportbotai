@@ -549,34 +549,36 @@ export function calculateModelProbability(
   
   // 6. Normalize to 100%
   const total = homeBase + awayBase + drawBase;
-  const home = Math.max(5, Math.min(90, Math.round((homeBase / total) * 100)));
-  const away = Math.max(5, Math.min(90, Math.round((awayBase / total) * 100)));
-  const draw = hasDraw ? 100 - home - away : undefined;
   
-  // CALIBRATION FIX: Better confidence calculation
-  // Confidence should reflect ACTUAL predictive power, not just signal clarity
-  // - Reduce confidence when probability spread is low (close matches are unpredictable)
-  // - Cap lower because our historical accuracy is ~45%, not 85%
-  const rawConfidence = signals.clarity_score;
-  
-  // Calculate probability spread (higher = clearer prediction)
-  const maxProb = Math.max(home, away, draw || 0);
-  const minProb = Math.min(home, away, draw || 100);
-  const probSpread = maxProb - minProb;
-  
-  // Reduce confidence for close matches (spread < 20 means toss-up)
-  const spreadFactor = Math.min(1, probSpread / 30); // Max factor at 30% spread
-  
-  // Cap at 70% instead of 85% - our actual accuracy is ~45-55%
-  // High confidence should only be given when we have clear edges
-  const confidence = Math.min(70, Math.round(rawConfidence * spreadFactor * 0.85));
-  
-  return {
-    home,
-    away,
-    draw,
-    confidence,
-  };
+  if (hasDraw) {
+    // 3-way market: calculate all three, ensure they sum to 100
+    const home = Math.max(5, Math.min(90, Math.round((homeBase / total) * 100)));
+    const away = Math.max(5, Math.min(90, Math.round((awayBase / total) * 100)));
+    const draw = 100 - home - away; // Ensure exact 100% sum
+    
+    // CALIBRATION FIX: Better confidence calculation
+    const rawConfidence = signals.clarity_score;
+    const maxProb = Math.max(home, away, draw);
+    const minProb = Math.min(home, away, draw);
+    const probSpread = maxProb - minProb;
+    const spreadFactor = Math.min(1, probSpread / 30);
+    const confidence = Math.min(70, Math.round(rawConfidence * spreadFactor * 0.85));
+    
+    return { home, away, draw, confidence };
+  } else {
+    // 2-way market (no draw): home + away MUST equal 100%
+    const homeRaw = (homeBase / total) * 100;
+    const home = Math.max(5, Math.min(95, Math.round(homeRaw)));
+    const away = 100 - home; // Ensure exact 100% sum
+    
+    // Confidence calculation for 2-way
+    const rawConfidence = signals.clarity_score;
+    const probSpread = Math.abs(home - away);
+    const spreadFactor = Math.min(1, probSpread / 30);
+    const confidence = Math.min(70, Math.round(rawConfidence * spreadFactor * 0.85));
+    
+    return { home, away, draw: undefined, confidence };
+  }
 }
 
 // ============================================
