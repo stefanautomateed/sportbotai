@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { generateMatchSlug } from '@/lib/match-utils';
 
 export const revalidate = 300; // Cache for 5 minutes
 
@@ -92,8 +93,15 @@ export async function GET(request: NextRequest) {
         aiReason = '💪 High confidence pick';
       }
       
+      // Parse team names from matchName (format: "Detroit Pistons vs New York Knicks")
+      const [homeTeam, awayTeam] = p.matchName.split(' vs ');
+      // Generate SEO-friendly matchId that match-preview API can parse
+      const seoMatchId = homeTeam && awayTeam 
+        ? generateMatchSlug(homeTeam, awayTeam, p.sport, p.kickoff.toISOString())
+        : p.matchId;
+      
       return {
-        matchId: p.matchId,
+        matchId: seoMatchId,
         matchName: p.matchName,
         sport: p.sport,
         league: p.league,
