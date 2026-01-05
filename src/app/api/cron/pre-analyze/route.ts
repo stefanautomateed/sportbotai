@@ -586,6 +586,9 @@ async function runQuickAnalysis(
   enrichedData: {
     homeFormStr: string;
     awayFormStr: string;
+    homeForm: Array<{ date: string; opponent: string; result: 'W' | 'D' | 'L'; score: string }>;
+    awayForm: Array<{ date: string; opponent: string; result: 'W' | 'D' | 'L'; score: string }>;
+    headToHead: Array<{ date: string; homeTeam: string; awayTeam: string; homeScore: number; awayScore: number }>;
     homeStats: { played: number; wins: number; draws: number; losses: number; goalsScored: number; goalsConceded: number };
     awayStats: { played: number; wins: number; draws: number; losses: number; goalsScored: number; goalsConceded: number };
     h2h: { total: number; homeWins: number; awayWins: number; draws: number };
@@ -875,6 +878,9 @@ ${!hasDraw ? 'NO DRAWS in this sport. Pick a winner.' : ''}`;
       enrichedData: {
         homeFormStr,
         awayFormStr,
+        homeForm: enrichedData.homeForm || [],
+        awayForm: enrichedData.awayForm || [],
+        headToHead: enrichedData.headToHead || [],
         homeStats,
         awayStats,
         h2h: h2hData,
@@ -1110,10 +1116,10 @@ export async function GET(request: NextRequest) {
               homeTrend: homeFormStr.includes('W') ? (homeFormStr.startsWith('WW') ? 'up' : 'stable') : 'down',
               awayTrend: awayFormStr.includes('W') ? (awayFormStr.startsWith('WW') ? 'up' : 'stable') : 'down',
               keyFormFactors: analysis.story?.riskFactors || [],
-              homeForm: enrichedData.homeForm || [],
-              awayForm: enrichedData.awayForm || [],
+              homeForm: analysis.enrichedData.homeForm || [],
+              awayForm: analysis.enrichedData.awayForm || [],
               formDataSource: 'API_SPORTS',
-              headToHead: enrichedData.headToHead || [],
+              headToHead: analysis.enrichedData.headToHead || [],
               h2hSummary: {
                 totalMatches: h2h.total,
                 homeWins: h2h.homeWins,
