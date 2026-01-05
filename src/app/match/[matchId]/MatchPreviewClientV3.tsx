@@ -724,6 +724,11 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
         
         // DEBUG: Log what we got from API
         console.log('[MatchPreview] API Response:', {
+          isDemo: result.isDemo,
+          demoId: result.demoId,
+          matchInfoHomeTeam: result.matchInfo?.homeTeam,
+          matchInfoAwayTeam: result.matchInfo?.awayTeam,
+          requestedMatch: result.requestedMatch,
           hasInjuries: !!result.injuries,
           homeInjuries: result.injuries?.home?.length || 0,
           awayInjuries: result.injuries?.away?.length || 0,
