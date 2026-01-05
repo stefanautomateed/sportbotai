@@ -294,11 +294,20 @@ async function fetchSportResult(
         (home.includes(searchHome) || searchHome.includes(home)) &&
         (away.includes(searchAway) || searchAway.includes(away))
       ) {
+        // Hockey API returns scores directly as numbers: { home: 2, away: 3 }
+        // Basketball API returns scores as objects: { home: { total: 100, points: 100 }, ... }
+        const homeScore = typeof game.scores?.home === 'number' 
+          ? game.scores.home 
+          : (game.scores?.home?.total ?? game.scores?.home?.points ?? 0);
+        const awayScore = typeof game.scores?.away === 'number' 
+          ? game.scores.away 
+          : (game.scores?.away?.total ?? game.scores?.away?.points ?? 0);
+        
         return {
           homeTeam: game.teams.home.name,
           awayTeam: game.teams.away.name,
-          homeScore: game.scores?.home?.total ?? game.scores?.home?.points ?? 0,
-          awayScore: game.scores?.away?.total ?? game.scores?.away?.points ?? 0,
+          homeScore,
+          awayScore,
           completed: true,
         };
       }
