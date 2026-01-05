@@ -1109,7 +1109,7 @@ export async function GET(request: NextRequest) {
               awayMomentumScore: null,
               homeTrend: homeFormStr.includes('W') ? (homeFormStr.startsWith('WW') ? 'up' : 'stable') : 'down',
               awayTrend: awayFormStr.includes('W') ? (awayFormStr.startsWith('WW') ? 'up' : 'stable') : 'down',
-              keyFormFactors: analysis.riskFactors || [],
+              keyFormFactors: analysis.story?.riskFactors || [],
               homeForm: enrichedData.homeForm || [],
               awayForm: enrichedData.awayForm || [],
               formDataSource: 'API_SPORTS',
