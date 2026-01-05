@@ -414,8 +414,10 @@ export default function MatchBrowser({ initialSport = 'soccer', initialLeague, m
                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
               </svg>
               AI Picks
-              {viewMode === 'ai-picks' && aiFlaggedMatches.length > 0 && (
-                <span className="text-xs bg-bg-primary/30 px-1.5 py-0.5 rounded">
+              {aiFlaggedMatches.length > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded ${
+                  viewMode === 'ai-picks' ? 'bg-bg-primary/30' : 'bg-white/10'
+                }`}>
                   {flaggedCountsByTime[timeFilter]}
                 </span>
               )}
@@ -429,11 +431,11 @@ export default function MatchBrowser({ initialSport = 'soccer', initialLeague, m
               }`}
             >
               All Matches
-              {viewMode === 'all' && (
-                <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded">
-                  {matchCountsByTime[timeFilter]}
-                </span>
-              )}
+              <span className={`text-xs px-1.5 py-0.5 rounded ${
+                viewMode === 'all' ? 'bg-white/20' : 'bg-white/10'
+              }`}>
+                {matchCountsByTime[timeFilter]}
+              </span>
             </button>
           </div>
 
