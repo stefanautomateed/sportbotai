@@ -1,0 +1,158 @@
+/**
+ * Match URL Utilities
+ * 
+ * Generates clean, SEO-friendly URLs for match pages.
+ * Format: detroit-pistons-vs-new-york-knicks-nba-2026-01-06
+ */
+
+/**
+ * Convert team name to URL-safe slug
+ * "New York Knicks" -> "new-york-knicks"
+ */
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')     // Replace spaces with hyphens
+    .replace(/-+/g, '-');     // Remove consecutive hyphens
+}
+
+/**
+ * Get short sport code for URL
+ * "basketball_nba" -> "nba"
+ * "soccer_epl" -> "epl"
+ */
+function getSportCode(sportKey: string): string {
+  // Extract the league part after underscore
+  const parts = sportKey.split('_');
+  if (parts.length >= 2) {
+    return parts.slice(1).join('-'); // "basketball_nba" -> "nba", "soccer_spain_la_liga" -> "spain-la-liga"
+  }
+  return sportKey;
+}
+
+/**
+ * Generate a clean, SEO-friendly match URL slug
+ * 
+ * @example
+ * generateMatchSlug("Detroit Pistons", "New York Knicks", "basketball_nba", "2026-01-06T00:10:00Z")
+ * // Returns: "detroit-pistons-vs-new-york-knicks-nba-2026-01-06"
+ */
+export function generateMatchSlug(
+  homeTeam: string,
+  awayTeam: string,
+  sportKey: string,
+  kickoff?: string
+): string {
+  const home = slugify(homeTeam);
+  const away = slugify(awayTeam);
+  const sport = getSportCode(sportKey);
+  
+  // Add date for uniqueness if available
+  if (kickoff) {
+    const date = kickoff.split('T')[0]; // "2026-01-06"
+    return `${home}-vs-${away}-${sport}-${date}`;
+  }
+  
+  return `${home}-vs-${away}-${sport}`;
+}
+
+/**
+ * Parse a match slug back to its components
+ * Returns null if parsing fails
+ * 
+ * @example
+ * parseMatchSlug("detroit-pistons-vs-new-york-knicks-nba-2026-01-06")
+ * // Returns: { home: "detroit pistons", away: "new york knicks", sport: "nba", date: "2026-01-06" }
+ */
+export function parseMatchSlug(slug: string): {
+  homeSlug: string;
+  awaySlug: string;
+  sportCode: string;
+  date?: string;
+} | null {
+  // Check if it's a base64 encoded string (legacy format)
+  if (isBase64(slug)) {
+    return null; // Let the caller handle base64 separately
+  }
+  
+  // Try to parse the slug format: home-team-vs-away-team-sport-date
+  const vsIndex = slug.indexOf('-vs-');
+  if (vsIndex === -1) return null;
+  
+  const homeSlug = slug.substring(0, vsIndex);
+  const afterVs = slug.substring(vsIndex + 4);
+  
+  // Find the date at the end (YYYY-MM-DD format)
+  const dateMatch = afterVs.match(/(\d{4}-\d{2}-\d{2})$/);
+  const date = dateMatch ? dateMatch[1] : undefined;
+  
+  // Remove the date from the rest
+  const withoutDate = date ? afterVs.slice(0, -(date.length + 1)) : afterVs;
+  
+  // The last segment before date is the sport code
+  const segments = withoutDate.split('-');
+  
+  // For multi-word sports like "spain-la-liga", we need to find where away team ends
+  // Heuristic: sport codes are typically short (nba, nhl, epl, etc.) or known patterns
+  const knownSports = ['nba', 'nhl', 'nfl', 'epl', 'euroleague', 'la-liga', 'bundesliga', 'serie-a', 'ligue-one', 'mls'];
+  
+  let sportCode = '';
+  let awaySlug = '';
+  
+  // Try to find a known sport from the end
+  for (let i = 1; i <= Math.min(3, segments.length); i++) {
+    const potentialSport = segments.slice(-i).join('-');
+    if (knownSports.includes(potentialSport) || potentialSport.length <= 5) {
+      sportCode = potentialSport;
+      awaySlug = segments.slice(0, -i).join('-');
+      break;
+    }
+  }
+  
+  if (!sportCode) {
+    // Fallback: assume last segment is sport
+    sportCode = segments[segments.length - 1];
+    awaySlug = segments.slice(0, -1).join('-');
+  }
+  
+  return { homeSlug, awaySlug, sportCode, date };
+}
+
+/**
+ * Check if a string is base64 encoded
+ */
+export function isBase64(str: string): boolean {
+  if (!str || str.length < 20) return false;
+  
+  // Base64 strings are typically longer and use specific characters
+  const base64Regex = /^[A-Za-z0-9+/]+=*$/;
+  
+  // Also check if it starts with eyJ which is base64 for {"
+  return base64Regex.test(str) || str.startsWith('eyJ');
+}
+
+/**
+ * Decode legacy base64 matchId to match data
+ */
+export function decodeBase64MatchId(encodedId: string): {
+  homeTeam: string;
+  awayTeam: string;
+  sport: string;
+  league: string;
+  kickoff: string;
+} | null {
+  try {
+    // Handle both browser (atob) and Node (Buffer)
+    let decoded: string;
+    if (typeof Buffer !== 'undefined') {
+      decoded = Buffer.from(encodedId, 'base64').toString('utf-8');
+    } else {
+      decoded = atob(encodedId);
+    }
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}

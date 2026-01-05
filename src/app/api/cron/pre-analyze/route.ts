@@ -470,17 +470,14 @@ function getConsensusOdds(event: OddsApiEvent): { home: number; away: number; dr
 }
 
 /**
- * Generate matchId (base64 encoded match data)
+ * Generate clean, SEO-friendly matchId slug
  */
-function generateMatchId(event: OddsApiEvent, sportKey: string, league: string): string {
-  const matchData = {
-    homeTeam: event.home_team,
-    awayTeam: event.away_team,
-    sport: sportKey,
-    league: league,
-    kickoff: event.commence_time,
-  };
-  return Buffer.from(JSON.stringify(matchData)).toString('base64');
+function generateMatchId(event: OddsApiEvent, sportKey: string, _league: string): string {
+  const homeSlug = event.home_team.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+  const awaySlug = event.away_team.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+  const sportCode = sportKey.split('_').slice(1).join('-') || sportKey;
+  const date = event.commence_time.split('T')[0];
+  return `${homeSlug}-vs-${awaySlug}-${sportCode}-${date}`;
 }
 
 /**

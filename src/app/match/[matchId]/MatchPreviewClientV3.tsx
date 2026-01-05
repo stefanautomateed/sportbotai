@@ -30,6 +30,7 @@ import {
   ProSection,
   CollapsibleSection,
 } from '@/components/analysis';
+import { isBase64, parseMatchSlug, decodeBase64MatchId } from '@/lib/match-utils';
 import StandingsTable from '@/components/StandingsTable';
 import type { UniversalSignals } from '@/lib/universal-signals';
 import type { MarketIntel, OddsData } from '@/lib/value-detection';
@@ -262,32 +263,51 @@ function getLeagueInfo(leagueName: string, sport: string): { id: number; sport: 
 }
 
 // Parse matchId on client to show header immediately
+// Supports both new SEO-friendly slugs and legacy base64 format
 function parseMatchIdClient(matchId: string): { homeTeam: string; awayTeam: string; league: string; sport: string; kickoff: string } | null {
-  try {
-    // Try base64 decode first
-    const decoded = atob(matchId);
-    const parsed = JSON.parse(decoded);
-    return {
-      homeTeam: parsed.homeTeam || 'Home Team',
-      awayTeam: parsed.awayTeam || 'Away Team',
-      league: parsed.league || '',
-      sport: parsed.sport || 'soccer',
-      kickoff: parsed.kickoff || new Date().toISOString(),
-    };
-  } catch {
-    // Fallback: parse underscore-separated format
-    const parts = matchId.split('_');
-    if (parts.length >= 3) {
+  // Try legacy base64 format first (for backward compatibility)
+  if (isBase64(matchId)) {
+    const decoded = decodeBase64MatchId(matchId);
+    if (decoded) {
       return {
-        homeTeam: parts[0].replace(/-/g, ' '),
-        awayTeam: parts[1].replace(/-/g, ' '),
-        league: parts[2].replace(/-/g, ' '),
-        sport: 'soccer',
-        kickoff: parts[3] ? new Date(parseInt(parts[3])).toISOString() : new Date().toISOString(),
+        homeTeam: decoded.homeTeam || 'Home Team',
+        awayTeam: decoded.awayTeam || 'Away Team',
+        league: decoded.league || '',
+        sport: decoded.sport || 'soccer',
+        kickoff: decoded.kickoff || new Date().toISOString(),
       };
     }
-    return null;
   }
+  
+  // Try new SEO-friendly slug format: home-team-vs-away-team-sport-date
+  const parsed = parseMatchSlug(matchId);
+  if (parsed) {
+    // Convert slugs back to display names (capitalize words)
+    const toDisplayName = (slug: string) => 
+      slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    
+    return {
+      homeTeam: toDisplayName(parsed.homeSlug),
+      awayTeam: toDisplayName(parsed.awaySlug),
+      league: parsed.sportCode.toUpperCase(),
+      sport: `basketball_${parsed.sportCode}`, // Will be refined by API
+      kickoff: parsed.date ? `${parsed.date}T12:00:00Z` : new Date().toISOString(),
+    };
+  }
+  
+  // Fallback: parse underscore-separated format (old format)
+  const parts = matchId.split('_');
+  if (parts.length >= 3) {
+    return {
+      homeTeam: parts[0].replace(/-/g, ' '),
+      awayTeam: parts[1].replace(/-/g, ' '),
+      league: parts[2].replace(/-/g, ' '),
+      sport: 'soccer',
+      kickoff: parts[3] ? new Date(parseInt(parts[3])).toISOString() : new Date().toISOString(),
+    };
+  }
+  
+  return null;
 }
 
 interface MatchPreviewClientProps {

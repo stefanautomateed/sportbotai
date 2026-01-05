@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import TeamLogo from './TeamLogo';
 import LeagueLogo from './LeagueLogo';
+import { generateMatchSlug } from '@/lib/match-utils';
 
 interface MatchListItemProps {
   matchId: string;
@@ -38,16 +39,8 @@ export default function MatchListItem({
   isHot = false,
   className = '',
 }: MatchListItemProps) {
-  // Generate match preview URL - use consistent server-side encoding
-  const matchData = {
-    homeTeam,
-    awayTeam,
-    league,
-    sport: sportKey,
-    kickoff: commenceTime,
-  };
-  // Use Buffer on both server and client for consistency (Next.js polyfills it)
-  const encodedMatchId = Buffer.from(JSON.stringify(matchData)).toString('base64');
+  // Generate clean, SEO-friendly URL slug
+  const matchSlug = generateMatchSlug(homeTeam, awayTeam, sportKey, commenceTime);
 
   // Format time until match - use state to avoid hydration mismatch
   const [timeDisplay, setTimeDisplay] = useState({ text: '', isUrgent: false });
@@ -78,7 +71,7 @@ export default function MatchListItem({
 
   return (
     <Link
-      href={`/match/${encodedMatchId}`}
+      href={`/match/${matchSlug}`}
       className={`
         group flex items-center gap-4 px-4 py-3 
         bg-bg-card hover:bg-bg-elevated 

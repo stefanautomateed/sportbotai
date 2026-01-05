@@ -16,6 +16,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useFavorites } from '@/lib/FavoritesContext'
+import { generateMatchSlug } from '@/lib/match-utils'
 import Link from 'next/link'
 import TeamLogo from '@/components/ui/TeamLogo'
 
@@ -29,17 +30,9 @@ interface UpcomingMatch {
   sportTitle?: string
 }
 
-// Generate match preview URL - same format as MatchCard
+// Generate clean, SEO-friendly match URL slug
 function generateMatchId(match: UpcomingMatch): string {
-  const matchData = {
-    homeTeam: match.homeTeam,
-    awayTeam: match.awayTeam,
-    league: match.league || match.sportTitle || match.sport,
-    sport: match.sport,
-    kickoff: match.commenceTime,
-  };
-  // Use btoa for browser compatibility
-  return btoa(JSON.stringify(matchData));
+  return generateMatchSlug(match.homeTeam, match.awayTeam, match.sport, match.commenceTime);
 }
 
 export default function MyTeamsDashboard() {

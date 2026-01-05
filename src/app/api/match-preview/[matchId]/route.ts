@@ -18,6 +18,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions, canUserAnalyze, incrementAnalysisCount } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { applyConvictionCap } from '@/lib/accuracy-core/types';
+import { isBase64, parseMatchSlug, decodeBase64MatchId } from '@/lib/match-utils';
 
 // Force dynamic rendering (uses headers/session)
 export const dynamic = 'force-dynamic';
@@ -1353,32 +1354,58 @@ function getSportConfig(sport: string) {
 }
 
 function parseMatchId(matchId: string) {
-  try {
-    const decoded = Buffer.from(matchId, 'base64').toString('utf-8');
-    const parsed = JSON.parse(decoded);
-    return {
-      homeTeam: parsed.homeTeam,
-      awayTeam: parsed.awayTeam,
-      league: normalizeLeagueName(parsed.league),
-      sport: parsed.sport || detectSportFromLeague(parsed.league) || 'soccer',
-      kickoff: parsed.kickoff || new Date().toISOString(),
-      venue: parsed.venue || null,
-    };
-  } catch {
-    const parts = matchId.split('_');
-    if (parts.length >= 3) {
-      const league = normalizeLeagueName(parts[2].replace(/-/g, ' '));
+  // Try legacy base64 format first
+  if (isBase64(matchId)) {
+    const decoded = decodeBase64MatchId(matchId);
+    if (decoded) {
       return {
-        homeTeam: parts[0].replace(/-/g, ' '),
-        awayTeam: parts[1].replace(/-/g, ' '),
-        league,
-        sport: detectSportFromLeague(league) || 'soccer',
-        kickoff: parts[3] ? new Date(parseInt(parts[3])).toISOString() : new Date().toISOString(),
+        homeTeam: decoded.homeTeam,
+        awayTeam: decoded.awayTeam,
+        league: normalizeLeagueName(decoded.league),
+        sport: decoded.sport || detectSportFromLeague(decoded.league) || 'soccer',
+        kickoff: decoded.kickoff || new Date().toISOString(),
         venue: null,
       };
     }
-    return null;
   }
+  
+  // Try new SEO-friendly slug format: home-team-vs-away-team-sport-date
+  const parsed = parseMatchSlug(matchId);
+  if (parsed) {
+    const toDisplayName = (slug: string) => 
+      slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    
+    // Map sport code to sport key (e.g., "nba" -> "basketball_nba")
+    const sportCode = parsed.sportCode;
+    const sportType = detectSportFromLeague(sportCode.toUpperCase()) || 
+      (sportCode.includes('nba') || sportCode.includes('euroleague') ? 'basketball' : 
+       sportCode.includes('nfl') ? 'americanfootball' :
+       sportCode.includes('nhl') ? 'icehockey' : 'soccer');
+    
+    return {
+      homeTeam: toDisplayName(parsed.homeSlug),
+      awayTeam: toDisplayName(parsed.awaySlug),
+      league: sportCode.toUpperCase(),
+      sport: `${sportType}_${sportCode}`,
+      kickoff: parsed.date ? `${parsed.date}T12:00:00Z` : new Date().toISOString(),
+      venue: null,
+    };
+  }
+  
+  // Fallback: underscore-separated format
+  const parts = matchId.split('_');
+  if (parts.length >= 3) {
+    const league = normalizeLeagueName(parts[2].replace(/-/g, ' '));
+    return {
+      homeTeam: parts[0].replace(/-/g, ' '),
+      awayTeam: parts[1].replace(/-/g, ' '),
+      league,
+      sport: detectSportFromLeague(league) || 'soccer',
+      kickoff: parts[3] ? new Date(parseInt(parts[3])).toISOString() : new Date().toISOString(),
+      venue: null,
+    };
+  }
+  return null;
 }
 
 function buildH2HHeadline(homeTeam: string, awayTeam: string, h2h: { totalMeetings: number; homeWins: number; awayWins: number; draws: number }) {

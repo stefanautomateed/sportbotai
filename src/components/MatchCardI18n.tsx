@@ -15,6 +15,7 @@ import TeamLogo from '@/components/ui/TeamLogo';
 import LeagueLogo from '@/components/ui/LeagueLogo';
 import MatchCountdown from '@/components/ui/MatchCountdown';
 import { Locale } from '@/lib/i18n/translations';
+import { generateMatchSlug } from '@/lib/match-utils';
 
 interface LiveScore {
   homeScore: number;
@@ -143,16 +144,8 @@ export default function MatchCardI18n({
     }
   }, [homeTeam, awayTeam, commenceTime, sportKey, isFinished]);
 
-  // Generate match preview URL - use Buffer for consistent encoding
-  const matchData = {
-    homeTeam,
-    awayTeam,
-    league,
-    sport: sportKey,
-    kickoff: commenceTime,
-  };
-  // Use Buffer on both server and client for consistency (Next.js polyfills it)
-  const encodedMatchId = Buffer.from(JSON.stringify(matchData)).toString('base64');
+  // Generate clean, SEO-friendly URL slug
+  const matchSlug = generateMatchSlug(homeTeam, awayTeam, sportKey, commenceTime);
 
   // Format match date - only called within useEffect/event handlers
   const [formattedDate, setFormattedDate] = useState<string>('');
@@ -177,7 +170,7 @@ export default function MatchCardI18n({
 
   return (
     <Link
-      href={`${localePath}/match/${encodedMatchId}`}
+      href={`${localePath}/match/${matchSlug}`}
       scroll={false}
       className={`group relative card-glass rounded-xl ${isLive ? 'border-red-500/40 ring-1 ring-red-500/20' : isFinished ? 'border-gray-600/40' : 'border-white/10'} p-3 sm:p-4 hover:border-accent/40 hover:bg-white/[0.08] transition-all duration-300 ease-out block hover:scale-[1.02] hover:shadow-xl hover:shadow-accent/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg touch-manipulation ${isFinished ? 'opacity-80' : ''}`}
       data-card
