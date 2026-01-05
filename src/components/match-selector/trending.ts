@@ -209,16 +209,22 @@ function detectDerby(homeTeam: string, awayTeam: string): boolean {
 /**
  * Get trending matches from a list of matches
  * Returns top N matches sorted by hot score
+ * Only includes matches within the next 48 hours (analyzable timeframe)
  */
 export function getTrendingMatches(
   matches: MatchData[],
   limit: number = 8
 ): TrendingMatch[] {
-  // Filter out matches that have already started
+  // Filter to only matches that:
+  // 1. Haven't started yet
+  // 2. Are within the next 48 hours (analyzable)
   const now = Date.now();
-  const upcomingMatches = matches.filter(m => 
-    new Date(m.commenceTime).getTime() > now
-  );
+  const maxTime = now + (48 * 60 * 60 * 1000); // 48 hours from now
+  
+  const upcomingMatches = matches.filter(m => {
+    const matchTime = new Date(m.commenceTime).getTime();
+    return matchTime > now && matchTime <= maxTime;
+  });
   
   // Calculate hot scores for all matches
   const scoredMatches = upcomingMatches.map(calculateHotScore);
