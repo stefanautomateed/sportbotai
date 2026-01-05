@@ -24,6 +24,7 @@ import ReferralSync from '@/components/ReferralSync';
 import ActivityTracker from '@/components/ActivityTracker';
 import { SITE_CONFIG, META, OG_DEFAULTS, getOrganizationSchema, getWebsiteSchema } from '@/lib/seo';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import MicrosoftClarity from '@/components/MicrosoftClarity';
 import CookieConsent from '@/components/CookieConsent';
 
 // Inter font with display swap for better performance
@@ -164,6 +165,9 @@ export default function RootLayout({
         
         {/* Google Analytics */}
         <GoogleAnalytics />
+        
+        {/* Microsoft Clarity - Heatmaps & Session Recording */}
+        <MicrosoftClarity />
         
         {/* DNS Prefetch & Preconnect for Logo CDNs - faster image loading */}
         <link rel="dns-prefetch" href="//a.espncdn.com" />
