@@ -45,6 +45,8 @@ export async function generateToolReviewPosts(count: number = 1): Promise<ToolRe
       blogPostId: null, // No blog post created yet
       // ONLY from sportsbettingtools.io - our single source
       sourceUrl: { contains: 'sportsbettingtools' },
+      // ONLY tools with contact emails - so we can send outreach
+      contactEmail: { not: null },
       // Exclude big brands - they won't link back
       NOT: {
         OR: bigBrands.map(brand => ({
@@ -53,9 +55,7 @@ export async function generateToolReviewPosts(count: number = 1): Promise<ToolRe
       }
     },
     orderBy: [
-      // Prioritize tools with contact emails (can reach out)
-      { contactEmail: 'desc' },
-      // Then newest first (more likely to engage)
+      // Newest first (more likely to engage)
       { createdAt: 'desc' },
     ],
     take: count,
@@ -154,7 +154,7 @@ export async function generateToolReviewPosts(count: number = 1): Promise<ToolRe
 }
 
 /**
- * Get count of tools ready for review generation (ONLY from sportsbettingtools.io)
+ * Get count of tools ready for review generation (ONLY with contact emails)
  */
 export async function getToolsReadyForReview(): Promise<number> {
   return prisma.toolReview.count({
@@ -162,6 +162,7 @@ export async function getToolsReadyForReview(): Promise<number> {
       contentWords: { gt: 100 },
       blogPostId: null,
       sourceUrl: { contains: 'sportsbettingtools' },
+      contactEmail: { not: null }, // Only count tools we can email
     },
   });
 }
