@@ -14,6 +14,7 @@ import {
 } from '@/lib/backlink-scout';
 import { generateFeaturedImage } from './image-generator';
 import { generateToolReviewContent } from './content-generator';
+import { sendToolReviewOutreach } from '@/lib/email';
 
 export interface ToolReviewResult {
   success: boolean;
@@ -132,6 +133,14 @@ export async function generateToolReviewPosts(count: number = 1): Promise<ToolRe
       });
       
       console.log(`[ToolReview] ✅ Published: /blog/${review.slug}`);
+      
+      // Send outreach email if contact email exists
+      if (tool.contactEmail) {
+        const reviewUrl = `https://www.sportbotai.com/blog/${review.slug}`;
+        const emailSent = await sendToolReviewOutreach(tool.contactEmail, tool.toolName, reviewUrl);
+        console.log(`[ToolReview] 📧 Outreach email ${emailSent ? 'sent' : 'failed'} to ${tool.contactEmail}`);
+      }
+      
       results.push({ success: true, toolName: tool.toolName, slug: review.slug });
       
     } catch (error) {

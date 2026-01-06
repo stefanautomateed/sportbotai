@@ -453,3 +453,75 @@ export async function sendAdminPurchaseNotification(
 
   return results.every((r) => r);
 }
+
+// ============================================
+// TOOL REVIEW OUTREACH EMAILS
+// ============================================
+
+/**
+ * Send friendly outreach email when a tool review is published
+ */
+export async function sendToolReviewOutreach(
+  email: string,
+  toolName: string,
+  reviewUrl: string
+): Promise<boolean> {
+  const badgeSnippet = `<a href="${reviewUrl}" title="${toolName} Review on SportBot AI" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 8px; text-decoration: none; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; color: white; font-weight: 500;">
+  <img src="https://www.sportbotai.com/logo.svg" alt="SportBot AI" width="24" height="24" style="border-radius: 4px;">
+  Featured on SportBot AI
+</a>`;
+
+  const html = emailWrapper(`
+    <h2 style="color: #10B981;">We featured ${toolName}! 🎉</h2>
+    
+    <p>Hey there!</p>
+    
+    <p>Hope you're doing well. I'm Goran from SportBot AI - we help sports fans find value using AI-powered analysis.</p>
+    
+    <p>I wanted to let you know that we just published a detailed review of <strong>${toolName}</strong> on our site. We genuinely think it's a great tool and wanted to share it with our audience.</p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${reviewUrl}" style="${buttonStyle}">
+        View Your Review →
+      </a>
+    </div>
+    
+    <h3 style="color: #f8fafc; margin-top: 30px;">Quick note about the link</h3>
+    
+    <p>Currently, the link to your site is <strong>nofollow</strong> (standard for reviews). But here's the thing - if you'd like us to make it a <strong>dofollow</strong> link, we're happy to do that!</p>
+    
+    <p>All we ask is that you add our small "Featured on SportBot AI" badge somewhere on your site. It's a win-win: you get SEO juice from a dofollow link, and we get a little visibility. 🤝</p>
+    
+    <div style="background: #1e293b; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 0 0 15px 0; color: #fbbf24;"><strong>How it works:</strong></p>
+      <ol style="color: #cbd5e1; margin: 0; padding-left: 20px; line-height: 1.8;">
+        <li>Copy the badge code below</li>
+        <li>Add it anywhere on your site (footer, about page, anywhere works!)</li>
+        <li>Reply to this email to let us know</li>
+        <li>We'll update your link to dofollow within 24 hours ✓</li>
+      </ol>
+    </div>
+    
+    <h3 style="color: #f8fafc;">Badge code:</h3>
+    <div style="background: #020617; padding: 15px; border-radius: 8px; overflow-x: auto; margin-bottom: 20px;">
+      <code style="font-size: 11px; color: #10B981; word-break: break-all;">${badgeSnippet.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>
+    </div>
+    
+    <p style="color: #94a3b8; font-size: 14px;">
+      No pressure at all - the review stays up either way! Just wanted to offer the option. 😊
+    </p>
+    
+    <p style="margin-top: 30px;">
+      Cheers,<br>
+      <strong>Goran</strong><br>
+      <span style="color: #94a3b8;">SportBot AI</span>
+    </p>
+  `);
+
+  return sendEmail({
+    to: email,
+    subject: `We featured ${toolName} on SportBot AI 🎉`,
+    html,
+  });
+}
+
