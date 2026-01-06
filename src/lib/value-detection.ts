@@ -697,18 +697,18 @@ export function detectValue(
  * Generate complete market intelligence
  * 
  * @param league - Optional league key (e.g., 'epl', 'laliga') for calibration
+ * @param pipelineProbabilities - Optional pre-calculated probabilities from accuracy-core pipeline
+ *                                When provided, these override internal probability calculation
+ *                                This ensures all endpoints use the SAME Poisson/Elo model probabilities
  */
 export function analyzeMarket(
   signals: UniversalSignals,
   odds: OddsData,
   hasDraw: boolean = true,
   previousOdds?: OddsData,
-  league?: string
+  league?: string,
+  pipelineProbabilities?: { home: number; away: number; draw?: number | null }
 ): MarketIntel {
-  // Calculate initial model probability with league-specific calibration
-  // This will be recalculated if we detect steam moves
-  const modelProbInitial = calculateModelProbability(signals, hasDraw, league);
-  
   // Calculate margin for display
   const margin = calculateMargin(odds.homeOdds, odds.awayOdds, odds.drawOdds);
   
@@ -722,6 +722,10 @@ export function analyzeMarket(
   // Analyze line movement if we have previous odds
   let lineMovement: LineMovement | undefined;
   let steamMoveInput: SteamMoveInput | undefined;
+  
+  // Calculate initial model probability (for RLM detection and fallback)
+  // This may be overridden by pipeline probabilities later
+  const modelProbInitial = calculateModelProbability(signals, hasDraw, league);
   
   if (previousOdds) {
     const homeDiff = previousOdds.homeOdds - odds.homeOdds;
@@ -786,11 +790,32 @@ export function analyzeMarket(
     };
   }
   
-  // Re-calculate model probability WITH steam move input
-  // This ensures our probabilities factor in sharp money signals
-  const modelProb = steamMoveInput 
-    ? calculateModelProbability(signals, hasDraw, league, steamMoveInput)
-    : modelProbInitial;
+  // ============================================
+  // MODEL PROBABILITIES - SINGLE SOURCE OF TRUTH
+  // ============================================
+  // If pipeline probabilities are provided (from accuracy-core), use them.
+  // This ensures all endpoints return the SAME edge calculations.
+  // Otherwise fall back to legacy calculation (for backward compatibility).
+  let modelProb: ModelProbability;
+  
+  if (pipelineProbabilities) {
+    // Use pipeline probabilities (Poisson/Elo models from accuracy-core)
+    // Convert from decimals (0.45) to percentages (45) if needed
+    const isDecimal = pipelineProbabilities.home < 1 && pipelineProbabilities.away < 1;
+    modelProb = {
+      home: isDecimal ? pipelineProbabilities.home * 100 : pipelineProbabilities.home,
+      away: isDecimal ? pipelineProbabilities.away * 100 : pipelineProbabilities.away,
+      draw: pipelineProbabilities.draw != null 
+        ? (isDecimal ? pipelineProbabilities.draw * 100 : pipelineProbabilities.draw)
+        : undefined,
+      confidence: 75, // Pipeline has high confidence by default
+    };
+  } else {
+    // Legacy: Use internal heuristics with steam move adjustment
+    modelProb = steamMoveInput 
+      ? calculateModelProbability(signals, hasDraw, league, steamMoveInput)
+      : modelProbInitial;
+  }
   
   // Detect value (uses bookmaker quality weighting internally)
   // This uses the final model probability (with steam adjustments if any)

@@ -597,12 +597,14 @@ export async function GET(request: NextRequest) {
       let awayEdge: number;
       let drawEdge: number | undefined;
       let valueEdgeLabel: string | undefined;
+      let usingPipelineProbs = false; // Track if we're using proper Poisson/Elo probabilities
       
       if (cachedAnalysis?.marketIntel?.modelProbability) {
         const aiProbs = cachedAnalysis.marketIntel.modelProbability;
         modelHomeProb = aiProbs.home;
         modelAwayProb = aiProbs.away;
         modelDrawProb = aiProbs.draw;
+        usingPipelineProbs = true;
         
         const homeImplied = oddsToImpliedProb(consensus.home);
         const awayImplied = oddsToImpliedProb(consensus.away);
@@ -613,6 +615,9 @@ export async function GET(request: NextRequest) {
         drawEdge = modelDrawProb ? modelDrawProb - drawImplied : undefined;
         valueEdgeLabel = cachedAnalysis.marketIntel.valueEdge?.label;
       } else {
+        // FALLBACK: No cached pipeline data, use heuristic approximation
+        // This should be rare after pre-analyze runs - log for monitoring
+        console.warn(`[Market-Alerts] No cached pipeline data for ${matchRef} - using heuristic fallback (less accurate)`);
         const modelProb = calculateQuickModelProbability(consensus, prevSnapshot ?? null, sport.hasDraw);
         modelHomeProb = modelProb.home;
         modelAwayProb = modelProb.away;

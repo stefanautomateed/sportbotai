@@ -1018,6 +1018,126 @@ export async function GET(request: NextRequest) {
           // Extract enriched data for building rich UI components
           const { homeFormStr, awayFormStr, homeStats, awayStats, h2h } = analysis.enrichedData;
           
+          // ============================================
+          // RUN ACCURACY-CORE PIPELINE EARLY
+          // ============================================
+          // This ensures we have Poisson/Elo probabilities for:
+          // 1. Cache storage (marketIntel.modelProbability)
+          // 2. OddsSnapshot storage
+          // 3. Prediction creation
+          // 
+          // SINGLE SOURCE OF TRUTH: All probabilities come from here!
+          const matchDate = new Date(event.commence_time);
+          const pipelineOdds: BookmakerOdds[] = [{
+            bookmaker: 'consensus',
+            homeOdds: consensus.home,
+            awayOdds: consensus.away,
+            drawOdds: consensus.draw || undefined,
+          }];
+          
+          const pipelineInput: PipelineInput = {
+            matchId: event.id,
+            sport: sport.key,
+            league: sport.league,
+            homeTeam: event.home_team,
+            awayTeam: event.away_team,
+            kickoff: matchDate,
+            homeStats: {
+              played: homeStats?.played || 0,
+              wins: homeStats?.wins || 0,
+              draws: homeStats?.draws || 0,
+              losses: homeStats?.losses || 0,
+              scored: homeStats?.goalsScored || 0,
+              conceded: homeStats?.goalsConceded || 0,
+            },
+            awayStats: {
+              played: awayStats?.played || 0,
+              wins: awayStats?.wins || 0,
+              draws: awayStats?.draws || 0,
+              losses: awayStats?.losses || 0,
+              scored: awayStats?.goalsScored || 0,
+              conceded: awayStats?.goalsConceded || 0,
+            },
+            homeForm: homeFormStr,
+            awayForm: awayFormStr,
+            h2h: h2h ? {
+              total: h2h.total || 0,
+              homeWins: h2h.homeWins || 0,
+              awayWins: h2h.awayWins || 0,
+              draws: h2h.draws || 0,
+            } : undefined,
+            odds: pipelineOdds,
+            situational: (() => {
+              const isFatigueSport = sport.key.includes('basketball') || sport.key.includes('hockey') || sport.key.includes('football');
+              const matchTime = matchDate.getTime();
+              const oneDayMs = 24 * 60 * 60 * 1000;
+              
+              const getRestDays = (formData: any[] | null): number => {
+                if (!formData || formData.length === 0) return 3;
+                const lastGameDate = formData
+                  .map((g: any) => new Date(g.date).getTime())
+                  .filter((d: number) => d < matchTime)
+                  .sort((a: number, b: number) => b - a)[0];
+                if (!lastGameDate) return 3;
+                return Math.floor((matchTime - lastGameDate) / oneDayMs);
+              };
+              
+              const homeRestDays = getRestDays(analysis.enrichedData?.homeForm);
+              const awayRestDays = getRestDays(analysis.enrichedData?.awayForm);
+              
+              // Count injuries
+              const countInjuries = (injuries: any[]) => {
+                let outCount = 0;
+                let doubtfulCount = 0;
+                for (const inj of injuries || []) {
+                  const reason = (inj.reason || inj.status || '').toLowerCase();
+                  if (reason.includes('out') || reason.includes('injury') && !reason.includes('questionable') && !reason.includes('doubtful') && !reason.includes('probable')) {
+                    outCount++;
+                  } else if (reason.includes('doubtful') || reason.includes('questionable') || reason.includes('gtd')) {
+                    doubtfulCount++;
+                  }
+                }
+                return { outCount, doubtfulCount };
+              };
+              
+              const homeInjuryCounts = countInjuries(analysis.injuries?.home || []);
+              const awayInjuryCounts = countInjuries(analysis.injuries?.away || []);
+              
+              return {
+                homeRestDays: isFatigueSport ? homeRestDays : 3,
+                awayRestDays: isFatigueSport ? awayRestDays : 3,
+                isHomeBackToBack: isFatigueSport ? homeRestDays <= 1 : false,
+                isAwayBackToBack: isFatigueSport ? awayRestDays <= 1 : false,
+                homeGamesLast7Days: isFatigueSport ? (analysis.enrichedData?.homeForm || []).filter((g: any) => {
+                  const gameTime = new Date(g.date).getTime();
+                  return gameTime > (matchTime - 7 * oneDayMs) && gameTime < matchTime;
+                }).length : 0,
+                awayGamesLast7Days: isFatigueSport ? (analysis.enrichedData?.awayForm || []).filter((g: any) => {
+                  const gameTime = new Date(g.date).getTime();
+                  return gameTime > (matchTime - 7 * oneDayMs) && gameTime < matchTime;
+                }).length : 0,
+                homeInjuriesOut: homeInjuryCounts.outCount,
+                awayInjuriesOut: awayInjuryCounts.outCount,
+                homeInjuriesDoubtful: homeInjuryCounts.doubtfulCount,
+                awayInjuriesDoubtful: awayInjuryCounts.doubtfulCount,
+              };
+            })(),
+            config: { logPredictions: false, minEdgeToShow: 0.02 },
+          };
+          
+          const pipelineResult = await runAccuracyPipeline(pipelineInput);
+          
+          // Extract calibrated probabilities (Poisson/Elo) - THE SOURCE OF TRUTH
+          const pipelineProbs = {
+            home: pipelineResult.details.calibratedProbabilities.home,
+            away: pipelineResult.details.calibratedProbabilities.away,
+            draw: pipelineResult.details.calibratedProbabilities.draw || null,
+          };
+          const pipelineEdge = pipelineResult.details.edge;
+          const modelMethod = pipelineResult.details.rawProbabilities.method;
+          
+          console.log(`[Pre-Analyze] ${modelMethod.toUpperCase()}: ${matchRef} | H:${(pipelineProbs.home*100).toFixed(1)}% A:${(pipelineProbs.away*100).toFixed(1)}%${pipelineProbs.draw ? ` D:${(pipelineProbs.draw*100).toFixed(1)}%` : ''} | Edge: ${pipelineEdge.primaryEdge.outcome} ${pipelineEdge.primaryEdge.value > 0 ? '+' : ''}${(pipelineEdge.primaryEdge.value*100).toFixed(1)}%`);
+          
           // Build H2H headline
           const buildH2HHeadline = () => {
             if (h2h.total === 0) return 'First ever meeting';
@@ -1068,6 +1188,34 @@ export async function GET(request: NextRequest) {
           
           // Build full response for cache - MUST match match-preview API response format!
           // The client expects data.matchInfo to exist
+          
+          // ============================================
+          // OVERRIDE marketIntel WITH PIPELINE PROBABILITIES
+          // ============================================
+          // Re-run analyzeMarket with pipeline probabilities to ensure
+          // ALL edge calculations use the SAME Poisson/Elo source
+          const oddsData = {
+            homeOdds: consensus.home,
+            awayOdds: consensus.away,
+            drawOdds: consensus.draw,
+          };
+          const leagueKey = sport.league.toLowerCase().replace(/\s+/g, '_');
+          const pipelineMarketIntel = analyzeMarket(
+            analysis.signals, 
+            oddsData, 
+            sport.hasDraw, 
+            undefined, 
+            leagueKey,
+            pipelineProbs  // <-- PIPELINE PROBABILITIES AS SINGLE SOURCE OF TRUTH
+          );
+          
+          // Override probabilities with pipeline values (convert to percentage format for UI)
+          const pipelineProbabilitiesForUI = {
+            home: pipelineProbs.home * 100,
+            away: pipelineProbs.away * 100,
+            draw: pipelineProbs.draw != null ? pipelineProbs.draw * 100 : undefined,
+          };
+          
           const cacheResponse = {
             // matchInfo wrapper - required by client!
             matchInfo: {
@@ -1094,8 +1242,10 @@ export async function GET(request: NextRequest) {
             universalSignals: analysis.universalSignals,
             // Headlines for viral display
             headlines: analysis.headlines,
-            probabilities: analysis.probabilities,
-            marketIntel: analysis.marketIntel,
+            // USE PIPELINE PROBABILITIES - SINGLE SOURCE OF TRUTH
+            probabilities: pipelineProbabilitiesForUI,
+            // USE PIPELINE-BASED MARKET INTEL
+            marketIntel: pipelineMarketIntel,
             odds: {
               homeOdds: consensus.home,
               awayOdds: consensus.away,
@@ -1143,26 +1293,18 @@ export async function GET(request: NextRequest) {
             console.error(`[Pre-Analyze] Cache write failed:`, cacheError);
           }
           
-          // Update OddsSnapshot with real AI edge
+          // Update OddsSnapshot with PIPELINE probabilities (single source of truth)
           try {
-            const probs = analysis.probabilities;
+            // Use pipeline probabilities (already calculated above)
+            // Convert to percentages for storage
+            const homeProb = pipelineProbs.home * 100;
+            const awayProb = pipelineProbs.away * 100;
+            const drawProb = pipelineProbs.draw != null ? pipelineProbs.draw * 100 : 0;
             
-            // Normalize probabilities to percentages (0-100)
-            // AI may return decimals (0.45) or percentages (45) - detect and normalize
-            const isDecimal = probs.home < 1 && probs.away < 1;
-            const homeProb = isDecimal ? probs.home * 100 : probs.home;
-            const awayProb = isDecimal ? probs.away * 100 : probs.away;
-            const drawProb = probs.draw ? (isDecimal ? probs.draw * 100 : probs.draw) : 0;
-            
-            // Use oddsToImpliedProb which returns percentages (e.g., 54.05)
-            const impliedHome = oddsToImpliedProb(consensus.home);
-            const impliedAway = oddsToImpliedProb(consensus.away);
-            const impliedDraw = consensus.draw ? oddsToImpliedProb(consensus.draw) : 0;
-            
-            // Edge = model probability - implied probability (both in percentage)
-            const homeEdge = homeProb - impliedHome;
-            const awayEdge = awayProb - impliedAway;
-            const drawEdge = probs.draw ? drawProb - impliedDraw : null;
+            // Use pipeline edges (already calculated)
+            const homeEdge = pipelineEdge.home * 100;
+            const awayEdge = pipelineEdge.away * 100;
+            const drawEdge = pipelineEdge.draw !== undefined ? pipelineEdge.draw * 100 : null;
             
             const bestEdge = Math.max(homeEdge, awayEdge, drawEdge || 0);
             const alertLevel = bestEdge > 10 ? 'HIGH' : bestEdge > 5 ? 'MEDIUM' : bestEdge > 3 ? 'LOW' : null;
@@ -1185,7 +1327,7 @@ export async function GET(request: NextRequest) {
                 homeOdds: consensus.home,
                 awayOdds: consensus.away,
                 drawOdds: consensus.draw ?? null,
-                modelHomeProb: homeProb,  // Store as percentage (0-100)
+                modelHomeProb: homeProb,  // PIPELINE probability (Poisson/Elo)
                 modelAwayProb: awayProb,
                 modelDrawProb: drawProb || null,
                 homeEdge,
@@ -1193,14 +1335,14 @@ export async function GET(request: NextRequest) {
                 drawEdge,
                 hasValueEdge: bestEdge >= 5,
                 alertLevel,
-                alertNote: analysis.marketIntel?.valueEdge?.label || null,
+                alertNote: pipelineMarketIntel?.valueEdge?.label || null,
                 bookmaker: 'consensus',
               },
               update: {
                 homeOdds: consensus.home,
                 awayOdds: consensus.away,
                 drawOdds: consensus.draw ?? null,
-                modelHomeProb: homeProb,  // Store as percentage (0-100)
+                modelHomeProb: homeProb,  // PIPELINE probability (Poisson/Elo)
                 modelAwayProb: awayProb,
                 modelDrawProb: drawProb || null,
                 homeEdge,
@@ -1208,180 +1350,31 @@ export async function GET(request: NextRequest) {
                 drawEdge,
                 hasValueEdge: bestEdge >= 5,
                 alertLevel,
-                alertNote: analysis.marketIntel?.valueEdge?.label || null,
+                alertNote: pipelineMarketIntel?.valueEdge?.label || null,
                 updatedAt: new Date(),
               },
             });
             
             stats.oddsSnapshotUpdates++;
-            console.log(`[Pre-Analyze] OddsSnapshot updated: ${matchRef} (${bestEdge.toFixed(1)}% edge)`);
+            console.log(`[Pre-Analyze] OddsSnapshot: ${matchRef} (${bestEdge.toFixed(1)}% edge on ${pipelineEdge.primaryEdge.outcome})`);
           } catch (dbError) {
             console.error(`[Pre-Analyze] OddsSnapshot update failed:`, dbError);
           }
           
           // Create Prediction record for accuracy tracking
           try {
-            const matchDate = new Date(event.commence_time);
-            
-            // ============================================
-            // USE FULL ACCURACY-CORE PIPELINE
-            // ============================================
-            // This uses REAL mathematical models:
-            // - Soccer: Poisson / Dixon-Coles (expected goals)
-            // - Basketball: Elo-based with point differential
-            // - Football: Elo with home field adjustment
-            // - Hockey: Elo-conservative (high parity adjustment)
-            //
-            // Plus ensemble blending with market probabilities!
-            
-            // Build odds array for pipeline
-            const pipelineOdds: BookmakerOdds[] = [{
-              bookmaker: 'consensus',
-              homeOdds: consensus.home,
-              awayOdds: consensus.away,
-              drawOdds: consensus.draw || undefined,
-            }];
-            
-            // Get enriched data from analysis
-            const analysisEnrichedData = analysis.enrichedData;
-            
-            // Build pipeline input
-            const pipelineInput: PipelineInput = {
-              matchId: event.id,
-              sport: sport.key,
-              league: sport.league,
-              homeTeam: event.home_team,
-              awayTeam: event.away_team,
-              kickoff: matchDate,
-              homeStats: {
-                played: analysisEnrichedData?.homeStats?.played || 0,
-                wins: analysisEnrichedData?.homeStats?.wins || 0,
-                draws: analysisEnrichedData?.homeStats?.draws || 0,
-                losses: analysisEnrichedData?.homeStats?.losses || 0,
-                scored: (analysisEnrichedData?.homeStats as any)?.goalsScored || (analysisEnrichedData?.homeStats as any)?.pointsScored || 0,
-                conceded: (analysisEnrichedData?.homeStats as any)?.goalsConceded || (analysisEnrichedData?.homeStats as any)?.pointsConceded || 0,
-              },
-              awayStats: {
-                played: analysisEnrichedData?.awayStats?.played || 0,
-                wins: analysisEnrichedData?.awayStats?.wins || 0,
-                draws: analysisEnrichedData?.awayStats?.draws || 0,
-                losses: analysisEnrichedData?.awayStats?.losses || 0,
-                scored: (analysisEnrichedData?.awayStats as any)?.goalsScored || (analysisEnrichedData?.awayStats as any)?.pointsScored || 0,
-                conceded: (analysisEnrichedData?.awayStats as any)?.goalsConceded || (analysisEnrichedData?.awayStats as any)?.pointsConceded || 0,
-              },
-              homeForm: homeFormStr,
-              awayForm: awayFormStr,
-              h2h: analysisEnrichedData?.h2h ? {
-                total: analysisEnrichedData.h2h.total || 0,
-                homeWins: analysisEnrichedData.h2h.homeWins || 0,
-                awayWins: analysisEnrichedData.h2h.awayWins || 0,
-                draws: analysisEnrichedData.h2h.draws || 0,
-              } : undefined,
-              odds: pipelineOdds,
-              // PASS SITUATIONAL FACTORS FOR PROPER EDGE CALCULATION
-              situational: (() => {
-                // Calculate rest days for NBA/NHL/NFL
-                const isFatigueSport = sport.key.includes('basketball') || sport.key.includes('hockey') || sport.key.includes('football');
-                
-                const matchTime = new Date(event.commence_time).getTime();
-                const oneDayMs = 24 * 60 * 60 * 1000;
-                
-                const getRestDays = (formData: any[] | null): number => {
-                  if (!formData || formData.length === 0) return 3;
-                  const lastGameDate = formData
-                    .map((g: any) => new Date(g.date).getTime())
-                    .filter((d: number) => d < matchTime)
-                    .sort((a: number, b: number) => b - a)[0];
-                  if (!lastGameDate) return 3;
-                  return Math.floor((matchTime - lastGameDate) / oneDayMs);
-                };
-                
-                const homeRestDays = getRestDays(analysis.enrichedData?.homeForm);
-                const awayRestDays = getRestDays(analysis.enrichedData?.awayForm);
-                
-                // ========================================
-                // INJURY COUNTS FOR EDGE ADJUSTMENT
-                // ========================================
-                // Parse injury status to count OUT vs DOUBTFUL/QUESTIONABLE
-                const countInjuries = (injuries: any[]) => {
-                  let outCount = 0;
-                  let doubtfulCount = 0;
-                  for (const inj of injuries || []) {
-                    const reason = (inj.reason || inj.status || '').toLowerCase();
-                    if (reason.includes('out') || reason.includes('injury') && !reason.includes('questionable') && !reason.includes('doubtful') && !reason.includes('probable')) {
-                      outCount++;
-                    } else if (reason.includes('doubtful') || reason.includes('questionable') || reason.includes('gtd')) {
-                      doubtfulCount++;
-                    }
-                  }
-                  return { outCount, doubtfulCount };
-                };
-                
-                const homeInjuryCounts = countInjuries(analysis.injuries?.home || []);
-                const awayInjuryCounts = countInjuries(analysis.injuries?.away || []);
-                
-                // Log injury impact
-                if (homeInjuryCounts.outCount > 0 || awayInjuryCounts.outCount > 0) {
-                  console.log(`[Pre-Analyze] Injuries affecting edge: ${event.home_team} (${homeInjuryCounts.outCount} OUT, ${homeInjuryCounts.doubtfulCount} doubtful) vs ${event.away_team} (${awayInjuryCounts.outCount} OUT, ${awayInjuryCounts.doubtfulCount} doubtful)`);
-                }
-                
-                // For soccer, injuries always matter
-                // For fatigue sports (NBA/NHL/NFL), include fatigue factors too
-                return {
-                  homeRestDays: isFatigueSport ? homeRestDays : 3,
-                  awayRestDays: isFatigueSport ? awayRestDays : 3,
-                  isHomeBackToBack: isFatigueSport ? homeRestDays <= 1 : false,
-                  isAwayBackToBack: isFatigueSport ? awayRestDays <= 1 : false,
-                  homeGamesLast7Days: isFatigueSport ? (analysis.enrichedData?.homeForm || []).filter((g: any) => {
-                    const gameTime = new Date(g.date).getTime();
-                    return gameTime > (matchTime - 7 * oneDayMs) && gameTime < matchTime;
-                  }).length : 0,
-                  awayGamesLast7Days: isFatigueSport ? (analysis.enrichedData?.awayForm || []).filter((g: any) => {
-                    const gameTime = new Date(g.date).getTime();
-                    return gameTime > (matchTime - 7 * oneDayMs) && gameTime < matchTime;
-                  }).length : 0,
-                  // NEW: Injury factors
-                  homeInjuriesOut: homeInjuryCounts.outCount,
-                  awayInjuriesOut: awayInjuryCounts.outCount,
-                  homeInjuriesDoubtful: homeInjuryCounts.doubtfulCount,
-                  awayInjuriesDoubtful: awayInjuryCounts.doubtfulCount,
-                };
-              })(),
-              config: {
-                logPredictions: false, // We'll log separately
-                minEdgeToShow: 0.02,
-              },
-            };
-            
-            // Run the full pipeline
-            const pipelineResult = await runAccuracyPipeline(pipelineInput);
-            
-            // Extract probabilities from pipeline (these are from Poisson/Elo models!)
-            const calibratedProbs = pipelineResult.details.calibratedProbabilities;
+            // Pipeline already ran above - use pipelineProbs and pipelineEdge
+            // Convert probabilities to the format needed
             const normProbs = {
-              home: calibratedProbs.home,
-              away: calibratedProbs.away,
-              draw: calibratedProbs.draw || null,
+              home: pipelineProbs.home,
+              away: pipelineProbs.away,
+              draw: pipelineProbs.draw,
             };
-            
-            // Get edges from pipeline (properly calculated with quality checks)
-            const pipelineEdge = pipelineResult.details.edge;
             const edges = {
-              home: pipelineEdge.home * 100, // Convert to percentage
+              home: pipelineEdge.home * 100,
               away: pipelineEdge.away * 100,
               draw: pipelineEdge.draw !== undefined ? pipelineEdge.draw * 100 : -999,
             };
-            
-            // Calculate implied probabilities from odds (for storage)
-            const impliedProbs = {
-              home: 1 / consensus.home,
-              away: 1 / consensus.away,
-              draw: consensus.draw ? 1 / consensus.draw : null,
-            };
-            
-            // Log model info
-            const modelMethod = pipelineResult.details.rawProbabilities.method;
-            console.log(`[Pre-Analyze] ${modelMethod.toUpperCase()} model: ${matchRef} | Home: ${(normProbs.home*100).toFixed(1)}%, Away: ${(normProbs.away*100).toFixed(1)}%${normProbs.draw ? `, Draw: ${(normProbs.draw*100).toFixed(1)}%` : ''} | Edge: ${pipelineEdge.primaryEdge.outcome} ${pipelineEdge.primaryEdge.value > 0 ? '+' : ''}${(pipelineEdge.primaryEdge.value*100).toFixed(1)}% (${pipelineEdge.primaryEdge.quality})`);
             
             // ============================================
             // VALUE BET SELECTION (SIMPLIFIED)

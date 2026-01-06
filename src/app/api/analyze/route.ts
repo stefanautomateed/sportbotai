@@ -336,12 +336,70 @@ function computeProbabilities(
     drawOdds: hasDraw && odds.draw ? odds.draw : undefined,
   };
 
+  // ========================================
+  // RUN ACCURACY PIPELINE (Poisson/Elo models)
+  // ========================================
+  // This is the SINGLE SOURCE OF TRUTH for probabilities
+  // Same as pre-analyze cron job for consistency
+  
+  const pipelineInput = {
+    sport,
+    homeTeam,
+    awayTeam,
+    kickoff: new Date().toISOString(), // Live analysis - kickoff time not critical
+    homeStats: {
+      played: rawInput.homeStats.played,
+      wins: rawInput.homeStats.wins,
+      draws: rawInput.homeStats.draws,
+      losses: rawInput.homeStats.losses,
+      scored: rawInput.homeStats.scored,
+      conceded: rawInput.homeStats.conceded,
+    },
+    awayStats: {
+      played: rawInput.awayStats.played,
+      wins: rawInput.awayStats.wins,
+      draws: rawInput.awayStats.draws,
+      losses: rawInput.awayStats.losses,
+      scored: rawInput.awayStats.scored,
+      conceded: rawInput.awayStats.conceded,
+    },
+    homeForm,
+    awayForm,
+    h2h: rawInput.h2h,
+    odds: oddsData,
+    config: {
+      logPredictions: false,
+      minEdgeToShow: 0.02,
+    },
+  };
+  
+  let pipelineProbs: { home: number; away: number; draw: number | null } | undefined;
+  let pipelineEdge: { primaryEdge: { outcome: string; value: number; quality: string } } | undefined;
+  
+  try {
+    const pipelineResult = await runAccuracyPipeline(pipelineInput);
+    const calibratedProbs = pipelineResult.details.calibratedProbabilities;
+    pipelineProbs = {
+      home: calibratedProbs.home,
+      away: calibratedProbs.away,
+      draw: calibratedProbs.draw || null,
+    };
+    pipelineEdge = { primaryEdge: pipelineResult.details.edge.primaryEdge };
+    
+    const modelMethod = pipelineResult.details.rawProbabilities.method;
+    console.log(`[Pipeline] ${modelMethod.toUpperCase()} model: Home: ${(pipelineProbs.home*100).toFixed(1)}%, Away: ${(pipelineProbs.away*100).toFixed(1)}%${pipelineProbs.draw ? `, Draw: ${(pipelineProbs.draw*100).toFixed(1)}%` : ''} | Edge: ${pipelineEdge.primaryEdge.outcome} ${pipelineEdge.primaryEdge.value > 0 ? '+' : ''}${(pipelineEdge.primaryEdge.value*100).toFixed(1)}%`);
+  } catch (error) {
+    console.warn('[Pipeline] Accuracy pipeline failed, will use analyzeMarket fallback:', error);
+  }
+
   // Run market analysis (uses signals with form weighting)
   // Pass sport as league for calibration (extract league from sport key)
+  // Pass pipeline probabilities if available for consistency
   const leagueFromSport = sport.includes('_') ? sport.split('_').slice(-1)[0] : sport;
   let marketIntel: MarketIntel | null = null;
   try {
-    marketIntel = analyzeMarket(signals, oddsData, hasDraw, undefined, leagueFromSport);
+    // If we have pipeline probabilities, pass them to analyzeMarket for consistency
+    marketIntel = analyzeMarket(signals, oddsData, hasDraw, undefined, leagueFromSport, pipelineProbs);
     console.log('[Pipeline] Market intel:', {
       modelProb: marketIntel.modelProbability,
       valueEdge: marketIntel.valueEdge,
