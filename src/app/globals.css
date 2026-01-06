@@ -1532,9 +1532,56 @@ button:focus-visible {
   @apply text-slate-900 italic;
 }
 
-/* Blog table */
+/* Blog table - Mobile Responsive with scroll indicator */
 .blog-content table {
-  @apply w-full my-8 border-collapse;
+  @apply w-full my-8 border-collapse rounded-lg;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #e2e8f0;
+}
+
+/* Scroll hint shadow on mobile */
+@media (max-width: 640px) {
+  .blog-content table {
+    background: 
+      linear-gradient(to right, white 30%, rgba(255,255,255,0)),
+      linear-gradient(to right, rgba(255,255,255,0), white 70%) 100% 0,
+      radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.1), rgba(0,0,0,0)),
+      radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.1), rgba(0,0,0,0)) 100% 0;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+}
+
+.blog-content table thead,
+.blog-content table tbody,
+.blog-content table tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+@media (max-width: 640px) {
+  .blog-content table {
+    font-size: 0.875rem;
+  }
+  
+  .blog-content table thead,
+  .blog-content table tbody,
+  .blog-content table tr {
+    display: table;
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+  }
+  
+  .blog-content th,
+  .blog-content td {
+    @apply p-2 whitespace-nowrap;
+    min-width: 100px;
+  }
 }
 
 .blog-content th {

@@ -726,3 +726,92 @@ model LineMovement {
   @@index([isSharpMove])
   @@index([alertSent])
 }
+
+// ============================================
+// BACKLINK OUTREACH SYSTEM
+// Automated tool discovery and outreach for backlinks
+// ============================================
+
+model ToolReview {
+  id              String    @id @default(cuid())
+  
+  // Tool info
+  toolName        String
+  toolUrl         String    @unique
+  toolDescription String?
+  toolLogo        String?
+  
+  // Scraping metadata
+  scrapedFrom     String    // "producthunt", "alternativeto", "betalist", etc.
+  sourceUrl       String?   // Direct link to listing on source site
+  scrapedAt       DateTime  @default(now())
+  contentExtracted String?  @db.Text // First 5000 words from their site
+  contentWords    Int       @default(0)
+  
+  // Contact info found
+  contactEmail    String?
+  contactName     String?
+  emailSource     String?   // "contact_page", "footer", "about", "whois"
+  
+  // Review status
+  reviewStatus    ReviewStatus @default(PENDING)
+  blogPostId      String?   @unique
+  blogSlug        String?
+  reviewTitle     String?
+  reviewContent   String?   @db.Text
+  reviewGeneratedAt DateTime?
+  
+  // Outreach tracking
+  outreachStatus  OutreachStatus @default(NOT_SENT)
+  outreachSentAt  DateTime?
+  outreachEmailId String?   // Resend email ID for tracking
+  outreachOpened  Boolean   @default(false)
+  outreachClicked Boolean   @default(false)
+  outreachReplied Boolean   @default(false)
+  outreachReplyAt DateTime?
+  
+  // Backlink tracking
+  backlinkStatus  BacklinkStatus @default(NONE)
+  backlinkUrl     String?   // Their page that links to us
+  backlinkCheckedAt DateTime?
+  dofollow        Boolean   @default(false)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([scrapedFrom])
+  @@index([reviewStatus])
+  @@index([outreachStatus])
+  @@index([backlinkStatus])
+  @@index([scrapedAt])
+}
+
+enum ReviewStatus {
+  PENDING       // Just discovered, not reviewed yet
+  SKIP          // Not relevant (casino, gambling site, etc.)
+  GENERATING    // GPT is writing the review
+  GENERATED     // Review ready, not published
+  PUBLISHED     // Published to blog
+  FAILED        // Generation failed
+}
+
+enum OutreachStatus {
+  NOT_SENT      // No email sent yet
+  NO_EMAIL      // Couldn't find email
+  QUEUED        // In queue to send
+  SENT          // Email sent, awaiting response
+  OPENED        // Email opened (tracked)
+  CLICKED       // Link clicked
+  REPLIED       // Got a reply
+  BOUNCED       // Email bounced
+}
+
+enum BacklinkStatus {
+  NONE          // No backlink
+  PENDING       // They said they'll add it
+  NOFOLLOW      // They linked but nofollow
+  DOFOLLOW      // Success! Dofollow backlink
+  REMOVED       // They removed the link
+}
+

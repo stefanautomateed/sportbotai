@@ -1,10 +1,12 @@
 // Cron endpoint for automated blog generation
 // Called by Vercel Cron or external scheduler
 // NEWS entries are automatically created when match previews are generated (in match-generator.ts)
+// TOOL REVIEWS are discovered from sportsbettingtools.io, generated, and published automatically
 
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { generateBatch, seedKeywords, getNextKeyword } from '@/lib/blog';
+import { generateBatch, seedKeywords, getNextKeyword, generateToolReviewPosts, getToolsReadyForReview } from '@/lib/blog';
+import { discoverAndProcessNewTools } from '@/lib/blog/tool-review-generator';
 import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
@@ -88,9 +90,48 @@ export async function GET(request: NextRequest) {
     if (failed.length > 0) {
       console.error('[Blog Cron] Failures:', failed.map(f => f.error));
     }
+    
+    // =====================================================
+    // TOOL REVIEW PIPELINE (Fully Automated)
+    // 1. Discover new tools from sportsbettingtools.io (every 6th run = ~every 12 hours)
+    // 2. Generate AI review and publish as blog post (1 per run)
+    // =====================================================
+    
+    let discoveryResults = { discovered: 0, new: 0 };
+    let toolReviewResults: { success: boolean; toolName: string; slug?: string; error?: string }[] = [];
+    
+    // Check if we should run discovery (every 6th cron run = ~12 hours)
+    // Use current hour to determine: run at 6AM and 6PM UTC
+    const currentHour = new Date().getUTCHours();
+    const shouldDiscover = currentHour === 6 || currentHour === 18;
+    
+    if (shouldDiscover) {
+      console.log('[Blog Cron] Running tool discovery from sportsbettingtools.io...');
+      try {
+        discoveryResults = await discoverAndProcessNewTools(5); // Max 5 new tools per discovery
+        console.log(`[Blog Cron] Discovery: ${discoveryResults.discovered} found, ${discoveryResults.new} new`);
+      } catch (discoverError) {
+        console.error('[Blog Cron] Discovery error:', discoverError);
+      }
+    }
+    
+    // Generate tool reviews only at 8am and 6pm UTC (2 per day total)
+    const currentHour = new Date().getUTCHours();
+    const isReviewHour = currentHour === 8 || currentHour === 18; // 8am or 6pm UTC
+    
+    const toolsReady = await getToolsReadyForReview();
+    
+    if (isReviewHour && toolsReady > 0) {
+      console.log(`[Blog Cron] Review hour (${currentHour}:00 UTC), ${toolsReady} tools ready, generating 1...`);
+      toolReviewResults = await generateToolReviewPosts(1); // 1 per run = 2 per day
+      const toolSuccessful = toolReviewResults.filter(r => r.success).length;
+      console.log(`[Blog Cron] Tool reviews: ${toolSuccessful} generated`);
+    } else if (toolsReady > 0) {
+      console.log(`[Blog Cron] Skipping reviews (hour ${currentHour}, not review hour). ${toolsReady} tools waiting.`);
+    }
 
     // Revalidate blog pages
-    if (successful > 0) {
+    if (successful > 0 || toolReviewResults.some(r => r.success)) {
       revalidatePath('/blog');
       console.log('[Blog Cron] Revalidated /blog cache');
     }
@@ -99,12 +140,20 @@ export async function GET(request: NextRequest) {
       success: true,
       generated: successful,
       failed: failed.length,
+      toolDiscovery: discoveryResults,
+      toolReviews: toolReviewResults.length,
       results: results.map(r => ({
         success: r.success,
         slug: r.slug,
         error: r.error,
         cost: r.cost,
         duration: r.duration,
+      })),
+      toolReviewResults: toolReviewResults.map(r => ({
+        success: r.success,
+        toolName: r.toolName,
+        slug: r.slug,
+        error: r.error,
       })),
     });
 

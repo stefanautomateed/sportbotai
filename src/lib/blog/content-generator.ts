@@ -403,3 +403,197 @@ export function estimateGenerationCost(
   
   return inputCost + outputCost + perplexityCost;
 }
+
+// ============================================
+// TOOL REVIEW CONTENT GENERATION
+// Uses same patterns as regular blog content
+// ============================================
+
+export interface ToolReviewContent {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  metaTitle: string;
+  metaDescription: string;
+  tags: string[];
+}
+
+/**
+ * Generate a tool review blog post following the same patterns as regular blogs
+ * Outputs proper HTML directly (no markdown conversion needed)
+ * Target: 5000-6000 words for comprehensive SEO-optimized reviews
+ */
+export async function generateToolReviewContent(
+  toolName: string,
+  toolUrl: string,
+  toolDescription: string,
+  websiteContent: string
+): Promise<ToolReviewContent> {
+  
+  // Get existing posts for internal linking
+  const existingPosts = await getExistingBlogSlugs();
+  const internalLinksInfo = existingPosts.length > 0
+    ? `\nEXISTING BLOG POSTS FOR INTERNAL LINKING (use 5-8 naturally throughout):
+${existingPosts.slice(0, 15).map(p => `- "/blog/${p.slug}" - ${p.title}`).join('\n')}`
+    : '';
+
+  const prompt = `Write a COMPREHENSIVE, in-depth tool review for SportBot AI blog.
+
+═══════════════════════════════════════════════════════════════
+⚠️ CRITICAL: LENGTH REQUIREMENT
+═══════════════════════════════════════════════════════════════
+
+This review MUST be 5000-6000 words. This is a long-form, authoritative guide.
+Each section should have multiple detailed paragraphs.
+Include real examples, use cases, comparisons, and detailed explanations.
+
+═══════════════════════════════════════════════════════════════
+📋 TOOL INFORMATION
+═══════════════════════════════════════════════════════════════
+
+Tool Name: ${toolName}
+Website: ${toolUrl}
+Description: ${toolDescription}
+
+Website Content (for research):
+${websiteContent.substring(0, 8000)}
+
+═══════════════════════════════════════════════════════════════
+📝 REQUIRED STRUCTURE (5000-6000 words total)
+═══════════════════════════════════════════════════════════════
+
+<h2>Introduction</h2>
+<p>3-4 paragraphs introducing the tool, the problem it solves, and why readers should care. Set the context for sports bettors.</p>
+
+<h2>What is ${toolName}?</h2>
+<p>Detailed explanation of the platform - its history, who created it, what makes it unique in the market. 2-3 paragraphs.</p>
+
+<h2>Key Features (Deep Dive)</h2>
+For EACH feature, write 2-3 detailed paragraphs explaining:
+- What it does
+- How it works
+- Why it matters for bettors
+- Real-world use cases
+
+<h3>1. [Feature Name]</h3>
+<p>Detailed multi-paragraph explanation...</p>
+
+<h3>2. [Feature Name]</h3>
+<p>Detailed multi-paragraph explanation...</p>
+
+<h3>3. [Feature Name]</h3>
+<p>Detailed multi-paragraph explanation...</p>
+
+<h3>4. [Feature Name]</h3>
+<p>Detailed multi-paragraph explanation...</p>
+
+<h3>5. [Feature Name]</h3>
+<p>Detailed multi-paragraph explanation...</p>
+
+<h2>How to Get Started with ${toolName}</h2>
+<p>Step-by-step guide on signing up and using the platform. Include tips for beginners. 3-4 paragraphs.</p>
+
+<h2>Who Should Use ${toolName}?</h2>
+<h3>Ideal For</h3>
+<p>Detailed profile of who benefits most - specific user types, experience levels, betting styles.</p>
+<h3>Not Ideal For</h3>
+<p>Who might want to look elsewhere and why.</p>
+
+<h2>Pricing and Value Analysis</h2>
+<p>Detailed breakdown of pricing tiers, what you get at each level, comparison to competitors, and whether it's worth the cost. Include a pricing table if possible. 3-4 paragraphs.</p>
+
+<h2>${toolName} vs Alternatives</h2>
+<p>Compare to 2-3 similar tools in the market. What does ${toolName} do better? Where do alternatives win? 4-5 paragraphs.</p>
+
+<h2>Pros and Cons</h2>
+<h3>Pros</h3>
+<ul>
+<li><strong>[Pro]:</strong> Detailed explanation (2-3 sentences each)</li>
+<li><strong>[Pro]:</strong> Detailed explanation</li>
+<li><strong>[Pro]:</strong> Detailed explanation</li>
+<li><strong>[Pro]:</strong> Detailed explanation</li>
+<li><strong>[Pro]:</strong> Detailed explanation</li>
+</ul>
+<h3>Cons</h3>
+<ul>
+<li><strong>[Con]:</strong> Detailed explanation</li>
+<li><strong>[Con]:</strong> Detailed explanation</li>
+<li><strong>[Con]:</strong> Detailed explanation</li>
+</ul>
+
+<h2>Tips for Getting the Most Out of ${toolName}</h2>
+<p>5-6 actionable tips for users to maximize value. Each tip should be a paragraph.</p>
+
+<h2>Frequently Asked Questions</h2>
+<p>5-6 common questions with detailed answers.</p>
+<h3>Is ${toolName} legit?</h3>
+<p>Answer...</p>
+<h3>Does ${toolName} offer a free trial?</h3>
+<p>Answer...</p>
+<h3>[More relevant questions]</h3>
+<p>Answer...</p>
+
+<div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; padding: 24px; margin: 32px 0; text-align: center; border: 1px solid #334155;">
+<p style="color: #10b981; font-size: 18px; font-weight: 600; margin: 0 0 8px 0;">🔗 Ready to Try ${toolName}?</p>
+<p style="color: #94a3b8; font-size: 14px; margin: 0 0 16px 0;">Visit their website to learn more and get started.</p>
+<a href="${toolUrl}" target="_blank" rel="noopener" style="display: inline-block; background: #10b981; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">Visit ${toolName} →</a>
+</div>
+
+<h2>Final Verdict</h2>
+<p>2-3 paragraphs summarizing your overall assessment. Who should get it? Is it worth the money? Final recommendation.</p>
+
+═══════════════════════════════════════════════════════════════
+✍️ WRITING STYLE
+═══════════════════════════════════════════════════════════════
+
+✔ Natural, conversational tone (contractions, "you", rhetorical questions)
+✔ Be objective and balanced - acknowledge both strengths and weaknesses
+✔ Include specific examples and use cases
+✔ Vary sentence length - mix short punchy sentences with longer explanations
+✔ Use HTML tags: <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>, <table>
+✔ NO MARKDOWN - output pure HTML only
+✔ Include data tables where relevant (pricing, feature comparisons)
+${internalLinksInfo}
+
+═══════════════════════════════════════════════════════════════
+🏷️ ABOUT SPORTBOT AI
+═══════════════════════════════════════════════════════════════
+
+We review tools in the sports analytics space objectively.
+Mention SportBot AI features naturally where relevant:
+- AI-powered match analysis (/matches)
+- AI Sports Desk for questions (/ai-desk)
+- Value detection and probability analysis
+- Market alerts for odds movements
+
+═══════════════════════════════════════════════════════════════
+
+REMEMBER: 5000-6000 words minimum. This is a comprehensive guide, not a quick overview.
+
+Return JSON:
+{
+  "title": "${toolName} Review [Current Year]: [Compelling subtitle about value proposition]",
+  "slug": "${toolName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-review",
+  "excerpt": "Compelling 2-3 sentence excerpt that makes readers want to click and read the full review.",
+  "content": "<h2>Introduction</h2><p>...</p>...FULL 5000-6000 word HTML content with all sections...",
+  "metaTitle": "${toolName} Review 2026: Features, Pricing & Honest Verdict",
+  "metaDescription": "Complete ${toolName} review with features, pricing, pros & cons. See if it's worth it for your betting strategy.",
+  "tags": ["tool-review", "sports-betting", "analytics", "${toolName.toLowerCase()}", "betting-tools"]
+}`;
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o', // Use gpt-4o for longer, higher quality content
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.75,
+    max_tokens: 16000, // Increased for 5000-6000 word output
+    response_format: { type: 'json_object' },
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error('No content generated for tool review');
+  }
+
+  return JSON.parse(content) as ToolReviewContent;
+}
