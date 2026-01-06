@@ -466,8 +466,10 @@ export async function sendToolReviewOutreach(
   toolName: string,
   reviewUrl: string
 ): Promise<boolean> {
+  // Use PNG for email compatibility (SVG doesn't work in most email clients)
+  const logoUrl = 'https://www.sportbotai.com/logo-icon.png';
   const badgeSnippet = `<a href="${reviewUrl}" title="${toolName} Review on SportBot AI" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 8px; text-decoration: none; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; color: white; font-weight: 500;">
-  <img src="https://www.sportbotai.com/logo.svg" alt="SportBot AI" width="24" height="24" style="border-radius: 4px;">
+  <img src="${logoUrl}" alt="SportBot AI" width="24" height="24" style="border-radius: 4px;">
   Featured on SportBot AI
 </a>`;
 

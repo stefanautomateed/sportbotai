@@ -11,8 +11,8 @@ interface FeaturedBadgeSnippetProps {
 export default function FeaturedBadgeSnippet({ toolName, reviewUrl }: FeaturedBadgeSnippetProps) {
   const [copied, setCopied] = useState(false);
 
-  // The HTML snippet with dofollow link and SportBot logo
-  const logoUrl = 'https://www.sportbotai.com/logo.svg';
+  // The HTML snippet with dofollow link and SportBot logo (PNG for better compatibility)
+  const logoUrl = 'https://www.sportbotai.com/logo-icon.png';
   const snippet = `<a href="${reviewUrl}" title="${toolName} Review on SportBot AI" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 8px; text-decoration: none; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; color: white; font-weight: 500;">
   <img src="${logoUrl}" alt="SportBot AI" width="24" height="24" style="border-radius: 4px;">
   Featured on SportBot AI
