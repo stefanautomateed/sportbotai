@@ -476,7 +476,7 @@ export async function sendToolReviewOutreach(
     
     <p>Hey there!</p>
     
-    <p>Hope you're doing well. I'm Goran from SportBot AI - we help sports fans find value using AI-powered analysis.</p>
+    <p>Hope you're doing well. I'm Stefan from SportBot AI - we help sports fans find value using AI-powered analysis.</p>
     
     <p>I wanted to let you know that we just published a detailed review of <strong>${toolName}</strong> on our site. We genuinely think it's a great tool and wanted to share it with our audience.</p>
     
@@ -513,7 +513,7 @@ export async function sendToolReviewOutreach(
     
     <p style="margin-top: 30px;">
       Cheers,<br>
-      <strong>Goran</strong><br>
+      <strong>Stefan</strong><br>
       <span style="color: #94a3b8;">SportBot AI</span>
     </p>
   `);
