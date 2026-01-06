@@ -475,26 +475,27 @@ async function main() {
             continue;
           }
           
-          // Generate featured image using Replicate (same as other blogs)
+          // Capture homepage screenshot for featured image
           let featuredImage = '/sports/football.jpg'; // fallback
           const skipImage = args.includes('--no-image');
           
-          if (!skipImage) {
+          if (!skipImage && tool.toolUrl) {
             try {
-              console.log(`[Publish] Generating image...`);
-              const { generateFeaturedImage } = await import('../src/lib/blog/image-generator');
-              const imageResult = await generateFeaturedImage(
-                tool.reviewTitle || `${tool.toolName} Review`,
-                tool.toolName.toLowerCase(),
-                'Tools & Resources'
+              console.log(`[Publish] Capturing screenshot of ${tool.toolUrl}...`);
+              const { captureScreenshotWithFallback } = await import('../src/lib/blog/screenshot-generator');
+              featuredImage = await captureScreenshotWithFallback(
+                tool.toolUrl,
+                tool.toolName,
+                '/sports/football.jpg'
               );
-              featuredImage = imageResult.url;
-              console.log(`[Publish] ✅ Image generated`);
+              console.log(`[Publish] ✅ Screenshot captured`);
             } catch (imgErr) {
-              console.log(`[Publish] ⚠️ Image failed, using fallback:`, imgErr instanceof Error ? imgErr.message : imgErr);
+              console.log(`[Publish] ⚠️ Screenshot failed, using fallback:`, imgErr instanceof Error ? imgErr.message : imgErr);
             }
+          } else if (skipImage) {
+            console.log(`[Publish] Skipping screenshot (--no-image)`);
           } else {
-            console.log(`[Publish] Skipping image generation (--no-image)`);
+            console.log(`[Publish] No tool URL, using fallback image`);
           }
           
           // Create blog post
