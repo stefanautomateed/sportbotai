@@ -576,7 +576,7 @@ export async function scrapeSportsBettingTools(): Promise<DiscoveredTool[]> {
       const seenNames = new Set<string>();
       
       // Find all cards in the grid
-      const cards = document.querySelectorAll('.grid > div');
+      const cards = Array.from(document.querySelectorAll('.grid > div'));
       
       for (const card of cards) {
         // Get the tool name from heading
@@ -586,7 +586,7 @@ export async function scrapeSportsBettingTools(): Promise<DiscoveredTool[]> {
         if (!name || seenNames.has(name)) continue;
         
         // Find the "Visit Website" link (the actual tool URL)
-        const links = card.querySelectorAll('a[href]');
+        const links = Array.from(card.querySelectorAll('a[href]'));
         let toolUrl = '';
         
         for (const link of links) {
