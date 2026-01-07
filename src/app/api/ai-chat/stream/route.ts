@@ -33,6 +33,16 @@ import { isSoccerStatsQuery, getVerifiedSoccerPlayerStats, formatVerifiedSoccerP
 import { isEuroleagueStatsQuery, getVerifiedEuroleaguePlayerStats, formatVerifiedEuroleaguePlayerStats } from '@/lib/verified-euroleague-stats';
 // Team match statistics (shots, corners per game, etc.)
 import { isTeamMatchStatsQuery, getVerifiedTeamMatchStats, getOpponentAnalysis, formatTeamMatchStatsContext } from '@/lib/verified-team-match-stats';
+// League leaders (top scorers/assists)
+import { isTopScorersQuery, isTopAssistsQuery, getVerifiedTopScorers, getVerifiedTopAssists, formatLeagueLeadersContext } from '@/lib/verified-league-leaders';
+// Match lineups
+import { isLineupQuery, getVerifiedLineup, formatLineupContext } from '@/lib/verified-lineups';
+// Coach information
+import { isCoachQuery, getVerifiedCoach, formatCoachContext } from '@/lib/verified-coach';
+// Match events (goals, cards)
+import { isMatchEventsQuery, getVerifiedMatchEvents, formatMatchEventsContext } from '@/lib/verified-match-events';
+// Match prediction (our pre-match analysis for upcoming games within 48h)
+import { isMatchPredictionQuery, getUpcomingMatchPrediction, formatMatchPredictionContext } from '@/lib/verified-match-prediction';
 
 // ============================================
 // TYPES
@@ -1317,6 +1327,116 @@ If their favorite team has a match today/tonight, lead with that information.`;
             }
           }
 
+          // Step 1.9: Verified League Leaders (top scorers/assists)
+          let verifiedLeagueLeadersContext = '';
+          if (isTopScorersQuery(searchMessage)) {
+            console.log('[AI-Chat-Stream] Top scorers query detected...');
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🏆 Fetching top scorers...' })}\n\n`));
+            
+            const leadersResult = await getVerifiedTopScorers(searchMessage);
+            if (leadersResult.success && leadersResult.data) {
+              verifiedLeagueLeadersContext = formatLeagueLeadersContext(leadersResult);
+              console.log(`[AI-Chat-Stream] ✅ Got top ${leadersResult.data.players.length} scorers for ${leadersResult.data.league.name}`);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found ${leadersResult.data.players.length} top scorers` })}\n\n`));
+              perplexityContext = '';
+              citations = [];
+            } else {
+              console.log('[AI-Chat-Stream] ⚠️ Could not get top scorers:', leadersResult.error);
+            }
+          } else if (isTopAssistsQuery(searchMessage)) {
+            console.log('[AI-Chat-Stream] Top assists query detected...');
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🏆 Fetching top assists...' })}\n\n`));
+            
+            const leadersResult = await getVerifiedTopAssists(searchMessage);
+            if (leadersResult.success && leadersResult.data) {
+              verifiedLeagueLeadersContext = formatLeagueLeadersContext(leadersResult);
+              console.log(`[AI-Chat-Stream] ✅ Got top ${leadersResult.data.players.length} assists for ${leadersResult.data.league.name}`);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found ${leadersResult.data.players.length} top assists` })}\n\n`));
+              perplexityContext = '';
+              citations = [];
+            } else {
+              console.log('[AI-Chat-Stream] ⚠️ Could not get top assists:', leadersResult.error);
+            }
+          }
+
+          // Step 1.10: Verified Lineups
+          let verifiedLineupContext = '';
+          if (isLineupQuery(searchMessage)) {
+            console.log('[AI-Chat-Stream] Lineup query detected...');
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '📋 Fetching team lineups...' })}\n\n`));
+            
+            const lineupResult = await getVerifiedLineup(searchMessage);
+            if (lineupResult.success && lineupResult.data) {
+              verifiedLineupContext = formatLineupContext(lineupResult);
+              console.log(`[AI-Chat-Stream] ✅ Got lineups for ${lineupResult.data.home.team.name} vs ${lineupResult.data.away.team.name}`);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Lineups found` })}\n\n`));
+              perplexityContext = '';
+              citations = [];
+            } else {
+              console.log('[AI-Chat-Stream] ⚠️ Could not get lineups:', lineupResult.error);
+            }
+          }
+
+          // Step 1.11: Verified Coach Info
+          let verifiedCoachContext = '';
+          if (isCoachQuery(searchMessage)) {
+            console.log('[AI-Chat-Stream] Coach query detected...');
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '👔 Fetching coach info...' })}\n\n`));
+            
+            const coachResult = await getVerifiedCoach(searchMessage);
+            if (coachResult.success && coachResult.data) {
+              verifiedCoachContext = formatCoachContext(coachResult);
+              console.log(`[AI-Chat-Stream] ✅ Got coach info: ${coachResult.data.name}`);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found: ${coachResult.data.name}` })}\n\n`));
+              perplexityContext = '';
+              citations = [];
+            } else {
+              console.log('[AI-Chat-Stream] ⚠️ Could not get coach info:', coachResult.error);
+            }
+          }
+
+          // Step 1.12: Verified Match Events (goals, cards)
+          let verifiedMatchEventsContext = '';
+          if (isMatchEventsQuery(searchMessage)) {
+            console.log('[AI-Chat-Stream] Match events query detected...');
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '⚽ Fetching match events...' })}\n\n`));
+            
+            const eventsResult = await getVerifiedMatchEvents(searchMessage);
+            if (eventsResult.success && eventsResult.data) {
+              verifiedMatchEventsContext = formatMatchEventsContext(eventsResult);
+              const goalCount = eventsResult.data.events.filter(e => e.type === 'Goal').length;
+              console.log(`[AI-Chat-Stream] ✅ Got ${goalCount} goals for match`);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found ${goalCount} goals` })}\n\n`));
+              perplexityContext = '';
+              citations = [];
+            } else {
+              console.log('[AI-Chat-Stream] ⚠️ Could not get match events:', eventsResult.error);
+            }
+          }
+
+          // Step 1.13: Our Match Prediction (for upcoming games within 48h)
+          let verifiedMatchPredictionContext = '';
+          if (isMatchPredictionQuery(searchMessage)) {
+            console.log('[AI-Chat-Stream] Match prediction query detected...');
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🎯 Fetching our match analysis...' })}\n\n`));
+            
+            const predictionResult = await getUpcomingMatchPrediction(searchMessage);
+            if (predictionResult.success && predictionResult.data) {
+              verifiedMatchPredictionContext = formatMatchPredictionContext(predictionResult);
+              console.log(`[AI-Chat-Stream] ✅ Found prediction for ${predictionResult.data.matchName}, kickoff in ${predictionResult.hoursUntilKickoff}h`);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Analysis found (kickoff in ${predictionResult.hoursUntilKickoff}h)` })}\n\n`));
+              // Override Perplexity - use our data
+              perplexityContext = '';
+              citations = [];
+            } else if (predictionResult.error?.includes('hours')) {
+              // Match exists but not within 48h - let user know
+              verifiedMatchPredictionContext = `⏳ ${predictionResult.error}. Check back closer to kickoff for our full analysis.`;
+              console.log(`[AI-Chat-Stream] ℹ️ Match found but ${predictionResult.hoursUntilKickoff}h away`);
+            } else {
+              console.log('[AI-Chat-Stream] ⚠️ Could not get match prediction:', predictionResult.error);
+            }
+          }
+
           // Send status: generating
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: 'Generating response...' })}\n\n`));
 
@@ -1371,11 +1491,80 @@ If their favorite team has a match today/tonight, lead with that information.`;
 
           // Add user message with context
           let userContent = message;
-          const hasContext = perplexityContext || dataLayerContext || verifiedPlayerStatsContext || ourPredictionContext || verifiedStandingsContext || verifiedTeamMatchStatsContext;
+          const hasContext = perplexityContext || dataLayerContext || verifiedPlayerStatsContext || ourPredictionContext || verifiedStandingsContext || verifiedTeamMatchStatsContext || verifiedLeagueLeadersContext || verifiedLineupContext || verifiedCoachContext || verifiedMatchEventsContext || verifiedMatchPredictionContext;
           
           if (hasContext) {
+            // For match prediction queries (who will win, prediction for match)
+            if (verifiedMatchPredictionContext) {
+              userContent = `USER QUESTION: ${message}
+
+⚠️ CRITICAL: The user is asking for our match analysis/prediction. Use ONLY the data below.
+
+${verifiedMatchPredictionContext}
+
+RESPONSE RULES:
+1. Present SportBot's pre-match analysis in a clear, engaging format
+2. Include our prediction, conviction level, and reasoning
+3. Show win probabilities if available
+4. Mention any value bet detected
+5. ALWAYS include the disclaimer about gambling responsibly
+6. Answer in the user's language
+7. If the analysis says "not yet available", explain that our detailed analysis is published closer to kickoff (within 48 hours)`;
+            // For league leaders queries (top scorers/assists)
+            } else if (verifiedLeagueLeadersContext) {
+              userContent = `USER QUESTION: ${message}
+
+⚠️ CRITICAL: Use ONLY the verified league leaders data below.
+
+${verifiedLeagueLeadersContext}
+
+RESPONSE RULES:
+1. Present the top scorers/assists in a clear ranked format
+2. Include player name, team, and goals/assists count
+3. Use the exact numbers from the data - they are VERIFIED
+4. Answer in the user's language`;
+            // For lineup queries
+            } else if (verifiedLineupContext) {
+              userContent = `USER QUESTION: ${message}
+
+⚠️ CRITICAL: Use ONLY the verified lineup data below.
+
+${verifiedLineupContext}
+
+RESPONSE RULES:
+1. Present the starting XI clearly by position
+2. Include the formation
+3. List substitutes
+4. Mention the coach
+5. Answer in the user's language`;
+            // For coach queries
+            } else if (verifiedCoachContext) {
+              userContent = `USER QUESTION: ${message}
+
+⚠️ CRITICAL: Use ONLY the verified coach data below.
+
+${verifiedCoachContext}
+
+RESPONSE RULES:
+1. Include coach name, nationality, age
+2. Mention current position and tenure
+3. List recent career history
+4. Answer in the user's language`;
+            // For match events queries
+            } else if (verifiedMatchEventsContext) {
+              userContent = `USER QUESTION: ${message}
+
+⚠️ CRITICAL: Use ONLY the verified match events data below.
+
+${verifiedMatchEventsContext}
+
+RESPONSE RULES:
+1. Present goals with scorer, minute, and assist
+2. Include cards if asked
+3. Use the exact data provided - it's VERIFIED
+4. Answer in the user's language`;
             // For team match statistics queries (shots, corners per game)
-            if (verifiedTeamMatchStatsContext) {
+            } else if (verifiedTeamMatchStatsContext) {
               userContent = `USER QUESTION: ${message}
 
 ⚠️ CRITICAL: The user is asking about MATCH STATISTICS. Use ONLY the verified data below.
