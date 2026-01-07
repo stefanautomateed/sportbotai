@@ -1,18 +1,22 @@
-import { captureScreenshotWithFallback } from '../src/lib/blog/screenshot-generator';
+import 'dotenv/config';
+import { captureScreenshotWithFallback, captureWebsiteScreenshot } from '../src/lib/blog/screenshot-generator';
 
 async function test() {
-  console.log('Testing screenshot for EdgHouse...');
+  const testUrls = [
+    { name: 'Pickswise', url: 'https://www.pickswise.com/' },
+    { name: 'Killer Sports', url: 'https://killersports.com/' },
+  ];
   
-  try {
-    const result = await captureScreenshotWithFallback(
-      'https://edghouse.com/',
-      'EdgHouse',
-      '/sports/football.jpg'
-    );
+  for (const { name, url } of testUrls) {
+    console.log(`\n--- Testing ${name} ---`);
+    console.log(`URL: ${url}`);
     
-    console.log('Result:', result);
-  } catch (error) {
-    console.error('Error:', error);
+    try {
+      const result = await captureWebsiteScreenshot(url, name);
+      console.log(`✅ SUCCESS: ${result.url}`);
+    } catch (error) {
+      console.log(`❌ FAILED: ${error instanceof Error ? error.message : error}`);
+    }
   }
 }
 
