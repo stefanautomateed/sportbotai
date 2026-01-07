@@ -54,12 +54,12 @@ export function ScrollToTop({ threshold = 400, className = '' }: ScrollToTopProp
       onClick={scrollToTop}
       aria-label="Scroll to top"
       className={`
-        fixed bottom-20 right-4 z-40
-        w-12 h-12 rounded-full
-        bg-bg-card/90 backdrop-blur-sm border border-divider
-        shadow-lg shadow-black/30
+        fixed bottom-24 left-4 z-40
+        w-10 h-10 rounded-full
+        bg-bg-card/80 backdrop-blur-sm border border-divider/50
+        shadow-md shadow-black/20
         flex items-center justify-center
-        text-text-secondary hover:text-accent hover:border-accent/50
+        text-text-muted hover:text-accent hover:border-accent/50
         transition-all duration-300 ease-out
         hover:scale-110 active:scale-95
         animate-in fade-in slide-in-from-bottom-4 duration-300
@@ -68,7 +68,7 @@ export function ScrollToTop({ threshold = 400, className = '' }: ScrollToTopProp
       `}
     >
       <svg 
-        className={`w-5 h-5 transition-transform duration-300 ${isScrolling ? '-translate-y-0.5' : ''}`}
+        className={`w-4 h-4 transition-transform duration-300 ${isScrolling ? '-translate-y-0.5' : ''}`}
         fill="none" 
         viewBox="0 0 24 24" 
         stroke="currentColor" 

@@ -1071,6 +1071,8 @@ interface PlayerInjury {
 
 /**
  * Get team injuries/unavailable players
+ * Strategy: Use most recent injury reports (from last 2 weeks) as they likely still apply
+ * API-Sports ties injuries to fixtures, but injury status often persists across matches
  */
 export async function getTeamInjuries(teamId: number): Promise<PlayerInjury[]> {
   const cacheKey = `injuries:${teamId}`;
@@ -1091,35 +1093,39 @@ export async function getTeamInjuries(teamId: number): Promise<PlayerInjury[]> {
   
   console.log(`[Football-API] Raw injuries response for team ${teamId}: ${response.response.length} items`);
   
-  // Filter for UPCOMING fixtures only (today onwards) to get current injuries
+  // Strategy: Use injuries from the LAST 14 DAYS or NEXT fixtures
+  // Injuries typically persist, so recent past injuries are still relevant
   const now = new Date();
+  const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).getTime();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   
-  const upcomingInjuries = response.response
+  // Filter for injuries from recent fixtures (last 2 weeks) or upcoming fixtures
+  const relevantInjuries = response.response
     .filter((item: any) => {
       if (!item.player?.reason) return false;
       const fixtureDate = item.fixture?.date ? new Date(item.fixture.date).getTime() : 0;
-      return fixtureDate >= today;
+      // Include if fixture is upcoming OR was within the last 2 weeks
+      return fixtureDate >= twoWeeksAgo;
     })
-    // Sort by fixture date ascending (soonest first)
+    // Sort by fixture date descending (most recent first)
     .sort((a: any, b: any) => {
       const dateA = new Date(a.fixture?.date || 0).getTime();
       const dateB = new Date(b.fixture?.date || 0).getTime();
-      return dateA - dateB;
+      return dateB - dateA;
     });
   
-  // Deduplicate by player name (same player might be listed for multiple upcoming fixtures)
+  // Deduplicate by player name (keep most recent entry for each player)
   const seenPlayers = new Set<string>();
-  const uniqueInjuries = upcomingInjuries.filter((item: any) => {
+  const uniqueInjuries = relevantInjuries.filter((item: any) => {
     const playerName = item.player?.name?.toLowerCase();
     if (seenPlayers.has(playerName)) return false;
     seenPlayers.add(playerName);
     return true;
   });
   
-  console.log(`[Football-API] Filtered injuries for team ${teamId}: ${upcomingInjuries.length} upcoming, ${uniqueInjuries.length} unique`);
+  console.log(`[Football-API] Filtered injuries for team ${teamId}: ${relevantInjuries.length} recent/upcoming, ${uniqueInjuries.length} unique`);
   if (uniqueInjuries.length > 0) {
-    console.log(`[Football-API] Sample upcoming injury:`, JSON.stringify(uniqueInjuries[0]));
+    console.log(`[Football-API] Sample injury:`, JSON.stringify(uniqueInjuries[0]));
   }
 
   const injuries: PlayerInjury[] = uniqueInjuries
