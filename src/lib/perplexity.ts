@@ -524,6 +524,306 @@ export default {
 };
 
 // ============================================
+// SOCCER ROSTER VALIDATION
+// ============================================
+
+// Known players for top Premier League teams (2025-26 season)
+// This prevents Perplexity from returning players from other teams
+const KNOWN_SOCCER_ROSTERS: Record<string, string[]> = {
+  'arsenal': [
+    'raya', 'ramsdale', 'saliba', 'gabriel', 'white', 'zinchenko', 'timber', 'kiwior', 'tomiyasu', 'calafiori',
+    'rice', 'partey', 'odegaard', 'havertz', 'saka', 'martinelli', 'trossard', 'jesus', 'nketiah', 'nelson',
+    'vieira', 'smith rowe', 'jorginho', 'sterling', 'merino', 'mosquera', 'dowman', 'ethan nwaneri', 'lewis-skelly'
+  ],
+  'liverpool': [
+    'alisson', 'kelleher', 'van dijk', 'konate', 'gomez', 'quansah', 'robertson', 'tsimikas', 'alexander-arnold', 'bradley',
+    'mac allister', 'gravenberch', 'szoboszlai', 'jones', 'endo', 'bajcetic', 'elliott', 'morton',
+    'salah', 'diaz', 'jota', 'gakpo', 'nunez', 'chiesa', 'carvalho'
+  ],
+  'manchester city': [
+    'ederson', 'ortega', 'walker', 'stones', 'dias', 'akanji', 'ake', 'gvardiol', 'lewis', 'josko',
+    'rodri', 'kovacic', 'bernardo', 'de bruyne', 'foden', 'grealish', 'doku', 'mcatee', 'savinho',
+    'haaland', 'alvarez', 'nunes', 'bobb', 'wright'
+  ],
+  'manchester united': [
+    'onana', 'bayindir', 'maguire', 'martinez', 'varane', 'lindelof', 'shaw', 'dalot', 'malacia', 'evans', 'yoro',
+    'casemiro', 'mainoo', 'fernandes', 'mount', 'eriksen', 'mctominay', 'amad', 'antony', 'garnacho',
+    'rashford', 'hojlund', 'zirkzee', 'wheatley', 'ugarte'
+  ],
+  'chelsea': [
+    'sanchez', 'petrovic', 'chalobah', 'fofana', 'colwill', 'disasi', 'badiashile', 'cucurella', 'gusto', 'james',
+    'caicedo', 'fernandez', 'lavia', 'gallagher', 'chukwuemeka', 'dewsbury-hall', 'palmer', 'madueke', 'mudryk',
+    'nkunku', 'jackson', 'neto', 'sancho', 'felix', 'george'
+  ],
+  'tottenham': [
+    'vicario', 'forster', 'romero', 'van de ven', 'dragusin', 'davies', 'udogie', 'porro', 'emerson', 'spence',
+    'bissouma', 'bentancur', 'sarr', 'maddison', 'kulusevski', 'johnson', 'bergvall', 'gray',
+    'son', 'richarlison', 'solanke', 'moore', 'lankshear', 'werner'
+  ],
+  'newcastle': [
+    'pope', 'dubravka', 'trippier', 'botman', 'schar', 'lascelles', 'krafth', 'livramento', 'hall', 'kelly',
+    'tonali', 'guimaraes', 'joelinton', 'longstaff', 'willock', 'miley',
+    'isak', 'gordon', 'barnes', 'almiron', 'murphy', 'osula', 'wilson'
+  ],
+  'aston villa': [
+    'martinez', 'olsen', 'carlos', 'torres', 'konsa', 'mings', 'digne', 'cash', 'maatsen', 'nedeljkovic',
+    'kamara', 'onana', 'tielemans', 'mcginn', 'ramsey', 'bailey', 'buendia', 'rogers',
+    'watkins', 'duran', 'philogene'
+  ],
+  'real madrid': [
+    'courtois', 'lunin', 'militao', 'rudiger', 'alaba', 'carvajal', 'mendy', 'garcia', 'vallejo', 'fran garcia',
+    'tchouameni', 'camavinga', 'valverde', 'modric', 'bellingham', 'ceballos', 'guler',
+    'vinicius', 'rodrygo', 'mbappe', 'endrick', 'brahim', 'joselu'
+  ],
+  'barcelona': [
+    'ter stegen', 'pena', 'kounde', 'araujo', 'christensen', 'inigo martinez', 'balde', 'cancelo', 'fort', 'cubarsi',
+    'pedri', 'gavi', 'de jong', 'fermín', 'casado', 'bernal', 'torre',
+    'yamal', 'raphinha', 'lewandowski', 'ferran', 'fati', 'victor', 'pau'
+  ],
+  'bayern munich': [
+    'neuer', 'ulreich', 'upamecano', 'kim', 'dier', 'de ligt', 'davies', 'kimmich', 'guerreiro', 'mazraoui', 'stanisic',
+    'goretzka', 'laimer', 'musiala', 'sane', 'gnabry', 'coman', 'muller', 'olise', 'palhinha',
+    'kane', 'tel'
+  ],
+};
+
+// ============================================
+// NBA ROSTER VALIDATION
+// ============================================
+
+// Known players for NBA teams (2025-26 season) - key players only
+const KNOWN_NBA_ROSTERS: Record<string, string[]> = {
+  'lakers': [
+    'james', 'lebron', 'davis', 'reaves', 'russell', 'hachimura', 'vanderbilt', 'christie', 'vincent', 'wood', 'prince', 'hayes', 'reddish', 'knecht', 'koloko'
+  ],
+  'celtics': [
+    'tatum', 'brown', 'porzingis', 'white', 'holiday', 'horford', 'pritchard', 'hauser', 'kornet', 'tillman', 'walsh', 'banton'
+  ],
+  'warriors': [
+    'curry', 'thompson', 'wiggins', 'green', 'looney', 'kuminga', 'poole', 'payton', 'moody', 'podz', 'jackson', 'santos'
+  ],
+  'bucks': [
+    'antetokounmpo', 'giannis', 'lillard', 'middleton', 'portis', 'lopez', 'beverly', 'connaughton', 'ingles', 'beauchamp', 'livingston'
+  ],
+  'nuggets': [
+    'jokic', 'murray', 'porter', 'gordon', 'caldwell-pope', 'braun', 'watson', 'strawther', 'pickett', 'cancar'
+  ],
+  'suns': [
+    'durant', 'booker', 'beal', 'nurkic', 'allen', 'goodwin', 'okogie', 'eubanks', 'bol', 'warren', 'lee'
+  ],
+  'mavericks': [
+    'doncic', 'luka', 'irving', 'kyrie', 'lively', 'gafford', 'washington', 'hardaway', 'exum', 'kleber', 'hardy', 'green'
+  ],
+  'clippers': [
+    'leonard', 'kawhi', 'george', 'westbrook', 'zubac', 'hyland', 'powell', 'batum', 'mann', 'plumlee', 'boston', 'coffey'
+  ],
+  'heat': [
+    'butler', 'herro', 'adebayo', 'bam', 'lowry', 'robinson', 'strus', 'vincent', 'martin', 'love', 'highsmith', 'jovic'
+  ],
+  'knicks': [
+    'brunson', 'randle', 'anunoby', 'hart', 'robinson', 'divincenzo', 'bridges', 'mcbride', 'toppin', 'grimes', 'sims'
+  ],
+  '76ers': [
+    'embiid', 'maxey', 'george', 'oubre', 'yabusele', 'drummond', 'gordon', 'mccain', 'martin', 'riller'
+  ],
+  'thunder': [
+    'gilgeous-alexander', 'shai', 'holmgren', 'chet', 'williams', 'dort', 'giddey', 'wallace', 'mann', 'muscala'
+  ],
+  'timberwolves': [
+    'edwards', 'gobert', 'randle', 'conley', 'reid', 'mcdaniels', 'dillingham', 'minott', 'alexander-walker'
+  ],
+  'cavaliers': [
+    'mitchell', 'garland', 'mobley', 'allen', 'levert', 'okoro', 'strus', 'niang', 'merrill', 'wade'
+  ],
+};
+
+// ============================================
+// NHL ROSTER VALIDATION
+// ============================================
+
+const KNOWN_NHL_ROSTERS: Record<string, string[]> = {
+  'maple leafs': [
+    'matthews', 'marner', 'nylander', 'tavares', 'rielly', 'mccabe', 'jarnkrok', 'domi', 'bertuzzi', 'kampf', 'woll', 'stolarz'
+  ],
+  'oilers': [
+    'mcdavid', 'draisaitl', 'hyman', 'nugent-hopkins', 'nurse', 'bouchard', 'skinner', 'pickard', 'brown', 'henrique', 'arvidsson'
+  ],
+  'bruins': [
+    'pastrnak', 'marchand', 'zacha', 'coyle', 'lindholm', 'mcavoy', 'carlo', 'swayman', 'ullmark', 'frederic'
+  ],
+  'avalanche': [
+    'mackinnon', 'rantanen', 'makar', 'landeskog', 'nichushkin', 'lehkonen', 'georgiev', 'toews', 'johnson'
+  ],
+  'panthers': [
+    'barkov', 'reinhart', 'tkachuk', 'verhaeghe', 'ekblad', 'bobrovsky', 'lundell', 'forsling', 'rodrigues'
+  ],
+  'rangers': [
+    'panarin', 'zibanejad', 'kreider', 'trocheck', 'lafreniere', 'fox', 'shesterkin', 'lindgren', 'chytil'
+  ],
+  'hurricanes': [
+    'aho', 'svechnikov', 'kotkaniemi', 'staal', 'slavin', 'burns', 'andersen', 'kochetkov', 'jarvis'
+  ],
+  'golden knights': [
+    'eichel', 'stone', 'marchessault', 'barbashev', 'pietrangelo', 'theodore', 'hill', 'thompson', 'howden'
+  ],
+  'stars': [
+    'robertson', 'hintz', 'pavelski', 'benn', 'heiskanen', 'oettinger', 'seguin', 'duchene', 'steel'
+  ],
+  'lightning': [
+    'kucherov', 'stamkos', 'point', 'hedman', 'sergachev', 'vasilevskiy', 'cirelli', 'hagel', 'paul'
+  ],
+};
+
+// ============================================
+// NFL ROSTER VALIDATION
+// ============================================
+
+const KNOWN_NFL_ROSTERS: Record<string, string[]> = {
+  'chiefs': [
+    'mahomes', 'kelce', 'pacheco', 'rice', 'moore', 'worthy', 'jones', 'bolton', 'sneed', 'mcduffie', 'karlaftis'
+  ],
+  'eagles': [
+    'hurts', 'barkley', 'brown', 'smith', 'goedert', 'johnson', 'dickerson', 'hargrave', 'bradberry', 'slay'
+  ],
+  'bills': [
+    'allen', 'josh', 'diggs', 'cook', 'shakir', 'kincaid', 'morse', 'von miller', 'ed oliver', 'milano'
+  ],
+  '49ers': [
+    'purdy', 'mccaffrey', 'aiyuk', 'samuel', 'kittle', 'williams', 'bosa', 'warner', 'greenlaw', 'lenoir'
+  ],
+  'cowboys': [
+    'prescott', 'lamb', 'elliott', 'parsons', 'diggs', 'gilmore', 'smith', 'martin', 'overshown'
+  ],
+  'dolphins': [
+    'tagovailoa', 'tua', 'hill', 'waddle', 'mostert', 'armstead', 'chubb', 'wilkins', 'holland', 'ramsey'
+  ],
+  'ravens': [
+    'jackson', 'lamar', 'henry', 'flowers', 'andrews', 'hamilton', 'humphrey', 'oweh', 'madubuike', 'roquan'
+  ],
+  'lions': [
+    'goff', 'gibbs', 'st brown', 'laporta', 'sewell', 'hutchinson', 'mcneil', 'branch', 'houston'
+  ],
+  'bengals': [
+    'burrow', 'chase', 'higgins', 'mixon', 'boyd', 'hendrickson', 'reader', 'wilson', 'bell'
+  ],
+  'packers': [
+    'love', 'dillon', 'watson', 'doubs', 'kraft', 'walker', 'clark', 'smith', 'alexander'
+  ],
+  'jets': [
+    'rodgers', 'hall', 'wilson', 'lazard', 'allen', 'sauce gardner', 'williams', 'quinnen', 'reed'
+  ],
+  'patriots': [
+    'maye', 'stevenson', 'henry', 'thornton', 'judon', 'barmore', 'dugger', 'jones', 'gonzalez'
+  ],
+};
+
+/**
+ * Generic roster validation function for all sports
+ */
+function validateRoster(
+  injuries: InjuryData[], 
+  teamName: string, 
+  rosters: Record<string, string[]>,
+  sportName: string
+): InjuryData[] {
+  const normalizedTeam = teamName.toLowerCase();
+  
+  // Find matching roster
+  let roster: string[] | undefined;
+  for (const [team, players] of Object.entries(rosters)) {
+    if (normalizedTeam.includes(team) || team.includes(normalizedTeam)) {
+      roster = players;
+      break;
+    }
+  }
+  
+  // If no roster found, return all (can't validate)
+  if (!roster) {
+    console.log(`[Perplexity] No ${sportName} roster found for ${teamName}, skipping validation`);
+    return injuries;
+  }
+  
+  // Filter to only include players on the roster
+  const validated = injuries.filter(injury => {
+    const playerLower = injury.playerName.toLowerCase();
+    const nameParts = playerLower.split(' ').filter(p => p.length > 2);
+    const lastName = nameParts[nameParts.length - 1];
+    
+    const isOnRoster = roster!.some(rosterPlayer => {
+      const rosterParts = rosterPlayer.split(/[\s-]+/);
+      return rosterParts.some(rosterPart => {
+        if (rosterPart.length < 3 || lastName.length < 3) return false;
+        return rosterPart === lastName || 
+               (lastName.length >= 4 && rosterPart.startsWith(lastName.slice(0, 4))) ||
+               (rosterPart.length >= 4 && lastName.startsWith(rosterPart.slice(0, 4)));
+      });
+    });
+    
+    if (!isOnRoster) {
+      console.log(`[Perplexity] Filtering out ${injury.playerName} (${lastName}) - not on ${teamName} ${sportName} roster`);
+    }
+    
+    return isOnRoster;
+  });
+  
+  return validated;
+}
+
+/**
+ * Validate injury list against known roster
+ * Returns only players who are likely on the team
+ */
+function validateSoccerRoster(injuries: InjuryData[], teamName: string): InjuryData[] {
+  const normalizedTeam = teamName.toLowerCase();
+  
+  // Find matching roster
+  let roster: string[] | undefined;
+  for (const [team, players] of Object.entries(KNOWN_SOCCER_ROSTERS)) {
+    if (normalizedTeam.includes(team) || team.includes(normalizedTeam)) {
+      roster = players;
+      break;
+    }
+  }
+  
+  // If no roster found, return all (can't validate)
+  if (!roster) {
+    console.log(`[Perplexity] No roster found for ${teamName}, skipping validation`);
+    return injuries;
+  }
+  
+  // Filter to only include players on the roster
+  const validated = injuries.filter(injury => {
+    const playerLower = injury.playerName.toLowerCase();
+    const nameParts = playerLower.split(' ').filter(p => p.length > 2); // Ignore short parts like initials
+    
+    // Check if player's LAST NAME matches any roster entry
+    // Last name is more reliable than first name (fewer duplicates)
+    const lastName = nameParts[nameParts.length - 1];
+    
+    const isOnRoster = roster!.some(rosterPlayer => {
+      // Exact match on last name or roster entry contains last name
+      // But roster entry must be similar length to avoid partial matches
+      const rosterParts = rosterPlayer.split(/[\s-]+/);
+      
+      return rosterParts.some(rosterPart => {
+        // Must be at least 4 chars and exact match or very close
+        if (rosterPart.length < 4 || lastName.length < 4) return false;
+        return rosterPart === lastName || 
+               (lastName.length >= 5 && rosterPart.startsWith(lastName.slice(0, 5)));
+      });
+    });
+    
+    if (!isOnRoster) {
+      console.log(`[Perplexity] Filtering out ${injury.playerName} (${lastName}) - not on ${teamName} roster`);
+    }
+    
+    return isOnRoster;
+  });
+  
+  return validated;
+}
+
+// ============================================
 // INJURY DATA VIA PERPLEXITY (for non-soccer sports)
 // ============================================
 
@@ -555,7 +855,8 @@ interface MatchInjuriesResult {
 export async function getMatchInjuriesViaPerplexity(
   homeTeam: string,
   awayTeam: string,
-  sport: string
+  sport: string,
+  league?: string
 ): Promise<MatchInjuriesResult> {
   const client = getPerplexityClient();
   
@@ -563,14 +864,24 @@ export async function getMatchInjuriesViaPerplexity(
     return { success: false, home: [], away: [], error: 'Perplexity not configured' };
   }
 
-  // Determine sport label
+  // Determine sport label and sources
   let sportLabel = 'NBA';
-  if (sport.includes('euroleague')) {
+  let sources = 'NBA.com, ESPN';
+  
+  if (sport.includes('soccer') || sport.includes('epl') || sport.includes('premier') || 
+      sport.includes('la_liga') || sport.includes('bundesliga') || sport.includes('serie_a') ||
+      sport.includes('ligue') || sport.includes('champions') || sport.includes('europa')) {
+    sportLabel = league || 'Premier League';
+    sources = 'official club websites, Transfermarkt, ESPN FC, Sky Sports, BBC Sport';
+  } else if (sport.includes('euroleague')) {
     sportLabel = 'Euroleague';
+    sources = 'Euroleague.net, ESPN';
   } else if (sport.includes('hockey') || sport.includes('nhl')) {
     sportLabel = 'NHL';
+    sources = 'NHL.com, ESPN';
   } else if (sport.includes('football') || sport.includes('nfl')) {
     sportLabel = 'NFL';
+    sources = 'NFL.com, ESPN';
   }
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -580,22 +891,36 @@ export async function getMatchInjuriesViaPerplexity(
     day: 'numeric',
   });
 
+  const isSoccer = sportLabel.includes('League') || sportLabel.includes('Liga') || 
+                   sportLabel.includes('Serie') || sportLabel.includes('Bundesliga') ||
+                   sportLabel.includes('Champions') || sportLabel.includes('Europa');
+  const isNBA = sportLabel === 'NBA';
+  const isNHL = sportLabel === 'NHL';
+  const isNFL = sportLabel === 'NFL';
+
   const systemPrompt = `You are a sports injury reporter. Today is ${today}.
 
 Your task is to find CURRENT injury reports for both teams in this ${sportLabel} matchup.
 
-REQUIREMENTS:
-1. Only report injuries that are ACTIVE/CURRENT (not past injuries)
-2. Focus on players who are OUT, DOUBTFUL, QUESTIONABLE, or PROBABLE for today's game
-3. Use official injury reports from ${sportLabel === 'NBA' ? 'NBA.com' : sportLabel === 'NHL' ? 'NHL.com' : sportLabel === 'NFL' ? 'NFL.com' : 'official league sources'}, ESPN, team sources
-4. If a team has no reported injuries, say "No active injuries reported"
+⚠️ CRITICAL TEAM VERIFICATION:
+- ${homeTeam} is the HOME team - ONLY include players who are CURRENTLY on ${homeTeam}'s roster
+- ${awayTeam} is the AWAY team - ONLY include players who are CURRENTLY on ${awayTeam}'s roster
+- DO NOT include players from other teams even if mentioned in preview articles
+- If you're unsure if a player belongs to the team, DO NOT include them
 
-RESPONSE FORMAT (JSON):
+REQUIREMENTS:
+1. Only report injuries that are ACTIVE/CURRENT (not past injuries that players have recovered from)
+2. Focus on players who are OUT, DOUBTFUL, or QUESTIONABLE for the upcoming match
+3. Use official sources: ${sources}
+4. If a team has no reported injuries, return an empty injuries array
+5. VERIFY each player actually plays for the team you're listing them under${isSoccer ? '\n6. For soccer: also include suspended players (red cards, accumulated yellows)' : ''}
+
+RESPONSE FORMAT (JSON only, no other text):
 {
   "homeTeam": {
     "name": "${homeTeam}",
     "injuries": [
-      { "player": "Player Name", "injury": "Injury Type", "status": "Out/Doubtful/Questionable/Probable/GTD" }
+      { "player": "Player Name", "injury": "Injury Type (e.g., Hamstring, ACL, Suspended)", "status": "Out/Doubtful/Questionable" }
     ]
   },
   "awayTeam": {
@@ -660,19 +985,37 @@ Return ONLY the JSON, no other text.`;
     }
 
     // Convert parsed data to our format
-    const homeInjuries: InjuryData[] = (parsed.homeTeam?.injuries || []).map((inj: any) => ({
+    const homeInjuriesRaw: InjuryData[] = (parsed.homeTeam?.injuries || []).map((inj: any) => ({
       playerName: inj.player || inj.name || 'Unknown',
       injury: inj.injury || inj.type || 'Unknown',
       status: normalizeStatus(inj.status),
       expectedReturn: inj.expectedReturn,
     }));
 
-    const awayInjuries: InjuryData[] = (parsed.awayTeam?.injuries || []).map((inj: any) => ({
+    const awayInjuriesRaw: InjuryData[] = (parsed.awayTeam?.injuries || []).map((inj: any) => ({
       playerName: inj.player || inj.name || 'Unknown',
       injury: inj.injury || inj.type || 'Unknown',
       status: normalizeStatus(inj.status),
       expectedReturn: inj.expectedReturn,
     }));
+
+    // Validate injuries against known rosters based on sport
+    let homeInjuries = homeInjuriesRaw;
+    let awayInjuries = awayInjuriesRaw;
+    
+    if (isSoccer) {
+      homeInjuries = validateSoccerRoster(homeInjuriesRaw, homeTeam);
+      awayInjuries = validateSoccerRoster(awayInjuriesRaw, awayTeam);
+    } else if (isNBA) {
+      homeInjuries = validateRoster(homeInjuriesRaw, homeTeam, KNOWN_NBA_ROSTERS, 'NBA');
+      awayInjuries = validateRoster(awayInjuriesRaw, awayTeam, KNOWN_NBA_ROSTERS, 'NBA');
+    } else if (isNHL) {
+      homeInjuries = validateRoster(homeInjuriesRaw, homeTeam, KNOWN_NHL_ROSTERS, 'NHL');
+      awayInjuries = validateRoster(awayInjuriesRaw, awayTeam, KNOWN_NHL_ROSTERS, 'NHL');
+    } else if (isNFL) {
+      homeInjuries = validateRoster(homeInjuriesRaw, homeTeam, KNOWN_NFL_ROSTERS, 'NFL');
+      awayInjuries = validateRoster(awayInjuriesRaw, awayTeam, KNOWN_NFL_ROSTERS, 'NFL');
+    }
 
     console.log(`[Perplexity Injuries] Found: ${homeTeam} (${homeInjuries.length}), ${awayTeam} (${awayInjuries.length})`);
 

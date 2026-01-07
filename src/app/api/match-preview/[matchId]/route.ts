@@ -24,6 +24,7 @@ import { isBase64, parseMatchSlug, decodeBase64MatchId } from '@/lib/match-utils
 export const dynamic = 'force-dynamic';
 import { getMatchInjuries, getMatchGoalTiming, getMatchKeyPlayers, getFixtureReferee, getMatchFixtureInfo } from '@/lib/football-api';
 import { getNFLMatchInjuries } from '@/lib/sports-api';
+import { getMatchInjuriesViaPerplexity } from '@/lib/perplexity';
 import { normalizeSport } from '@/lib/data-layer/bridge';
 import { getUnifiedMatchData, type MatchIdentifier } from '@/lib/unified-match-service';
 import { normalizeToUniversalSignals, formatSignalsForAI, getSignalSummary, type RawMatchInput } from '@/lib/universal-signals';
@@ -43,6 +44,57 @@ const openai = new OpenAI({
 
 interface RouteParams {
   params: Promise<{ matchId: string }>;
+}
+
+/**
+ * Fetch injuries using hybrid approach:
+ * - Perplexity as PRIMARY (real-time news, accurate team assignments)
+ * - API-Sports as FALLBACK (structured but sometimes has data quality issues)
+ */
+async function getHybridInjuries(
+  homeTeam: string,
+  awayTeam: string,
+  sport: string,
+  league?: string
+): Promise<{ home: any[]; away: any[] }> {
+  // Try Perplexity first (more accurate, real-time)
+  try {
+    console.log(`[Match-Preview] Fetching injuries via Perplexity...`);
+    const perplexityResult = await getMatchInjuriesViaPerplexity(homeTeam, awayTeam, sport, league);
+    
+    if (perplexityResult.success && (perplexityResult.home.length > 0 || perplexityResult.away.length > 0)) {
+      console.log(`[Match-Preview] Perplexity injuries: home=${perplexityResult.home.length}, away=${perplexityResult.away.length}`);
+      
+      // Convert Perplexity format to our standard format
+      return {
+        home: perplexityResult.home.map(i => ({
+          player: i.playerName,
+          position: 'Unknown',
+          reason: i.injury.toLowerCase().includes('suspend') ? 'suspension' as const : 'injury' as const,
+          details: `${i.injury} - ${i.status}`,
+        })),
+        away: perplexityResult.away.map(i => ({
+          player: i.playerName,
+          position: 'Unknown',
+          reason: i.injury.toLowerCase().includes('suspend') ? 'suspension' as const : 'injury' as const,
+          details: `${i.injury} - ${i.status}`,
+        })),
+      };
+    }
+  } catch (perplexityError) {
+    console.warn(`[Match-Preview] Perplexity injuries failed:`, perplexityError);
+  }
+  
+  // Fallback to API-Sports
+  console.log(`[Match-Preview] Falling back to API-Sports for injuries...`);
+  try {
+    const apiInjuries = await getMatchInjuries(homeTeam, awayTeam, league);
+    console.log(`[Match-Preview] API-Sports injuries: home=${apiInjuries.home.length}, away=${apiInjuries.away.length}`);
+    return apiInjuries;
+  } catch (apiError) {
+    console.error(`[Match-Preview] API-Sports injuries failed:`, apiError);
+    return { home: [], away: [] };
+  }
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -212,11 +264,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                                  .some(s => storedSport?.toLowerCase()?.includes(s));
         
         if (isSoccerStored) {
-          console.log(`[Match-Preview] Soccer match - ALWAYS fetching fresh injuries...`);
+          console.log(`[Match-Preview] Soccer match - fetching injuries via Perplexity+API hybrid...`);
           try {
-            const freshInjuries = await getMatchInjuries(
+            const freshInjuries = await getHybridInjuries(
               responseData.matchInfo?.homeTeam || matchInfo.homeTeam,
               responseData.matchInfo?.awayTeam || matchInfo.awayTeam,
+              storedSport,
               responseData.matchInfo?.league || matchInfo.league
             );
             
@@ -375,11 +428,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           .includes(cachedSport?.toLowerCase() || '');
         
         if (isSoccerCached) {
-          console.log(`[Match-Preview] Soccer match from cache - ALWAYS fetching fresh injuries...`);
+          console.log(`[Match-Preview] Soccer match from cache - fetching injuries via Perplexity+API hybrid...`);
           try {
-            const freshInjuries = await getMatchInjuries(
+            const freshInjuries = await getHybridInjuries(
               responseData.matchInfo?.homeTeam || matchInfo.homeTeam,
               responseData.matchInfo?.awayTeam || matchInfo.awayTeam,
+              cachedSport,
               responseData.matchInfo?.league || matchInfo.league
             );
             
