@@ -4,7 +4,11 @@
  * Run with: npx tsx scripts/check-pending-predictions.ts
  */
 
-import { prisma } from '../src/lib/prisma';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('='.repeat(60));

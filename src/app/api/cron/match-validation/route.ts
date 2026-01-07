@@ -36,24 +36,75 @@ interface MatchResult {
 
 /**
  * Fetch match result from API
+ * Supports both numeric IDs and team name slugs
  */
-async function getMatchResult(matchId: string, sport: string): Promise<MatchResult | null> {
+async function getMatchResult(matchId: string, sport: string, matchName?: string, kickoff?: Date): Promise<MatchResult | null> {
   try {
-    const baseUrl = sport === 'basketball' ? BASKETBALL_API_URL : FOOTBALL_API_URL;
-    const endpoint = sport === 'basketball' ? '/games' : '/fixtures';
+    // Check if matchId is numeric (real API ID) or a slug
+    const isNumericId = /^\d+$/.test(matchId);
     
-    const response = await fetch(`${baseUrl}${endpoint}?id=${matchId}`, {
-      headers: { 'x-apisports-key': API_KEY },
-    });
+    // For basketball sports, use basketball API
+    const isBasketball = sport.includes('basketball') || sport.includes('nba') || sport.includes('euroleague');
+    const baseUrl = isBasketball ? BASKETBALL_API_URL : FOOTBALL_API_URL;
     
-    if (!response.ok) return null;
+    let match: any = null;
     
-    const data = await response.json();
-    const match = data.response?.[0];
+    if (isNumericId) {
+      // Direct ID lookup
+      const endpoint = isBasketball ? '/games' : '/fixtures';
+      const response = await fetch(`${baseUrl}${endpoint}?id=${matchId}`, {
+        headers: { 'x-apisports-key': API_KEY },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        match = data.response?.[0];
+      }
+    }
+    
+    // If no match found and we have team names, search by team/date
+    if (!match && matchName) {
+      const [homeTeam, awayTeam] = matchName.split(' vs ').map(t => t.trim());
+      
+      if (homeTeam && awayTeam && kickoff) {
+        const dateStr = kickoff.toISOString().split('T')[0];
+        const endpoint = isBasketball ? '/games' : '/fixtures';
+        
+        // For soccer, search by date and then filter by team names
+        const response = await fetch(`${baseUrl}${endpoint}?date=${dateStr}`, {
+          headers: { 'x-apisports-key': API_KEY },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const matches = data.response || [];
+          
+          // Find the match by team names (fuzzy match)
+          const homeNormalized = homeTeam.toLowerCase().replace(/[^a-z]/g, '');
+          const awayNormalized = awayTeam.toLowerCase().replace(/[^a-z]/g, '');
+          
+          match = matches.find((m: any) => {
+            const apiHome = isBasketball 
+              ? (m.teams?.home?.name || '').toLowerCase().replace(/[^a-z]/g, '')
+              : (m.teams?.home?.name || '').toLowerCase().replace(/[^a-z]/g, '');
+            const apiAway = isBasketball 
+              ? (m.teams?.away?.name || '').toLowerCase().replace(/[^a-z]/g, '')
+              : (m.teams?.away?.name || '').toLowerCase().replace(/[^a-z]/g, '');
+            
+            return (apiHome.includes(homeNormalized) || homeNormalized.includes(apiHome)) &&
+                   (apiAway.includes(awayNormalized) || awayNormalized.includes(apiAway));
+          });
+          
+          if (match) {
+            console.log(`[Validation] Found match by team names: ${homeTeam} vs ${awayTeam}`);
+          }
+        }
+      }
+    }
     
     if (!match) return null;
     
-    if (sport === 'basketball') {
+    if (isBasketball) {
       const homeScore = match.scores?.home?.total || 0;
       const awayScore = match.scores?.away?.total || 0;
       return {
@@ -268,11 +319,16 @@ export async function GET(request: NextRequest) {
     
     for (const prediction of pendingPredictions) {
       try {
-        // Fetch match result
-        const result = await getMatchResult(prediction.matchId, prediction.sport);
+        // Fetch match result - pass matchName and kickoff for team name lookup
+        const result = await getMatchResult(
+          prediction.matchId, 
+          prediction.sport, 
+          prediction.matchName,
+          prediction.kickoff
+        );
         
         if (!result) {
-          console.log(`[Cron] No result for ${prediction.matchId}`);
+          console.log(`[Cron] No result for ${prediction.matchId} (${prediction.matchName})`);
           continue;
         }
         
