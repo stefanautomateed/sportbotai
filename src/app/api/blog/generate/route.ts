@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
     if (shouldDiscover) {
       console.log('[Blog Cron] Running tool discovery from sportsbettingtools.io...');
       try {
-        discoveryResults = await discoverAndProcessNewTools(5); // Max 5 new tools per discovery
+        discoveryResults = await discoverAndProcessNewTools(30); // Max 30 new tools per discovery
         console.log(`[Blog Cron] Discovery: ${discoveryResults.discovered} found, ${discoveryResults.new} new`);
       } catch (discoverError) {
         console.error('[Blog Cron] Discovery error:', discoverError);
