@@ -12,8 +12,11 @@ export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get('url') || 'https://killersports.com/';
   const name = request.nextUrl.searchParams.get('name') || 'Test';
   
+  const apiKey = process.env.SCREENSHOTONE_API_KEY || '';
+  const keyPreview = apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'NOT SET';
+  
   console.log(`[Screenshot Debug] Testing ${url} with name ${name}`);
-  console.log(`[Screenshot Debug] SCREENSHOTONE_API_KEY configured: ${!!process.env.SCREENSHOTONE_API_KEY}`);
+  console.log(`[Screenshot Debug] SCREENSHOTONE_API_KEY: ${keyPreview} (length: ${apiKey.length})`);
   console.log(`[Screenshot Debug] BLOB_READ_WRITE_TOKEN configured: ${!!process.env.BLOB_READ_WRITE_TOKEN}`);
   
   try {
@@ -40,6 +43,8 @@ export async function GET(request: NextRequest) {
       stack: stack,
       envCheck: {
         screenshotoneKey: !!process.env.SCREENSHOTONE_API_KEY,
+        keyPreview: keyPreview,
+        keyLength: apiKey.length,
         blobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
       }
     }, { status: 500 });
