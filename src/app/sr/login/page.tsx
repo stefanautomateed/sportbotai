@@ -8,6 +8,7 @@ import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getTranslations } from '@/lib/i18n/translations';
 
 const t = getTranslations('sr');
@@ -59,9 +60,13 @@ function LoginForm() {
       {/* Header */}
       <div className="text-center mb-8">
         <Link href="/sr" className="inline-flex items-center gap-2 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-            <span className="text-lg font-bold text-bg-primary">B</span>
-          </div>
+          <Image
+            src="/logo-icon.png"
+            alt="SportBot AI"
+            width={40}
+            height={40}
+            className="rounded-xl"
+          />
           <span className="text-xl font-bold text-text-primary">SportBot AI</span>
         </Link>
         <h1 className="text-2xl font-bold text-text-primary">{t.auth.welcomeBack}</h1>
