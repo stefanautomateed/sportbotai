@@ -14,6 +14,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { hashChatQuery } from '@/lib/cache';
+import { recordFeedback as recordFeedbackForLearning } from '@/lib/query-learning';
 
 // ============================================
 // LEARNING FROM FEEDBACK
@@ -192,6 +193,22 @@ export async function POST(request: NextRequest) {
     // If positive feedback, boost knowledge quality
     if (rating === 5) {
       await learnFromPositiveFeedback(queryHash, query, response);
+    }
+    
+    // Update ChatQuery with feedback for the new learning system
+    // This stores feedback directly on the query for easier analysis
+    try {
+      await prisma.chatQuery.updateMany({
+        where: { queryHash },
+        data: {
+          feedbackRating: rating,
+          feedbackAt: new Date(),
+          feedbackComment: feedback || null,
+        },
+      });
+      console.log(`[Feedback] Updated ChatQuery with feedback rating: ${rating}`);
+    } catch (updateErr) {
+      console.error('[Feedback] Failed to update ChatQuery with feedback:', updateErr);
     }
 
     return NextResponse.json({
