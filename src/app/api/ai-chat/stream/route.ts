@@ -224,9 +224,150 @@ function detectSport(message: string): string | undefined {
   const lower = message.toLowerCase();
   if (/football|soccer|premier league|la liga|serie a|bundesliga|champions league/i.test(lower)) return 'football';
   if (/basketball|nba|euroleague|lakers|celtics|warriors/i.test(lower)) return 'basketball';
+  if (/hockey|nhl|bruins|rangers|oilers|maple leafs|penguins|lightning|avalanche/i.test(lower)) return 'hockey';
   if (/tennis|atp|wta|wimbledon|nadal|djokovic/i.test(lower)) return 'tennis';
   if (/nfl|american football|quarterback|touchdown|super bowl/i.test(lower)) return 'american_football';
   return undefined;
+}
+
+/**
+ * Check if query is asking for standings/table data
+ */
+function isStandingsQuery(message: string): boolean {
+  return /standings|table|position|rank|leading|who('s| is) (first|top|leading)|conference|division|league.*leader/i.test(message);
+}
+
+/**
+ * Detect which league standings are being asked about
+ */
+function detectStandingsLeague(message: string): { sport: string; league: number; season: string; leagueName: string } | null {
+  const lower = message.toLowerCase();
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  
+  // NHL - season runs Oct-June
+  if (/nhl|hockey|bruins|rangers|oilers|maple leafs|penguins|lightning|avalanche|panthers|canucks|jets|flames|senators|devils|hurricanes|islanders|kings|ducks|sharks|kraken|wild|stars|blues|predators|blackhawks|red wings|sabres|flyers|capitals|blue jackets/i.test(lower)) {
+    const season = month >= 9 ? year : year - 1;
+    return { sport: 'hockey', league: 57, season: String(season), leagueName: 'NHL' };
+  }
+  
+  // NBA - season runs Oct-June
+  if (/nba|basketball|lakers|celtics|warriors|heat|bucks|nets|knicks|76ers|sixers|clippers|suns|nuggets|mavericks|grizzlies|timberwolves|cavaliers|bulls|hawks|raptors|pacers|magic|hornets|wizards|pistons|thunder|trail blazers|jazz|kings|spurs|pelicans|rockets/i.test(lower)) {
+    const season = month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+    return { sport: 'basketball', league: 12, season, leagueName: 'NBA' };
+  }
+  
+  // NFL - season runs Sep-Feb
+  if (/nfl|american football|chiefs|eagles|bills|cowboys|dolphins|ravens|bengals|49ers|lions|seahawks|packers|vikings|steelers|chargers|broncos|raiders|commanders|giants|jets|patriots|titans|jaguars|colts|texans|browns|bears|saints|buccaneers|falcons|panthers|cardinals|rams/i.test(lower)) {
+    const season = month >= 8 ? year : year - 1;
+    return { sport: 'nfl', league: 1, season: String(season), leagueName: 'NFL' };
+  }
+  
+  // Premier League
+  if (/premier league|epl|english|arsenal|chelsea|liverpool|man(chester)? (city|united)|tottenham|newcastle|west ham|aston villa|brighton|fulham|bournemouth|wolves|crystal palace|nottingham|brentford|everton|luton|burnley|sheffield/i.test(lower)) {
+    const season = month >= 7 ? year : year - 1;
+    return { sport: 'soccer', league: 39, season: String(season), leagueName: 'Premier League' };
+  }
+  
+  // La Liga
+  if (/la liga|spanish|real madrid|barcelona|atletico|sevilla|villarreal|sociedad|betis|athletic bilbao|valencia|osasuna|girona|getafe|celta|mallorca|rayo|cadiz|almeria|granada|las palmas/i.test(lower)) {
+    const season = month >= 7 ? year : year - 1;
+    return { sport: 'soccer', league: 140, season: String(season), leagueName: 'La Liga' };
+  }
+  
+  // Serie A
+  if (/serie a|italian|juventus|inter|milan|napoli|roma|lazio|atalanta|fiorentina|bologna|torino|monza|udinese|sassuolo|empoli|verona|cagliari|lecce|genoa|salernitana|frosinone/i.test(lower)) {
+    const season = month >= 7 ? year : year - 1;
+    return { sport: 'soccer', league: 135, season: String(season), leagueName: 'Serie A' };
+  }
+  
+  // Bundesliga
+  if (/bundesliga|german|bayern|dortmund|leverkusen|leipzig|frankfurt|wolfsburg|freiburg|hoffenheim|mainz|union berlin|koln|werder|gladbach|stuttgart|augsburg|bochum|heidenheim|darmstadt/i.test(lower)) {
+    const season = month >= 7 ? year : year - 1;
+    return { sport: 'soccer', league: 78, season: String(season), leagueName: 'Bundesliga' };
+  }
+  
+  // Ligue 1
+  if (/ligue 1|french|psg|paris saint.germain|marseille|monaco|lyon|lille|nice|lens|rennes|toulouse|montpellier|reims|strasbourg|nantes|lorient|metz|clermont|brest|le havre/i.test(lower)) {
+    const season = month >= 7 ? year : year - 1;
+    return { sport: 'soccer', league: 61, season: String(season), leagueName: 'Ligue 1' };
+  }
+  
+  return null;
+}
+
+/**
+ * Fetch standings from our API and format for context
+ */
+async function fetchStandingsContext(message: string): Promise<{ context: string; leagueName: string } | null> {
+  const leagueInfo = detectStandingsLeague(message);
+  if (!leagueInfo) {
+    console.log('[AI-Chat-Stream] Could not detect league for standings query');
+    return null;
+  }
+  
+  console.log(`[AI-Chat-Stream] Fetching ${leagueInfo.leagueName} standings (season ${leagueInfo.season})...`);
+  
+  try {
+    // Call our internal standings API
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+    const url = new URL('/api/standings', baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`);
+    url.searchParams.set('sport', leagueInfo.sport);
+    url.searchParams.set('league', String(leagueInfo.league));
+    url.searchParams.set('season', leagueInfo.season);
+    
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      console.error('[AI-Chat-Stream] Standings API error:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    if (!data.success || !data.data?.standings) {
+      console.error('[AI-Chat-Stream] Standings API returned no data');
+      return null;
+    }
+    
+    const standings = data.data.standings;
+    const league = data.data.league;
+    
+    // Format standings into context string
+    let context = `=== VERIFIED ${league.name.toUpperCase()} STANDINGS (${league.season} Season) ===\n`;
+    context += `Last updated: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}\n\n`;
+    
+    // For basketball/hockey/NFL, show wins-losses instead of points
+    const isPointsBased = leagueInfo.sport === 'soccer';
+    
+    if (isPointsBased) {
+      context += 'Pos | Team | P | W | D | L | GD | Pts\n';
+      context += '-'.repeat(50) + '\n';
+    } else {
+      context += 'Pos | Team | W | L | Streak\n';
+      context += '-'.repeat(40) + '\n';
+    }
+    
+    // Show top standings (or all for NHL/NBA with divisions)
+    const maxToShow = 32; // Show all teams for major leagues
+    for (const team of standings.slice(0, maxToShow)) {
+      if (isPointsBased) {
+        context += `${team.position}. ${team.teamName} | ${team.played} | ${team.won} | ${team.drawn} | ${team.lost} | ${team.goalDiff > 0 ? '+' : ''}${team.goalDiff} | ${team.points}\n`;
+      } else {
+        const streak = team.form ? team.form.slice(0, 5) : 'N/A';
+        context += `${team.position}. ${team.teamName} | ${team.won}-${team.lost} | ${streak}\n`;
+      }
+    }
+    
+    if (standings.length > maxToShow) {
+      context += `\n... and ${standings.length - maxToShow} more teams`;
+    }
+    
+    console.log(`[AI-Chat-Stream] ✅ Got ${standings.length} teams for ${leagueInfo.leagueName}`);
+    return { context, leagueName: leagueInfo.leagueName };
+  } catch (error) {
+    console.error('[AI-Chat-Stream] Error fetching standings:', error);
+    return null;
+  }
 }
 
 // ============================================
@@ -1131,6 +1272,26 @@ If their favorite team has a match today/tonight, lead with that information.`;
             }
           }
 
+          // Step 1.7: Verified Standings for standings queries (bypasses Perplexity for accurate data)
+          let verifiedStandingsContext = '';
+          if (isStandingsQuery(searchMessage)) {
+            console.log('[AI-Chat-Stream] Standings query detected, fetching from API...');
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '📊 Fetching verified standings...' })}\n\n`));
+            
+            const standingsResult = await fetchStandingsContext(searchMessage);
+            if (standingsResult) {
+              verifiedStandingsContext = standingsResult.context;
+              console.log(`[AI-Chat-Stream] ✅ Got ${standingsResult.leagueName} standings`);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Loaded ${standingsResult.leagueName} standings` })}\n\n`));
+              
+              // Override Perplexity context to prevent outdated data
+              perplexityContext = '';
+              citations = [];
+            } else {
+              console.log('[AI-Chat-Stream] ⚠️ Could not get verified standings, falling back to Perplexity');
+            }
+          }
+
           // Send status: generating
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: 'Generating response...' })}\n\n`));
 
@@ -1185,7 +1346,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
 
           // Add user message with context
           let userContent = message;
-          const hasContext = perplexityContext || dataLayerContext || verifiedPlayerStatsContext || ourPredictionContext;
+          const hasContext = perplexityContext || dataLayerContext || verifiedPlayerStatsContext || ourPredictionContext || verifiedStandingsContext;
           
           if (hasContext) {
             // For OUR_PREDICTION queries, use our stored analysis
@@ -1203,6 +1364,26 @@ INSTRUCTIONS:
 4. If outcome is PENDING ⏳, note that the match hasn't been played yet or result not updated
 5. If no prediction was found (⚠️ NO PREDICTION FOUND), say: "I don't have a stored analysis for that specific match"
 6. DO NOT make up an analysis if we don't have one`;
+            } else if (queryCategory === 'STANDINGS' && verifiedStandingsContext) {
+              // Prioritize verified standings data
+              userContent = `USER QUESTION: ${message}
+
+⚠️ CRITICAL: The user is asking about CURRENT STANDINGS. Your training data is OUTDATED.
+
+${verifiedStandingsContext}
+
+STRICT RULES:
+1. ONLY use the standings data provided above - it is VERIFIED and CURRENT
+2. DO NOT use any standings from your training data (it's outdated)
+3. When mentioning positions, be specific: "Team X is currently in 1st place with a 25-10 record"
+4. Include relevant stats like wins, losses, win streak if asked
+5. For conference/division questions, group teams appropriately
+
+RESPONSE FORMAT:
+- Be conversational but accurate
+- Lead with the most relevant information for what was asked
+- If they asked about a specific team, focus on that team's position first
+- Include comparison to rivals or nearby teams if relevant`;
             } else if (queryCategory === 'STATS') {
               // Prioritize verified player stats over Perplexity
               const statsData = verifiedPlayerStatsContext || perplexityContext || 'No real-time data available';
