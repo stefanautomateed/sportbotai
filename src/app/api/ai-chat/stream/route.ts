@@ -45,6 +45,8 @@ import { isCoachQuery, getVerifiedCoach, formatCoachContext } from '@/lib/verifi
 import { isMatchEventsQuery, getVerifiedMatchEvents, formatMatchEventsContext } from '@/lib/verified-match-events';
 // Match prediction (our pre-match analysis for upcoming games within 48h)
 import { isMatchPredictionQuery, getUpcomingMatchPrediction, formatMatchPredictionContext } from '@/lib/verified-match-prediction';
+// Query Learning - systematic improvement over time
+import { trackQuery as trackQueryForLearning, detectMismatch, recordMismatch, type QueryTrackingData } from '@/lib/query-learning';
 
 // ============================================
 // TYPES
@@ -1096,6 +1098,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
     // STEP 0: SMART QUERY UNDERSTANDING
     // Use LLM-backed classification for better intent detection
     // ============================================
+    const requestStartTime = Date.now(); // Track latency for learning
     let queryUnderstanding: QueryUnderstanding | null = null;
     try {
       queryUnderstanding = await understandQuery(message);
@@ -1898,7 +1901,20 @@ RESPONSE FORMAT:
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
           controller.close();
 
-          // Track query with answer for caching (async)
+          // Calculate response latency
+          const latencyMs = Date.now() - requestStartTime;
+          
+          // Determine primary response source for learning
+          let responseSource: 'CACHE' | 'VERIFIED_STATS' | 'PERPLEXITY' | 'OUR_PREDICTION' | 'LLM' | 'HYBRID' = 'LLM';
+          if (verifiedPlayerStatsContext || verifiedTeamMatchStatsContext || verifiedStandingsContext) {
+            responseSource = perplexityContext ? 'HYBRID' : 'VERIFIED_STATS';
+          } else if (verifiedMatchPredictionContext) {
+            responseSource = 'OUR_PREDICTION';
+          } else if (perplexityContext) {
+            responseSource = 'PERPLEXITY';
+          }
+
+          // Track query with answer for caching (async) + LEARNING FIELDS
           trackQuery({
             query: message,
             answer: fullResponse,  // Save the answer for future cache hits
@@ -1910,11 +1926,39 @@ RESPONSE FORMAT:
             hadCitations: citations.length > 0,
             citations,  // Save citations for reuse
             userId,     // Track who submitted the query
-            // NEW: Data confidence metrics for quality tracking
+            // Data confidence metrics for quality tracking
             dataConfidenceLevel: dataConfidence.level,
             dataConfidenceScore: dataConfidence.score,
             dataSources: dataConfidence.sources,
+            
+            // ============================================
+            // QUERY LEARNING FIELDS (for systematic improvement)
+            // ============================================
+            
+            // Classification tracking
+            detectedIntent: queryUnderstanding?.intent,
+            intentConfidence: queryUnderstanding?.intentConfidence,
+            entitiesDetected: queryUnderstanding?.entities.map(e => e.name),
+            expandedQuery: expandedQuery !== message ? expandedQuery : undefined,
+            patternMatched: queryUnderstanding?.patternMatched,
+            wasLLMClassified: queryUnderstanding?.usedLLM ?? false,
+            
+            // Response tracking
+            responseSource,
+            cacheHit: false,
+            latencyMs,
           }).catch(() => {});
+          
+          // Detect entity mismatch (asked about X, answered about Y)
+          // This helps us learn from mistakes
+          if (queryUnderstanding && queryUnderstanding.entities.length > 0) {
+            const mismatch = detectMismatch(message, fullResponse);
+            if (mismatch.hasMismatch && mismatch.details) {
+              console.warn(`[AI-Chat-Stream] ⚠️ ENTITY MISMATCH DETECTED: ${mismatch.details}`);
+              // Record for learning - fire and forget
+              recordMismatch(queryHash, mismatch.details).catch(() => {});
+            }
+          }
 
           saveKnowledge({
             question: message,

@@ -65,6 +65,9 @@ export interface QueryUnderstanding {
   isAmbiguous: boolean;
   alternativeIntents?: QueryIntent[];
   clarifyingQuestion?: string;
+  // For learning/tracking
+  patternMatched?: string;   // Which regex pattern matched (if any)
+  usedLLM?: boolean;         // True if LLM was used for classification
 }
 
 // ============================================
@@ -529,15 +532,20 @@ const INTENT_PATTERNS: IntentPattern[] = [
 
 /**
  * Classify intent using pattern matching
- * Returns intent and confidence
+ * Returns intent, confidence, alternatives, and matched pattern (for learning)
  */
-function classifyIntentByPatterns(query: string): { intent: QueryIntent; confidence: number; alternatives: QueryIntent[] } {
-  const matches: { intent: QueryIntent; priority: number }[] = [];
+function classifyIntentByPatterns(query: string): { 
+  intent: QueryIntent; 
+  confidence: number; 
+  alternatives: QueryIntent[];
+  matchedPattern?: string;
+} {
+  const matches: { intent: QueryIntent; priority: number; pattern: string }[] = [];
   
   for (const { intent, patterns, priority } of INTENT_PATTERNS) {
     for (const pattern of patterns) {
       if (pattern.test(query)) {
-        matches.push({ intent, priority });
+        matches.push({ intent, priority, pattern: pattern.toString() });
         break; // Only count each intent once
       }
     }
@@ -562,7 +570,12 @@ function classifyIntentByPatterns(query: string): { intent: QueryIntent; confide
     confidence = 0.85; // Single clear match
   }
   
-  return { intent: topMatch.intent, confidence, alternatives };
+  return { 
+    intent: topMatch.intent, 
+    confidence, 
+    alternatives,
+    matchedPattern: topMatch.pattern,
+  };
 }
 
 // ============================================
@@ -672,14 +685,18 @@ export async function understandQuery(query: string): Promise<QueryUnderstanding
   let intentConfidence = patternResult.confidence;
   let alternativeIntents = patternResult.alternatives;
   let isAmbiguous = false;
+  let patternMatched: string | undefined = patternResult.matchedPattern;
+  let usedLLM = false;
   
   // If low confidence or UNCLEAR, use LLM
   if (intentConfidence < 0.7 || intent === 'UNCLEAR') {
     console.log(`[QueryIntelligence] Low confidence (${intentConfidence}), using LLM...`);
+    usedLLM = true;
     const llmResult = await classifyWithLLM(query);
     
     intent = llmResult.intent;
     intentConfidence = llmResult.confidence;
+    patternMatched = undefined; // LLM classified, no pattern
     
     // Merge LLM entities with pattern entities
     for (const llmEntity of llmResult.entities) {
@@ -718,6 +735,9 @@ export async function understandQuery(query: string): Promise<QueryUnderstanding
     isAmbiguous,
     alternativeIntents: alternativeIntents.length > 0 ? alternativeIntents : undefined,
     clarifyingQuestion: isAmbiguous ? generateClarifyingQuestion(query, intent, alternativeIntents) : undefined,
+    // Learning/tracking fields
+    patternMatched,
+    usedLLM,
   };
   
   // Cache for 5 minutes
@@ -729,6 +749,7 @@ export async function understandQuery(query: string): Promise<QueryUnderstanding
     entities: entities.map(e => e.name),
     sport,
     dataNeeds: suggestedDataSources,
+    usedLLM,
   });
   
   return understanding;

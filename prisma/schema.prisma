@@ -229,6 +229,34 @@ model ChatQuery {
   dataConfidenceScore Int?      // 0-100
   dataSources         Json?     // Array of sources used
 
+  // ============================================
+  // QUERY INTELLIGENCE TRACKING (for learning)
+  // ============================================
+  
+  // Classification details
+  detectedIntent     String?   // MATCH_PREDICTION, PLAYER_STATS, etc.
+  intentConfidence   Float?    // 0.0 - 1.0 (how sure we were)
+  entitiesDetected   Json?     // ["LeBron James", "Lakers"]
+  expandedQuery      String?   // The query after entity expansion
+  
+  // Response quality metrics  
+  feedbackRating     Int?      // 1 (thumbs down) or 5 (thumbs up)
+  feedbackAt         DateTime?
+  feedbackComment    String?   // Optional user comment
+  
+  // Mismatch detection (automatic)
+  entityMismatch     Boolean   @default(false)  // Asked about X, answered about Y
+  mismatchDetails    String?   // "Query mentioned Jokic but response was about Knicks"
+  
+  // Pattern learning
+  patternMatched     String?   // Which pattern matched this query
+  wasLLMClassified   Boolean   @default(false)  // True if patterns failed, used LLM
+  
+  // Response source tracking
+  responseSource     String?   // CACHE, VERIFIED_STATS, PERPLEXITY, OUR_PREDICTION, LLM
+  cacheHit           Boolean   @default(false)
+  latencyMs          Int?      // How long the response took
+
   @@index([category])
   @@index([sport])
   @@index([team])
@@ -237,6 +265,10 @@ model ChatQuery {
   @@index([expiresAt])
   @@index([userId])
   @@index([dataConfidenceLevel])
+  @@index([detectedIntent])
+  @@index([feedbackRating])
+  @@index([entityMismatch])
+  @@index([wasLLMClassified])
 }
 
 model TrendingTopic {

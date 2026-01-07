@@ -36,6 +36,23 @@ interface QueryMetadata {
   dataConfidenceLevel?: 'FULL' | 'PARTIAL' | 'MINIMAL' | 'NONE';
   dataConfidenceScore?: number;
   dataSources?: string[];
+  
+  // ============================================
+  // QUERY LEARNING FIELDS (for systematic improvement)
+  // ============================================
+  
+  // Classification tracking
+  detectedIntent?: string;      // MATCH_PREDICTION, PLAYER_STATS, etc.
+  intentConfidence?: number;    // 0.0 - 1.0
+  entitiesDetected?: string[];  // ["LeBron James", "Lakers"]
+  expandedQuery?: string;       // The query after entity expansion
+  patternMatched?: string;      // Which regex pattern matched
+  wasLLMClassified?: boolean;   // True if patterns failed, used LLM
+  
+  // Response tracking
+  responseSource?: 'CACHE' | 'VERIFIED_STATS' | 'PERPLEXITY' | 'OUR_PREDICTION' | 'LLM' | 'HYBRID';
+  cacheHit?: boolean;
+  latencyMs?: number;
 }
 
 interface AgentPostData {
@@ -311,10 +328,27 @@ export async function trackQuery(metadata: QueryMetadata): Promise<void> {
           hadCitations: metadata.hadCitations ?? false,
           expiresAt,
           userId: metadata.userId,
-          // NEW: Data confidence metrics
+          // Data confidence metrics
           dataConfidenceLevel: metadata.dataConfidenceLevel,
           dataConfidenceScore: metadata.dataConfidenceScore,
           dataSources: metadata.dataSources,
+          
+          // ============================================
+          // QUERY LEARNING FIELDS (for systematic improvement)
+          // ============================================
+          
+          // Classification tracking
+          detectedIntent: metadata.detectedIntent,
+          intentConfidence: metadata.intentConfidence,
+          entitiesDetected: metadata.entitiesDetected ? JSON.stringify(metadata.entitiesDetected) : null,
+          expandedQuery: metadata.expandedQuery,
+          patternMatched: metadata.patternMatched,
+          wasLLMClassified: metadata.wasLLMClassified ?? false,
+          
+          // Response tracking
+          responseSource: metadata.responseSource,
+          cacheHit: metadata.cacheHit ?? false,
+          latencyMs: metadata.latencyMs,
         },
       });
     }
