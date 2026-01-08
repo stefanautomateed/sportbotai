@@ -18,7 +18,7 @@ export default function Footer() {
     <footer className="bg-bg text-text-secondary">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Brand Column */}
           <div className="md:col-span-2">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
@@ -98,6 +98,24 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
+          </div>
+
+          {/* Resources */}
+          <div>
+            <h3 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider">Resources</h3>
+            <ul className="space-y-1">
+              <li>
+                <Link href="/partners" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
+                  Featured Tools
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
+                  Blog
+                </Link>
+              </li>
+            </ul>
+          </div>
           </div>
         </div>
 
