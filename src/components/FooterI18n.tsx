@@ -125,6 +125,23 @@ export default function FooterI18n({ locale: localeProp }: FooterI18nProps) {
             </ul>
           </div>
 
+          {/* Resources */}
+          <div>
+            <h3 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider">{locale === 'sr' ? 'Resursi' : 'Resources'}</h3>
+            <ul className="space-y-1">
+              <li>
+                <Link href="/partners" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
+                  {locale === 'sr' ? 'Alati' : 'Featured Tools'}
+                </Link>
+              </li>
+              <li>
+                <Link href={`${localePath}/blog`} className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
+                  Blog
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Legal */}
           <div>
             <h3 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider">{t.legal}</h3>
@@ -142,23 +159,6 @@ export default function FooterI18n({ locale: localeProp }: FooterI18nProps) {
               <li>
                 <Link href={`${localePath}/responsible-gambling`} className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
                   {t.responsibleGambling}
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Resources */}
-          <div>
-            <h3 className="text-text-primary font-semibold mb-4 text-sm uppercase tracking-wider">{locale === 'sr' ? 'Resursi' : 'Resources'}</h3>
-            <ul className="space-y-1">
-              <li>
-                <Link href="/partners" className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
-                  {locale === 'sr' ? 'Alati' : 'Featured Tools'}
-                </Link>
-              </li>
-              <li>
-                <Link href={`${localePath}/blog`} className="text-text-muted hover:text-accent transition-colors text-sm py-2 inline-block touch-manipulation">
-                  Blog
                 </Link>
               </li>
             </ul>
