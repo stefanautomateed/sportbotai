@@ -724,6 +724,8 @@ Return ONLY the JSON object defined in the schema. No other text.`;
 // ============================================
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
     // ========================================
     // INTERNAL API KEY CHECK (for blog generator, cron jobs)
@@ -899,6 +901,47 @@ export async function POST(request: NextRequest) {
     }
 
     // ========================================
+    // CHECK PRE-ANALYZED CACHE FIRST (from daily cron job)
+    // This saves OpenAI costs by using pre-warmed analysis
+    // ========================================
+    const sportInput = normalizedRequest.matchData.sport;
+    const matchDateStr = normalizedRequest.matchData.matchDate 
+      ? new Date(normalizedRequest.matchData.matchDate).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
+    
+    const preAnalyzedKey = CACHE_KEYS.matchPreview(
+      normalizedRequest.matchData.homeTeam,
+      normalizedRequest.matchData.awayTeam,
+      sportInput,
+      matchDateStr
+    );
+    
+    const preAnalyzed = await cacheGet<AnalyzeResponse>(preAnalyzedKey);
+    
+    if (preAnalyzed && !forceRefresh) {
+      console.log('[Cache] ✅ PRE-ANALYZED data from cron job - saving OpenAI costs!');
+      
+      // Still count usage for billing purposes (except internal calls)
+      if (!isInternalCall) {
+        await incrementAnalysisCount(userId);
+      }
+      
+      return NextResponse.json({
+        ...preAnalyzed,
+        usageInfo: {
+          plan: usageCheck.plan,
+          remaining: usageCheck.remaining - 1,
+          limit: usageCheck.limit,
+        },
+        _meta: {
+          source: 'PRE_ANALYZED_CACHE',
+          cacheKey: preAnalyzedKey,
+          responseTimeMs: Date.now() - startTime,
+        },
+      });
+    }
+
+    // ========================================
     // FREE USERS: Decrement credit immediately
     // PRO/PREMIUM: Credits only used for NEW (non-cached) analyses
     // ========================================
@@ -935,7 +978,7 @@ export async function POST(request: NextRequest) {
     // FETCH REAL DATA (via Unified Match Service)
     // ========================================
     let enrichedData: MultiSportEnrichedData | null = null;
-    const sportInput = normalizedRequest.matchData.sport;
+    // sportInput already declared above in pre-analyzed cache check
     
     if (isSportSupported(sportInput)) {
       try {
