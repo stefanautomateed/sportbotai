@@ -852,13 +852,23 @@ ${!hasDraw ? 'NO DRAWS in this sport. Pick a winner.' : ''}`;
       homeTeam, awayTeam, homeFormStr, awayFormStr, homeStats, awayStats, h2hData, signals
     );
     
+    // Sanitize AI snapshot - remove any "undefined" strings that AI might output
+    const sanitizeSnapshot = (snapshot: string[] | undefined): string[] => {
+      if (!snapshot || !Array.isArray(snapshot)) return fallbackSnapshot;
+      return snapshot.map(s => 
+        typeof s === 'string' 
+          ? s.replace(/\bundefined\b/gi, 'unconfirmed').replace(/\bnull\b/gi, 'unknown')
+          : s
+      );
+    };
+    
     // Return story in SAME format as generateAIAnalysis
     return {
       story: {
         favored: aiResponse.favored || (hasDraw ? 'draw' : 'home'),
         confidence: mapConfidence(aiResponse.confidence),
         narrative: aiResponse.gameFlow || aiResponse.narrative || 'Analysis not available.',
-        snapshot: aiResponse.snapshot || fallbackSnapshot,
+        snapshot: sanitizeSnapshot(aiResponse.snapshot),
         riskFactors: aiResponse.riskFactors || ['Limited historical data'],
       },
       probabilities: aiResponse.probabilities || { home: 0.33, away: 0.33, draw: 0.34 },

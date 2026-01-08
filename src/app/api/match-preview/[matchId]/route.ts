@@ -1889,13 +1889,23 @@ ${!sportConfig.hasDraw ? 'NO DRAWS in this sport. Pick a winner.' : 'Draw is val
       result.analysis.favored = 'home';
     }
     
+    // Sanitize snapshot - remove any "undefined" strings that AI might output
+    const sanitizeSnapshot = (snapshot: string[] | undefined): string[] => {
+      if (!snapshot || !Array.isArray(snapshot)) return [];
+      return snapshot.map(s => 
+        typeof s === 'string' 
+          ? s.replace(/\bundefined\b/gi, 'unconfirmed').replace(/\bnull\b/gi, 'unknown')
+          : s
+      );
+    };
+    
     // Build response with Universal Signals
     return {
       story: {
         favored: result.analysis?.favored || 'draw',
         confidence: mapConfidence(result.analysis?.confidence),
         narrative: result.analysis?.gameFlow || '',
-        snapshot: result.analysis?.snapshot || [],
+        snapshot: sanitizeSnapshot(result.analysis?.snapshot),
         riskFactors: result.analysis?.riskFactors || [],
       },
       headlines: result.headline ? [
