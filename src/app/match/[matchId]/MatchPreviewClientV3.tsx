@@ -30,6 +30,7 @@ import {
   ProSection,
   CollapsibleSection,
   SnapshotList,
+  ViralStatsBar,
 } from '@/components/analysis';
 import { isBase64, parseMatchSlug, decodeBase64MatchId } from '@/lib/match-utils';
 import StandingsTable from '@/components/StandingsTable';
@@ -1206,6 +1207,36 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
                 {data.dataAvailability.message || t.limitedDataMessage}
               </p>
             </div>
+          </div>
+        )}
+
+        {/* QUICK STATS BAR - Viral shareable stats (H2H, Form, Streak, Key Absence) */}
+        {data.viralStats && (
+          <div className="mt-6">
+            <ViralStatsBar
+              homeTeam={data.matchInfo.homeTeam}
+              awayTeam={data.matchInfo.awayTeam}
+              hasDraw={data.matchInfo.hasDraw}
+              stats={{
+                h2h: data.viralStats.h2h ? {
+                  headline: data.viralStats.h2h.headline || 'No H2H data',
+                  favors: (data.viralStats.h2h.favors as 'home' | 'away' | 'even') || 'even',
+                } : { headline: 'First meeting', favors: 'even' },
+                form: data.viralStats.form ? {
+                  home: data.viralStats.form.home || '-----',
+                  away: data.viralStats.form.away || '-----',
+                } : { home: '-----', away: '-----' },
+                keyAbsence: data.viralStats.keyAbsence ? {
+                  team: data.viralStats.keyAbsence.team as 'home' | 'away',
+                  player: data.viralStats.keyAbsence.player,
+                  impact: 'key' as const,
+                } : undefined,
+                streak: data.viralStats.streak ? {
+                  text: data.viralStats.streak.text,
+                  team: data.viralStats.streak.team as 'home' | 'away',
+                } : undefined,
+              }}
+            />
           </div>
         )}
 
