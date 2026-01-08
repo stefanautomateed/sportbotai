@@ -183,6 +183,13 @@ export default async function RootLayout({
         {/* Microsoft Clarity - Heatmaps & Session Recording */}
         <MicrosoftClarity />
         
+        {/* Ahrefs Web Analytics */}
+        <script 
+          src="https://analytics.ahrefs.com/analytics.js" 
+          data-key="P7J/OBKDmyZ1TF6GuRYQsQ" 
+          async 
+        />
+        
         {/* DNS Prefetch & Preconnect for Logo CDNs - faster image loading */}
         <link rel="dns-prefetch" href="//a.espncdn.com" />
         <link rel="dns-prefetch" href="//media.api-sports.io" />
