@@ -8,6 +8,7 @@
 import { Metadata } from 'next';
 import MatchBrowser from '@/components/MatchBrowser';
 import { META, SITE_CONFIG, getMatchAnalyzerSchema, getMatchesBreadcrumb } from '@/lib/seo';
+import { prisma } from '@/lib/prisma';
 
 export const metadata: Metadata = {
   title: META.matches.title,
@@ -44,13 +45,47 @@ export const metadata: Metadata = {
   },
 };
 
-export default function MatchesPage({
+// Fetch upcoming matches for SSR SEO content
+async function getUpcomingMatches() {
+  try {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    
+    const matches = await prisma.oddsSnapshot.findMany({
+      where: {
+        matchDate: {
+          gte: now,
+          lte: tomorrow,
+        },
+      },
+      select: {
+        homeTeam: true,
+        awayTeam: true,
+        league: true,
+        sport: true,
+        matchDate: true,
+      },
+      orderBy: { matchDate: 'asc' },
+      take: 20,
+      distinct: ['homeTeam', 'awayTeam'],
+    });
+    
+    return matches;
+  } catch {
+    return [];
+  }
+}
+
+export default async function MatchesPage({
   searchParams,
 }: {
   searchParams: { league?: string };
 }) {
   const jsonLd = getMatchAnalyzerSchema();
   const breadcrumbSchema = getMatchesBreadcrumb();
+  
+  // Pre-fetch matches for SEO (server-rendered content for crawlers)
+  const upcomingMatches = await getUpcomingMatches();
   
   return (
     <>
@@ -91,7 +126,37 @@ export default function MatchesPage({
           </div>
         </section>
 
-        {/* Match Browser */}
+        {/* SSR Content for SEO - Hidden visually but readable by crawlers */}
+        {upcomingMatches.length > 0 && (
+          <noscript>
+            <section className="max-w-7xl mx-auto px-4 py-8">
+              <h2 className="text-xl font-bold text-white mb-4">Upcoming Matches</h2>
+              <p className="text-zinc-400 mb-6">
+                Get AI-powered analysis for these upcoming matches across Premier League, NBA, NFL, NHL and more.
+              </p>
+              <ul className="space-y-2">
+                {upcomingMatches.map((match, i) => (
+                  <li key={i} className="text-zinc-300">
+                    <strong>{match.homeTeam}</strong> vs <strong>{match.awayTeam}</strong>
+                    {match.league && <span className="text-zinc-500"> — {match.league}</span>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </noscript>
+        )}
+        
+        {/* Server-rendered SEO text (visible but minimal) */}
+        <div className="sr-only">
+          <h2>Upcoming Sports Matches for AI Analysis</h2>
+          <p>Browse upcoming matches from Premier League, La Liga, NBA, NFL, NHL and other major sports leagues. 
+          Get AI-powered pre-match analysis, form data, head-to-head records, and betting value detection.</p>
+          {upcomingMatches.slice(0, 10).map((match, i) => (
+            <p key={i}>{match.homeTeam} vs {match.awayTeam} - {match.league} match analysis</p>
+          ))}
+        </div>
+
+        {/* Match Browser (Client Component) */}
         <MatchBrowser maxMatches={24} initialLeague={searchParams.league} />
       </div>
     </>

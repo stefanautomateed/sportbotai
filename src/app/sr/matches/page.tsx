@@ -9,6 +9,7 @@ import { Metadata } from 'next';
 import MatchBrowserI18n from '@/components/MatchBrowserI18n';
 import { SITE_CONFIG, getMatchAnalyzerSchema, getMatchesBreadcrumb } from '@/lib/seo';
 import { getTranslations } from '@/lib/i18n/translations';
+import { prisma } from '@/lib/prisma';
 
 const t = getTranslations('sr');
 
@@ -47,13 +48,47 @@ export const metadata: Metadata = {
   },
 };
 
-export default function MatchesPageSr({
+// Fetch upcoming matches for SSR SEO content
+async function getUpcomingMatches() {
+  try {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    
+    const matches = await prisma.oddsSnapshot.findMany({
+      where: {
+        matchDate: {
+          gte: now,
+          lte: tomorrow,
+        },
+      },
+      select: {
+        homeTeam: true,
+        awayTeam: true,
+        league: true,
+        sport: true,
+        matchDate: true,
+      },
+      orderBy: { matchDate: 'asc' },
+      take: 20,
+      distinct: ['homeTeam', 'awayTeam'],
+    });
+    
+    return matches;
+  } catch {
+    return [];
+  }
+}
+
+export default async function MatchesPageSr({
   searchParams,
 }: {
   searchParams: { league?: string };
 }) {
   const jsonLd = getMatchAnalyzerSchema();
   const breadcrumbSchema = getMatchesBreadcrumb();
+  
+  // Pre-fetch matches for SEO
+  const upcomingMatches = await getUpcomingMatches();
   
   return (
     <>
@@ -93,6 +128,36 @@ export default function MatchesPageSr({
             </div>
           </div>
         </section>
+
+        {/* SSR Content for SEO - Hidden visually but readable by crawlers */}
+        {upcomingMatches.length > 0 && (
+          <noscript>
+            <section className="max-w-7xl mx-auto px-4 py-8">
+              <h2 className="text-xl font-bold text-white mb-4">Predstojeći Mečevi</h2>
+              <p className="text-zinc-400 mb-6">
+                Dobijte AI-analizu za predstojeće mečeve iz Premier Lige, NBA, NFL, NHL i drugih liga.
+              </p>
+              <ul className="space-y-2">
+                {upcomingMatches.map((match, i) => (
+                  <li key={i} className="text-zinc-300">
+                    <strong>{match.homeTeam}</strong> vs <strong>{match.awayTeam}</strong>
+                    {match.league && <span className="text-zinc-500"> — {match.league}</span>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </noscript>
+        )}
+        
+        {/* Server-rendered SEO text (visible but minimal) */}
+        <div className="sr-only">
+          <h2>Predstojeći Sportski Mečevi za AI Analizu</h2>
+          <p>Pregledajte predstojeće mečeve iz Premier Lige, La Lige, NBA, NFL, NHL i drugih velikih sportskih liga. 
+          Dobijte AI-analizu pre meča, podatke o formi, međusobne rezultate i detekciju vrednosnih kvota.</p>
+          {upcomingMatches.slice(0, 10).map((match, i) => (
+            <p key={i}>{match.homeTeam} vs {match.awayTeam} - {match.league} analiza meča</p>
+          ))}
+        </div>
 
         {/* Match Browser */}
         <MatchBrowserI18n maxMatches={24} locale="sr" initialLeague={searchParams.league} />
