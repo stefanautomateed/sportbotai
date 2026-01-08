@@ -47,7 +47,7 @@ export default function ViralStatsBar({
       {/* H2H Record */}
       <div className="bg-[#0F1114] rounded-xl border border-white/10 p-5">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-xl">⚔️</span>
+          <span className="text-xl">🆚</span>
           <span className="text-xs text-text-muted uppercase tracking-wider font-medium">Head to Head</span>
         </div>
         <p className="text-base font-bold text-white mb-2">{stats.h2h.headline}</p>
