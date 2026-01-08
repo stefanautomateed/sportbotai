@@ -978,6 +978,77 @@ ${research.rosterContext}
 
 === END HTML ELEMENTS ===
 
+═══════════════════════════════════════════════════════════════
+✍️ NATURAL, CONVERSATIONAL TONE (CRITICAL)
+═══════════════════════════════════════════════════════════════
+
+Write as if speaking to a friend who asked about this match:
+✔ Use contractions naturally (it's, don't, you're, we've, that's)
+✔ Address the reader directly ("you", "your", "we")
+✔ Include rhetorical questions ("So what does this mean for Sunday's clash?")
+✔ Vary sentence length — mix short punchy ones with longer explanations
+✔ Add emotional nuance — excitement, caution, curiosity
+✔ Use transitions like "Here's the thing...", "Now, let's talk about..."
+✔ Include asides and parentheticals (like this one)
+
+DO NOT sound like a lecture or match report template. Sound like a conversation.
+
+═══════════════════════════════════════════════════════════════
+🚫 BANNED AI PHRASES (INSTANT QUALITY PENALTY)
+═══════════════════════════════════════════════════════════════
+
+NEVER use these robotic AI-sounding phrases:
+❌ "In today's digital landscape..."
+❌ "It's important to note that..."
+❌ "Cutting-edge" / "State-of-the-art"
+❌ "Seamless" / "Seamlessly"
+❌ "Delve into" / "Delving deeper"
+❌ "At the end of the day..."
+❌ "Robust" / "Robust solutions"
+❌ "Leverage" (as a verb)
+❌ "Elevate your..."
+❌ "Navigate the complexities"
+❌ "In conclusion..." (at the start of conclusion)
+❌ "Furthermore..." / "Moreover..." (overused)
+❌ "A myriad of..."
+❌ "It goes without saying..."
+❌ "Needless to say..."
+❌ "This clash promises..." / "This fixture promises..."
+❌ "The stage is set..."
+❌ "All eyes will be on..."
+❌ "A tantalizing prospect"
+
+Instead, use direct, specific language that sounds like a real person wrote it.
+
+═══════════════════════════════════════════════════════════════
+💡 ORIGINAL INSIGHT & REAL EXAMPLES (E-E-A-T)
+═══════════════════════════════════════════════════════════════
+
+Add genuine value through:
+✔ Specific context ("When these sides met in October, the 2-1 scoreline didn't tell the whole story...")
+✔ Actual statistics with meaning ("City's 2.3 xG at home dwarfs their 1.4 on the road")
+✔ Reasoning and WHY explanations, not just WHAT happened
+✔ Personal-sounding insights ("One thing worth watching is...")
+✔ Acknowledge limitations ("Form's tricky to read here because...")
+✔ Specific player matchups ("If Salah gets isolated against their right-back...")
+
+DO NOT: Write filler content or repeat generic facts everyone knows.
+
+═══════════════════════════════════════════════════════════════
+🔄 BREAK AI PATTERNS (CRITICAL FOR QUALITY)
+═══════════════════════════════════════════════════════════════
+
+AI writing has predictable patterns. Break them:
+
+✔ Vary paragraph lengths (some 2 sentences, some 5-6)
+✔ Start sentences differently (not all "The", "This", "It")
+✔ Mix sentence structures (questions, statements, exclamations)
+✔ Include occasional one-sentence paragraphs for emphasis
+✔ Use fragments intentionally for effect ("Big ask.")
+✔ Vary transitions — don't repeat the same ones
+✔ Add personality touches ("Here's where it gets interesting...")
+✔ Each preview should have a UNIQUE angle/narrative hook
+
 REQUIREMENTS:
 1. SEO-optimized title including team names AND the word "prediction" or "preview" (50-60 chars)
 2. Engaging intro paragraph with match context, include primary keyword
