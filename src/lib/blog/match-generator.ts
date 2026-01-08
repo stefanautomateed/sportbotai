@@ -1195,31 +1195,71 @@ function stripPromotionalContent(content: string): string {
 
 /**
  * Generate news-style headline from blog title
- * Uses simple transformation - no AI call needed
+ * Creates varied, engaging headlines for Google News
  */
 function generateNewsTitle(
   blogTitle: string,
   homeTeam: string,
-  awayTeam: string
+  awayTeam: string,
+  league?: string,
+  matchDate?: Date
 ): string {
-  // Remove common blog-style patterns
-  let newsTitle = blogTitle
-    .replace(/prediction|preview|tips|picks|best bets/gi, '')
-    .replace(/odds analysis|betting/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  // Get day of week
+  const dayName = matchDate 
+    ? matchDate.toLocaleDateString('en-US', { weekday: 'long' })
+    : new Date().toLocaleDateString('en-US', { weekday: 'long' });
   
-  // If title is too short or generic, create a new one
-  if (newsTitle.length < 30 || newsTitle.toLowerCase().includes('vs')) {
-    // Create news-style headline
-    const newsVerbs = ['Face', 'Meet', 'Clash With', 'Take On', 'Battle'];
-    const verb = newsVerbs[Math.floor(Math.random() * newsVerbs.length)];
-    newsTitle = `${homeTeam} ${verb} ${awayTeam} in Key ${new Date().toLocaleDateString('en-US', { weekday: 'long' })} Matchup`;
-  }
+  // Pick a random template style
+  const templateStyle = Math.floor(Math.random() * 10);
+  
+  // Varied headline templates
+  const templates: string[] = [
+    // Action-focused
+    `${homeTeam} Host ${awayTeam} in ${dayName}'s ${league || ''} Showdown`.trim(),
+    `${awayTeam} Travel to Face ${homeTeam} in Crucial ${league || ''} Clash`,
+    `${homeTeam} Look to Extend Form Against Visiting ${awayTeam}`,
+    `${awayTeam} Eye Road Victory as They Face ${homeTeam}`,
+    
+    // Stakes-focused
+    `High Stakes as ${homeTeam} Welcome ${awayTeam} to Town`,
+    `${homeTeam} vs ${awayTeam}: What's at Stake This ${dayName}`,
+    `Crucial Points on the Line as ${homeTeam} Meet ${awayTeam}`,
+    `${dayName} Spotlight: ${homeTeam} Take On ${awayTeam}`,
+    
+    // Narrative-focused  
+    `Can ${awayTeam} Upset ${homeTeam} on the Road?`,
+    `${homeTeam} Aim to Bounce Back Against ${awayTeam}`,
+    `${awayTeam} Put Unbeaten Run to Test at ${homeTeam}`,
+    `Form Guide Favors ${homeTeam} Ahead of ${awayTeam} Visit`,
+    
+    // Time-focused
+    `${dayName} ${league || 'Action'}: ${homeTeam} vs ${awayTeam} Preview`,
+    `This ${dayName}: ${homeTeam} Set to Battle ${awayTeam}`,
+    `${league || 'Sports'} ${dayName}: ${homeTeam} Welcome ${awayTeam}`,
+    
+    // Question style
+    `${homeTeam} or ${awayTeam}: Who Will Prevail This ${dayName}?`,
+    `Will ${homeTeam} Continue Home Dominance vs ${awayTeam}?`,
+    
+    // Analysis style
+    `Inside the Matchup: ${homeTeam} vs ${awayTeam} Breakdown`,
+    `Key Factors in ${homeTeam}'s Clash with ${awayTeam}`,
+    `What to Watch: ${homeTeam} Against ${awayTeam}`,
+  ];
+  
+  let newsTitle = templates[templateStyle % templates.length];
+  
+  // Clean up any double spaces or trailing league text
+  newsTitle = newsTitle.replace(/\s+/g, ' ').trim();
   
   // Ensure it doesn't exceed reasonable length
-  if (newsTitle.length > 80) {
-    newsTitle = newsTitle.substring(0, 77) + '...';
+  if (newsTitle.length > 90) {
+    // Fall back to simpler format
+    newsTitle = `${homeTeam} vs ${awayTeam}: ${dayName}'s ${league || ''} Clash`.trim();
+  }
+  
+  if (newsTitle.length > 90) {
+    newsTitle = `${homeTeam} Face ${awayTeam} in ${league || dayName} Clash`;
   }
   
   return newsTitle;
@@ -1368,7 +1408,8 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
 
     // Step 6: Generate News Content (same post, different view)
     console.log('[Match Preview] Step 6/7: Generating news content...');
-    const newsTitle = generateNewsTitle(content.title, match.homeTeam, match.awayTeam);
+    const matchDate = match.commenceTime ? new Date(match.commenceTime) : undefined;
+    const newsTitle = generateNewsTitle(content.title, match.homeTeam, match.awayTeam, match.league, matchDate);
     let newsContent = transformToNewsContent(
       processedContent,
       match.homeTeam,
