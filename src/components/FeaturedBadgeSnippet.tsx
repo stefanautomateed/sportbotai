@@ -29,7 +29,7 @@ export default function FeaturedBadgeSnippet({ toolName, reviewUrl }: FeaturedBa
   };
 
   return (
-    <div className="mt-8 p-6 bg-gradient-to-br from-emerald-50 to-white rounded-xl shadow-lg border-2 border-emerald-200">
+    <div id="badge" className="mt-8 p-6 bg-gradient-to-br from-emerald-50 to-white rounded-xl shadow-lg border-2 border-emerald-200 scroll-mt-24">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center p-1">
           <Image src="/logo.svg" alt="SportBot AI" width={32} height={32} />

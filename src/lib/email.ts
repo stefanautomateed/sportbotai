@@ -468,10 +468,9 @@ export async function sendToolReviewOutreach(
 ): Promise<boolean> {
   // Use PNG for email compatibility (SVG doesn't work in most email clients)
   const logoUrl = 'https://www.sportbotai.com/logo-icon.png';
-  const badgeSnippet = `<a href="${reviewUrl}" title="${toolName} Review on SportBot AI" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 8px; text-decoration: none; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; color: white; font-weight: 500;">
-  <img src="${logoUrl}" alt="SportBot AI" width="24" height="24" style="border-radius: 4px;">
-  Featured on SportBot AI
-</a>`;
+  
+  // Clean URL for the badge page (review URL + #badge anchor or dedicated page)
+  const badgePageUrl = `${reviewUrl}#badge`;
 
   const html = emailWrapper(`
     <h2 style="color: #10B981;">We featured ${toolName}! 🎉</h2>
@@ -497,16 +496,29 @@ export async function sendToolReviewOutreach(
     <div style="background: #1e293b; padding: 20px; border-radius: 8px; margin: 20px 0;">
       <p style="margin: 0 0 15px 0; color: #fbbf24;"><strong>How it works:</strong></p>
       <ol style="color: #cbd5e1; margin: 0; padding-left: 20px; line-height: 1.8;">
-        <li>Copy the badge code below</li>
+        <li>Click the button below to get the badge code</li>
         <li>Add it anywhere on your site (footer, about page, anywhere works!)</li>
         <li>Reply to this email to let us know</li>
         <li>We'll update your link to dofollow within 24 hours ✓</li>
       </ol>
     </div>
     
-    <h3 style="color: #f8fafc;">Badge code:</h3>
-    <div style="background: #020617; padding: 15px; border-radius: 8px; overflow-x: auto; margin-bottom: 20px;">
-      <code style="font-size: 11px; color: #10B981; word-break: break-all;">${badgeSnippet.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>
+    <h3 style="color: #f8fafc;">Your badge:</h3>
+    
+    <!-- Badge Preview -->
+    <div style="background: #0f172a; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+      <p style="color: #64748b; font-size: 12px; margin: 0 0 12px 0;">Preview of how it looks:</p>
+      <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 8px; border: 1px solid #475569;">
+        <img src="${logoUrl}" alt="SportBot AI" width="24" height="24" style="border-radius: 4px;">
+        <span style="color: white; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 500;">Featured on SportBot AI</span>
+      </div>
+    </div>
+    
+    <!-- Get Code Button -->
+    <div style="text-align: center; margin: 25px 0;">
+      <a href="${badgePageUrl}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #059669 0%, #10B981 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+        Get Badge Code →
+      </a>
     </div>
     
     <p style="color: #94a3b8; font-size: 14px;">
