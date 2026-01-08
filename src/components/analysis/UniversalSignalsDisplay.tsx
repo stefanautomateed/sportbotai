@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import { UniversalSignals } from '@/lib/universal-signals';
+import { InfoTooltip } from '@/components/ui/Tooltip';
 import {
   FormDots,
   EdgeBar,
@@ -41,6 +42,12 @@ const signalTranslations = {
     rich: 'Rich',
     standard: 'Standard',
     limited: 'Limited',
+    // Tooltips
+    formTooltip: 'Last 5 results. Recent form predicts short-term performance better than season averages.',
+    edgeTooltip: 'Probability gap between teams based on our model. Higher % = stronger advantage.',
+    tempoTooltip: 'Expected game pace. High-tempo matches often produce more goals/points.',
+    efficiencyTooltip: 'How well teams convert chances. The difference between good teams and great ones.',
+    availabilityTooltip: 'Squad health impact. Key absences can shift outcomes by 10-20%.',
   },
   sr: {
     loadingSignals: 'Učitavamo signale meča...',
@@ -62,6 +69,12 @@ const signalTranslations = {
     rich: 'Bogato',
     standard: 'Standardno',
     limited: 'Ograničeno',
+    // Tooltips
+    formTooltip: 'Poslednjih 5 rezultata. Nedavna forma bolje predviđa kratkoročne performanse.',
+    edgeTooltip: 'Razlika u verovatnoći između timova. Viši % = jača prednost.',
+    tempoTooltip: 'Očekivani tempo igre. Brze utakmice često donose više golova/poena.',
+    efficiencyTooltip: 'Koliko dobro timovi realizuju šanse. Razlika između dobrih i sjajnih timova.',
+    availabilityTooltip: 'Uticaj zdravlja tima. Ključna odsustva mogu pomeriti ishod za 10-20%.',
   },
 };
 
@@ -136,6 +149,7 @@ export default function UniversalSignalsDisplay({
         <SignalCard 
           icon="📊" 
           label={t.form}
+          tooltip={t.formTooltip}
           rightContent={
             <span className="text-sm font-medium text-zinc-200">
               {display.form.label}
@@ -149,7 +163,7 @@ export default function UniversalSignalsDisplay({
         </SignalCard>
 
         {/* Strength Edge - Visual bar */}
-        <SignalCard icon="⚡" label={t.strengthEdge}>
+        <SignalCard icon="⚡" label={t.strengthEdge} tooltip={t.edgeTooltip}>
           <div className="mt-3">
             <EdgeBar
               direction={display.edge?.direction || 'even'}
@@ -169,6 +183,7 @@ export default function UniversalSignalsDisplay({
               <div className="flex items-center gap-2">
                 <span className="text-lg">🎯</span>
                 <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">{t.tempo}</span>
+                <InfoTooltip content={t.tempoTooltip} position="bottom" />
               </div>
               <TempoIndicator level={display.tempo.level} />
             </div>
@@ -182,6 +197,7 @@ export default function UniversalSignalsDisplay({
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">📈</span>
               <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">{t.efficiency}</span>
+              <InfoTooltip content={t.efficiencyTooltip} position="bottom" />
             </div>
             <p className="text-base font-medium text-stone-200">
               {display.efficiency.label}
@@ -200,6 +216,7 @@ export default function UniversalSignalsDisplay({
           homeTeam={homeTeam}
           awayTeam={awayTeam}
           locale={locale}
+          tooltip={t.availabilityTooltip}
         />
       </div>
 
@@ -220,11 +237,13 @@ function ExpandableAvailability({
   homeTeam,
   awayTeam,
   locale = 'en',
+  tooltip,
 }: {
   display: UniversalSignals['display'];
   homeTeam: string;
   awayTeam: string;
   locale?: 'en' | 'sr';
+  tooltip?: string;
 }) {
   const t = signalTranslations[locale];
   const [showAll, setShowAll] = useState(false);
@@ -273,6 +292,7 @@ function ExpandableAvailability({
           <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
             {locale === 'sr' ? 'Raspoloživost Tima' : 'Squad Availability'}
           </span>
+          {tooltip && <InfoTooltip content={tooltip} position="bottom" />}
         </div>
         <AvailabilityDots level={display.availability.level} />
       </div>
@@ -394,11 +414,13 @@ function SignalCard({
   label, 
   children,
   rightContent,
+  tooltip,
 }: { 
   icon: string; 
   label: string; 
   children: React.ReactNode;
   rightContent?: React.ReactNode;
+  tooltip?: string;
 }) {
   return (
     <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
@@ -406,6 +428,7 @@ function SignalCard({
         <div className="flex items-center gap-3">
           <span className="text-lg">{icon}</span>
           <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">{label}</span>
+          {tooltip && <InfoTooltip content={tooltip} position="bottom" />}
         </div>
         {rightContent}
       </div>
