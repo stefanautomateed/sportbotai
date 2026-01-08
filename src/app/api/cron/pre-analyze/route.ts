@@ -284,7 +284,16 @@ async function getInjuryInfo(
       const formatInjuries = (team: string, list: any[]): string => {
         if (list.length === 0) return '';
         const top = list.slice(0, 3); // Limit to top 3 injuries per team
-        const names = top.map(inj => `${inj.playerName} (${inj.type || inj.reason || 'injured'})`).join(', ');
+        // Safeguard against undefined values
+        const names = top
+          .filter(inj => inj.playerName) // Skip entries without player name
+          .map(inj => {
+            const name = inj.playerName || 'Unknown';
+            const reason = inj.type || inj.reason || 'injured';
+            return `${name} (${reason})`;
+          })
+          .join(', ');
+        if (!names) return '';
         return `${team}: ${names}${list.length > 3 ? ` +${list.length - 3} more` : ''}`;
       };
       
@@ -313,7 +322,17 @@ async function getInjuryInfo(
       const formatInjuries = (team: string, list: typeof result.home): string => {
         if (list.length === 0) return '';
         const top = list.slice(0, 4); // Show up to 4 injuries for US sports (rosters are bigger)
-        const names = top.map(inj => `${inj.playerName} (${inj.injury} - ${inj.status})`).join(', ');
+        // Safeguard against undefined values
+        const names = top
+          .filter(inj => inj.playerName) // Skip entries without player name
+          .map(inj => {
+            const name = inj.playerName || 'Unknown';
+            const injury = inj.injury || 'Injury';
+            const status = inj.status || 'Unknown';
+            return `${name} (${injury} - ${status})`;
+          })
+          .join(', ');
+        if (!names) return '';
         return `${team}: ${names}${list.length > 4 ? ` +${list.length - 4} more` : ''}`;
       };
       
@@ -627,14 +646,23 @@ async function runQuickAnalysis(
       rosterSport ? getRosterContextCached(homeTeam, awayTeam, rosterSport, league) : Promise.resolve(null),
     ]);
     
-    // Merge injuries from soccer API or Perplexity
+    // Merge injuries from soccer API or Perplexity - with safeguards against undefined values
+    const safeString = (val: any, fallback = 'Unknown'): string => 
+      val !== undefined && val !== null && val !== '' ? String(val) : fallback;
+    
     const finalInjuries = {
       home: isSoccerMatch 
         ? (structuredInjuries?.home || []) 
-        : (perplexityInjuries?.home?.map(i => ({ player: i.playerName, reason: `${i.injury} - ${i.status}` })) || []),
+        : (perplexityInjuries?.home?.map(i => ({ 
+            player: safeString(i.playerName, 'Unknown Player'), 
+            reason: `${safeString(i.injury, 'Injury')} - ${safeString(i.status, 'Unknown Status')}` 
+          })).filter(i => i.player !== 'Unknown Player') || []),
       away: isSoccerMatch 
         ? (structuredInjuries?.away || [])
-        : (perplexityInjuries?.away?.map(i => ({ player: i.playerName, reason: `${i.injury} - ${i.status}` })) || []),
+        : (perplexityInjuries?.away?.map(i => ({ 
+            player: safeString(i.playerName, 'Unknown Player'), 
+            reason: `${safeString(i.injury, 'Injury')} - ${safeString(i.status, 'Unknown Status')}` 
+          })).filter(i => i.player !== 'Unknown Player') || []),
     };
     
     console.log(`[Pre-Analyze] Injuries fetched - home: ${finalInjuries.home.length}, away: ${finalInjuries.away.length} (source: ${isSoccerMatch ? 'API-Sports' : 'Perplexity'})`);
@@ -707,10 +735,10 @@ async function runQuickAnalysis(
     // Get league-specific hints for better accuracy
     const leagueHint = getLeagueHint(league);
     
-    // Build injury context for prompt
+    // Build injury context for prompt - ONLY include if we have actual data
     const injuryContext = injuryInfo 
       ? `INJURIES: ${injuryInfo}\n(Use this in risk assessment - missing key players matter!)`
-      : 'INJURIES: No injury data available - assume full squads';
+      : ''; // Don't mention injuries at all if no data
     
     // Build rest days context for NBA/NHL
     const restContext = getRestDaysContext(
@@ -768,7 +796,7 @@ JSON output:
     "THE EDGE: [use team NAME not home/away] because [stat]. Not close.",
     "MARKET MISS: [what odds undervalue - remember ${homeTeam} is HOME, ${awayTeam} is AWAY]. The data screams [X].",
     "THE PATTERN: [H2H/streak with numbers]. This isn't random.",
-    "THE RISK: [caveat based on form/market data${injuryInfo ? '/injuries' : ''}${restContext ? '/fatigue' : ''}]. Don't ignore this."
+    "THE RISK: [caveat based on form/market data${restContext ? '/fatigue' : ''}${injuryInfo ? ' and listed injuries' : ''}]. Don't ignore this."
   ],
   "gameFlow": "Sharp take on how this plays out. Cite the numbers. Remember: ${homeTeam} is at HOME.",
   "riskFactors": ["Risk based on form/market/H2H${injuryInfo ? '/injury' : ''}${restContext ? '/rest' : ''} data only", "Secondary if relevant"]
@@ -778,7 +806,7 @@ CRITICAL RULES:
 - ONLY use data provided above. Do NOT invent injuries, suspensions, or lineup info not shown above.
 - ${homeTeam} is HOME, ${awayTeam} is AWAY. NEVER say "${awayTeam} has home advantage".
 - riskFactors must be based on form patterns, market odds, H2H${injuryInfo ? ', or listed injuries' : ''} - NOT made-up info.
-${injuryInfo ? '- FACTOR IN INJURIES: The listed injuries are real and current. Use them in your analysis.' : '- If you don\'t have injury data, don\'t mention injuries.'}
+${injuryInfo ? '- FACTOR IN INJURIES: The listed injuries are real and current. Use them in your analysis.' : '- DO NOT mention injuries, absences, or suspensions. You have no injury data.'}
 - AVOID HOME BIAS: Modern football home advantage is only ~5%. Don't favor home teams without strong statistical evidence.
 - RESPECT THE MARKET: Odds reflect wisdom of millions. Only call an edge when form/H2H data clearly contradicts implied probabilities.
 - BE CONTRARIAN: Your accuracy is better on away picks. Look harder for away value.
