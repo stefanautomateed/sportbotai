@@ -35,3 +35,6 @@ export { PremiumBlur } from './PremiumBlur';
 
 // Progressive Disclosure
 export { CollapsibleSection } from './CollapsibleSection';
+
+// Interactive Snapshot List
+export { default as SnapshotList } from './SnapshotList';

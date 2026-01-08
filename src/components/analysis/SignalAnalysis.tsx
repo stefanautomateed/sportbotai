@@ -9,6 +9,8 @@
 
 'use client';
 
+import { useState } from 'react';
+
 interface SignalAnalysisProps {
   homeTeam: string;
   awayTeam: string;
@@ -88,7 +90,7 @@ export default function SignalAnalysis({
         </div>
       </div>
 
-      {/* Match Snapshot - The Key Insights */}
+      {/* Match Snapshot - The Key Insights with Expandable Details */}
       {snapshot && snapshot.length > 0 && (
         <div className="rounded-2xl bg-[#0a0a0b] border border-white/[0.06] p-7">
           <div className="flex items-center justify-between mb-5">
@@ -99,12 +101,9 @@ export default function SignalAnalysis({
               PRO
             </span>
           </div>
-          <ul className="space-y-4">
+          <ul className="space-y-3">
             {snapshot.slice(0, 5).map((insight, index) => (
-              <li key={index} className="flex items-start gap-3">
-                <span className="w-2 h-2 rounded-full bg-white/40 mt-2 flex-shrink-0" />
-                <span className="text-base text-zinc-300 leading-relaxed">{insight}</span>
-              </li>
+              <SnapshotInsight key={index} insight={insight} index={index} />
             ))}
           </ul>
         </div>
@@ -172,5 +171,100 @@ function SignalPill({ label, value }: { label: string; value: string }) {
         {displayValue}
       </p>
     </div>
+  );
+}
+
+/**
+ * Snapshot Insight Component - Expandable insight with colored bullet and explanation
+ */
+function SnapshotInsight({ insight, index }: { insight: string; index: number }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  // Determine bullet type and color based on content
+  const getBulletConfig = (text: string, idx: number) => {
+    const lowerText = text.toLowerCase();
+    
+    if (lowerText.includes('the edge:') || idx === 0) {
+      return { 
+        color: 'bg-emerald-500', 
+        icon: '🎯',
+        label: 'THE EDGE',
+        explanation: 'This is our primary pick based on statistical analysis. The percentage shown is the computed edge between our model probability and the market odds.'
+      };
+    }
+    if (lowerText.includes('market miss:') || idx === 1) {
+      return { 
+        color: 'bg-blue-500', 
+        icon: '💡',
+        label: 'MARKET MISS',
+        explanation: 'This identifies what the bookmaker odds are potentially undervaluing. We compare home/away form splits, recent performance, and market implied probabilities.'
+      };
+    }
+    if (lowerText.includes('the pattern:') || idx === 2) {
+      return { 
+        color: 'bg-violet-500', 
+        icon: '📊',
+        label: 'THE PATTERN',
+        explanation: 'Historical patterns from head-to-head meetings and streaks. While past performance doesn\'t guarantee future results, recurring patterns can indicate underlying dynamics.'
+      };
+    }
+    if (lowerText.includes('the risk:') || idx === 3) {
+      return { 
+        color: 'bg-amber-500', 
+        icon: '⚠️',
+        label: 'THE RISK',
+        explanation: 'Key factors that could invalidate this analysis. Always consider these before making decisions. Injuries, fatigue, and form changes can significantly impact outcomes.'
+      };
+    }
+    return { 
+      color: 'bg-zinc-500', 
+      icon: '•',
+      label: 'INSIGHT',
+      explanation: 'Additional context from our analysis.'
+    };
+  };
+  
+  const config = getBulletConfig(insight, index);
+  
+  // Extract the text after the label (e.g., "THE EDGE: Arsenal because...")
+  const displayText = insight.replace(/^(THE EDGE|MARKET MISS|THE PATTERN|THE RISK):\s*/i, '');
+  
+  return (
+    <li className="group">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full text-left flex items-start gap-3 p-3 -m-3 rounded-xl hover:bg-white/[0.02] transition-colors"
+      >
+        {/* Colored bullet */}
+        <span className={`w-2.5 h-2.5 rounded-full ${config.color} mt-1.5 flex-shrink-0 ring-2 ring-offset-1 ring-offset-[#0a0a0b] ${config.color.replace('bg-', 'ring-')}/30`} />
+        
+        <div className="flex-1 min-w-0">
+          {/* Label badge */}
+          <span className={`inline-block text-[10px] font-bold uppercase tracking-wider mb-1 ${config.color.replace('bg-', 'text-')}`}>
+            {config.label}
+          </span>
+          
+          {/* Main insight text */}
+          <p className="text-base text-zinc-300 leading-relaxed">
+            {displayText}
+          </p>
+          
+          {/* Expandable explanation */}
+          {expanded && (
+            <div className="mt-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+              <p className="text-sm text-zinc-400 leading-relaxed flex items-start gap-2">
+                <span className="text-zinc-500 mt-0.5">ℹ️</span>
+                <span><strong className="text-zinc-300">Why this matters:</strong> {config.explanation}</span>
+              </p>
+            </div>
+          )}
+        </div>
+        
+        {/* Expand indicator */}
+        <span className={`text-zinc-500 text-sm transition-transform ${expanded ? 'rotate-180' : ''} opacity-0 group-hover:opacity-100`}>
+          ▼
+        </span>
+      </button>
+    </li>
   );
 }

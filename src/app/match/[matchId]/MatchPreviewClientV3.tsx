@@ -29,6 +29,7 @@ import {
   AIvsMarketHero,
   ProSection,
   CollapsibleSection,
+  SnapshotList,
 } from '@/components/analysis';
 import { isBase64, parseMatchSlug, decodeBase64MatchId } from '@/lib/match-utils';
 import StandingsTable from '@/components/StandingsTable';
@@ -1284,14 +1285,7 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
               className="mt-3 sm:mt-4"
             >
               {canSeeExactNumbers ? (
-                <ul className="space-y-4">
-                  {snapshot.slice(0, 4).map((insight, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <span className="w-2 h-2 rounded-full bg-violet-500/40 mt-2 flex-shrink-0" />
-                      <span className="text-sm text-stone-200 leading-relaxed">{insight}</span>
-                    </li>
-                  ))}
-                </ul>
+                <SnapshotList snapshot={snapshot} maxItems={4} compact={false} />
               ) : (
                 <ProSection
                   isPro={canSeeExactNumbers}
@@ -1304,14 +1298,7 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
                   locale={locale}
                   className="!bg-transparent !border-0 !p-0"
                 >
-                  <ul className="space-y-4">
-                    {snapshot.slice(0, 4).map((insight, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <span className="w-2 h-2 rounded-full bg-violet-500/40 mt-2 flex-shrink-0" />
-                        <span className="text-sm text-stone-200 leading-relaxed">{insight}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <SnapshotList snapshot={snapshot} maxItems={4} compact={true} />
                 </ProSection>
               )}
             </CollapsibleSection>
