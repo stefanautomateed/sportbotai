@@ -4,8 +4,17 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
-// Email template types
+// Email template types - Tool Review Outreach is default (most used)
 const EMAIL_TEMPLATES = [
+  {
+    id: 'tool-review-outreach',
+    name: 'Tool Review Outreach',
+    description: 'Sent to tool owners after publishing review',
+    params: { 
+      toolName: '8rain Station', 
+      reviewUrl: 'https://www.sportbotai.com/blog/8rain-station-review' 
+    },
+  },
   {
     id: 'welcome',
     name: 'Welcome Email',
@@ -41,15 +50,6 @@ const EMAIL_TEMPLATES = [
     name: 'Registration Welcome',
     description: 'Sent after free registration',
     params: { name: 'John' },
-  },
-  {
-    id: 'tool-review-outreach',
-    name: 'Tool Review Outreach',
-    description: 'Sent to tool owners after publishing review',
-    params: { 
-      toolName: '8rain Station', 
-      reviewUrl: 'https://www.sportbotai.com/blog/8rain-station-review' 
-    },
   },
 ];
 
