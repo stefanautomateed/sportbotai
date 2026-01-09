@@ -715,17 +715,30 @@ export async function extractWebsiteContent(url: string): Promise<{ content: str
 
 /**
  * Find contact email from a website
- * Checks homepage, /contact, /about pages
+ * Checks multiple pages, social media links, and falls back to Perplexity search
  */
 export async function findContactEmail(baseUrl: string): Promise<{ email: string | null; source: string }> {
+  // Clean URL
+  const cleanUrl = baseUrl.replace(/\?.*$/, '').replace(/#.*$/, '').replace(/\/$/, '');
+  
+  // Expanded list of pages to check
   const pagesToCheck = [
-    baseUrl,
-    `${baseUrl}/contact`,
-    `${baseUrl}/contact-us`,
-    `${baseUrl}/about`,
-    `${baseUrl}/about-us`,
-    `${baseUrl}/team`,
-    `${baseUrl}/support`,
+    cleanUrl,
+    `${cleanUrl}/contact`,
+    `${cleanUrl}/contact-us`,
+    `${cleanUrl}/contactus`,
+    `${cleanUrl}/about`,
+    `${cleanUrl}/about-us`,
+    `${cleanUrl}/aboutus`,
+    `${cleanUrl}/team`,
+    `${cleanUrl}/our-team`,
+    `${cleanUrl}/support`,
+    `${cleanUrl}/help`,
+    `${cleanUrl}/faq`,
+    `${cleanUrl}/legal`,
+    `${cleanUrl}/privacy`,
+    `${cleanUrl}/terms`,
+    `${cleanUrl}/footer`, // Some SPAs
   ];
   
   // Common email patterns to look for
@@ -733,21 +746,59 @@ export async function findContactEmail(baseUrl: string): Promise<{ email: string
   
   // Priority order for email types
   const emailPriority = [
-    /^(hello|hi|contact|info|support|team)@/i,  // Best
-    /^[a-z]+@/i,                                  // Single name
+    /^(hello|hi|contact|info|support|team|help|press|media|partnerships|partner|business|collab)@/i,  // Best
+    /^[a-z]+@/i,                                  // Single name (e.g., john@)
     /.*/,                                          // Any
   ];
   
+  // Blacklist for emails we don't want
+  const isBlacklisted = (email: string) => {
+    const lower = email.toLowerCase();
+    return lower.includes('example.com') ||
+           lower.includes('yourdomain') ||
+           lower.includes('email.com') ||
+           lower.includes('test@') ||
+           lower.includes('noreply') ||
+           lower.includes('no-reply') ||
+           lower.includes('donotreply') ||
+           lower.includes('do-not-reply') ||
+           lower.includes('unsubscribe') ||
+           lower.includes('notifications') ||
+           lower.includes('mailer-daemon') ||
+           lower.includes('postmaster') ||
+           lower.includes('.png') ||
+           lower.includes('.jpg') ||
+           lower.includes('.jpeg') ||
+           lower.includes('.gif') ||
+           lower.includes('.svg') ||
+           lower.includes('.webp') ||
+           lower.endsWith('.js') ||
+           lower.endsWith('.css') ||
+           lower.endsWith('.map') ||
+           lower.includes('sentry.io') ||
+           lower.includes('google.com') ||
+           lower.includes('facebook.com') ||
+           lower.includes('twitter.com') ||
+           lower.includes('github.com') ||
+           lower.includes('stripe.com') ||
+           lower.includes('cloudflare.com') ||
+           lower.includes('amazonaws.com') ||
+           lower.includes('vercel.com') ||
+           lower.includes('netlify.com') ||
+           lower.includes('wixsite.com');
+  };
+  
   for (const pageUrl of pagesToCheck) {
     try {
-      await delay(1000); // Small delay between pages
+      await delay(800); // Small delay between pages
       
       const response = await fetch(pageUrl, {
         headers: {
           'User-Agent': getRandomUserAgent(),
-          'Accept': 'text/html',
+          'Accept': 'text/html,application/xhtml+xml',
         },
         redirect: 'follow',
+        signal: AbortSignal.timeout(8000), // 8 second timeout
       });
       
       if (!response.ok) continue;
@@ -755,42 +806,96 @@ export async function findContactEmail(baseUrl: string): Promise<{ email: string
       const html = await response.text();
       const emails = html.match(emailRegex) || [];
       
-      // Filter out common non-contact emails
-      const filteredEmails = emails.filter(email => {
-        const lower = email.toLowerCase();
-        return !lower.includes('example.com') &&
-               !lower.includes('yourdomain') &&
-               !lower.includes('email.com') &&
-               !lower.includes('test@') &&
-               !lower.includes('noreply') &&
-               !lower.includes('no-reply') &&
-               !lower.includes('donotreply') &&
-               !lower.includes('.png') &&
-               !lower.includes('.jpg') &&
-               !lower.includes('.svg') &&
-               !lower.endsWith('.js') &&
-               !lower.endsWith('.css');
-      });
+      // Filter out blacklisted emails and deduplicate
+      const filteredEmails = Array.from(new Set(emails)).filter(e => !isBlacklisted(e));
       
       if (filteredEmails.length > 0) {
         // Sort by priority
         for (const priorityRegex of emailPriority) {
           const match = filteredEmails.find(e => priorityRegex.test(e));
           if (match) {
-            const source = pageUrl === baseUrl ? 'homepage' : 
+            const source = pageUrl === cleanUrl ? 'homepage' : 
                           pageUrl.includes('contact') ? 'contact_page' :
-                          pageUrl.includes('about') ? 'about_page' : 'other';
+                          pageUrl.includes('about') ? 'about_page' :
+                          pageUrl.includes('support') || pageUrl.includes('help') ? 'support_page' :
+                          pageUrl.includes('privacy') || pageUrl.includes('terms') || pageUrl.includes('legal') ? 'legal_page' : 'other';
+            console.log(`[EmailFinder] Found ${match} from ${source}`);
             return { email: match.toLowerCase(), source };
           }
         }
       }
       
     } catch (error) {
-      // Page doesn't exist, continue
+      // Page doesn't exist or timeout, continue
     }
   }
   
+  // Fallback: Use Perplexity to find contact email
+  console.log(`[EmailFinder] Scraping failed for ${cleanUrl}, trying Perplexity...`);
+  const perplexityResult = await findEmailViaPerplexity(cleanUrl);
+  if (perplexityResult.email) {
+    return perplexityResult;
+  }
+  
   return { email: null, source: 'not_found' };
+}
+
+/**
+ * Use Perplexity to find contact email when scraping fails
+ */
+async function findEmailViaPerplexity(url: string): Promise<{ email: string | null; source: string }> {
+  const apiKey = process.env.PERPLEXITY_API_KEY;
+  if (!apiKey) {
+    return { email: null, source: 'perplexity_not_configured' };
+  }
+  
+  try {
+    // Extract domain for search
+    const domain = new URL(url).hostname.replace('www.', '');
+    
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'sonar',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a research assistant. Find the contact or support email address for the given website. Return ONLY the email address, nothing else. If you cannot find one, return "NOT_FOUND".',
+          },
+          {
+            role: 'user',
+            content: `What is the contact or support email address for ${domain}? Look for their contact page, about page, or any public listing.`,
+          },
+        ],
+        max_tokens: 100,
+        temperature: 0.1,
+      }),
+    });
+    
+    if (!response.ok) {
+      console.error(`[EmailFinder] Perplexity error: ${response.status}`);
+      return { email: null, source: 'perplexity_error' };
+    }
+    
+    const data = await response.json();
+    const answer = data.choices?.[0]?.message?.content?.trim() || '';
+    
+    // Extract email from response
+    const emailMatch = answer.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    if (emailMatch && !answer.includes('NOT_FOUND')) {
+      console.log(`[EmailFinder] Perplexity found: ${emailMatch[0]}`);
+      return { email: emailMatch[0].toLowerCase(), source: 'perplexity' };
+    }
+    
+    return { email: null, source: 'perplexity_not_found' };
+  } catch (error) {
+    console.error(`[EmailFinder] Perplexity search failed:`, error);
+    return { email: null, source: 'perplexity_error' };
+  }
 }
 
 // ============================================
