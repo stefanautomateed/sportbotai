@@ -86,14 +86,14 @@ export default function SerbianHomePage() {
       {/* Trending matches - server-rendered for fast LCP */}
       <TrendingSectionServer maxMatches={6} locale="sr" />
 
-      {/* Pricing - moved up for faster conversion path */}
+      {/* Moments carousel - marketing situations */}
+      <VideoTestimonialsCarousel locale="sr" />
+
+      {/* Pricing teaser - CTA */}
       <PricingTeaserI18n t={t} locale="sr" />
 
       {/* How it works - minimal 1-row strip */}
       <HowItWorksStripI18n locale="sr" />
-
-      {/* Moments carousel - marketing situations */}
-      <VideoTestimonialsCarousel locale="sr" />
 
       {/* FAQ section */}
       <FAQI18n t={t} />

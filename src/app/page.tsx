@@ -77,14 +77,14 @@ export default function HomePage() {
       {/* Trending matches - server-rendered for fast LCP */}
       <TrendingSectionServer maxMatches={6} />
 
-      {/* Pricing - moved up for faster conversion path */}
+      {/* Testimonials - video social proof */}
+      <VideoTestimonialsCarousel />
+
+      {/* Pricing - conversion CTA */}
       <PricingTeaser />
 
       {/* How it works - minimal 1-row strip */}
       <HowItWorksStrip />
-
-      {/* Testimonials - video social proof */}
-      <VideoTestimonialsCarousel />
 
       {/* FAQ section */}
       <FAQ />
