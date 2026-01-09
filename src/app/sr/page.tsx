@@ -16,7 +16,7 @@ import ResponsibleGamblingBlockI18n from '@/components/ResponsibleGamblingBlockI
 import FAQI18n from '@/components/FAQI18n';
 import { TrustBadgesI18n } from '@/components/SocialProofI18n';
 import LeagueScroll from '@/components/LeagueScroll';
-import TestimonialsCarousel from '@/components/TestimonialsCarousel';
+import VideoTestimonialsCarousel from '@/components/VideoTestimonialsCarousel';
 import { getTranslations } from '@/lib/i18n';
 import { getOrganizationSchema, getWebsiteSchema, getMatchAnalyzerSchema, getAIDeskSchema, getHomepageFAQSchema, getHomeBreadcrumb } from '@/lib/seo';
 
@@ -92,8 +92,8 @@ export default function SerbianHomePage() {
       {/* How it works - minimal 1-row strip */}
       <HowItWorksStripI18n locale="sr" />
 
-      {/* Testimonials - social proof */}
-      <TestimonialsCarousel />
+      {/* Moments carousel - marketing situations */}
+      <VideoTestimonialsCarousel />
 
       {/* FAQ section */}
       <FAQI18n t={t} />

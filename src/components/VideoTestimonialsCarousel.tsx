@@ -1,349 +1,318 @@
 /**
- * Video Testimonials Carousel
+ * Moments Carousel - Marketing Situations
  * 
- * UGC-style video testimonials in a sliding carousel.
- * Auto-advances, plays on hover/tap, mobile swipe support.
- * 
- * Videos should be placed in /public/videos/testimonials/
+ * Horizontal scrolling carousel showing relatable betting moments.
+ * Purple gradient cards with situations + ambient video clips (always playing).
+ * Mobile-optimized with snap scrolling and touch gestures.
  */
 
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-interface VideoTestimonial {
+// Situation card (gradient with scenario text)
+interface SituationCard {
+  type: 'situation';
   id: string;
-  videoSrc: string;
-  posterSrc?: string;
-  name: string;
-  role: string;
-  quote: string;
+  icon: string;
+  headline: string;
+  subtext: string;
 }
 
-// Placeholder testimonials - replace videoSrc with actual InVideo outputs
-const TESTIMONIALS: VideoTestimonial[] = [
+// Video clip (ambient, always playing)
+interface VideoClip {
+  type: 'video';
+  id: string;
+  videoSrc: string;
+}
+
+type CarouselItem = SituationCard | VideoClip;
+
+// Alternating situations and video vibes
+const CAROUSEL_ITEMS: CarouselItem[] = [
   {
-    id: 'nba-fan',
-    videoSrc: '/videos/testimonials/nba-fan.mp4',
-    posterSrc: '/videos/testimonials/nba-fan-poster.jpg',
-    name: 'Marcus T.',
-    role: 'NBA Fan',
-    quote: 'The value detection has genuinely changed how I think about odds.',
+    type: 'situation',
+    id: 'situation-1',
+    icon: 'trending',
+    headline: 'When the line moves your way',
+    subtext: 'You saw the edge. The market caught up.',
   },
   {
-    id: 'epl-fan',
-    videoSrc: '/videos/testimonials/epl-fan.mp4',
-    posterSrc: '/videos/testimonials/epl-fan-poster.jpg',
-    name: 'James W.',
-    role: 'Premier League Fan',
-    quote: "It's like having a sports analyst in your pocket.",
+    type: 'video',
+    id: 'video-1',
+    videoSrc: '/videos/the alert hit.mp4',
   },
   {
-    id: 'creator',
-    videoSrc: '/videos/testimonials/creator.mp4',
-    posterSrc: '/videos/testimonials/creator-poster.jpg',
-    name: 'Sophie K.',
-    role: 'Sports Content Creator',
-    quote: 'My prep time went from 2 hours to 20 minutes.',
+    type: 'situation',
+    id: 'situation-2',
+    icon: 'target',
+    headline: 'When your +180 underdog covers',
+    subtext: 'Data over hype. Every time.',
   },
   {
-    id: 'multi-sport',
-    videoSrc: '/videos/testimonials/multi-sport.mp4',
-    posterSrc: '/videos/testimonials/multi-sport-poster.jpg',
-    name: 'Alex M.',
-    role: 'Multi-Sport Fan',
-    quote: 'NBA, Premier League, Serie A — it covers all of them.',
+    type: 'video',
+    id: 'video-2',
+    videoSrc: '/videos/the morning check.mp4',
   },
   {
-    id: 'smart-bettor',
-    videoSrc: '/videos/testimonials/smart-bettor.mp4',
-    posterSrc: '/videos/testimonials/smart-bettor-poster.jpg',
-    name: 'David L.',
-    role: 'Sports Enthusiast',
-    quote: "It doesn't give you picks, it gives you understanding.",
+    type: 'situation',
+    id: 'situation-3',
+    icon: 'chart',
+    headline: '+12% ROI this month',
+    subtext: 'Quiet confidence. No sweating.',
+  },
+  {
+    type: 'video',
+    id: 'video-3',
+    videoSrc: '/videos/the calm collect.mp4',
+  },
+  {
+    type: 'situation',
+    id: 'situation-4',
+    icon: 'bolt',
+    headline: 'When the 8% edge alert drops',
+    subtext: 'Market mispricing. You move first.',
+  },
+  {
+    type: 'video',
+    id: 'video-4',
+    videoSrc: '/videos/the pub moment.mp4',
+  },
+  {
+    type: 'situation',
+    id: 'situation-5',
+    icon: 'diamond',
+    headline: 'Finding value others miss',
+    subtext: 'Not tips. Edge.',
+  },
+  {
+    type: 'video',
+    id: 'video-5',
+    videoSrc: '/videos/the silent nod.mp4',
   },
 ];
 
-function VideoCard({ 
-  testimonial, 
-  isActive,
-  onVideoEnd,
-}: { 
-  testimonial: VideoTestimonial;
-  isActive: boolean;
-  onVideoEnd: () => void;
-}) {
+// Premium SVG icons
+const ICONS: Record<string, JSX.Element> = {
+  trending: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+    </svg>
+  ),
+  target: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+    </svg>
+  ),
+  chart: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    </svg>
+  ),
+  bolt: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+    </svg>
+  ),
+  diamond: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l8 6-8 14-8-14 8-6z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16" />
+    </svg>
+  ),
+};
+
+// Situation card (purple gradient like PrizePicks)
+function SituationCardComponent({ item }: { item: SituationCard }) {
+  return (
+    <div className="flex-shrink-0 w-[160px] sm:w-[200px] lg:w-[220px] aspect-[9/14] rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-purple-800 p-4 sm:p-5 flex flex-col justify-between shadow-lg shadow-purple-900/30">
+      {/* Icon with glow */}
+      <div className="text-white/90 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+        {ICONS[item.icon]}
+      </div>
+      
+      {/* Text */}
+      <div className="flex-grow flex flex-col justify-center py-2">
+        <h3 className="text-white text-base sm:text-xl lg:text-2xl font-bold leading-tight mb-1 sm:mb-2">
+          {item.headline}
+        </h3>
+        <p className="text-white/70 text-xs sm:text-sm leading-snug">
+          {item.subtext}
+        </p>
+      </div>
+      
+      {/* Brand tag */}
+      <div className="flex items-center gap-1.5 sm:gap-2 text-white/50 text-[10px] sm:text-xs">
+        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent"></span>
+        <span>SportBot AI</span>
+      </div>
+    </div>
+  );
+}
+
+// Video card (ambient, always playing, no controls)
+function VideoCardComponent({ item }: { item: VideoClip }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasError, setHasError] = useState(false);
 
-  // Play/pause based on active state
+  // Start playing when component mounts or becomes visible
   useEffect(() => {
-    if (!videoRef.current) return;
-    
-    if (isActive) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => setHasError(true));
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  }, [isActive]);
+    const video = videoRef.current;
+    if (!video) return;
 
-  const handleVideoEnd = () => {
-    setIsPlaying(false);
-    onVideoEnd();
-  };
+    // Try to play immediately
+    video.play().catch(() => {});
 
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    
-    if (isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      videoRef.current.play().catch(() => setHasError(true));
-      setIsPlaying(true);
-    }
-  };
+    // Use IntersectionObserver to play when visible
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div 
-      className={`
-        relative flex-shrink-0 w-[280px] sm:w-[320px] aspect-[9/16] rounded-2xl overflow-hidden
-        bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10
-        transition-all duration-300 cursor-pointer
-        ${isActive ? 'ring-2 ring-accent shadow-lg shadow-accent/20 scale-[1.02]' : 'opacity-70 hover:opacity-90'}
-      `}
-      onClick={togglePlay}
-    >
-      {/* Video */}
-      {!hasError ? (
-        <video
-          ref={videoRef}
-          src={testimonial.videoSrc}
-          poster={testimonial.posterSrc}
-          className="absolute inset-0 w-full h-full object-cover"
-          playsInline
-          muted
-          onEnded={handleVideoEnd}
-          onError={() => setHasError(true)}
-        />
-      ) : (
-        /* Fallback gradient if video fails */
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-          <div className="text-6xl">🎬</div>
-        </div>
-      )}
-      
-      {/* Gradient overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-      
-      {/* Play/Pause indicator */}
-      <div className={`
-        absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-        w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm
-        flex items-center justify-center
-        transition-opacity duration-200
-        ${isPlaying ? 'opacity-0' : 'opacity-100'}
-      `}>
-        <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-        </svg>
-      </div>
-      
-      {/* Bottom content */}
-      <div className="absolute bottom-0 left-0 right-0 p-4">
-        {/* Quote */}
-        <p className="text-white text-sm font-medium mb-3 line-clamp-2">
-          &ldquo;{testimonial.quote}&rdquo;
-        </p>
-        
-        {/* Author */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center text-white font-bold text-sm">
-            {testimonial.name.charAt(0)}
-          </div>
-          <div>
-            <p className="text-white font-semibold text-sm">{testimonial.name}</p>
-            <p className="text-white/60 text-xs">{testimonial.role}</p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Active indicator dot */}
-      {isActive && (
-        <div className="absolute top-3 right-3">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
-          </span>
-        </div>
-      )}
+    <div className="flex-shrink-0 w-[160px] sm:w-[200px] lg:w-[220px] aspect-[9/14] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900 shadow-lg shadow-black/30">
+      <video
+        ref={videoRef}
+        src={item.videoSrc}
+        className="w-full h-full object-cover"
+        loop
+        muted
+        playsInline
+        autoPlay
+        preload="auto"
+      />
     </div>
   );
 }
 
 export default function VideoTestimonialsCarousel() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const goToNext = useCallback(() => {
-    setActiveIndex(prev => (prev + 1) % TESTIMONIALS.length);
-  }, []);
-
-  const goToPrev = useCallback(() => {
-    setActiveIndex(prev => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
-  }, []);
-
-  // Auto-advance every 8 seconds (unless paused)
-  useEffect(() => {
-    if (isPaused) return;
-    
-    autoAdvanceRef.current = setInterval(goToNext, 8000);
-    
-    return () => {
-      if (autoAdvanceRef.current) {
-        clearInterval(autoAdvanceRef.current);
-      }
-    };
-  }, [isPaused, goToNext]);
-
-  // Scroll to active card
-  useEffect(() => {
-    if (!containerRef.current) return;
-    
-    const container = containerRef.current;
-    const cards = container.querySelectorAll('[data-card]');
-    const activeCard = cards[activeIndex] as HTMLElement;
-    
-    if (activeCard) {
-      const containerWidth = container.offsetWidth;
-      const cardLeft = activeCard.offsetLeft;
-      const cardWidth = activeCard.offsetWidth;
-      const scrollLeft = cardLeft - (containerWidth / 2) + (cardWidth / 2);
-      
-      container.scrollTo({
-        left: scrollLeft,
-        behavior: 'smooth',
-      });
-    }
-  }, [activeIndex]);
-
-  // Touch/swipe support
-  const touchStartX = useRef(0);
-  
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    setIsPaused(true);
+  const checkScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX.current - touchEndX;
-    
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        goToNext();
-      } else {
-        goToPrev();
-      }
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkScroll);
+      return () => el.removeEventListener('scroll', checkScroll);
     }
-    
-    // Resume auto-advance after 5 seconds
-    setTimeout(() => setIsPaused(false), 5000);
+  }, []);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    const scrollAmount = window.innerWidth < 640 ? 176 : 220;
+    scrollRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
   };
 
   return (
-    <section className="py-12 sm:py-16 overflow-hidden bg-bg-primary">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="py-10 sm:py-12 lg:py-16 bg-bg-primary overflow-hidden">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8 sm:mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            What Fans Are Saying
+        <div className="text-center mb-6 sm:mb-8 px-4">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1.5 sm:mb-2">
+            Moments That Matter
           </h2>
-          <p className="text-white/50 text-sm sm:text-base">
-            Real users, real experiences
-          </p>
-          <p className="text-white/30 text-xs mt-2">
-            AI-generated dramatizations for illustration
+          <p className="text-white/50 text-xs sm:text-sm">
+            Find where the market is wrong
           </p>
         </div>
 
-        {/* Carousel */}
-        <div 
-          ref={containerRef}
-          className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
-          {/* Left spacer for centering */}
-          <div className="flex-shrink-0 w-[calc(50vw-160px)] sm:w-[calc(50vw-180px)]" />
+        {/* Scrollable container */}
+        <div className="relative">
+          {/* Left fade - subtle on mobile */}
+          <div className="absolute left-0 top-0 bottom-0 w-4 sm:w-12 lg:w-16 bg-gradient-to-r from-bg-primary to-transparent z-10 pointer-events-none" />
           
-          {TESTIMONIALS.map((testimonial, index) => (
-            <div 
-              key={testimonial.id} 
-              data-card
-              className="snap-center"
-              onClick={() => setActiveIndex(index)}
-            >
-              <VideoCard
-                testimonial={testimonial}
-                isActive={index === activeIndex}
-                onVideoEnd={goToNext}
-              />
-            </div>
-          ))}
-          
-          {/* Right spacer for centering */}
-          <div className="flex-shrink-0 w-[calc(50vw-160px)] sm:w-[calc(50vw-180px)]" />
-        </div>
+          {/* Right fade - subtle on mobile */}
+          <div className="absolute right-0 top-0 bottom-0 w-4 sm:w-12 lg:w-16 bg-gradient-to-l from-bg-primary to-transparent z-10 pointer-events-none" />
 
-        {/* Navigation dots */}
-        <div className="flex justify-center gap-1 mt-6">
-          {TESTIMONIALS.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveIndex(index)}
-              className="p-3 group"
-              aria-label={`Go to testimonial ${index + 1}`}
-            >
-              <span className={`
-                block h-2 rounded-full transition-all duration-300
-                ${index === activeIndex 
-                  ? 'w-6 bg-accent' 
-                  : 'w-2 bg-white/30 group-hover:bg-white/50'}
-              `} />
-            </button>
-          ))}
-        </div>
-
-        {/* Navigation arrows (desktop) */}
-        <div className="hidden sm:flex justify-center gap-4 mt-6">
-          <button
-            onClick={goToPrev}
-            className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-            aria-label="Previous testimonial"
+          {/* Cards - snap scroll on mobile */}
+          <div 
+            ref={scrollRef}
+            className="flex gap-3 sm:gap-4 overflow-x-auto px-4 sm:px-6 lg:px-8 pb-2 snap-x snap-mandatory"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch',
+            }}
           >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {CAROUSEL_ITEMS.map((item) => (
+              <div key={item.id} className="snap-start">
+                {item.type === 'situation' 
+                  ? <SituationCardComponent item={item} />
+                  : <VideoCardComponent item={item} />
+                }
+              </div>
+            ))}
+            {/* End spacer for last card visibility */}
+            <div className="flex-shrink-0 w-1 sm:w-4" />
+          </div>
+        </div>
+
+        {/* Navigation arrows - hidden on mobile (swipe instead) */}
+        <div className="hidden sm:flex justify-center gap-3 mt-6">
+          <button
+            onClick={() => scroll('left')}
+            disabled={!canScrollLeft}
+            className={`p-2.5 sm:p-3 rounded-full border transition-all ${
+              canScrollLeft 
+                ? 'bg-white/5 border-white/20 hover:bg-white/10 text-white active:scale-95' 
+                : 'border-white/10 text-white/30 cursor-not-allowed'
+            }`}
+            aria-label="Scroll left"
+          >
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <button
-            onClick={goToNext}
-            className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-            aria-label="Next testimonial"
+            onClick={() => scroll('right')}
+            disabled={!canScrollRight}
+            className={`p-2.5 sm:p-3 rounded-full border transition-all ${
+              canScrollRight 
+                ? 'bg-white/5 border-white/20 hover:bg-white/10 text-white active:scale-95' 
+                : 'border-white/10 text-white/30 cursor-not-allowed'
+            }`}
+            aria-label="Scroll right"
           >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
+        </div>
+
+        {/* Mobile swipe hint */}
+        <div className="flex sm:hidden justify-center mt-4">
+          <div className="flex items-center gap-1.5 text-white/30 text-xs">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+            </svg>
+            <span>Swipe to explore</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </div>
         </div>
       </div>
     </section>

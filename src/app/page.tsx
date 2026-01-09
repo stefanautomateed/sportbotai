@@ -16,7 +16,7 @@ import FAQ from '@/components/FAQ';
 import ResponsibleGamblingBlock from '@/components/ResponsibleGamblingBlock';
 import { TrustBadges } from '@/components/SocialProof';
 import LeagueScroll from '@/components/LeagueScroll';
-import TestimonialsCarousel from '@/components/TestimonialsCarousel';
+import VideoTestimonialsCarousel from '@/components/VideoTestimonialsCarousel';
 import { getOrganizationSchema, getWebsiteSchema, getMatchAnalyzerSchema, getAIDeskSchema, getHomepageFAQSchema, getHomeBreadcrumb } from '@/lib/seo';
 
 // Homepage metadata with canonical and hreflang
@@ -83,8 +83,8 @@ export default function HomePage() {
       {/* How it works - minimal 1-row strip */}
       <HowItWorksStrip />
 
-      {/* Testimonials - social proof */}
-      <TestimonialsCarousel />
+      {/* Testimonials - video social proof */}
+      <VideoTestimonialsCarousel />
 
       {/* FAQ section */}
       <FAQ />
