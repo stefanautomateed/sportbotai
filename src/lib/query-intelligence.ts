@@ -65,9 +65,93 @@ export interface QueryUnderstanding {
   isAmbiguous: boolean;
   alternativeIntents?: QueryIntent[];
   clarifyingQuestion?: string;
+  needsClarification?: boolean;  // True if we need user to specify (e.g., which sport)
   // For learning/tracking
   patternMatched?: string;   // Which regex pattern matched (if any)
   usedLLM?: boolean;         // True if LLM was used for classification
+}
+
+// ============================================
+// AMBIGUOUS CITY DETECTION
+// Cities with teams in multiple major sports leagues
+// ============================================
+
+const MULTI_SPORT_CITIES: Record<string, { nba?: string; nfl?: string; nhl?: string; mlb?: string }> = {
+  'dallas': { nba: 'Mavericks', nfl: 'Cowboys', nhl: 'Stars' },
+  'chicago': { nba: 'Bulls', nfl: 'Bears', nhl: 'Blackhawks' },
+  'los angeles': { nba: 'Lakers/Clippers', nfl: 'Rams/Chargers', nhl: 'Kings' },
+  'new york': { nba: 'Knicks/Nets', nfl: 'Giants/Jets', nhl: 'Rangers/Islanders' },
+  'boston': { nba: 'Celtics', nfl: 'Patriots', nhl: 'Bruins' },
+  'miami': { nba: 'Heat', nfl: 'Dolphins', nhl: 'Panthers' },
+  'denver': { nba: 'Nuggets', nfl: 'Broncos', nhl: 'Avalanche' },
+  'phoenix': { nba: 'Suns', nfl: 'Cardinals', nhl: 'Coyotes' },
+  'detroit': { nba: 'Pistons', nfl: 'Lions', nhl: 'Red Wings' },
+  'philadelphia': { nba: '76ers', nfl: 'Eagles', nhl: 'Flyers' },
+  'washington': { nba: 'Wizards', nfl: 'Commanders', nhl: 'Capitals' },
+  'minnesota': { nba: 'Timberwolves', nfl: 'Vikings', nhl: 'Wild' },
+  'tampa': { nfl: 'Buccaneers', nhl: 'Lightning' },
+  'atlanta': { nba: 'Hawks', nfl: 'Falcons' },
+  'houston': { nba: 'Rockets', nfl: 'Texans' },
+  'cleveland': { nba: 'Cavaliers', nfl: 'Browns' },
+  'san francisco': { nfl: '49ers', nba: 'Warriors' },
+  'pittsburgh': { nfl: 'Steelers', nhl: 'Penguins' },
+  'seattle': { nfl: 'Seahawks', nhl: 'Kraken' },
+  'las vegas': { nfl: 'Raiders', nhl: 'Golden Knights' },
+  'nashville': { nfl: 'Titans', nhl: 'Predators' },
+  'carolina': { nfl: 'Panthers', nhl: 'Hurricanes' },
+  'arizona': { nfl: 'Cardinals', nhl: 'Coyotes' },
+  'colorado': { nfl: 'Broncos', nhl: 'Avalanche', nba: 'Nuggets' },
+};
+
+/**
+ * Check if query contains ambiguous city names without sport context
+ * Returns clarifying question if ambiguous
+ */
+function checkForAmbiguousCities(query: string): { isAmbiguous: boolean; cities: string[]; clarifyingQuestion?: string } {
+  const lower = query.toLowerCase();
+  const foundCities: string[] = [];
+  
+  // Check for multi-sport cities
+  for (const city of Object.keys(MULTI_SPORT_CITIES)) {
+    if (lower.includes(city)) {
+      foundCities.push(city);
+    }
+  }
+  
+  if (foundCities.length === 0) {
+    return { isAmbiguous: false, cities: [] };
+  }
+  
+  // Check if sport is already specified in query
+  const hasSportContext = /\b(nba|nfl|nhl|mlb|basketball|football|hockey|baseball|premier league|soccer|la liga|serie a|bundesliga|ligue 1)\b/i.test(lower);
+  
+  // Check if team name (not city) is used - that's unambiguous
+  const hasTeamName = /\b(mavericks|mavs|cowboys|stars|bulls|bears|blackhawks|lakers|clippers|rams|chargers|kings|knicks|nets|giants|jets|rangers|islanders|celtics|patriots|bruins|heat|dolphins|panthers|nuggets|broncos|avalanche|suns|cardinals|coyotes|pistons|lions|red wings|76ers|sixers|eagles|flyers|wizards|commanders|capitals|timberwolves|wolves|vikings|wild|buccaneers|bucs|lightning|hawks|falcons|rockets|texans|cavaliers|cavs|browns|49ers|niners|warriors|steelers|penguins|pens|seahawks|kraken|raiders|golden knights|titans|predators|hurricanes|canes)\b/i.test(lower);
+  
+  if (hasSportContext || hasTeamName) {
+    return { isAmbiguous: false, cities: foundCities };
+  }
+  
+  // Build clarifying question
+  if (foundCities.length >= 1) {
+    const options: string[] = [];
+    
+    for (const city of foundCities) {
+      const teams = MULTI_SPORT_CITIES[city];
+      if (teams) {
+        if (teams.nba) options.push(`${city.charAt(0).toUpperCase() + city.slice(1)} ${teams.nba} (NBA)`);
+        if (teams.nfl) options.push(`${city.charAt(0).toUpperCase() + city.slice(1)} ${teams.nfl} (NFL)`);
+        if (teams.nhl) options.push(`${city.charAt(0).toUpperCase() + city.slice(1)} ${teams.nhl} (NHL)`);
+      }
+    }
+    
+    const cityNames = foundCities.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(' and ');
+    const clarifyingQuestion = `Which sport are you asking about? ${cityNames} ${foundCities.length > 1 ? 'have' : 'has'} teams in multiple leagues:\n\n${options.map(o => `• ${o}`).join('\n')}\n\nPlease specify the sport or use the team name (e.g., "Mavericks vs Bulls" for NBA).`;
+    
+    return { isAmbiguous: true, cities: foundCities, clarifyingQuestion };
+  }
+  
+  return { isAmbiguous: false, cities: foundCities };
 }
 
 // ============================================
@@ -827,6 +911,34 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
       }
     }
     
+    // CHECK FOR AMBIGUOUS CITIES (Dallas, Chicago, etc. have multiple teams)
+    const ambiguityCheck = checkForAmbiguousCities(query);
+    if (ambiguityCheck.isAmbiguous) {
+      console.log(`[QueryIntelligence] ⚠️ Ambiguous cities detected: ${ambiguityCheck.cities.join(', ')}`);
+      
+      const understanding: QueryUnderstanding = {
+        originalQuery: query,
+        intent: 'MATCH_PREDICTION',
+        intentConfidence: 0.5,  // Low confidence due to ambiguity
+        timeFrame: 'UPCOMING',
+        entities,
+        sport: undefined,  // Unknown - that's the problem
+        needsRealTimeData: false,
+        needsVerifiedStats: false,
+        needsOurPrediction: true,
+        suggestedDataSources: [],
+        isAmbiguous: true,
+        needsClarification: true,
+        clarifyingQuestion: ambiguityCheck.clarifyingQuestion,
+        patternMatched: 'SHORT_MATCH_QUERY_AMBIGUOUS',
+        usedLLM: false,
+      };
+      
+      // Don't cache ambiguous queries
+      console.log(`[QueryIntelligence] ✅ Needs clarification (ambiguous cities) in ${Date.now() - startTime}ms`);
+      return understanding;
+    }
+    
     // This is definitely a match prediction
     const understanding: QueryUnderstanding = {
       originalQuery: query,
@@ -927,10 +1039,24 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
   if (intent === 'LINEUP') suggestedDataSources.push('lineup-api');
   if (needsRealTimeData && !needsVerifiedStats) suggestedDataSources.push('perplexity');
   
+  // CHECK FOR AMBIGUOUS CITIES for match prediction queries without sport context
+  let needsClarification = false;
+  let cityAmbiguityQuestion: string | undefined;
+  
+  if ((intent === 'MATCH_PREDICTION' || intent === 'BETTING_ANALYSIS') && !sport) {
+    const ambiguityCheck = checkForAmbiguousCities(query);
+    if (ambiguityCheck.isAmbiguous) {
+      console.log(`[QueryIntelligence] ⚠️ Ambiguous cities detected: ${ambiguityCheck.cities.join(', ')}`);
+      needsClarification = true;
+      cityAmbiguityQuestion = ambiguityCheck.clarifyingQuestion;
+      isAmbiguous = true;
+    }
+  }
+  
   const understanding: QueryUnderstanding = {
     originalQuery: query,
     intent,
-    intentConfidence,
+    intentConfidence: needsClarification ? 0.5 : intentConfidence,  // Lower confidence if ambiguous
     timeFrame,
     entities: deduplicatedEntities,
     sport,
@@ -939,8 +1065,9 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
     needsOurPrediction,
     suggestedDataSources,
     isAmbiguous,
+    needsClarification,
     alternativeIntents: alternativeIntents.length > 0 ? alternativeIntents : undefined,
-    clarifyingQuestion: isAmbiguous ? generateClarifyingQuestion(query, intent, alternativeIntents) : undefined,
+    clarifyingQuestion: cityAmbiguityQuestion || (isAmbiguous ? generateClarifyingQuestion(query, intent, alternativeIntents) : undefined),
     // Learning/tracking fields
     patternMatched,
     usedLLM,

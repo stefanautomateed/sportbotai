@@ -1295,6 +1295,38 @@ If their favorite team has a match today/tonight, lead with that information.`;
       if (queryUnderstanding.isAmbiguous) {
         console.log(`[AI-Chat-Stream] ⚠️ Ambiguous query detected. Alternatives: ${queryUnderstanding.alternativeIntents?.join(', ')}`);
       }
+      
+      // HANDLE CLARIFICATION NEEDED (e.g., "Dallas vs Chicago" - which sport?)
+      if (queryUnderstanding.needsClarification && queryUnderstanding.clarifyingQuestion) {
+        console.log(`[AI-Chat-Stream] 🤔 Needs clarification - returning question to user`);
+        
+        return new Response(
+          new ReadableStream({
+            async start(controller) {
+              const encoder = new TextEncoder();
+              
+              // Send the clarifying question as the response
+              const clarificationResponse = queryUnderstanding!.clarifyingQuestion!;
+              
+              // Stream the response character by character for nice UX
+              for (const char of clarificationResponse) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', content: char })}\n\n`));
+              }
+              
+              // Send done signal
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+              controller.close();
+            },
+          }),
+          {
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+            },
+          }
+        );
+      }
     } catch (err) {
       console.error('[AI-Chat-Stream] Query intelligence failed, using fallback:', err);
     }

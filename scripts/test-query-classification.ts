@@ -110,6 +110,22 @@ const TEST_CASES: TestCase[] = [
   { query: 'what do you think about the lakers game', expectedIntent: 'OUR_ANALYSIS' },
 ];
 
+// Test cases that should trigger clarification (ambiguous cities)
+interface ClarificationTestCase {
+  query: string;
+  expectClarification: boolean;
+  description: string;
+}
+
+const CLARIFICATION_TEST_CASES: ClarificationTestCase[] = [
+  { query: 'dallas vs chicago', expectClarification: true, description: 'City names only - need sport' },
+  { query: 'mavericks vs bulls', expectClarification: false, description: 'Team names - unambiguous (NBA)' },
+  { query: 'cowboys vs bears', expectClarification: false, description: 'Team names - unambiguous (NFL)' },
+  { query: 'dallas vs chicago nba', expectClarification: false, description: 'Sport specified' },
+  { query: 'denver vs boston', expectClarification: true, description: 'Multi-sport cities' },
+  { query: 'nuggets vs celtics', expectClarification: false, description: 'Team names - unambiguous' },
+];
+
 // ============================================================================
 // TEST RUNNER
 // ============================================================================
@@ -124,6 +140,9 @@ async function runTests() {
   let passed = 0;
   let failed = 0;
   const failures: { query: string; expected: string; got: string; description?: string }[] = [];
+  
+  // Run intent tests
+  console.log('\n📋 INTENT CLASSIFICATION TESTS\n');
   
   for (const test of TEST_CASES) {
     try {
@@ -148,11 +167,40 @@ async function runTests() {
     }
   }
   
+  // Run clarification tests
+  console.log('\n\n🤔 CLARIFICATION DETECTION TESTS\n');
+  
+  let clarificationPassed = 0;
+  let clarificationFailed = 0;
+  
+  for (const test of CLARIFICATION_TEST_CASES) {
+    try {
+      const result = await understandQuery(test.query);
+      const gotClarification = result.needsClarification === true;
+      
+      if (gotClarification === test.expectClarification) {
+        clarificationPassed++;
+        console.log(`✅ "${test.query.padEnd(30)}" → ${gotClarification ? 'NEEDS CLARIFICATION' : 'OK'} (${test.description})`);
+      } else {
+        clarificationFailed++;
+        console.log(`❌ "${test.query.padEnd(30)}" → ${gotClarification ? 'NEEDS CLARIFICATION' : 'OK'} (expected: ${test.expectClarification ? 'NEEDS CLARIFICATION' : 'OK'}) - ${test.description}`);
+      }
+    } catch (error) {
+      clarificationFailed++;
+      console.log(`💥 "${test.query.padEnd(30)}" → ERROR: ${error}`);
+    }
+  }
+  
+  const totalPassed = passed + clarificationPassed;
+  const totalTests = TEST_CASES.length + CLARIFICATION_TEST_CASES.length;
+  
   console.log('\n' + '='.repeat(70));
-  console.log(`\n📊 Results: ${passed}/${TEST_CASES.length} passed (${((passed / TEST_CASES.length) * 100).toFixed(1)}%)\n`);
+  console.log(`\n📊 Intent Tests: ${passed}/${TEST_CASES.length} passed (${((passed / TEST_CASES.length) * 100).toFixed(1)}%)`);
+  console.log(`📊 Clarification Tests: ${clarificationPassed}/${CLARIFICATION_TEST_CASES.length} passed (${((clarificationPassed / CLARIFICATION_TEST_CASES.length) * 100).toFixed(1)}%)`);
+  console.log(`📊 TOTAL: ${totalPassed}/${totalTests} passed (${((totalPassed / totalTests) * 100).toFixed(1)}%)\n`);
   
   if (failures.length > 0) {
-    console.log('❌ FAILURES:\n');
+    console.log('❌ INTENT FAILURES:\n');
     for (const f of failures) {
       console.log(`  Query: "${f.query}"`);
       console.log(`  Expected: ${f.expected}`);
@@ -164,7 +212,7 @@ async function runTests() {
     console.log('💡 To fix: Update patterns in src/lib/query-intelligence.ts');
   }
   
-  process.exit(failed > 0 ? 1 : 0);
+  process.exit(failed > 0 || clarificationFailed > 0 ? 1 : 0);
 }
 
 runTests().catch(console.error);

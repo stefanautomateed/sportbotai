@@ -324,6 +324,7 @@ export async function getUpcomingMatchPrediction(message: string): Promise<Match
     if (teams.team2) searchTerms.push(teams.team2);
 
     // Search for predictions matching team names and within 48h
+    // IMPORTANT: If we have 2 teams, match must contain BOTH (AND), not just one (OR)
     const predictions = await prisma.prediction.findMany({
       where: {
         AND: [
@@ -334,12 +335,10 @@ export async function getUpcomingMatchPrediction(message: string): Promise<Match
               lte: next48h,
             },
           },
-          // Match name must contain at least one team
-          {
-            OR: searchTerms.map(term => ({
-              matchName: { contains: term, mode: 'insensitive' as const }
-            })),
-          },
+          // Match name must contain ALL specified teams (AND logic)
+          ...searchTerms.map(term => ({
+            matchName: { contains: term, mode: 'insensitive' as const }
+          })),
         ],
       },
       orderBy: { kickoff: 'asc' },
