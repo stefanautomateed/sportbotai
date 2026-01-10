@@ -1530,8 +1530,12 @@ If their favorite team has a match today/tonight, lead with that information.`;
           }
 
           // Step 1.5: DataLayer stats if needed (form, H2H, season stats)
+          // USE QUERY INTELLIGENCE FLAGS - not pattern matching
           let dataLayerContext = '';
-          if (needsDataLayerStats(searchMessage, queryCategory)) {
+          const needsOurStats = queryUnderstanding?.needsVerifiedStats || 
+            ['PLAYER_STATS', 'TEAM_STATS', 'FORM_CHECK', 'HEAD_TO_HEAD'].includes(queryUnderstanding?.intent || '');
+          
+          if (needsOurStats) {
             const teams = extractTeamNames(searchMessage);
             if (teams.homeTeam) {
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: 'Fetching team stats...' })}\n\n`));
@@ -1545,7 +1549,8 @@ If their favorite team has a match today/tonight, lead with that information.`;
 
           // Step 1.6: Verified Player Stats for ALL SPORTS (bypasses Perplexity for accurate stats)
           let verifiedPlayerStatsContext = '';
-          const isAnyStatsQuery = isStatsQuery(searchMessage) || isNFLStatsQuery(searchMessage) || isNHLStatsQuery(searchMessage) || isSoccerStatsQuery(searchMessage) || isEuroleagueStatsQuery(searchMessage);
+          const isPlayerStatsIntent = queryUnderstanding?.intent === 'PLAYER_STATS';
+          const isAnyStatsQuery = isPlayerStatsIntent || isStatsQuery(searchMessage) || isNFLStatsQuery(searchMessage) || isNHLStatsQuery(searchMessage) || isSoccerStatsQuery(searchMessage) || isEuroleagueStatsQuery(searchMessage);
           
           if (isAnyStatsQuery) {
             console.log('[AI-Chat-Stream] Stats query detected, determining sport...');
