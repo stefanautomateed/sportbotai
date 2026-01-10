@@ -1744,8 +1744,8 @@ If their favorite team has a match today/tonight, lead with that information.`;
                                      queryUnderstanding?.intent === 'OUR_ANALYSIS' ||
                                      queryUnderstanding?.intent === 'BETTING_ANALYSIS';
           
-          if (isPredictionIntent && queryUnderstanding?.entities.length > 0) {
-            console.log(`[AI-Chat-Stream] Prediction query detected (intent: ${queryUnderstanding.intent})...`);
+          if (isPredictionIntent && (queryUnderstanding?.entities?.length ?? 0) > 0) {
+            console.log(`[AI-Chat-Stream] Prediction query detected (intent: ${queryUnderstanding?.intent})...`);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🎯 Fetching our match analysis...' })}\n\n`));
             
             const predictionResult = await getUpcomingMatchPrediction(searchMessage);
