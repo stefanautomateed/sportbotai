@@ -426,11 +426,11 @@ function isShortMatchQuery(query: string): { isMatch: boolean; teams: string[] }
       const foundTeams: string[] = [];
       
       for (const pattern of allTeamPatterns) {
-        // Use matchAll to find ALL occurrences, not just the first
+        // Use exec in a loop to find ALL occurrences, not just the first
         const globalPattern = new RegExp(pattern.source, 'gi');
-        const matches = [...lower.matchAll(globalPattern)];
-        for (const match of matches) {
-          if (match[0] && !foundTeams.some(t => t.toLowerCase() === match[0].toLowerCase())) {
+        let match: RegExpExecArray | null;
+        while ((match = globalPattern.exec(lower)) !== null) {
+          if (match[0] && !foundTeams.some(t => t.toLowerCase() === match![0].toLowerCase())) {
             foundTeams.push(match[0]);
           }
         }
