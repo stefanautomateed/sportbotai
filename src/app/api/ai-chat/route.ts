@@ -495,10 +495,40 @@ function detectSportFromTeams(homeTeam: string, awayTeam: string, message: strin
     return 'mma_mixed_martial_arts';
   }
   
-  // Soccer (default for most European team names)
-  const soccerIndicators = /fc|united|city|real|barcelona|madrid|bayern|arsenal|chelsea|liverpool|tottenham|manchester|juventus|inter|milan|psg|dortmund|atletico|sevilla|valencia|napoli|roma|lazio|sporting|benfica|porto|ajax|feyenoord|psv/i;
-  if (soccerIndicators.test(combined) || /premier league|la liga|bundesliga|serie a|ligue 1|champions league|europa|soccer|football|epl/i.test(message)) {
-    return 'soccer_epl'; // Default to EPL, will be overridden if league detected
+  // Serie A (Italian) teams - check before generic soccer
+  const serieATeams = /\b(roma|lazio|napoli|juventus|inter|milan|ac milan|atalanta|fiorentina|bologna|torino|genoa|sassuolo|udinese|verona|lecce|empoli|cagliari|monza|parma|sampdoria|salernitana|spezia|cremonese|frosinone|como|venezia)\b/i;
+  if (serieATeams.test(combined) || /serie a|calcio|italian/i.test(message)) {
+    return 'soccer_italy_serie_a';
+  }
+  
+  // La Liga (Spanish) teams
+  const laLigaTeams = /\b(real madrid|barcelona|atletico|sevilla|valencia|villarreal|betis|real sociedad|athletic bilbao|getafe|osasuna|celta vigo|mallorca|rayo vallecano|almeria|cadiz|las palmas|girona|alaves|leganes)\b/i;
+  if (laLigaTeams.test(combined) || /la liga|spanish|primera/i.test(message)) {
+    return 'soccer_spain_la_liga';
+  }
+  
+  // Bundesliga (German) teams
+  const bundesligaTeams = /\b(bayern|dortmund|leverkusen|leipzig|frankfurt|wolfsburg|gladbach|freiburg|hoffenheim|mainz|augsburg|koln|stuttgart|union berlin|hertha|bochum|bremen|schalke|darmstadt|heidenheim)\b/i;
+  if (bundesligaTeams.test(combined) || /bundesliga|german/i.test(message)) {
+    return 'soccer_germany_bundesliga';
+  }
+  
+  // Ligue 1 (French) teams
+  const ligue1Teams = /\b(psg|paris saint-germain|marseille|lyon|monaco|lille|nice|lens|rennes|strasbourg|nantes|montpellier|toulouse|reims|brest|lorient|clermont|metz|le havre|auxerre)\b/i;
+  if (ligue1Teams.test(combined) || /ligue 1|french/i.test(message)) {
+    return 'soccer_france_ligue_one';
+  }
+  
+  // Premier League (English) teams
+  const eplTeams = /\b(arsenal|chelsea|liverpool|manchester united|man utd|manchester city|man city|tottenham|spurs|newcastle|west ham|aston villa|brighton|crystal palace|fulham|brentford|everton|nottingham forest|bournemouth|wolves|burnley|sheffield united|luton)\b/i;
+  if (eplTeams.test(combined) || /premier league|epl|english/i.test(message)) {
+    return 'soccer_epl';
+  }
+  
+  // Generic soccer detection
+  const soccerIndicators = /fc|united|city|real|sporting|benfica|porto|ajax|feyenoord|psv/i;
+  if (soccerIndicators.test(combined) || /champions league|europa|soccer|football/i.test(message)) {
+    return 'soccer_epl'; // Default to EPL if can't determine specific league
   }
   
   // Default to soccer (most common globally)
@@ -516,8 +546,21 @@ async function performMatchAnalysis(
   request: NextRequest
 ): Promise<{ success: boolean; response: string; error?: string }> {
   try {
-    // Generate a match ID from team names
-    const matchId = `${homeTeam.toLowerCase().replace(/\s+/g, '-')}-vs-${awayTeam.toLowerCase().replace(/\s+/g, '-')}-${sport}`;
+    // Generate a match ID using proper slug format
+    // Format: home-team-vs-away-team-sport-date
+    const slugify = (text: string) => text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+    const getSportCode = (sportKey: string) => {
+      const parts = sportKey.split('_');
+      return parts.length >= 2 ? parts.slice(1).join('-') : sportKey;
+    };
+    
+    const homeSlug = slugify(homeTeam);
+    const awaySlug = slugify(awayTeam);
+    const sportCode = getSportCode(sport);
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Proper format: roma-vs-sassuolo-italy-serie-a-2026-01-10
+    const matchId = `${homeSlug}-vs-${awaySlug}-${sportCode}-${today}`;
     
     // Get the host from the request
     const protocol = request.headers.get('x-forwarded-proto') || 'http';
@@ -528,6 +571,7 @@ async function performMatchAnalysis(
     const cookies = request.headers.get('cookie') || '';
     
     console.log(`[AI-Chat] Calling match-preview API for: ${homeTeam} vs ${awayTeam}`);
+    console.log(`[AI-Chat] Generated matchId: ${matchId}`);
     
     // Try match-preview first for real data
     const previewResponse = await fetch(`${baseUrl}/api/match-preview/${encodeURIComponent(matchId)}`, {
