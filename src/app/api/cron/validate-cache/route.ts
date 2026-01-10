@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
     try {
       // Fetch events for this sport
       const eventsResult = await theOddsClient.getEvents(sportKey);
-      if (!eventsResult.success || !eventsResult.data) {
+      if (!eventsResult.data || eventsResult.data.length === 0) {
         console.log(`[Validate] No events for ${sportKey}`);
         continue;
       }
