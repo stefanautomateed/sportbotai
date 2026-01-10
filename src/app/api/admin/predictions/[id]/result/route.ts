@@ -71,9 +71,14 @@ export async function PATCH(
     const predictionLower = prediction.prediction.toLowerCase();
     const selectionLower = (prediction.selection || '').toLowerCase();
     
+    // Extract team names from matchName (e.g., "Arsenal vs Liverpool")
+    const matchParts = prediction.matchName.split(' vs ');
+    const homeTeamName = matchParts[0]?.toLowerCase().trim() || '';
+    const awayTeamName = matchParts[1]?.toLowerCase().trim() || '';
+    
     let wasAccurate = false;
     
-    // Check main prediction (e.g., "Home Win", "Away Win", "Draw")
+    // Check main prediction text (e.g., "Home Win", "Away Win", "Draw")
     if (
       (predictionLower.includes('home') && actualResult === 'HOME_WIN') ||
       (predictionLower.includes('away') && actualResult === 'AWAY_WIN') ||
@@ -82,13 +87,33 @@ export async function PATCH(
       wasAccurate = true;
     }
     
-    // Also check selection field
+    // Check selection field - handles "home", "away", "draw" keywords
     if (
       (selectionLower === 'home' && actualResult === 'HOME_WIN') ||
       (selectionLower === 'away' && actualResult === 'AWAY_WIN') ||
       (selectionLower === 'draw' && actualResult === 'DRAW')
     ) {
       wasAccurate = true;
+    }
+    
+    // Check selection field - handles team names (e.g., "Arsenal", "Liverpool")
+    if (selectionLower && !['home', 'away', 'draw'].includes(selectionLower)) {
+      // Selection is a team name, match it against home/away team
+      if (selectionLower === homeTeamName && actualResult === 'HOME_WIN') {
+        wasAccurate = true;
+      } else if (selectionLower === awayTeamName && actualResult === 'AWAY_WIN') {
+        wasAccurate = true;
+      } else if (homeTeamName.includes(selectionLower) && actualResult === 'HOME_WIN') {
+        // Partial match (e.g., "Montréal Canadiens" contains "montréal")
+        wasAccurate = true;
+      } else if (awayTeamName.includes(selectionLower) && actualResult === 'AWAY_WIN') {
+        wasAccurate = true;
+      } else if (selectionLower.includes(homeTeamName) && homeTeamName && actualResult === 'HOME_WIN') {
+        // Selection might be longer than matchName team (e.g., "Montréal Canadiens" vs "Montreal")
+        wasAccurate = true;
+      } else if (selectionLower.includes(awayTeamName) && awayTeamName && actualResult === 'AWAY_WIN') {
+        wasAccurate = true;
+      }
     }
 
     const outcome = wasAccurate ? 'HIT' : 'MISS';
