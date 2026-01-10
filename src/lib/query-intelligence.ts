@@ -608,11 +608,14 @@ const INTENT_PATTERNS: IntentPattern[] = [
   {
     intent: 'SCHEDULE',
     patterns: [
-      /\bwhen (is|does|do|are)\b.*\b(play|game|match)\b/i,
-      /\bnext (game|match|fixture)\b/i,
-      /\bschedule|fixture\b/i,
+      /\bwhen\b.*\b(play|playing|game|match|face|facing)\b/i,  // "when nuggets play", "when do they play"
+      /\bwhen (is|does|do|are|will)\b.*\b(play|game|match|next)\b/i,
+      /\bnext (game|match|fixture|opponent)\b/i,
+      /\b(schedule|fixture|calendar)\b/i,
+      /\bwho.*play.*next\b/i,  // "who do they play next"
+      /\bwhat time\b.*\b(game|match|play)\b/i,  // "what time is the game"
     ],
-    priority: 40,
+    priority: 75,  // HIGHER priority - schedule questions are common!
   },
   {
     intent: 'TRANSFER_NEWS',

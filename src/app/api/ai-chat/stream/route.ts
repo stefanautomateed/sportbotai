@@ -1733,9 +1733,13 @@ If their favorite team has a match today/tonight, lead with that information.`;
 
           // Step 1.13: Our Match Prediction (for upcoming games within 48h)
           // Triggered by: explicit prediction queries OR Query Intelligence detecting MATCH_PREDICTION/OUR_ANALYSIS intent
+          // IMPORTANT: Do NOT trigger for SCHEDULE queries (when does team play next)
           let verifiedMatchPredictionContext = '';
-          const shouldFetchOurPrediction = isMatchPredictionQuery(searchMessage) || 
-            (queryUnderstanding?.needsOurPrediction && queryUnderstanding.entities.length > 0);
+          const isScheduleQuery = queryUnderstanding?.intent === 'SCHEDULE';
+          const shouldFetchOurPrediction = !isScheduleQuery && (
+            isMatchPredictionQuery(searchMessage) || 
+            (queryUnderstanding?.needsOurPrediction && queryUnderstanding.entities.length > 0)
+          );
           
           if (shouldFetchOurPrediction) {
             console.log('[AI-Chat-Stream] Match prediction query detected (explicit or via query intelligence)...');

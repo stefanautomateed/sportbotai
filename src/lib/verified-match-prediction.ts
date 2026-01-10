@@ -61,6 +61,16 @@ export interface MatchPredictionResult {
 export function isMatchPredictionQuery(message: string): boolean {
   const lower = message.toLowerCase();
   
+  // EXCLUDE schedule queries - "when do they play" is NOT a prediction query
+  const isScheduleQuery = /\bwhen\b.*\b(play|playing|game|match|face|next)\b/i.test(lower) ||
+    /\bnext (game|match|fixture|opponent)\b/i.test(lower) ||
+    /\b(schedule|fixture|calendar)\b/i.test(lower) ||
+    /\bwhat time\b/i.test(lower);
+  
+  if (isScheduleQuery) {
+    return false;
+  }
+  
   // Check for explicit "vs" pattern - this is a match query
   const hasVsPattern = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*(?:vs?\.?|x|@)\s*[A-Z][a-z]+/i.test(message);
   
