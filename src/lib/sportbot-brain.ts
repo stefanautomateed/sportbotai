@@ -88,6 +88,13 @@ export function calculateDataConfidence(params: {
     }
   }
   
+  // INJURY queries critically need real-time data
+  if (category === 'INJURY') {
+    if (!params.hasPerplexityData) {
+      missingCritical.push('real-time injury reports');
+    }
+  }
+  
   // Determine level
   let level: DataCoverageLevel;
   if (score >= 70 && missingCritical.length === 0) {

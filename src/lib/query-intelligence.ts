@@ -581,11 +581,13 @@ const INTENT_PATTERNS: IntentPattern[] = [
   {
     intent: 'INJURY_NEWS',
     patterns: [
-      /\b(injur|hurt|out|miss|sideline|available|fit|healthy)\b/i,
+      /\b(injur(y|ed|ies)?|hurt|out|miss(ing)?|sideline[d]?|available|fit(ness)?|healthy|health)\b/i,
       /\bwill .+ play\b/i,
-      /\b(doubt|questionable|probable|ruled out)\b/i,
+      /\b(doubt(ful)?|questionable|probable|ruled out|day.to.day|GTD|IL|IR)\b/i,
+      /\b(status|update|recovery|return)\b.*\b(injur|health)\b/i,
+      /\bhow (is|are) .+ (injur|going|doing).*injur/i,  // "how is X injury going"
     ],
-    priority: 55,
+    priority: 80,  // BOOST priority - injury queries are critical and time-sensitive
   },
   {
     intent: 'FORM_CHECK',

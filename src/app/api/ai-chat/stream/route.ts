@@ -1504,11 +1504,16 @@ If their favorite team has a match today/tonight, lead with that information.`;
               } else {
                 // Search returned nothing - log it and signal to AI to be cautious
                 console.log('[AI-Chat-Stream] ⚠️ Perplexity search returned no data for:', searchMessage.slice(0, 50));
+                // DO NOT set perplexityContext to a warning - keep it empty so data confidence knows we have no real data
+                // The warning will be in the system prompt instead
+                perplexityContext = ''; // Keep empty!
+                
+                // Set a flag for the system prompt
                 if (queryCategory === 'INJURY') {
-                  // For injury queries with no data, add explicit warning
-                  perplexityContext = '⚠️ REAL-TIME SEARCH RETURNED NO INJURY DATA. Do not assume the player is healthy. Say you could not verify their current injury status.';
+                  // Will be handled in system prompt via dataConfidence
+                  console.log('[AI-Chat-Stream] ⚠️ No injury data found - will warn in response');
                 } else if (queryCategory === 'STATS') {
-                  perplexityContext = '⚠️ REAL-TIME SEARCH RETURNED NO STATS. Do not invent statistics. Say you could not find verified current stats.';
+                  console.log('[AI-Chat-Stream] ⚠️ No stats data found - will warn in response');
                 }
               }
             }
