@@ -677,33 +677,42 @@ async function performMatchAnalysis(
     const host = request.headers.get('host') || 'localhost:3000';
     const baseUrl = `${protocol}://${host}`;
     
-    // Forward cookies for authentication
+    // Forward all headers for authentication (including cookies)
     const cookies = request.headers.get('cookie') || '';
+    const authHeader = request.headers.get('authorization') || '';
     
     console.log(`[AI-Chat] Calling match-preview API for: ${homeTeam} vs ${awayTeam}`);
     console.log(`[AI-Chat] Generated matchId: ${matchId}`);
+    console.log(`[AI-Chat] Cookies present: ${cookies.length > 0}`);
     
     // Try match-preview first for real data
     const previewResponse = await fetch(`${baseUrl}/api/match-preview/${encodeURIComponent(matchId)}`, {
       method: 'GET',
       headers: {
         'Cookie': cookies,
+        'Authorization': authHeader,
       },
     });
     
     if (previewResponse.ok) {
       const previewData = await previewResponse.json();
       
-      // Format the rich preview data for chat
-      const formattedResponse = formatMatchPreviewForChat(previewData, homeTeam, awayTeam);
-      
-      return {
-        success: true,
-        response: formattedResponse,
-      };
+      // Check if this is a demo/random match instead of the real match we asked for
+      // If isDemo is true and the teams don't match, skip this response
+      if (previewData.isDemo) {
+        console.log(`[AI-Chat] Match-preview returned a demo, falling back to analyze API`);
+      } else {
+        // Format the rich preview data for chat
+        const formattedResponse = formatMatchPreviewForChat(previewData, homeTeam, awayTeam);
+        
+        return {
+          success: true,
+          response: formattedResponse,
+        };
+      }
+    } else {
+      console.log(`[AI-Chat] Match-preview failed (${previewResponse.status}), falling back to analyze API`);
     }
-    
-    console.log(`[AI-Chat] Match-preview failed (${previewResponse.status}), falling back to analyze API`);
     
     // Fallback to analyze API with default odds
     const analyzeRequest = {
