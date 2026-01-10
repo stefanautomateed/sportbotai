@@ -108,3 +108,34 @@ npm run lint         # ESLint check
 3. **18+ only** - Enforce age restrictions in UI/copy
 4. **Stripe Price IDs** - Must be real IDs from Stripe Dashboard (replace placeholders in `PricingCards.tsx`)
 5. **API Quota Management** - Only `/api/odds/{sport}` uses quota; sports/events are free
+
+## 🚨 CRITICAL: Chat Response Data Standards
+
+**When formatting match analysis for chat (`formatLiveAnalysisForChat` or similar), ALWAYS include ALL available data from `AnalyzeResponse`:**
+
+### Required Data (if available in response):
+- ✅ `briefing.headline` + `briefing.verdict` + `briefing.confidenceRating`
+- ✅ `briefing.keyPoints` - ALL of them, not just 2-3
+- ✅ `probabilities` - homeWin, draw, awayWin percentages
+- ✅ `oddsComparison` - homeEdge, drawEdge, awayEdge (THIS IS OUR KEY VALUE PROP!)
+- ✅ `momentumAndForm` - recent W/L/D form for both teams
+- ✅ `injuryContext` - key injuries affecting the match
+- ✅ `preMatchInsights.viralStats` - interesting/viral stats
+- ✅ `upsetPotential` - upset alerts with reasons
+- ✅ `marketStability` - line movement warnings
+- ✅ `riskAnalysis` - risk level + trap match warnings
+- ✅ `tacticalAnalysis.keyBattles` - tactical matchups
+- ✅ `tacticalAnalysis.expertConclusionOneLiner` - expert verdict
+- ✅ `responsibleGambling.disclaimer` - ALWAYS include
+
+### NEVER do this:
+- ❌ Return just probabilities - that's useless
+- ❌ Skip edge/value data - that's literally our product
+- ❌ Ignore form/injuries - users need context
+- ❌ Forget the disclaimer - legal requirement
+
+### Key Files:
+- `src/app/api/ai-chat/stream/route.ts` - `formatLiveAnalysisForChat()` function
+- `src/lib/verified-match-prediction.ts` - `formatMatchPredictionContext()` function
+- `src/types/index.ts` - `AnalyzeResponse` interface (source of truth for available fields)
+
