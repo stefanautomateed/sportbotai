@@ -1349,6 +1349,50 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           const rawConviction = confidence === 'strong' ? 8 : confidence === 'moderate' ? 6 : 4;
           const cappedConviction = applyConvictionCap(rawConviction, sportKey);
           
+          // QUALITY GATE: Only save predictions with conviction >= 5 and real edge data
+          // Low conviction predictions have 27% win rate - don't track them
+          const shouldSavePrediction = cappedConviction >= 5 && marketIntel;
+          
+          if (!shouldSavePrediction) {
+            console.log(`[Match-Preview] Skipped prediction: ${matchRef} (conviction: ${cappedConviction}, hasMarketIntel: ${!!marketIntel})`);
+          } else {
+          // Extract edge tracking data from marketIntel if available
+          let modelProbability: number | null = null;
+          let marketProbabilityFair: number | null = null;
+          let edgeValue: number | null = null;
+          let edgeBucket: 'SMALL' | 'MEDIUM' | 'HIGH' | null = null;
+          let selectionText: string | null = null;
+          let marketOddsAtPrediction: number | null = null;
+          
+          if (marketIntel) {
+            // Get the probability and edge for the favored side
+            const modelProbs = marketIntel.modelProbability || {};
+            const impliedProbs = marketIntel.impliedProbability || {};
+            
+            if (favored === 'home') {
+              modelProbability = modelProbs.home || null;
+              marketProbabilityFair = impliedProbs.home || null;
+              marketOddsAtPrediction = odds?.homeOdds || null;
+              selectionText = matchInfo.homeTeam;
+            } else if (favored === 'away') {
+              modelProbability = modelProbs.away || null;
+              marketProbabilityFair = impliedProbs.away || null;
+              marketOddsAtPrediction = odds?.awayOdds || null;
+              selectionText = matchInfo.awayTeam;
+            } else {
+              modelProbability = modelProbs.draw || null;
+              marketProbabilityFair = impliedProbs.draw || null;
+              marketOddsAtPrediction = odds?.drawOdds || null;
+              selectionText = 'Draw';
+            }
+            
+            // Calculate edge
+            if (modelProbability !== null && marketProbabilityFair !== null) {
+              edgeValue = modelProbability - marketProbabilityFair;
+              edgeBucket = edgeValue >= 8 ? 'HIGH' : edgeValue >= 5 ? 'MEDIUM' : edgeValue >= 2 ? 'SMALL' : null;
+            }
+          }
+          
           await prisma.prediction.create({
             data: {
               matchId: matchRef.replace(/\s+/g, '_').toLowerCase(),
@@ -1364,9 +1408,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               impliedProb: marketIntel?.impliedProbability?.home || null,
               source: 'MATCH_ANALYSIS',
               outcome: 'PENDING',
+              // V2 Edge Tracking fields
+              modelVersion: 'v2',
+              selection: selectionText,
+              modelProbability,
+              marketProbabilityRaw: marketProbabilityFair, // Same as fair for now
+              marketProbabilityFair,
+              marketOddsAtPrediction,
+              edgeValue,
+              edgeBucket,
+              marketType: 'MONEYLINE',
+              predictionTimestamp: new Date(),
             },
           });
-          console.log(`[Match-Preview] Prediction saved: ${matchRef} -> ${predictedScenario} (conviction: ${rawConviction} -> ${cappedConviction})`);
+          console.log(`[Match-Preview] Prediction saved: ${matchRef} -> ${predictedScenario} (conviction: ${rawConviction} -> ${cappedConviction}, edge: ${edgeValue?.toFixed(1) || 'N/A'}%)`);
+          } // Close shouldSavePrediction if block
         }
         
         // ========================================

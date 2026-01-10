@@ -213,12 +213,19 @@ export async function GET(request: NextRequest) {
         // Calculate CLV
         const clvPercentage = calculateCLV(pred.openingOdds, closingOdds);
         
+        // Calculate fair closing probability for clvValue field
+        const closingProb = oddsToProb(closingOdds) * 100;
+        const openingProb = oddsToProb(pred.openingOdds) * 100;
+        const clvValue = closingProb - openingProb; // Absolute difference in probability points
+        
         // Update prediction with CLV data
         await prisma.prediction.update({
           where: { id: pred.id },
           data: {
             closingOdds,
+            closingProbabilityFair: closingProb,
             clvPercentage,
+            clvValue,
             clvFetched: true,
           },
         });
