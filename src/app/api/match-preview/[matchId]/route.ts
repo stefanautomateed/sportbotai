@@ -1612,7 +1612,8 @@ function parseMatchId(matchId: string) {
       slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     
     // Map sport code to sport key (e.g., "nba" -> "basketball_nba")
-    const sportCode = parsed.sportCode;
+    // Convert hyphens to underscores: "italy-serie-a" -> "italy_serie_a"
+    const sportCode = parsed.sportCode.replace(/-/g, '_');
     
     // detectSportFromLeague may return full sport key (basketball_nba) or just type (basketball)
     const detectedSport = detectSportFromLeague(sportCode.toUpperCase());
