@@ -415,20 +415,35 @@ function detectMatchAnalysisRequest(message: string): {
   
   // Analysis trigger phrases (multi-language)
   const analysisPatterns = [
-    // English
-    /(?:analyze|analyse|analysis|breakdown|preview|assess|evaluate)\s+(?:the\s+)?(?:match\s+)?(.+?)\s+(?:vs\.?|versus|v\.?)\s+(.+?)(?:\s+(?:match|game|tonight|today|tomorrow))?$/i,
-    /(?:what do you think|thoughts on|your take on|give me a breakdown|break down)\s+(?:about\s+)?(?:the\s+)?(.+?)\s+(?:vs\.?|versus|v\.?)\s+(.+?)(?:\s+(?:match|game))?$/i,
-    /(?:can you analyze|could you analyze|please analyze|i want analysis)\s+(.+?)\s+(?:vs\.?|versus|v\.?)\s+(.+)/i,
+    // English with vs/versus
+    /(?:analyze|analyse|analysis|breakdown|preview|assess|evaluate)\s+(?:the\s+)?(?:match\s+)?(.+?)\s+(?:vs\.?|versus|v\.?|against|facing)\s+(.+?)(?:\s+(?:match|game|tonight|today|tomorrow))?$/i,
+    /(?:what do you think|thoughts on|your take on|give me a breakdown|break down)\s+(?:about\s+)?(?:the\s+)?(.+?)\s+(?:vs\.?|versus|v\.?|against|facing)\s+(.+?)(?:\s+(?:match|game))?$/i,
+    /(?:can you analyze|could you analyze|please analyze|i want analysis)\s+(.+?)\s+(?:vs\.?|versus|v\.?|against)\s+(.+)/i,
     /(.+?)\s+(?:vs\.?|versus|v\.?)\s+(.+?)\s+(?:analysis|breakdown|preview|prediction)/i,
+    
+    // "X against Y" patterns (common from Chinese/other translations)
+    /(?:^|today|tonight|tomorrow)\s*([A-Za-z][A-Za-z\s]+?)\s+(?:against|facing|plays?|playing|vs\.?|versus|VS)\s+([A-Za-z][A-Za-z\s]+?)(?:\s+(?:will|who|can|should|what|match|game|today|tonight|tomorrow|at home|\?|$))/i,
+    
+    // "X at home against Y" pattern
+    /([A-Za-z][A-Za-z\s]+?)\s+(?:at home|away)\s+(?:against|vs\.?|versus|facing)\s+([A-Za-z][A-Za-z\s]+)/i,
     
     // Better generic "X vs Y" pattern - stops at common trailing words
     /(?:^|today|tonight|tomorrow|match|game|about)\s*([A-Za-z][A-Za-z\s]+?)\s+(?:vs\.?|versus|v\.?|VS)\s+([A-Za-z][A-Za-z\s]+?)(?:\s+(?:will|who|match|game|today|tonight|tomorrow|\?|$))/i,
     
     // Multi-word teams with vs/VS (e.g., "Los Angeles Lakers vs Boston Celtics")
-    /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})\s+(?:vs\.?|VS)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})\b/i,
+    /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})\s+(?:vs\.?|VS|against)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})\b/i,
     
-    // Simple team1 vs team2 - fallback for any "X vs Y" at end of message
-    /\b([A-Za-z][a-zA-Z]+(?:\s+[A-Za-z][a-zA-Z]+){0,3})\s+(?:vs\.?|VS|versus)\s+([A-Za-z][a-zA-Z]+(?:\s+[A-Za-z][a-zA-Z]+){0,3})$/i,
+    // Simple team1 vs team2 - fallback for any "X vs/against Y" at end of message
+    /\b([A-Za-z][a-zA-Z]+(?:\s+[A-Za-z][a-zA-Z]+){0,3})\s+(?:vs\.?|VS|versus|against)\s+([A-Za-z][a-zA-Z]+(?:\s+[A-Za-z][a-zA-Z]+){0,3})$/i,
+    
+    // "match between X and Y" pattern
+    /(?:match|game)\s+(?:between|of)\s+([A-Za-z][A-Za-z\s]+?)\s+(?:and|vs\.?)\s+([A-Za-z][A-Za-z\s]+)/i,
+    
+    // "will X win against Y" / "can X beat Y"
+    /(?:will|can|should)\s+([A-Za-z][A-Za-z\s]+?)\s+(?:win|beat|defeat)\s+(?:against\s+)?([A-Za-z][A-Za-z\s]+)/i,
+    
+    // "X vs Y [followed by additional context]" - stops at team name repetition or common words
+    /^([A-Za-z][A-Za-z\s]*?)\s+(?:vs\.?|VS|versus)\s+([A-Za-z][A-Za-z\s]*?)(?:\s+(?:Roma|Sassuolo|[A-Z][a-z]+\s+has|will|today|tonight|\.|\,))/i,
     
     // Serbian/Croatian
     /(?:analiziraj|analiza|analizu|pregledaj)\s+(?:utakmicu?\s+)?(.+?)\s+(?:vs\.?|protiv|v\.?|-)\s+(.+)/i,
@@ -447,17 +462,18 @@ function detectMatchAnalysisRequest(message: string): {
     if (match && match[1] && match[2]) {
       // Clean up team names (remove extra words from start and end)
       let homeTeam = match[1].trim()
-        .replace(/^(the|match|game|today|tonight|tomorrow|about|this|what about|how about)\s+/i, '')
-        .replace(/\s+(match|game|tonight|today|tomorrow)?$/i, '')
+        .replace(/^(the|match|game|today|tonight|tomorrow|about|this|what about|how about|will|can|should)\s+/i, '')
+        .replace(/\s+(match|game|tonight|today|tomorrow|win)?$/i, '')
         .trim();
       let awayTeam = match[2].trim()
         .replace(/^(the)\s+/i, '')
         // Stop at common words that indicate end of team name
-        .replace(/\s+(match|game|tonight|today|tomorrow|this|will|who|win|should|can|could|would|is|are|has|have|what|sunday|monday|tuesday|wednesday|thursday|friday|saturday|\?).*/i, '')
+        .replace(/\s+(match|game|tonight|today|tomorrow|this|will|who|win|should|can|could|would|is|are|has|have|what|sunday|monday|tuesday|wednesday|thursday|friday|saturday|roma|\.|\?).*/i, '')
         .trim();
       
       // Additional cleanup for edge cases
-      homeTeam = homeTeam.replace(/^(today|tonight|tomorrow|what about|how about)\s+/i, '').trim();
+      homeTeam = homeTeam.replace(/^(today|tonight|tomorrow|what about|how about|will|can|should)\s+/i, '').trim();
+      homeTeam = homeTeam.replace(/\s+win$/i, '').trim(); // "Roma win" -> "Roma"
       awayTeam = awayTeam.replace(/\s+(will|this|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\s+.*$/i, '').trim();
       
       // Must have reasonable team names (2+ chars each)
@@ -2048,6 +2064,14 @@ export async function POST(request: NextRequest) {
     
     // Detect category for all queries (for tracking) - use English for better accuracy
     const queryCategory = detectQueryCategory(searchMessage);
+    
+    // Debug logging for category detection
+    console.log(`[AI-Chat] Query category detected: ${queryCategory}`);
+    if (queryCategory !== 'MATCH_ANALYSIS') {
+      // Also try match detection directly to see what's happening
+      const debugIntent = detectMatchAnalysisRequest(searchMessage);
+      console.log(`[AI-Chat] Direct match detection: isMatch=${debugIntent.isMatchAnalysis}, home="${debugIntent.homeTeam}", away="${debugIntent.awayTeam}"`);
+    }
 
     // SPECIAL HANDLING: Match Analysis Request
     // If user asks "Analyze X vs Y", call the /api/analyze endpoint
