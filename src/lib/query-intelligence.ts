@@ -708,6 +708,24 @@ export async function understandQuery(query: string): Promise<QueryUnderstanding
     isAmbiguous = intentConfidence < 0.6;
   }
   
+  // Clean up entities - remove garbage like "Will Roma" which should just be "Roma"
+  const cleanedEntities = entities.map(e => {
+    // Remove common question words from entity names
+    let cleanName = e.name
+      .replace(/^(Will|Can|Should|Does|Do|Is|Are|What|Who|How|When|Where|Why)\s+/i, '')
+      .replace(/\s+(win|beat|defeat|play|playing|against|vs|today|tonight|match|game)$/i, '')
+      .trim();
+    return { ...e, name: cleanName };
+  }).filter(e => e.name.length >= 2); // Remove empty/tiny entities
+  
+  // Deduplicate after cleanup
+  const deduplicatedEntities: ExtractedEntity[] = [];
+  for (const entity of cleanedEntities) {
+    if (!deduplicatedEntities.some(e => e.name.toLowerCase() === entity.name.toLowerCase())) {
+      deduplicatedEntities.push(entity);
+    }
+  }
+  
   // Determine data needs based on intent
   const needsRealTimeData = ['INJURY_NEWS', 'TRANSFER_NEWS', 'MATCH_RESULT', 'LINEUP'].includes(intent) || timeFrame === 'LIVE';
   const needsVerifiedStats = ['PLAYER_STATS', 'TEAM_STATS', 'STANDINGS', 'FORM_CHECK', 'HEAD_TO_HEAD'].includes(intent);
@@ -726,7 +744,7 @@ export async function understandQuery(query: string): Promise<QueryUnderstanding
     intent,
     intentConfidence,
     timeFrame,
-    entities,
+    entities: deduplicatedEntities,
     sport,
     needsRealTimeData,
     needsVerifiedStats,
@@ -746,7 +764,7 @@ export async function understandQuery(query: string): Promise<QueryUnderstanding
   console.log(`[QueryIntelligence] Understood in ${Date.now() - startTime}ms:`, {
     intent,
     confidence: intentConfidence,
-    entities: entities.map(e => e.name),
+    entities: deduplicatedEntities.map(e => e.name),
     sport,
     dataNeeds: suggestedDataSources,
     usedLLM,
