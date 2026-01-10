@@ -71,11 +71,15 @@ async function translateToEnglish(message: string): Promise<{
   // Quick check for non-ASCII characters or common non-English patterns
   const hasNonAscii = /[^\x00-\x7F]/.test(message);
   const hasCyrillic = /[\u0400-\u04FF]/.test(message);
+  const hasChinese = /[\u4E00-\u9FFF]/.test(message);
+  const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF]/.test(message);
+  const hasKorean = /[\uAC00-\uD7AF]/.test(message);
+  const hasArabic = /[\u0600-\u06FF]/.test(message);
   // Note: removed 'was', 'wo', 'match' as they are also common English words
   const hasCommonNonEnglish = /\b(je|da|li|sta|šta|što|kako|koliko|gdje|gde|kada|zašto|porque|qué|cómo|cuándo|dónde|wie|wann|warum|où|quand|pourquoi|comment|combien)\b/i.test(message);
   
   // If message appears to be English, skip translation
-  if (!hasNonAscii && !hasCyrillic && !hasCommonNonEnglish) {
+  if (!hasNonAscii && !hasCyrillic && !hasChinese && !hasJapanese && !hasKorean && !hasArabic && !hasCommonNonEnglish) {
     return {
       originalLanguage: 'en',
       englishQuery: message,
@@ -106,18 +110,30 @@ If the message is already in English, return it unchanged.`
     
     const englishQuery = response.choices[0]?.message?.content?.trim() || message;
     
-    // Detect original language (simplified)
+    // Detect original language
     let originalLanguage = 'unknown';
-    if (hasCyrillic || /\b(je|da|li|koliko|postigao|utakmic|košev|poena)\b/i.test(message)) {
+    if (hasChinese) {
+      originalLanguage = 'zh'; // Chinese
+    } else if (hasJapanese) {
+      originalLanguage = 'ja'; // Japanese
+    } else if (hasKorean) {
+      originalLanguage = 'ko'; // Korean
+    } else if (hasArabic) {
+      originalLanguage = 'ar'; // Arabic
+    } else if (hasCyrillic || /\b(je|da|li|koliko|postigao|utakmic|košev|poena)\b/i.test(message)) {
       originalLanguage = 'sr'; // Serbian/Croatian
     } else if (/\b(porque|qué|cómo|cuándo|dónde|goles|partido)\b/i.test(message)) {
       originalLanguage = 'es'; // Spanish
     } else if (/\b(wie|wann|warum|spiel|spielen|mannschaft|gegen|tore)\b/i.test(message)) {
-      // Note: removed 'was' and 'wo' as they conflict with English
       originalLanguage = 'de'; // German
     } else if (/\b(où|quand|pourquoi|comment|combien|joueur|équipe|buts)\b/i.test(message)) {
-      // Note: removed 'match' as it's also English
       originalLanguage = 'fr'; // French
+    } else if (/\b(partita|squadra|gol|giocatore|quando|come|perché)\b/i.test(message)) {
+      originalLanguage = 'it'; // Italian
+    } else if (/\b(jogo|gols|jogador|quando|como|porque|equipe)\b/i.test(message)) {
+      originalLanguage = 'pt'; // Portuguese
+    } else if (/\b(матч|игра|гол|команда|когда|как|почему)\b/i.test(message)) {
+      originalLanguage = 'ru'; // Russian
     }
     
     console.log(`[AI-Chat] Translated from ${originalLanguage}: "${message}" -> "${englishQuery}"`);
@@ -490,7 +506,8 @@ function detectSportFromTeams(homeTeam: string, awayTeam: string, message: strin
 }
 
 /**
- * Call the analyze API and format response for chat
+ * Call the match-preview API and format response for chat
+ * This uses real data from our data layer instead of hardcoded values
  */
 async function performMatchAnalysis(
   homeTeam: string,
@@ -499,7 +516,42 @@ async function performMatchAnalysis(
   request: NextRequest
 ): Promise<{ success: boolean; response: string; error?: string }> {
   try {
-    // Build analyze request with default odds (user can refine later)
+    // Generate a match ID from team names
+    const matchId = `${homeTeam.toLowerCase().replace(/\s+/g, '-')}-vs-${awayTeam.toLowerCase().replace(/\s+/g, '-')}-${sport}`;
+    
+    // Get the host from the request
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const host = request.headers.get('host') || 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
+    
+    // Forward cookies for authentication
+    const cookies = request.headers.get('cookie') || '';
+    
+    console.log(`[AI-Chat] Calling match-preview API for: ${homeTeam} vs ${awayTeam}`);
+    
+    // Try match-preview first for real data
+    const previewResponse = await fetch(`${baseUrl}/api/match-preview/${encodeURIComponent(matchId)}`, {
+      method: 'GET',
+      headers: {
+        'Cookie': cookies,
+      },
+    });
+    
+    if (previewResponse.ok) {
+      const previewData = await previewResponse.json();
+      
+      // Format the rich preview data for chat
+      const formattedResponse = formatMatchPreviewForChat(previewData, homeTeam, awayTeam);
+      
+      return {
+        success: true,
+        response: formattedResponse,
+      };
+    }
+    
+    console.log(`[AI-Chat] Match-preview failed (${previewResponse.status}), falling back to analyze API`);
+    
+    // Fallback to analyze API with default odds
     const analyzeRequest = {
       matchData: {
         sport: sport,
@@ -515,14 +567,6 @@ async function performMatchAnalysis(
         },
       },
     };
-    
-    // Get the host from the request
-    const protocol = request.headers.get('x-forwarded-proto') || 'http';
-    const host = request.headers.get('host') || 'localhost:3000';
-    const baseUrl = `${protocol}://${host}`;
-    
-    // Forward cookies for authentication
-    const cookies = request.headers.get('cookie') || '';
     
     // Call the analyze API
     const analyzeResponse = await fetch(`${baseUrl}/api/analyze`, {
@@ -577,6 +621,82 @@ async function performMatchAnalysis(
       response: `Sorry, I couldn't analyze **${homeTeam} vs ${awayTeam}** right now. Please try using the [Match Analyzer](/analyzer) directly.`,
     };
   }
+}
+
+/**
+ * Format match-preview data for chat display
+ */
+function formatMatchPreviewForChat(data: any, homeTeam: string, awayTeam: string): string {
+  let response = `## 🔮 ${homeTeam} vs ${awayTeam}\n\n`;
+  
+  // Story/Narrative
+  if (data.story?.narrative) {
+    response += `${data.story.narrative}\n\n`;
+  }
+  
+  // Prediction
+  if (data.story?.favored) {
+    const favored = data.story.favored;
+    const confidence = data.story.confidence;
+    const team = favored === 'home' ? homeTeam : favored === 'away' ? awayTeam : 'Draw';
+    const emoji = confidence === 'strong' ? '💪' : confidence === 'moderate' ? '📊' : '🤔';
+    response += `### ${emoji} Prediction: **${team}** (${confidence} confidence)\n\n`;
+  }
+  
+  // Market Edge
+  if (data.marketIntel?.valueEdge) {
+    const edge = data.marketIntel.valueEdge;
+    if (edge.hasValue) {
+      response += `### 💰 Value Detected\n`;
+      response += `- **${edge.side}** @ ${edge.odds?.toFixed(2)} (${edge.edgePercent?.toFixed(1)}% edge)\n\n`;
+    }
+  }
+  
+  // Form Data
+  if (data.momentumAndForm?.homeForm?.length > 0 || data.momentumAndForm?.awayForm?.length > 0) {
+    response += `### 📈 Recent Form\n`;
+    if (data.momentumAndForm.homeForm?.length > 0) {
+      const homeFormStr = data.momentumAndForm.homeForm.slice(0, 5).map((m: any) => 
+        m.result === 'W' ? '✅' : m.result === 'L' ? '❌' : '➖'
+      ).join('');
+      response += `- **${homeTeam}**: ${homeFormStr}\n`;
+    }
+    if (data.momentumAndForm.awayForm?.length > 0) {
+      const awayFormStr = data.momentumAndForm.awayForm.slice(0, 5).map((m: any) => 
+        m.result === 'W' ? '✅' : m.result === 'L' ? '❌' : '➖'
+      ).join('');
+      response += `- **${awayTeam}**: ${awayFormStr}\n`;
+    }
+    response += '\n';
+  }
+  
+  // Key Factors
+  if (data.universalSignals?.length > 0) {
+    response += `### 🔑 Key Factors\n`;
+    const topSignals = data.universalSignals.slice(0, 3);
+    for (const signal of topSignals) {
+      const emoji = signal.favors === 'home' ? '🏠' : signal.favors === 'away' ? '✈️' : '⚖️';
+      response += `${emoji} **${signal.name}**: ${signal.insight || signal.description}\n`;
+    }
+    response += '\n';
+  }
+  
+  // Injuries
+  if (data.injuries?.home?.length > 0 || data.injuries?.away?.length > 0) {
+    response += `### 🏥 Injury News\n`;
+    if (data.injuries.home?.length > 0) {
+      response += `- **${homeTeam}**: ${data.injuries.home.slice(0, 3).map((i: any) => i.player).join(', ')}\n`;
+    }
+    if (data.injuries.away?.length > 0) {
+      response += `- **${awayTeam}**: ${data.injuries.away.slice(0, 3).map((i: any) => i.player).join(', ')}\n`;
+    }
+    response += '\n';
+  }
+  
+  // Disclaimer
+  response += `---\n⚠️ *This is educational analysis, not betting advice. Always gamble responsibly.*`;
+  
+  return response;
 }
 
 /**
@@ -1725,6 +1845,7 @@ export async function POST(request: NextRequest) {
       if (analysisIntent.isMatchAnalysis && analysisIntent.homeTeam && analysisIntent.awayTeam) {
         console.log(`[AI-Chat] Match analysis requested: ${analysisIntent.homeTeam} vs ${analysisIntent.awayTeam}`);
         console.log(`[AI-Chat] Detected sport: ${analysisIntent.sport}`);
+        console.log(`[AI-Chat] User's language: ${originalLanguage}`);
         
         const analysisResult = await performMatchAnalysis(
           analysisIntent.homeTeam,
@@ -1733,13 +1854,50 @@ export async function POST(request: NextRequest) {
           request
         );
         
+        // Translate response back to user's language if needed
+        let finalResponse = analysisResult.response;
+        if (translation.needsTranslation && originalLanguage !== 'en') {
+          console.log(`[AI-Chat] Translating match analysis back to ${originalLanguage}...`);
+          try {
+            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+            const languageNames: Record<string, string> = {
+              sr: 'Serbian', es: 'Spanish', de: 'German', fr: 'French',
+              zh: 'Chinese (Simplified)', ja: 'Japanese', ko: 'Korean',
+              ar: 'Arabic', it: 'Italian', pt: 'Portuguese', ru: 'Russian'
+            };
+            const targetLanguage = languageNames[originalLanguage] || originalLanguage;
+            
+            const translationResponse = await openai.chat.completions.create({
+              model: 'gpt-4o-mini',
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are a professional sports translator. Translate the following match analysis to ${targetLanguage}. Preserve ALL formatting (markdown, emojis, bullet points). Keep team names, player names, and technical betting terms in their original form. Make it sound natural in ${targetLanguage}.`
+                },
+                {
+                  role: 'user',
+                  content: finalResponse
+                }
+              ],
+              temperature: 0.3,
+              max_tokens: 2000
+            });
+            
+            finalResponse = translationResponse.choices[0]?.message?.content || finalResponse;
+            console.log(`[AI-Chat] ✅ Translated match analysis to ${originalLanguage}`);
+          } catch (translationError) {
+            console.error('[AI-Chat] Translation failed, returning English:', translationError);
+            // Keep English response if translation fails
+          }
+        }
+        
         // Increment chat credits for match analysis via chat
         await incrementChatCount(session.user.id);
         const updatedCredits = await canUserChat(session.user.id);
         
         return NextResponse.json({
           success: true,
-          response: analysisResult.response,
+          response: finalResponse,
           citations: [],
           usedRealTimeSearch: false,
           routingDecision: 'match-analysis',
@@ -1895,10 +2053,17 @@ export async function POST(request: NextRequest) {
     // Add language instruction if user wrote in non-English
     if (translation.needsTranslation && originalLanguage !== 'en') {
       const languageNames: Record<string, string> = {
+        'zh': 'Chinese (Simplified)',
+        'ja': 'Japanese',
+        'ko': 'Korean',
+        'ar': 'Arabic',
         'sr': 'Serbian/Croatian',
         'es': 'Spanish', 
         'de': 'German',
         'fr': 'French',
+        'it': 'Italian',
+        'pt': 'Portuguese',
+        'ru': 'Russian',
         'unknown': 'the same language as the user'
       };
       const langName = languageNames[originalLanguage] || languageNames['unknown'];
