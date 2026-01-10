@@ -71,6 +71,18 @@ export function isMatchPredictionQuery(message: string): boolean {
     return false;
   }
   
+  // EXCLUDE injury/status queries - "is X injured" is NOT a prediction query
+  const isInjuryQuery = /\b(injur(y|ed|ies)?|hurt|status|health|available|fit|recovery)\b/i.test(lower);
+  if (isInjuryQuery) {
+    return false;
+  }
+  
+  // EXCLUDE stats queries - "Jokic stats" is NOT a prediction query
+  const isStatsQuery = /\b(stats|statistics|average|scoring|points|assists|rebounds)\b/i.test(lower);
+  if (isStatsQuery) {
+    return false;
+  }
+  
   // Check for explicit "vs" pattern - this is a match query
   const hasVsPattern = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*(?:vs?\.?|x|@)\s*[A-Z][a-z]+/i.test(message);
   

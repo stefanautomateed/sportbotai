@@ -1738,10 +1738,11 @@ If their favorite team has a match today/tonight, lead with that information.`;
 
           // Step 1.13: Our Match Prediction (for upcoming games within 48h)
           // Triggered by: explicit prediction queries OR Query Intelligence detecting MATCH_PREDICTION/OUR_ANALYSIS intent
-          // IMPORTANT: Do NOT trigger for SCHEDULE queries (when does team play next)
+          // IMPORTANT: Do NOT trigger for non-prediction queries like SCHEDULE, INJURY, PLAYER_STATS etc
           let verifiedMatchPredictionContext = '';
-          const isScheduleQuery = queryUnderstanding?.intent === 'SCHEDULE';
-          const shouldFetchOurPrediction = !isScheduleQuery && (
+          const nonPredictionIntents = ['SCHEDULE', 'INJURY_NEWS', 'PLAYER_STATS', 'FORM_CHECK', 'TRANSFER_NEWS', 'STANDINGS', 'LINEUP', 'GENERAL_INFO'];
+          const isNonPredictionQuery = queryUnderstanding?.intent && nonPredictionIntents.includes(queryUnderstanding.intent);
+          const shouldFetchOurPrediction = !isNonPredictionQuery && (
             isMatchPredictionQuery(searchMessage) || 
             (queryUnderstanding?.needsOurPrediction && queryUnderstanding.entities.length > 0)
           );
