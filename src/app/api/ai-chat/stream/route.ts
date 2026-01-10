@@ -285,7 +285,14 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
  * "them" → "Manchester City" (if it was the subject)
  * "nba" (after clarification request) → "Mavericks vs Bulls" (full context)
  */
-function resolveConversationReferences(message: string, history: ChatMessage[]): string {
+interface ConversationResolution {
+  resolvedMessage: string;
+  wasClarificationResponse?: boolean;
+  resolvedTeams?: { home: string; away: string };
+  resolvedSport?: string;
+}
+
+function resolveConversationReferences(message: string, history: ChatMessage[]): ConversationResolution {
   const lower = message.toLowerCase().trim();
   
   // SPECIAL CASE: Short clarification responses like "nba", "nfl", "basketball", "football"
@@ -308,7 +315,7 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
       if (teamsMatch) {
         const team1 = teamsMatch[1].trim();
         const team2 = teamsMatch[2].trim();
-        const sport = lower.toUpperCase();
+        const sportKey = lower.toUpperCase();
         
         // Map city to team name based on sport
         const cityToTeam: Record<string, Record<string, string>> = {
@@ -317,13 +324,33 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
           'NHL': { 'dallas': 'Stars', 'chicago': 'Blackhawks', 'los angeles': 'Kings', 'boston': 'Bruins', 'miami': 'Panthers', 'denver': 'Avalanche', 'phoenix': 'Coyotes', 'new york': 'Rangers' },
         };
         
-        const sportMap = cityToTeam[sport] || {};
+        // Map sport key to API sport code
+        const sportCodeMap: Record<string, string> = {
+          'NBA': 'basketball_nba',
+          'BASKETBALL': 'basketball_nba',
+          'NFL': 'americanfootball_nfl',
+          'FOOTBALL': 'americanfootball_nfl',
+          'NHL': 'icehockey_nhl',
+          'HOCKEY': 'icehockey_nhl',
+          'MLB': 'baseball_mlb',
+          'BASEBALL': 'baseball_mlb',
+          'SOCCER': 'soccer_epl',
+        };
+        
+        const sportMap = cityToTeam[sportKey] || {};
         const resolvedTeam1 = sportMap[team1.toLowerCase()] || team1;
         const resolvedTeam2 = sportMap[team2.toLowerCase()] || team2;
+        const sportCode = sportCodeMap[sportKey] || 'basketball_nba';
         
-        const resolved = `Who will win ${resolvedTeam1} vs ${resolvedTeam2} ${sport}`;
-        console.log(`[Conversation] Resolved clarification: "${message}" → "${resolved}"`);
-        return resolved;
+        const resolved = `Who will win ${resolvedTeam1} vs ${resolvedTeam2} ${sportKey}`;
+        console.log(`[Conversation] Resolved clarification: "${message}" → "${resolved}" (sport: ${sportCode})`);
+        
+        return {
+          resolvedMessage: resolved,
+          wasClarificationResponse: true,
+          resolvedTeams: { home: resolvedTeam1, away: resolvedTeam2 },
+          resolvedSport: sportCode,
+        };
       }
     }
   }
@@ -358,15 +385,25 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
     }
     
     if (lastTeam1 && lastTeam2) {
+      const sportCodeMap: Record<string, string> = {
+        'NBA': 'basketball_nba',
+        'NFL': 'americanfootball_nfl',
+        'NHL': 'icehockey_nhl',
+      };
       const resolved = `Who will win ${lastTeam1} vs ${lastTeam2}${lastSport ? ` ${lastSport}` : ''}`;
       console.log(`[Conversation] Resolved follow-up: "${message}" → "${resolved}"`);
-      return resolved;
+      return {
+        resolvedMessage: resolved,
+        wasClarificationResponse: true,
+        resolvedTeams: { home: lastTeam1, away: lastTeam2 },
+        resolvedSport: lastSport ? sportCodeMap[lastSport] : undefined,
+      };
     }
   }
   
   // Check if message has unresolved references
   const hasPronouns = /\b(his|her|their|them|he|she|they|that|it|the team|the player|the game|the match)\b/i.test(lower);
-  if (!hasPronouns) return message;
+  if (!hasPronouns) return { resolvedMessage: message };
   
   // Look back through history for entities mentioned
   let lastPlayer: string | null = null;
@@ -433,7 +470,7 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
     console.log(`[Conversation] Resolved reference to match: ${lastMatch}`);
   }
   
-  return resolved;
+  return { resolvedMessage: resolved };
 }
 
 /**
@@ -1275,12 +1312,17 @@ export async function POST(request: NextRequest) {
     // ============================================
     // CONVERSATION MEMORY: Resolve pronouns/references from history
     // "his stats" → "LeBron James stats" (if we talked about LeBron earlier)
+    // "nba" (after clarification) → resolved teams + sport
     // ============================================
+    let clarificationContext: ConversationResolution | null = null;
     if (history.length > 0) {
-      const resolvedMessage = resolveConversationReferences(message, history);
-      if (resolvedMessage !== message) {
-        console.log(`[AI-Chat-Stream] Resolved references: "${message}" → "${resolvedMessage}"`);
-        message = resolvedMessage;
+      clarificationContext = resolveConversationReferences(message, history);
+      if (clarificationContext.resolvedMessage !== message) {
+        console.log(`[AI-Chat-Stream] Resolved references: "${message}" → "${clarificationContext.resolvedMessage}"`);
+        if (clarificationContext.wasClarificationResponse) {
+          console.log(`[AI-Chat-Stream] ✅ Clarification resolved! Teams: ${clarificationContext.resolvedTeams?.home} vs ${clarificationContext.resolvedTeams?.away}, Sport: ${clarificationContext.resolvedSport}`);
+        }
+        message = clarificationContext.resolvedMessage;
       }
     }
 
@@ -1864,13 +1906,87 @@ If their favorite team has a match today/tonight, lead with that information.`;
           // SIMPLIFIED: Only trigger for MATCH_PREDICTION or OUR_ANALYSIS intent
           // Trust Query Intelligence - don't duplicate pattern matching here
           let verifiedMatchPredictionContext = '';
+          
+          // FAST PATH: If this is a resolved clarification response, skip query intelligence and call analyze directly
+          const hasClarificationTeams = clarificationContext?.wasClarificationResponse && 
+                                        clarificationContext?.resolvedTeams?.home && 
+                                        clarificationContext?.resolvedTeams?.away;
+          
+          if (hasClarificationTeams) {
+            console.log(`[AI-Chat-Stream] 🚀 FAST PATH: Clarification resolved to ${clarificationContext!.resolvedTeams!.home} vs ${clarificationContext!.resolvedTeams!.away}`);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🎯 Generating match analysis...' })}\n\n`));
+            
+            const homeTeam = clarificationContext!.resolvedTeams!.home;
+            const awayTeam = clarificationContext!.resolvedTeams!.away;
+            const sport = clarificationContext!.resolvedSport || 'basketball_nba';
+            
+            try {
+              // Call the analyze API directly
+              const protocol = request.headers.get('x-forwarded-proto') || 'https';
+              const host = request.headers.get('host') || 'sportbot.ai';
+              const baseUrl = `${protocol}://${host}`;
+              const cookies = request.headers.get('cookie') || '';
+              
+              const analyzeRequest = {
+                matchData: {
+                  sport: sport,
+                  league: 'Auto-detected',
+                  homeTeam: homeTeam,
+                  awayTeam: awayTeam,
+                  matchDate: new Date().toISOString(),
+                  sourceType: 'chat-clarification',
+                  odds: {
+                    home: 2.0,
+                    draw: sport.includes('soccer') ? 3.5 : null,
+                    away: 2.0,
+                  },
+                },
+              };
+              
+              console.log(`[AI-Chat-Stream] Calling analyze API for clarified query: ${homeTeam} vs ${awayTeam} (${sport})`);
+              
+              const analyzeResponse = await fetch(`${baseUrl}/api/analyze`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Cookie': cookies,
+                },
+                body: JSON.stringify(analyzeRequest),
+              });
+              
+              if (analyzeResponse.ok) {
+                const analysisData = await analyzeResponse.json();
+                
+                if (analysisData.success) {
+                  // Format the analysis for chat using our proper formatter
+                  verifiedMatchPredictionContext = formatLiveAnalysisForChat(analysisData, homeTeam, awayTeam);
+                  console.log(`[AI-Chat-Stream] ✅ Clarification analysis complete for ${homeTeam} vs ${awayTeam}`);
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '✅ Analysis ready!' })}\n\n`));
+                  // Use our data, not Perplexity
+                  perplexityContext = '';
+                  citations = [];
+                } else {
+                  console.log(`[AI-Chat-Stream] ⚠️ Analyze API returned success=false:`, analysisData.error);
+                }
+              } else {
+                console.log(`[AI-Chat-Stream] ⚠️ Analyze API failed: ${analyzeResponse.status} ${analyzeResponse.statusText}`);
+                const errorBody = await analyzeResponse.text();
+                console.log(`[AI-Chat-Stream] Error body: ${errorBody.substring(0, 200)}`);
+              }
+            } catch (analyzeError) {
+              console.error('[AI-Chat-Stream] Clarification analyze error:', analyzeError);
+            }
+          }
+          
+          // NORMAL PATH: Use query intelligence for prediction intent
           const isPredictionIntent = queryUnderstanding?.intent === 'MATCH_PREDICTION' || 
                                      queryUnderstanding?.intent === 'OUR_ANALYSIS' ||
                                      queryUnderstanding?.intent === 'BETTING_ANALYSIS';
           
           console.log(`[AI-Chat-Stream] Match Prediction Check: isPredictionIntent=${isPredictionIntent}, intent=${queryUnderstanding?.intent}, entities=${queryUnderstanding?.entities?.length || 0}, searchMessage="${searchMessage.substring(0, 50)}"`);
           
-          if (isPredictionIntent && (queryUnderstanding?.entities?.length ?? 0) > 0) {
+          // Skip if we already got context from clarification fast path
+          if (!verifiedMatchPredictionContext && isPredictionIntent && (queryUnderstanding?.entities?.length ?? 0) > 0) {
             console.log(`[AI-Chat-Stream] Prediction query detected (intent: ${queryUnderstanding?.intent})...`);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🎯 Fetching our match analysis...' })}\n\n`));
             
