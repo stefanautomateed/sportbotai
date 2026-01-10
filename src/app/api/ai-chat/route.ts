@@ -421,8 +421,21 @@ function detectMatchAnalysisRequest(message: string): {
     /(?:can you analyze|could you analyze|please analyze|i want analysis)\s+(.+?)\s+(?:vs\.?|versus|v\.?|against)\s+(.+)/i,
     /(.+?)\s+(?:vs\.?|versus|v\.?)\s+(.+?)\s+(?:analysis|breakdown|preview|prediction)/i,
     
+    // CHINESE TRANSLATION PATTERNS - common structures from Chinese to English
+    // "Roma's chances/odds of winning against Sassuolo"
+    /([A-Za-z][A-Za-z\s]+?)(?:'s)?\s+(?:chances?|odds?|probability)\s+(?:of\s+)?(?:winning|beating|defeating)\s+(?:against\s+)?([A-Za-z][A-Za-z\s]+)/i,
+    
+    // "Roma at home facing/against Sassuolo" (common Chinese translation pattern)
+    /([A-Za-z][A-Za-z\s]+?)\s+(?:at home|away|home)\s+(?:facing|against|vs\.?|versus|playing)\s+([A-Za-z][A-Za-z\s]+)/i,
+    
+    // "The match Roma vs Sassuolo" or "Roma vs Sassuolo match"
+    /(?:the\s+)?(?:match|game)\s+(?:of\s+)?([A-Za-z][A-Za-z\s]+?)\s+(?:vs\.?|versus|against|and)\s+([A-Za-z][A-Za-z\s]+)/i,
+    
+    // "Roma playing at home against Sassuolo"
+    /([A-Za-z][A-Za-z\s]+?)\s+(?:playing|plays)\s+(?:at home|away)?\s*(?:against|vs\.?|versus)\s+([A-Za-z][A-Za-z\s]+)/i,
+    
     // "X against Y" patterns (common from Chinese/other translations)
-    /(?:^|today|tonight|tomorrow)\s*([A-Za-z][A-Za-z\s]+?)\s+(?:against|facing|plays?|playing|vs\.?|versus|VS)\s+([A-Za-z][A-Za-z\s]+?)(?:\s+(?:will|who|can|should|what|match|game|today|tonight|tomorrow|at home|\?|$))/i,
+    /(?:^|today|tonight|tomorrow)\s*([A-Za-z][A-Za-z\s]+?)\s+(?:against|facing|plays?|playing|vs\.?|versus|VS)\s+([A-Za-z][A-Za-z\s]+?)(?:\s+(?:will|who|can|should|what|match|game|today|tonight|tomorrow|at home|the game|this|\?|$))/i,
     
     // "X at home against Y" pattern
     /([A-Za-z][A-Za-z\s]+?)\s+(?:at home|away)\s+(?:against|vs\.?|versus|facing)\s+([A-Za-z][A-Za-z\s]+)/i,
@@ -448,6 +461,10 @@ function detectMatchAnalysisRequest(message: string): {
     // "X versus Y." with period/punctuation ending
     /^([A-Za-z][A-Za-z\s]+?)\s+(?:vs\.?|VS|versus)\s+([A-Za-z][A-Za-z\s]+?)[\.!\?]/i,
     
+    // FALLBACK: Any mention of two known teams in the same sentence
+    // This catches cases like "What are the chances Roma wins against Sassuolo today"
+    /([A-Za-z]+)\s+(?:wins?|winning|beats?|beating|defeats?|defeating|vs\.?|versus|against|plays?|playing|facing|and)\s+([A-Za-z]+)/i,
+    
     // Serbian/Croatian
     /(?:analiziraj|analiza|analizu|pregledaj)\s+(?:utakmicu?\s+)?(.+?)\s+(?:vs\.?|protiv|v\.?|-)\s+(.+)/i,
     /(?:šta misliš|sta mislis|mišljenje|tvoje mišljenje)\s+(?:o\s+)?(.+?)\s+(?:vs\.?|protiv|v\.?|-)\s+(.+)/i,
@@ -465,18 +482,19 @@ function detectMatchAnalysisRequest(message: string): {
     if (match && match[1] && match[2]) {
       // Clean up team names (remove extra words from start and end)
       let homeTeam = match[1].trim()
-        .replace(/^(the|match|game|today|tonight|tomorrow|about|this|what about|how about|will|can|should)\s+/i, '')
-        .replace(/\s+(match|game|tonight|today|tomorrow|win)?$/i, '')
+        .replace(/^(the|match|game|today|tonight|tomorrow|about|this|what about|how about|will|can|should|what are the chances)\s+/i, '')
+        .replace(/\s+(match|game|tonight|today|tomorrow|win|playing|plays)?$/i, '')
         .trim();
       let awayTeam = match[2].trim()
-        .replace(/^(the)\s+/i, '')
+        .replace(/^(the|against)\s+/i, '')
         // Stop at common words that indicate end of team name
-        .replace(/\s+(match|game|tonight|today|tomorrow|this|will|who|win|should|can|could|would|is|are|has|have|what|sunday|monday|tuesday|wednesday|thursday|friday|saturday|roma|\.|\?).*/i, '')
+        .replace(/\s+(match|game|tonight|today|tomorrow|this|will|who|win|should|can|could|would|is|are|has|have|what|sunday|monday|tuesday|wednesday|thursday|friday|saturday|roma|considering|the|at home|\.|\?).*/i, '')
         .trim();
       
       // Additional cleanup for edge cases
       homeTeam = homeTeam.replace(/^(today|tonight|tomorrow|what about|how about|will|can|should)\s+/i, '').trim();
-      homeTeam = homeTeam.replace(/\s+win$/i, '').trim(); // "Roma win" -> "Roma"
+      homeTeam = homeTeam.replace(/\s+(win|playing|plays)$/i, '').trim(); // "Roma playing" -> "Roma"
+      awayTeam = awayTeam.replace(/^against\s+/i, '').trim(); // "against Sassuolo" -> "Sassuolo"
       awayTeam = awayTeam.replace(/\s+(will|this|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\s+.*$/i, '').trim();
       
       // Must have reasonable team names (2+ chars each)
