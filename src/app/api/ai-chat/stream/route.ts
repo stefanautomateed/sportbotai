@@ -283,9 +283,80 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
  * "his stats" → "LeBron James stats" (if we talked about LeBron)
  * "that game" → "Lakers vs Warriors" (if we discussed it)
  * "them" → "Manchester City" (if it was the subject)
+ * "nba" (after clarification request) → "Mavericks vs Bulls" (full context)
  */
 function resolveConversationReferences(message: string, history: ChatMessage[]): string {
-  const lower = message.toLowerCase();
+  const lower = message.toLowerCase().trim();
+  
+  // SPECIAL CASE: Short clarification responses like "nba", "nfl", "basketball", "football"
+  // Check if previous assistant message was a clarification request
+  const isClarificationResponse = /^(nba|nfl|nhl|mlb|basketball|football|hockey|baseball|soccer)$/i.test(lower);
+  if (isClarificationResponse && history.length >= 2) {
+    // Look for the clarification request and the original query
+    const lastAssistant = history.filter(m => m.role === 'assistant').slice(-1)[0];
+    const lastUserQuery = history.filter(m => m.role === 'user').slice(-1)[0];
+    
+    if (lastAssistant?.content.includes('Which sport are you asking about?')) {
+      // This is a response to our clarification - find the original teams
+      const teamsMatch = lastUserQuery?.content.match(/([a-zA-Z\s]+)\s+(?:vs?\.?|or|versus|against)\s+([a-zA-Z\s]+)/i);
+      if (teamsMatch) {
+        const team1 = teamsMatch[1].trim();
+        const team2 = teamsMatch[2].trim();
+        const sport = lower.toUpperCase();
+        
+        // Map city to team name based on sport
+        const cityToTeam: Record<string, Record<string, string>> = {
+          'NBA': { 'dallas': 'Mavericks', 'chicago': 'Bulls', 'los angeles': 'Lakers', 'boston': 'Celtics', 'miami': 'Heat', 'denver': 'Nuggets', 'phoenix': 'Suns', 'new york': 'Knicks' },
+          'NFL': { 'dallas': 'Cowboys', 'chicago': 'Bears', 'los angeles': 'Rams', 'boston': 'Patriots', 'miami': 'Dolphins', 'denver': 'Broncos', 'phoenix': 'Cardinals', 'new york': 'Giants' },
+          'NHL': { 'dallas': 'Stars', 'chicago': 'Blackhawks', 'los angeles': 'Kings', 'boston': 'Bruins', 'miami': 'Panthers', 'denver': 'Avalanche', 'phoenix': 'Coyotes', 'new york': 'Rangers' },
+        };
+        
+        const sportMap = cityToTeam[sport] || {};
+        const resolvedTeam1 = sportMap[team1.toLowerCase()] || team1;
+        const resolvedTeam2 = sportMap[team2.toLowerCase()] || team2;
+        
+        const resolved = `Who will win ${resolvedTeam1} vs ${resolvedTeam2} ${sport}`;
+        console.log(`[Conversation] Resolved clarification: "${message}" → "${resolved}"`);
+        return resolved;
+      }
+    }
+  }
+  
+  // SPECIAL CASE: Follow-up prediction request like "so who wins" or "your prediction"
+  const isFollowUpPrediction = /\b(so|then|now|ok|okay)\b.*\b(who|what|will|win|prediction|think)\b/i.test(lower) ||
+                               /^(who wins|prediction|your pick|what do you think)/i.test(lower);
+  
+  if (isFollowUpPrediction && history.length >= 1) {
+    // Look for teams mentioned in recent conversation
+    let lastTeam1: string | null = null;
+    let lastTeam2: string | null = null;
+    let lastSport: string | null = null;
+    
+    for (const msg of history.slice(-6)) {
+      const content = msg.content;
+      
+      // Look for "Team vs Team" pattern
+      const matchPattern = content.match(/([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+(?:vs?\.?|versus|against|or|facing)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)/i);
+      if (matchPattern) {
+        lastTeam1 = matchPattern[1].trim();
+        lastTeam2 = matchPattern[2].trim();
+      }
+      
+      // Look for sport context
+      if (/\b(NBA|basketball)\b/i.test(content)) lastSport = 'NBA';
+      else if (/\b(NFL|football)\b/i.test(content)) lastSport = 'NFL';
+      else if (/\b(NHL|hockey)\b/i.test(content)) lastSport = 'NHL';
+      else if (/\b(Mavericks|Bulls|Lakers|Celtics|Nuggets|Heat)\b/i.test(content)) lastSport = 'NBA';
+      else if (/\b(Cowboys|Bears|Eagles|Chiefs|49ers)\b/i.test(content)) lastSport = 'NFL';
+      else if (/\b(Stars|Blackhawks|Bruins|Rangers)\b/i.test(content)) lastSport = 'NHL';
+    }
+    
+    if (lastTeam1 && lastTeam2) {
+      const resolved = `Who will win ${lastTeam1} vs ${lastTeam2}${lastSport ? ` ${lastSport}` : ''}`;
+      console.log(`[Conversation] Resolved follow-up: "${message}" → "${resolved}"`);
+      return resolved;
+    }
+  }
   
   // Check if message has unresolved references
   const hasPronouns = /\b(his|her|their|them|he|she|they|that|it|the team|the player|the game|the match)\b/i.test(lower);

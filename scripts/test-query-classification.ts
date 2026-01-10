@@ -5,26 +5,21 @@
  * Tests known queries against expected intents.
  * Run after making changes to query-intelligence.ts
  * 
- * Usage: npx ts-node scripts/test-query-classification.ts
+ * Usage: npx tsx scripts/test-query-classification.ts
  */
 
 import * as dotenv from 'dotenv';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
 dotenv.config({ path: '.env.local' });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Dynamic import for the module
 async function loadQueryIntelligence() {
-  // We need to use tsx/ts-node with proper module resolution
-  const path = require('path');
-  const tsConfigPaths = require('tsconfig-paths');
-  
-  // Register tsconfig paths
-  const baseUrl = path.resolve(__dirname, '..');
-  tsConfigPaths.register({
-    baseUrl,
-    paths: { '@/*': ['src/*'] }
-  });
-  
-  const mod = await import('../src/lib/query-intelligence');
+  const mod = await import('../src/lib/query-intelligence.js');
   return mod;
 }
 
