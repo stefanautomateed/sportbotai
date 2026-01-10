@@ -120,13 +120,30 @@ export function isMatchPredictionQuery(message: string): boolean {
  * Extract team names from message for match lookup
  */
 function extractTeamNamesFromMessage(message: string): { team1: string; team2?: string } | null {
-  // Pattern: Team1 vs Team2
-  const vsMatch = message.match(/([A-Z][a-zA-Z\s]+?)\s*(?:vs?\.?|x|-|@)\s*([A-Z][a-zA-Z\s]+?)(?:\s|$|\?|,)/i);
+  // Pattern: Team1 vs/against/facing Team2
+  const vsMatch = message.match(/([A-Z][a-zA-Z\s]+?)\s*(?:vs?\.?|versus|against|facing|plays?|playing|x|-|@)\s*([A-Z][a-zA-Z\s]+?)(?:\s|$|\?|,|today|tonight|tomorrow|will|who|can)/i);
   if (vsMatch) {
-    return { 
-      team1: vsMatch[1].trim().replace(/\s+/g, ' '),
-      team2: vsMatch[2].trim().replace(/\s+/g, ' ')
-    };
+    // Clean up team names
+    let team1 = vsMatch[1].trim().replace(/\s+/g, ' ')
+      .replace(/^(will|can|should|today|tonight)\s+/i, '')
+      .replace(/\s+(win|today|match|game)$/i, '');
+    let team2 = vsMatch[2].trim().replace(/\s+/g, ' ')
+      .replace(/\s+(today|tonight|tomorrow|will|who|can|should|win|match|game).*$/i, '');
+    
+    if (team1.length >= 2 && team2.length >= 2) {
+      return { team1, team2 };
+    }
+  }
+  
+  // Pattern: "win against Team" / "beat Team"
+  const againstMatch = message.match(/\b(?:win|beat|defeat)\s+(?:against\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|$|\?|,|today|tonight)/i);
+  if (againstMatch) {
+    const team2 = againstMatch[1].trim().replace(/\s+(today|tonight|tomorrow)$/i, '');
+    // Find team1 before the verb
+    const beforeMatch = message.match(/([A-Z][a-zA-Z]+)\s+(?:win|beat|defeat)/i);
+    if (beforeMatch && team2.length >= 2) {
+      return { team1: beforeMatch[1].trim(), team2 };
+    }
   }
   
   // Single team: "Arsenal match prediction"
@@ -138,23 +155,39 @@ function extractTeamNamesFromMessage(message: string): { team1: string; team2?: 
   // Look for common team names
   const teamPatterns = [
     // Premier League
-    /(Arsenal|Chelsea|Liverpool|Manchester United|Manchester City|Tottenham|Newcastle|Brighton|Aston Villa|West Ham|Fulham|Brentford|Crystal Palace|Everton|Nottingham Forest|Wolves|Bournemouth|Ipswich|Leicester|Southampton)/gi,
+    /(Arsenal|Chelsea|Liverpool|Manchester United|Manchester City|Man United|Man City|Tottenham|Spurs|Newcastle|Brighton|Aston Villa|West Ham|Fulham|Brentford|Crystal Palace|Everton|Nottingham Forest|Wolves|Bournemouth|Ipswich|Leicester|Southampton)/gi,
     // La Liga
-    /(Real Madrid|Barcelona|Atletico Madrid|Sevilla|Real Betis|Villarreal|Athletic Bilbao|Real Sociedad)/gi,
-    // Serie A
-    /(Juventus|Inter|AC Milan|Roma|Napoli|Lazio|Atalanta|Fiorentina)/gi,
+    /(Real Madrid|Barcelona|Atletico Madrid|Sevilla|Real Betis|Villarreal|Athletic Bilbao|Real Sociedad|Valencia|Celta Vigo|Getafe|Osasuna|Mallorca|Rayo Vallecano|Las Palmas)/gi,
+    // Serie A (EXPANDED)
+    /(Juventus|Inter|AC Milan|Roma|Napoli|Lazio|Atalanta|Fiorentina|Sassuolo|Bologna|Torino|Udinese|Monza|Empoli|Verona|Lecce|Cagliari|Genoa|Parma|Venezia|Como)/gi,
     // Bundesliga
-    /(Bayern|Dortmund|Leipzig|Leverkusen|Frankfurt|Wolfsburg)/gi,
+    /(Bayern|Bayern Munich|Dortmund|Borussia Dortmund|Leipzig|RB Leipzig|Leverkusen|Bayer Leverkusen|Frankfurt|Eintracht|Wolfsburg|Stuttgart|Union Berlin|Freiburg|Mainz|Hoffenheim|Werder Bremen|Augsburg|Bochum|Heidenheim|Darmstadt)/gi,
+    // Ligue 1
+    /(PSG|Paris Saint.?Germain|Marseille|Lyon|Monaco|Lille|Nice|Lens|Rennes|Strasbourg|Nantes|Toulouse|Montpellier|Reims|Brest)/gi,
+    // NBA
+    /(Lakers|Celtics|Warriors|Bulls|Heat|Nets|Knicks|76ers|Sixers|Bucks|Nuggets|Suns|Mavericks|Mavs|Clippers|Rockets|Spurs|Thunder|Grizzlies|Kings|Pelicans|Jazz|Trail Blazers|Blazers|Timberwolves|Wolves|Hornets|Hawks|Magic|Pistons|Pacers|Wizards|Cavaliers|Cavs|Raptors)/gi,
+    // NFL
+    /(Chiefs|Eagles|Bills|49ers|Niners|Cowboys|Ravens|Lions|Dolphins|Bengals|Chargers|Broncos|Jets|Patriots|Giants|Raiders|Saints|Packers|Steelers|Seahawks|Commanders|Falcons|Buccaneers|Bucs|Cardinals|Rams|Bears|Vikings|Browns|Texans|Colts|Jaguars|Jags|Titans|Panthers)/gi,
+    // NHL
+    /(Maple Leafs|Canadiens|Bruins|Rangers|Penguins|Blackhawks|Red Wings|Flyers|Devils|Islanders|Oilers|Flames|Canucks|Avalanche|Blues|Stars|Lightning|Panthers|Capitals|Kings|Ducks|Sharks|Kraken|Knights|Wild|Jets|Sabres|Hurricanes|Senators|Blue Jackets|Predators|Coyotes)/gi,
   ];
   
+  const foundTeams: string[] = [];
   for (const pattern of teamPatterns) {
     const matches = message.match(pattern);
-    if (matches && matches.length >= 1) {
-      return { 
-        team1: matches[0],
-        team2: matches.length > 1 ? matches[1] : undefined
-      };
+    if (matches) {
+      for (const m of matches) {
+        if (!foundTeams.some(t => t.toLowerCase() === m.toLowerCase())) {
+          foundTeams.push(m);
+        }
+      }
     }
+  }
+  
+  if (foundTeams.length >= 2) {
+    return { team1: foundTeams[0], team2: foundTeams[1] };
+  } else if (foundTeams.length === 1) {
+    return { team1: foundTeams[0] };
   }
   
   return null;
