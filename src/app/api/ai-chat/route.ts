@@ -783,8 +783,14 @@ async function performMatchAnalysis(
     
     const analysisData = await analyzeResponse.json();
     
+    console.log(`[AI-Chat] Analyze API response success: ${analysisData.success}`);
+    console.log(`[AI-Chat] Has briefing: ${!!analysisData.briefing}`);
+    console.log(`[AI-Chat] Has probabilities: ${!!analysisData.probabilities}`);
+    
     // Format the analysis for chat display
     const formattedResponse = formatAnalysisForChat(analysisData, homeTeam, awayTeam);
+    
+    console.log(`[AI-Chat] Formatted response length: ${formattedResponse.length}`);
     
     return {
       success: true,
