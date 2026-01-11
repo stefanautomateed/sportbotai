@@ -480,7 +480,11 @@ function detectTimeFrame(query: string): TimeFrame {
  * Users often type just team names expecting prediction
  */
 function isShortMatchQuery(query: string): { isMatch: boolean; teams: string[] } {
-  const lower = query.toLowerCase().trim();
+  let lower = query.toLowerCase().trim();
+  
+  // Strip command prefixes that indicate match prediction intent
+  // "Analyze Sevilla vs Celta" -> "Sevilla vs Celta"
+  lower = lower.replace(/^(analy[sz]e|preview|breakdown|assess|predict|prediction for)\s+/i, '');
   
   // Pattern: "Team1 Team2" or "Team1 vs Team2" or "Team1 - Team2"
   // Very short queries (1-5 words) with 2 team-like words
@@ -608,6 +612,8 @@ const INTENT_PATTERNS: IntentPattern[] = [
       /\b(match|game)\b.*\b(predict|prediction|preview)\b/i,
       /\bwinner\s+(of|between)\b/i,
       /\banalysis\s+(of|for)\s+.+\s+(vs?\.?|versus)\s+/i,
+      // "Analyze X vs Y" - our own suggested prompts use this format!
+      /\b(analy[sz]e|breakdown|preview|assess)\s+.+\s+(vs?\.?|versus|v\.?|against)\s+/i,
     ],
     priority: 90,
   },
