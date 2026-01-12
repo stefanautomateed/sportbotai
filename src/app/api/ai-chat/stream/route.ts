@@ -2197,15 +2197,73 @@ If their favorite team has a match today/tonight, lead with that information.`;
               console.log('[AI-Chat-Stream] ⚠️ No stored prediction, attempting live analysis via analyze API...');
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🔬 Generating live analysis...' })}\n\n`));
               
-              // Extract team names from entities
-              const teamEntities = queryUnderstanding?.entities.filter(e => 
-                e.type === 'TEAM' || e.type === 'UNKNOWN' || e.type === 'MATCH'
-              ).map(e => e.name.replace(/^Will\s+/i, '')) || [];
+              // Extract team names from entities OR parse from MATCH entity
+              let homeTeam: string | null = null;
+              let awayTeam: string | null = null;
               
-              if (teamEntities.length >= 2) {
-                const homeTeam = teamEntities[0];
-                const awayTeam = teamEntities[1];
-                const sport = queryUnderstanding?.sport || 'soccer_epl';
+              // First, check for MATCH entity (e.g., "Real Madrid vs Barcelona")
+              const matchEntity = queryUnderstanding?.entities.find(e => e.type === 'MATCH');
+              if (matchEntity) {
+                // Parse the match entity into two teams
+                const vsMatch = matchEntity.name.match(/(.+?)\s+(?:vs?\.?|versus|@)\s+(.+)/i);
+                if (vsMatch) {
+                  homeTeam = vsMatch[1].trim();
+                  awayTeam = vsMatch[2].trim();
+                  console.log(`[AI-Chat-Stream] Parsed MATCH entity: home="${homeTeam}", away="${awayTeam}"`);
+                }
+              }
+              
+              // If no MATCH entity, try extracting from TEAM/UNKNOWN entities
+              if (!homeTeam || !awayTeam) {
+                const teamEntities = queryUnderstanding?.entities.filter(e => 
+                  e.type === 'TEAM' || e.type === 'UNKNOWN'
+                ).map(e => e.name.replace(/^Will\s+/i, '')) || [];
+                
+                if (teamEntities.length >= 2) {
+                  homeTeam = teamEntities[0];
+                  awayTeam = teamEntities[1];
+                }
+              }
+              
+              // Last resort: try to parse directly from the search message
+              if (!homeTeam || !awayTeam) {
+                const directMatch = searchMessage.match(/(?:analy[sz]e|preview|predict|breakdown)?\s*([A-Za-z\s]+?)\s+(?:vs?\.?|versus|@|against)\s+([A-Za-z\s]+)/i);
+                if (directMatch) {
+                  homeTeam = directMatch[1].trim();
+                  awayTeam = directMatch[2].trim();
+                  console.log(`[AI-Chat-Stream] Parsed from message directly: home="${homeTeam}", away="${awayTeam}"`);
+                }
+              }
+              
+              if (homeTeam && awayTeam) {
+                // Detect sport from team names if not already detected
+                let sport = queryUnderstanding?.sport;
+                if (!sport || sport === 'unknown') {
+                  // La Liga teams
+                  if (/real madrid|barcelona|atletico madrid|sevilla|valencia|villarreal|real betis|athletic bilbao|real sociedad|celta/i.test(`${homeTeam} ${awayTeam}`)) {
+                    sport = 'soccer_spain_la_liga';
+                  }
+                  // Premier League teams  
+                  else if (/liverpool|manchester (united|city)|chelsea|arsenal|tottenham|newcastle|west ham|brighton|aston villa|everton/i.test(`${homeTeam} ${awayTeam}`)) {
+                    sport = 'soccer_epl';
+                  }
+                  // Serie A teams
+                  else if (/juventus|inter|milan|napoli|roma|lazio|fiorentina|atalanta|bologna|torino/i.test(`${homeTeam} ${awayTeam}`)) {
+                    sport = 'soccer_italy_serie_a';
+                  }
+                  // Bundesliga teams
+                  else if (/bayern|dortmund|leverkusen|leipzig|frankfurt|wolfsburg|gladbach|stuttgart|freiburg|union berlin/i.test(`${homeTeam} ${awayTeam}`)) {
+                    sport = 'soccer_germany_bundesliga';
+                  }
+                  // Ligue 1 teams
+                  else if (/paris saint-germain|psg|marseille|lyon|monaco|lille|nice|lens|rennes|strasbourg/i.test(`${homeTeam} ${awayTeam}`)) {
+                    sport = 'soccer_france_ligue_one';
+                  }
+                  // Default to EPL for soccer
+                  else {
+                    sport = 'soccer_epl';
+                  }
+                }
                 
                 console.log(`[AI-Chat-Stream] Calling analyze API for: ${homeTeam} vs ${awayTeam} (${sport})`);
                 
@@ -2260,7 +2318,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
                   console.error('[AI-Chat-Stream] Analyze API error:', analyzeError);
                 }
               } else {
-                console.log('[AI-Chat-Stream] ⚠️ Could not extract team names from entities:', teamEntities);
+                console.log(`[AI-Chat-Stream] ⚠️ Could not extract team names. home="${homeTeam}", away="${awayTeam}"`);
               }
             }
           }
