@@ -1922,8 +1922,8 @@ If their favorite team has a match today/tonight, lead with that information.`;
         });
       }
       
-      // Check database cache (longer-term storage)
-      const dbCached = await getCachedAnswer(message);
+      // Check database cache (longer-term storage) - with 5s timeout to prevent DB hangs
+      const dbCached = await withTimeout(getCachedAnswer(message), 5000, 'DB cache lookup');
       if (dbCached) {
         console.log(`[AI-Chat-Stream] DB Cache HIT for: "${message.slice(0, 50)}..."`);
         
@@ -2724,9 +2724,13 @@ Rather than make something up, I'll be honest - I can't find reliable stats for 
             systemPrompt += `\n\nYou have access to VERIFIED STRUCTURED DATA including team form, head-to-head records, and season statistics. Prioritize this data for factual claims about records and stats.`;
           }
 
-          // Add learned context (using detectedSport defined earlier)
+          // Add learned context (using detectedSport defined earlier) - with 3s timeout
           try {
-            const learnedContext = await buildLearnedContext(message, detectedSport);
+            const learnedContext = await withTimeout(
+              buildLearnedContext(message, detectedSport),
+              3000,
+              'Learned context'
+            );
             const sportTerminology = detectedSport ? getTerminologyForSport(detectedSport) : [];
             
             if (learnedContext) systemPrompt += `\n\n${learnedContext}`;
@@ -2937,14 +2941,27 @@ RESPONSE FORMAT:
           }
           messages.push({ role: 'user', content: userContent });
 
-          // Step 3: Create streaming response
-          const stream = await openai.chat.completions.create({
+          // Step 3: Create streaming response (with 30s timeout to prevent hanging)
+          const streamPromise = openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages,
             max_tokens: 800,
             temperature: 0.7,
             stream: true,
           });
+          
+          const stream = await withTimeout(streamPromise, 30000, 'OpenAI stream creation');
+          
+          if (!stream) {
+            console.error('[AI-Chat-Stream] OpenAI stream creation timed out');
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+              type: 'content', 
+              content: "I'm having trouble connecting right now. Please try again in a moment." 
+            })}\n\n`));
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+            controller.close();
+            return;
+          }
           
           // Generate quick follow-ups initially (will be replaced by smart ones after response)
           const quickFollowUps = generateQuickFollowUps(message, queryCategory, detectedSport);
