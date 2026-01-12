@@ -530,6 +530,149 @@ async function translateToEnglish(message: string): Promise<{
 
 // QueryCategory type is now imported from query-intelligence
 
+// ============================================
+// BULK PICKS / TIPSTER-STYLE DETECTION
+// Detects when users paste multiple matches asking "which to bet on"
+// ============================================
+
+interface BulkPicksDetection {
+  isBulkPicks: boolean;
+  matchCount: number;
+  reason: string;
+}
+
+/**
+ * Detect if user is asking for bulk betting picks / tipster-style advice
+ * This includes:
+ * - Pasting multiple matches asking "which one to bet on"
+ * - Asking for "sure bets" or "guaranteed winners" 
+ * - Asking us to pick from a list of games
+ */
+function detectBulkPicksRequest(message: string): BulkPicksDetection {
+  const lower = message.toLowerCase();
+  
+  // Count potential match indicators (odds patterns like 1.39, 1.45, etc.)
+  const oddsPattern = /\b\d+\.\d{2}\b/g;
+  const oddsMatches = message.match(oddsPattern) || [];
+  
+  // Count "vs" or team separator patterns
+  const vsPattern = /\b\w+\s*[-–—]\s*\w+\b/g;
+  const vsMatches = message.match(vsPattern) || [];
+  
+  // Count time patterns (21:30, 22:00, etc.)
+  const timePattern = /\b\d{1,2}:\d{2}\b/g;
+  const timeMatches = message.match(timePattern) || [];
+  
+  // Count date patterns (13 Jan, 14 Jan, Today, etc.)
+  const datePattern = /\b(\d{1,2}\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|today|tomorrow)\b/gi;
+  const dateMatches = message.match(datePattern) || [];
+  
+  // Betting market patterns (Under 5.5, Over 2.5, etc.)
+  const marketPattern = /\b(under|over)\s*\(?[\d.]+\)?/gi;
+  const marketMatches = message.match(marketPattern) || [];
+  
+  // Tipster-style request patterns
+  const tipsterPatterns = [
+    /which\s+(one|ones?)\s*(to|should|do)\s*(bet|pick|play|take|change|win)/i,
+    /which\s+(to|should)\s*(bet|pick|play|take)/i,
+    /give\s*me\s*(your\s*)?(picks?|tips?|bets?)/i,
+    /what\s*(should|do)\s*(i|we)\s*(bet|pick|play)/i,
+    /pick\s*(for|from)\s*(me|these|this)/i,
+    /best\s*(bet|pick|play)s?\s*(for|from|today|tonight)/i,
+    /sure\s*(bet|thing|winner|pick)/i,
+    /guaranteed\s*(win|winner|bet)/i,
+    /safe\s*(bet|pick|play)/i,
+    /lock\s*(of\s*the\s*(day|week|night))?/i,
+    /tell\s*me\s*(what|which)\s*to\s*(bet|pick|play)/i,
+    /select\s*(the\s*)?(best|winner|pick)/i,
+    /choose\s*(for|from)\s*(me|these)/i,
+    /winner.*from\s*(these|this\s*list)/i,
+  ];
+  
+  const hasTipsterRequest = tipsterPatterns.some(p => p.test(lower));
+  
+  // If message has 5+ odds values AND a tipster-style request, it's bulk picks
+  if (oddsMatches.length >= 5 && hasTipsterRequest) {
+    return {
+      isBulkPicks: true,
+      matchCount: Math.floor(oddsMatches.length / 2), // Each match has ~2 odds
+      reason: 'bulk_odds_with_request',
+    };
+  }
+  
+  // If message has 3+ time patterns AND market patterns AND tipster request
+  if (timeMatches.length >= 3 && marketMatches.length >= 3 && hasTipsterRequest) {
+    return {
+      isBulkPicks: true,
+      matchCount: timeMatches.length,
+      reason: 'bulk_markets_with_times',
+    };
+  }
+  
+  // If message has 5+ date patterns with times (schedule dump)
+  if (dateMatches.length >= 5 && timeMatches.length >= 5) {
+    return {
+      isBulkPicks: true,
+      matchCount: Math.min(dateMatches.length, timeMatches.length),
+      reason: 'schedule_dump',
+    };
+  }
+  
+  // Long message (1000+ chars) with betting market terms - likely a paste job
+  if (message.length > 1000 && marketMatches.length >= 5) {
+    return {
+      isBulkPicks: true,
+      matchCount: marketMatches.length,
+      reason: 'long_message_with_markets',
+    };
+  }
+  
+  // Simple tipster request without bulk data
+  if (hasTipsterRequest && message.length < 500) {
+    // Not bulk, but still tipster-style - handle differently
+    return {
+      isBulkPicks: false,
+      matchCount: 0,
+      reason: 'tipster_request_only',
+    };
+  }
+  
+  return {
+    isBulkPicks: false,
+    matchCount: 0,
+    reason: 'none',
+  };
+}
+
+/**
+ * Generate a polite educational response for bulk picks requests
+ */
+function generateBulkPicksResponse(detection: BulkPicksDetection): string {
+  const matchText = detection.matchCount > 1 
+    ? `I see you've shared ${detection.matchCount} matches` 
+    : "I see you've shared a list of matches";
+  
+  return `${matchText} looking for picks — I get why that's tempting, but that's not what I do.
+
+**SportBot finds edges, not "winners."**
+
+Here's the difference:
+• **Tipsters** say "Bet on X" → You follow blindly → You lose when they're wrong
+• **SportBot** says "The market might be mispricing X by 4%" → You decide if that edge is worth taking
+
+**What I CAN help with:**
+1. **Pick ONE match** from your list that you're most interested in
+2. I'll break down the probabilities, form, injuries, and whether there's any value vs the odds
+3. You'll understand WHY — not just WHAT — to consider
+
+**Why this matters:**
+The data shows that blind "multi-bet" strategies have a negative expected value. Edge-finding on individual matches you've researched yourself? That's sustainable.
+
+Drop a single match (e.g., "Newcastle vs Man City") and I'll give you the full breakdown.
+
+*Remember: Gambling involves risk. Only bet what you can afford to lose.*`;
+}
+
 function detectQueryCategory(message: string): QueryCategory {
   const msg = message.toLowerCase();
   
@@ -1306,6 +1449,53 @@ export async function POST(request: NextRequest) {
       return new Response(JSON.stringify({ error: 'AI chat is not configured' }), {
         status: 503,
         headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // ============================================
+    // BULK PICKS DETECTION: Politely decline tipster-style requests
+    // "Which of these 25 matches should I bet on?" → Educational response
+    // ============================================
+    const bulkPicksDetection = detectBulkPicksRequest(message);
+    if (bulkPicksDetection.isBulkPicks) {
+      console.log(`[AI-Chat-Stream] 🚫 Bulk picks detected: ${bulkPicksDetection.reason} (${bulkPicksDetection.matchCount} matches)`);
+      
+      const encoder = new TextEncoder();
+      const educationalResponse = generateBulkPicksResponse(bulkPicksDetection);
+      
+      const readable = new ReadableStream({
+        start(controller) {
+          // Send metadata
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'metadata',
+            citations: [],
+            usedRealTimeSearch: false,
+            brainMode: 'educational',
+            followUps: [
+              'Analyze Newcastle vs Man City',
+              'How does edge detection work?',
+              'What makes a good value bet?',
+            ],
+          })}\n\n`));
+          
+          // Stream the educational response
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'content',
+            content: educationalResponse,
+          })}\n\n`));
+          
+          // Send done
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+          controller.close();
+        },
+      });
+      
+      return new Response(readable, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
       });
     }
     

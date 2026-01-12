@@ -178,6 +178,88 @@ type QueryCategory =
   | 'GENERAL';    // Generic sports question
 
 // ============================================
+// BULK PICKS / TIPSTER-STYLE DETECTION
+// Detects when users paste multiple matches asking "which to bet on"
+// ============================================
+
+interface BulkPicksDetection {
+  isBulkPicks: boolean;
+  matchCount: number;
+  reason: string;
+}
+
+/**
+ * Detect if user is asking for bulk betting picks / tipster-style advice
+ */
+function detectBulkPicksRequest(message: string): BulkPicksDetection {
+  const lower = message.toLowerCase();
+  
+  // Count potential match indicators
+  const oddsPattern = /\b\d+\.\d{2}\b/g;
+  const oddsMatches = message.match(oddsPattern) || [];
+  const timePattern = /\b\d{1,2}:\d{2}\b/g;
+  const timeMatches = message.match(timePattern) || [];
+  const datePattern = /\b(\d{1,2}\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|today|tomorrow)\b/gi;
+  const dateMatches = message.match(datePattern) || [];
+  const marketPattern = /\b(under|over)\s*\(?[\d.]+\)?/gi;
+  const marketMatches = message.match(marketPattern) || [];
+  
+  // Tipster-style request patterns
+  const tipsterPatterns = [
+    /which\s+(one|ones?)\s*(to|should|do)\s*(bet|pick|play|take|change|win)/i,
+    /which\s+(to|should)\s*(bet|pick|play|take)/i,
+    /give\s*me\s*(your\s*)?(picks?|tips?|bets?)/i,
+    /what\s*(should|do)\s*(i|we)\s*(bet|pick|play)/i,
+    /best\s*(bet|pick|play)s?\s*(for|from|today|tonight)/i,
+    /sure\s*(bet|thing|winner|pick)/i,
+    /guaranteed\s*(win|winner|bet)/i,
+  ];
+  
+  const hasTipsterRequest = tipsterPatterns.some(p => p.test(lower));
+  
+  if (oddsMatches.length >= 5 && hasTipsterRequest) {
+    return { isBulkPicks: true, matchCount: Math.floor(oddsMatches.length / 2), reason: 'bulk_odds_with_request' };
+  }
+  
+  if (timeMatches.length >= 3 && marketMatches.length >= 3 && hasTipsterRequest) {
+    return { isBulkPicks: true, matchCount: timeMatches.length, reason: 'bulk_markets_with_times' };
+  }
+  
+  if (dateMatches.length >= 5 && timeMatches.length >= 5) {
+    return { isBulkPicks: true, matchCount: Math.min(dateMatches.length, timeMatches.length), reason: 'schedule_dump' };
+  }
+  
+  if (message.length > 1000 && marketMatches.length >= 5) {
+    return { isBulkPicks: true, matchCount: marketMatches.length, reason: 'long_message_with_markets' };
+  }
+  
+  return { isBulkPicks: false, matchCount: 0, reason: 'none' };
+}
+
+function generateBulkPicksResponse(detection: BulkPicksDetection): string {
+  const matchText = detection.matchCount > 1 
+    ? `I see you've shared ${detection.matchCount} matches` 
+    : "I see you've shared a list of matches";
+  
+  return `${matchText} looking for picks — I get why that's tempting, but that's not what I do.
+
+**SportBot finds edges, not "winners."**
+
+Here's the difference:
+• **Tipsters** say "Bet on X" → You follow blindly → You lose when they're wrong
+• **SportBot** says "The market might be mispricing X by 4%" → You decide if that edge is worth taking
+
+**What I CAN help with:**
+1. **Pick ONE match** from your list that you're most interested in
+2. I'll break down the probabilities, form, injuries, and whether there's any value vs the odds
+3. You'll understand WHY — not just WHAT — to consider
+
+Drop a single match (e.g., "Newcastle vs Man City") and I'll give you the full breakdown.
+
+*Remember: Gambling involves risk. Only bet what you can afford to lose.*`;
+}
+
+// ============================================
 // BETTING/PLAYER PROP DETECTION (multi-language)
 // ============================================
 
@@ -2066,6 +2148,24 @@ export async function POST(request: NextRequest) {
         { error: 'AI chat is not configured' },
         { status: 503 }
       );
+    }
+
+    // ============================================
+    // BULK PICKS DETECTION: Politely decline tipster-style requests
+    // ============================================
+    const bulkPicksDetection = detectBulkPicksRequest(message);
+    if (bulkPicksDetection.isBulkPicks) {
+      console.log(`[AI-Chat] 🚫 Bulk picks detected: ${bulkPicksDetection.reason} (${bulkPicksDetection.matchCount} matches)`);
+      
+      // Increment chat count since we're responding
+      await incrementChatCount(session.user.id);
+      
+      return NextResponse.json({
+        response: generateBulkPicksResponse(bulkPicksDetection),
+        citations: [],
+        usedRealTimeSearch: false,
+        brainMode: 'educational',
+      });
     }
 
     // Step 0: Translate non-English queries to English for better search
