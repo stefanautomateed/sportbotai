@@ -688,12 +688,19 @@ const INTENT_PATTERNS: IntentPattern[] = [
       /\b(doubt(ful)?|questionable|probable|ruled out|day.to.day|GTD|IL|IR)\b/i,
       /\b(status|update|recovery|return)\b.*\b(injur|health)\b/i,
       /\bhow (is|are) .+ (injur|going|doing).*injur/i,  // "how is X injury going"
-      // "breaking news" defaults to sports news (injuries, transfers, trades)
+    ],
+    priority: 80,  // BOOST priority - injury queries are critical and time-sensitive
+  },
+  // SPORTS_NEWS - "breaking news", "any news", "what's happening" = sports news (injuries, transfers, trades, etc.)
+  {
+    intent: 'GENERAL_INFO',  // Routes to general sports news search
+    patterns: [
       /\b(breaking|latest|recent)\s*(news|updates?)\b/i,
       /\bany\s*(news|updates?)\s*(today)?\b/i,  // "any news today?"
       /\bwhat('s| is)\s*(happening|new|going on)\b/i,  // "what's happening?" = sports news
+      /\bsports?\s*news\b/i,  // "sports news"
     ],
-    priority: 80,  // BOOST priority - injury queries are critical and time-sensitive
+    priority: 75,  // High priority for news queries
   },
   {
     intent: 'FORM_CHECK',

@@ -2036,6 +2036,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
               // Detect query types that need different recency windows
               const isLastGameQuery = /last (game|match|night)|yesterday|most recent|tonight|scored last|played last/i.test(searchMessage);
               const isInjuryQuery = /injur|injured|injury|is .+ (out|hurt|playing|available)|status|health/i.test(searchMessage);
+              const isBreakingNewsQuery = /breaking|latest|recent|any\s*news|what('s| is)\s*(happening|new|going on)/i.test(searchMessage);
               
               // Add current date to search for recency context
               const today = new Date();
@@ -2044,7 +2045,10 @@ If their favorite team has a match today/tonight, lead with that information.`;
               // For injury queries, ask for CURRENT STATUS (not just news)
               // This helps find ongoing injuries that aren't in recent news
               let enhancedSearch = searchMessage;
-              if (isLastGameQuery) {
+              if (isBreakingNewsQuery) {
+                // "Breaking news" = ALL sports news: injuries, transfers, trades, suspensions, etc.
+                enhancedSearch = `Today's top sports news ${dateStr}: major transfers, injuries, trades, suspensions, and breaking stories in NBA, NFL, soccer, NHL. What are the biggest sports stories right now?`;
+              } else if (isLastGameQuery) {
                 enhancedSearch = `${searchMessage} (as of ${dateStr}, get the most recent game data only)`;
               } else if (isInjuryQuery) {
                 // Extract player name if present for better search
@@ -2054,10 +2058,11 @@ If their favorite team has a match today/tonight, lead with that information.`;
               }
               
               // Determine recency filter:
+              // - Breaking news: 'day' (most recent)
               // - Last game queries: 'day' (very recent)
               // - Injury queries: 'month' (injuries can last weeks without new articles)
               // - Default: 'week'
-              const recencyFilter = isLastGameQuery ? 'day' : isInjuryQuery ? 'month' : 'week';
+              const recencyFilter = isBreakingNewsQuery || isLastGameQuery ? 'day' : isInjuryQuery ? 'month' : 'week';
               
               // Use timeout to prevent hanging (15 second limit for Perplexity)
               const searchResult = await withTimeout(
