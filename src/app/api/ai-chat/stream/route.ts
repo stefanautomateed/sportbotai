@@ -1709,14 +1709,18 @@ export async function POST(request: NextRequest) {
     }
 
     // ==========================================
-    // TIER-BASED RATE LIMITING
+    // TIER-BASED RATE LIMITING (with 3s timeout on auth/rate check)
     // ==========================================
-    const session = await getServerSession(authOptions);
+    const session = await withTimeout(getServerSession(authOptions), 3000, 'Auth session');
     const userId = session?.user?.id;
     const userPlan = session?.user?.plan || null;
     const identifier = userId || getClientIp(request);
     
-    const rateLimit = await checkChatRateLimit(identifier, userPlan);
+    const rateLimit = await withTimeout(
+      checkChatRateLimit(identifier, userPlan),
+      3000,
+      'Rate limit check'
+    ) || { success: true, tier: 'FREE', remaining: 10, reset: Date.now() + 86400000 };
     
     if (!rateLimit.success) {
       const limits = CHAT_RATE_LIMITS[rateLimit.tier as keyof typeof CHAT_RATE_LIMITS];
@@ -1748,19 +1752,23 @@ export async function POST(request: NextRequest) {
     }
 
     // ==========================================
-    // FETCH USER'S FAVORITE TEAMS FOR CONTEXT
+    // FETCH USER'S FAVORITE TEAMS FOR CONTEXT (with 3s timeout)
     // ==========================================
     let favoriteTeamsContext = '';
     let favoriteTeamsList: string[] = [];
     if (userId) {
       try {
-        const favorites = await prisma.favoriteTeam.findMany({
-          where: { userId },
-          select: { teamName: true, sport: true, league: true },
-          take: 5,
-        });
+        const favorites = await withTimeout(
+          prisma.favoriteTeam.findMany({
+            where: { userId },
+            select: { teamName: true, sport: true, league: true },
+            take: 5,
+          }),
+          3000,
+          'Favorite teams lookup'
+        );
         
-        if (favorites.length > 0) {
+        if (favorites && favorites.length > 0) {
           favoriteTeamsList = favorites.map(f => f.teamName);
           const teamsList = favorites.map(f => 
             `${f.teamName} (${f.sport}${f.league ? `, ${f.league}` : ''})`
@@ -1890,7 +1898,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
     const isTimeSensitive = shouldSkipCache(message);
     
     if (history.length === 0 && !isPlayerStatsQuery && !isTimeSensitive) {
-      const cached = await cacheGet<CachedChatResponse>(cacheKey);
+      const cached = await withTimeout(cacheGet<CachedChatResponse>(cacheKey), 3000, 'Redis cache lookup');
       if (cached) {
         console.log(`[AI-Chat-Stream] Cache HIT for: "${message.slice(0, 50)}..."`);
         
@@ -1972,8 +1980,12 @@ If their favorite team has a match today/tonight, lead with that information.`;
       }
     }
 
-    // Step 0: Translate if needed
-    const translation = await translateToEnglish(message);
+    // Step 0: Translate if needed (with 5s timeout - translation should be fast)
+    const translation = await withTimeout(
+      translateToEnglish(message),
+      5000,
+      'Translation'
+    ) || { englishQuery: message, originalLanguage: 'en', needsTranslation: false };
     let searchMessage = translation.englishQuery;
     const originalLanguage = translation.originalLanguage;
     
@@ -2438,16 +2450,20 @@ If their favorite team has a match today/tonight, lead with that information.`;
               
               console.log(`[AI-Chat-Stream] Calling analyze API for clarified query: ${homeTeam} vs ${awayTeam} (${sport})`);
               
-              const analyzeResponse = await fetch(`${baseUrl}/api/analyze`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Cookie': cookies,
-                },
-                body: JSON.stringify(analyzeRequest),
-              });
+              const analyzeResponse = await withTimeout(
+                fetch(`${baseUrl}/api/analyze`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Cookie': cookies,
+                  },
+                  body: JSON.stringify(analyzeRequest),
+                }),
+                30000,
+                'Analyze API (clarified)'
+              );
               
-              if (analyzeResponse.ok) {
+              if (analyzeResponse?.ok) {
                 const analysisData = await analyzeResponse.json();
                 
                 if (analysisData.success) {
@@ -2461,10 +2477,12 @@ If their favorite team has a match today/tonight, lead with that information.`;
                 } else {
                   console.log(`[AI-Chat-Stream] ⚠️ Analyze API returned success=false:`, analysisData.error);
                 }
-              } else {
+              } else if (analyzeResponse) {
                 console.log(`[AI-Chat-Stream] ⚠️ Analyze API failed: ${analyzeResponse.status} ${analyzeResponse.statusText}`);
                 const errorBody = await analyzeResponse.text();
                 console.log(`[AI-Chat-Stream] Error body: ${errorBody.substring(0, 200)}`);
+              } else {
+                console.log(`[AI-Chat-Stream] ⚠️ Analyze API timed out`);
               }
             } catch (analyzeError) {
               console.error('[AI-Chat-Stream] Clarification analyze error:', analyzeError);
@@ -2597,16 +2615,20 @@ If their favorite team has a match today/tonight, lead with that information.`;
                     },
                   };
                   
-                  const analyzeResponse = await fetch(`${baseUrl}/api/analyze`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Cookie': cookies,
-                    },
-                    body: JSON.stringify(analyzeRequest),
-                  });
+                  const analyzeResponse = await withTimeout(
+                    fetch(`${baseUrl}/api/analyze`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Cookie': cookies,
+                      },
+                      body: JSON.stringify(analyzeRequest),
+                    }),
+                    30000,
+                    'Analyze API (live)'
+                  );
                   
-                  if (analyzeResponse.ok) {
+                  if (analyzeResponse?.ok) {
                     const analysisData = await analyzeResponse.json();
                     
                     if (analysisData.success) {
@@ -2618,8 +2640,10 @@ If their favorite team has a match today/tonight, lead with that information.`;
                       perplexityContext = '';
                       citations = [];
                     }
-                  } else {
+                  } else if (analyzeResponse) {
                     console.log(`[AI-Chat-Stream] Analyze API failed: ${analyzeResponse.status}`);
+                  } else {
+                    console.log(`[AI-Chat-Stream] Analyze API (live) timed out`);
                   }
                 } catch (analyzeError) {
                   console.error('[AI-Chat-Stream] Analyze API error:', analyzeError);
@@ -2645,13 +2669,17 @@ If their favorite team has a match today/tonight, lead with that information.`;
             const perplexity = getPerplexityClient();
             if (perplexity.isConfigured()) {
               try {
-                const searchResult = await perplexity.search(searchMessage, {
-                  recency: 'week',
-                  model: 'sonar-pro',
-                  maxTokens: 1000,
-                });
+                const searchResult = await withTimeout(
+                  perplexity.search(searchMessage, {
+                    recency: 'week',
+                    model: 'sonar-pro',
+                    maxTokens: 1000,
+                  }),
+                  15000,
+                  'Perplexity fallback'
+                );
                 
-                if (searchResult.success && searchResult.content) {
+                if (searchResult?.success && searchResult.content) {
                   perplexityContext = searchResult.content;
                   citations = searchResult.citations || [];
                   console.log('[AI-Chat-Stream] ✅ Perplexity fallback succeeded');
