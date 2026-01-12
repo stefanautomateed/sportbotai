@@ -198,46 +198,76 @@ function SituationCardComponent({ item, locale }: { item: SituationCard; locale:
   );
 }
 
-// Video card (ambient, always playing, no controls)
+// Video card - lazy loaded, only plays when visible
+// On mobile: shows gradient placeholder, loads video only when in view
 function VideoCardComponent({ item }: { item: VideoClip }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Start playing when component mounts or becomes visible
+  // Detect mobile on mount
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    setIsMobile(window.innerWidth < 768);
+  }, []);
 
-    // Try to play immediately
-    video.play().catch(() => {});
+  // Lazy load: only load video src when visible
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-    // Use IntersectionObserver to play when visible
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            video.play().catch(() => {});
+            setIsVisible(true);
+            observer.disconnect(); // Only need to trigger once
           }
         });
       },
-      { threshold: 0.3 }
+      { threshold: 0.1, rootMargin: '100px' } // Start loading slightly before visible
     );
 
-    observer.observe(video);
+    observer.observe(container);
     return () => observer.disconnect();
   }, []);
 
+  // Play video when loaded and visible
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isVisible) return;
+
+    video.play().catch(() => {});
+  }, [isVisible]);
+
   return (
-    <div className="flex-shrink-0 w-[160px] sm:w-[200px] lg:w-[220px] aspect-[9/14] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900 shadow-lg shadow-black/30">
-      <video
-        ref={videoRef}
-        src={item.videoSrc}
-        className="w-full h-full object-cover"
-        loop
-        muted
-        playsInline
-        autoPlay
-        preload="auto"
-      />
+    <div 
+      ref={containerRef}
+      className="flex-shrink-0 w-[160px] sm:w-[200px] lg:w-[220px] aspect-[9/14] rounded-xl sm:rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-black shadow-lg shadow-black/30"
+    >
+      {/* Only render video when visible (lazy loading) */}
+      {isVisible && (
+        <video
+          ref={videoRef}
+          src={item.videoSrc}
+          className="w-full h-full object-cover"
+          loop
+          muted
+          playsInline
+          // Mobile: don't preload, Desktop: preload metadata only
+          preload={isMobile ? 'none' : 'metadata'}
+        />
+      )}
+      {/* Placeholder gradient shown until video loads */}
+      {!isVisible && (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-white/50" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
