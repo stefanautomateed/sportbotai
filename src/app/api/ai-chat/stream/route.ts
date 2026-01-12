@@ -1438,13 +1438,21 @@ Rules:
 - Questions should feel like what a curious fan would naturally ask next
 - Keep questions short (under 10 words ideally)
 - No generic questions - be specific to the conversation
+- IMPORTANT: Only suggest questions SportBot can reliably answer:
+  ✅ Match predictions (Team A vs Team B)
+  ✅ Team form/recent results
+  ✅ Injury news updates  
+  ✅ League standings
+  ✅ Head to head history
+  ✅ Transfer news
+  ❌ Avoid: obscure stats, player comparisons, historical records
 - Return ONLY a JSON array of 3 strings, nothing else
 
 Example good follow-ups for "Liverpool vs Arsenal":
-["Liverpool's injury list for this match?", "Head to head record last 5 games?", "Who's the top scorer between these two?"]
+["Liverpool's injury update?", "Head to head last 5 games?", "Liverpool recent form?"]
 
-Example bad follow-ups (too generic):
-["What teams are playing?", "Tell me more", "Any other news?"]`
+Example bad follow-ups (can't reliably answer):
+["Who's scored more goals historically?", "What's the xG comparison?", "Stadium atmosphere?"]`
           },
           {
             role: 'user',
@@ -1465,8 +1473,8 @@ Generate 3 specific follow-up questions:`
     );
     
     if (!response) {
-      // Timeout - return generic fallbacks
-      return ['Any injury updates?', 'What about recent form?', 'Key stats to know?'];
+      // Timeout - return suggestions we can actually answer
+      return ['Any injury updates?', 'Recent form check?', 'League standings?'];
     }
     
     const content = response.choices[0]?.message?.content || '';
@@ -1499,6 +1507,7 @@ Generate 3 specific follow-up questions:`
 
 /**
  * Fallback rule-based follow-ups when GPT fails
+ * ONLY suggest questions SportBot can reliably answer!
  */
 function generateFallbackFollowUps(
   teams: string[],
@@ -1512,31 +1521,32 @@ function generateFallbackFollowUps(
   const player = players[0];
   
   if (team && teams[1]) {
+    // Match context - suggest things we CAN answer
     suggestions.push(
-      `${team} vs ${teams[1]} head to head?`,
-      `Key injuries for ${team}?`,
-      `Who's favored in this match?`
+      `${team} vs ${teams[1]} prediction?`,  // We have this!
+      `${team} injury news?`,  // We have this!
+      `${team} recent form?`   // We have this!
     );
   } else if (team) {
     suggestions.push(
       `${team} recent form?`,
-      `${team} next fixture?`,
-      `${team} top performers?`
+      `${team} next match prediction?`,
+      `${team} injury updates?`
     );
   } else if (player) {
     suggestions.push(
-      `${player} stats this season?`,
-      `${player} recent performances?`,
-      `${player} injury status?`
+      `Is ${player} injured?`,
+      `${player} recent form?`,
+      `${player} transfer news?`
     );
   } else {
-    // Sport-specific defaults
+    // Sport-specific defaults - ONLY suggest what we can answer
     if (sport === 'football' || sport === 'soccer') {
-      suggestions.push('Premier League standings?', 'Champions League results?', 'Top scorers this week?');
+      suggestions.push('Premier League standings?', 'Any injury news today?', 'Upcoming big matches?');
     } else if (sport === 'basketball') {
-      suggestions.push('NBA standings?', 'Top performers tonight?', 'Injury updates?');
+      suggestions.push('NBA standings?', 'Any injury updates?', 'Top games tonight?');
     } else {
-      suggestions.push('Latest sports news?', 'Today\'s top matches?', 'Any breaking news?');
+      suggestions.push('Any injury news?', 'Upcoming matches?', 'League standings?');
     }
   }
   
@@ -1546,6 +1556,7 @@ function generateFallbackFollowUps(
 /**
  * Quick follow-ups for initial metadata (before response is ready)
  * These will be replaced by smart follow-ups after response completes
+ * ONLY suggest questions SportBot can reliably answer!
  */
 function generateQuickFollowUps(
   message: string, 
@@ -1560,31 +1571,31 @@ function generateQuickFollowUps(
     return [
       `${team} recent form?`,
       `${team} injury news?`,
-      `${team} next match?`
+      `${team} next match prediction?`
     ];
   } else if (player) {
     return [
-      `${player} season stats?`,
-      `${player} recent form?`,
-      `${player} latest news?`
+      `Is ${player} injured?`,
+      `${player} transfer news?`,
+      `${player} recent form?`
     ];
   }
   
-  // Category-based defaults
+  // Category-based defaults - ONLY suggest what we can answer
   switch (category) {
     case 'STANDINGS':
-      return ['Title race update?', 'Relegation battle?', 'Form table?'];
+      return ['Premier League standings?', 'La Liga standings?', 'Serie A standings?'];
     case 'FIXTURE':
-      return ['Biggest match this week?', 'TV schedule?', 'Team news?'];
+      return ['Upcoming big matches?', 'Champions League fixtures?', 'Premier League this weekend?'];
     case 'INJURY':
-      return ['Expected return dates?', 'Squad impact?', 'Replacement options?'];
+      return ['Any recovery updates?', 'Expected return dates?', 'Other injury news?'];
     case 'TRANSFER':
-      return ['Latest rumors?', 'Deal likelihood?', 'Fee expectations?'];
+      return ['Latest transfer rumors?', 'Any confirmed deals?', 'Transfer deadline news?'];
     default:
       if (sport === 'basketball') {
-        return ['NBA standings?', 'Top scorers?', 'Tonight\'s games?'];
+        return ['NBA standings?', 'Any injury updates?', 'Tonight\'s top games?'];
       }
-      return ['Latest headlines?', 'Top matches today?', 'Any breaking news?'];
+      return ['Any injury news?', 'League standings?', 'Upcoming matches?'];
   }
 }
 
