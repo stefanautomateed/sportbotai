@@ -30,6 +30,7 @@ export type QueryIntent =
   | 'SCHEDULE'          // When is next game
   | 'GENERAL_INFO'      // General questions (rules, who is X, etc.)
   | 'OUR_ANALYSIS'      // Asking about SportBot's prediction
+  | 'EXPLAIN_UI'        // Explaining SportBot features (edge, confidence, etc.)
   | 'UNCLEAR';          // Ambiguous - needs clarification
 
 export type TimeFrame = 
@@ -742,6 +743,19 @@ const INTENT_PATTERNS: IntentPattern[] = [
     ],
     priority: 30,
   },
+  {
+    intent: 'EXPLAIN_UI',
+    patterns: [
+      /\bwhat (does|is|are)\s+(edge|value|confidence|probability|signal|model)\b/i,
+      /\bhow (do|does|is)\s+(edge|value|the model|sportbot|your|probability)\s*(work|calculate|computed|determined|mean)\b/i,
+      /\bwhat does .+ mean\b/i,  // "what does edge mean"
+      /\bexplain\s+(edge|value|confidence|probability|model|signals?)\b/i,
+      /\bhow (do|does) (you|sportbot) (calculate|compute|determine|work)\b/i,
+      /\bwhat('s| is) (the )?(difference between|edge|value|confidence)\b/i,
+      /\b(how|what) (do|does) (you|the model|sportbot) (work|analyze)\b/i,
+    ],
+    priority: 95,  // High priority - answer without API calls
+  },
 ];
 
 /**
@@ -981,7 +995,7 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
   
   let intent = patternResult.intent;
   let intentConfidence = patternResult.confidence;
-  let alternativeIntents = patternResult.alternatives;
+  const alternativeIntents = patternResult.alternatives;
   let isAmbiguous = false;
   let patternMatched: string | undefined = patternResult.matchedPattern;
   let usedLLM = false;
@@ -1026,7 +1040,7 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
   // Clean up entities - remove garbage like "Will Roma" which should just be "Roma"
   const cleanedEntities = entities.map(e => {
     // Remove common question words from entity names
-    let cleanName = e.name
+    const cleanName = e.name
       .replace(/^(Will|Can|Should|Does|Do|Is|Are|What|Who|How|When|Where|Why)\s+/i, '')
       .replace(/\s+(win|beat|defeat|play|playing|against|vs|today|tonight|match|game)$/i, '')
       .trim();

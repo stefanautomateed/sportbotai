@@ -673,6 +673,114 @@ Drop a single match (e.g., "Newcastle vs Man City") and I'll give you the full b
 *Remember: Gambling involves risk. Only bet what you can afford to lose.*`;
 }
 
+// ============================================
+// EXPLAIN_UI: Static FAQ responses for feature questions
+// Saves API calls and provides instant, accurate answers
+// ============================================
+
+const FAQ_RESPONSES: Record<string, string> = {
+  edge: `**What is "Edge"?**
+
+Edge is the difference between what **our model** thinks the probability is and what the **bookmaker odds** imply.
+
+**Example:**
+• Our model: Liverpool has a 60% chance to win
+• Bookmaker odds: 2.00 (implies 50% probability)
+• **Edge: +10%** (model thinks Liverpool is underpriced)
+
+**How to interpret:**
+• **Positive edge (+):** Model thinks outcome is more likely than odds suggest
+• **Negative edge (-):** Model thinks outcome is less likely than odds suggest
+• **Large edge (>5%):** Significant disagreement with market
+• **Small edge (<3%):** Close alignment with market
+
+**Important:** Edge doesn't guarantee wins. It identifies where the market *might* be mispricing risk.`,
+
+  confidence: `**What is "Confidence Rating"?**
+
+The confidence rating (1-5 stars) reflects how **reliable** our analysis is for a specific match.
+
+**What affects confidence:**
+• ⭐⭐⭐⭐⭐ **Very High:** Lots of recent data, clear form trends, no major injuries
+• ⭐⭐⭐⭐ **High:** Good data, some uncertainty factors
+• ⭐⭐⭐ **Medium:** Limited data or conflicting signals
+• ⭐⭐ **Low:** Missing key data, unusual circumstances
+• ⭐ **Very Low:** Insufficient data for reliable analysis
+
+**It's NOT about the match outcome** — it's about how much you can trust the numbers we show you.`,
+
+  probability: `**How do we calculate probabilities?**
+
+Our model combines multiple data sources:
+
+1. **Recent Form:** Last 5-10 matches, weighted by recency
+2. **Head-to-Head:** Historical matchups between the teams
+3. **Home/Away Performance:** Home advantage varies by league
+4. **Injuries & Suspensions:** Key players missing affects win probability
+5. **Rest Days:** Fatigue from midweek games
+6. **League Position:** Current standings and momentum
+
+**We don't just guess.** Every probability is computed from real data, then compared against bookmaker odds to find potential mispricings.
+
+*Note: Sports are inherently unpredictable. Our probabilities are estimates, not guarantees.*`,
+
+  model: `**How does SportBot work?**
+
+SportBot is an **AI-powered sports analysis tool** that helps you understand matches better.
+
+**What we do:**
+1. 📊 **Gather data:** Form, H2H, injuries, stats from verified sources
+2. 🧮 **Calculate probabilities:** Using statistical models
+3. 📈 **Compare to market:** Find where bookmaker odds differ from our estimates
+4. 📝 **Explain the analysis:** So you understand the "why," not just the "what"
+
+**What we DON'T do:**
+• ❌ Tell you what to bet
+• ❌ Guarantee outcomes
+• ❌ Act as a tipster service
+
+**Our mission:** "Find where the market is wrong" — we provide the analysis, you make the decisions.`,
+
+  value: `**What is "Value"?**
+
+Value is another way of describing **positive edge** — when our model thinks an outcome is more likely than the bookmaker odds suggest.
+
+**Example of value:**
+• Odds offered: 3.00 (implies 33% probability)
+• Our model: 45% probability
+• **This is "value"** because the odds are higher than they "should" be
+
+**No value ≠ bad bet.** It just means the market is efficient — odds are priced fairly.
+
+**Key insight:** Consistently finding value is what separates profitable analysis from gambling. But remember, even value bets lose sometimes.`,
+};
+
+/**
+ * Check if query is asking about SportBot features and return static FAQ response
+ */
+function getExplainUIResponse(message: string): string | null {
+  const lower = message.toLowerCase();
+  
+  // Check for specific feature questions
+  if (/\b(what|explain|how).*(edge|value difference|market vs model)\b/i.test(lower)) {
+    return FAQ_RESPONSES.edge;
+  }
+  if (/\b(what|explain|how).*(confidence|rating|stars?)\b/i.test(lower)) {
+    return FAQ_RESPONSES.confidence;
+  }
+  if (/\b(what|explain|how).*(probability|probabilities|calculate|computed)\b/i.test(lower)) {
+    return FAQ_RESPONSES.probability;
+  }
+  if (/\b(how|what).*(sportbot|model|you|the ai)\s*(work|analyze|function)/i.test(lower)) {
+    return FAQ_RESPONSES.model;
+  }
+  if (/\b(what|explain).*(value|value bet)\b/i.test(lower) && !/player|stat/i.test(lower)) {
+    return FAQ_RESPONSES.value;
+  }
+  
+  return null;
+}
+
 function detectQueryCategory(message: string): QueryCategory {
   const msg = message.toLowerCase();
   
@@ -1436,7 +1544,7 @@ interface CachedChatResponse {
 export async function POST(request: NextRequest) {
   try {
     const body: ChatRequest = await request.json();
-    let { message, history = [] } = body;
+    const { message, history = [] } = body;
 
     if (!message || typeof message !== 'string') {
       return new Response(JSON.stringify({ error: 'Message is required' }), {
@@ -1482,6 +1590,52 @@ export async function POST(request: NextRequest) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({
             type: 'content',
             content: educationalResponse,
+          })}\n\n`));
+          
+          // Send done
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+          controller.close();
+        },
+      });
+      
+      return new Response(readable, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+    
+    // ============================================
+    // EXPLAIN_UI: Instant FAQ responses (no API calls needed)
+    // "What does edge mean?" → Static educational response
+    // ============================================
+    const faqResponse = getExplainUIResponse(message);
+    if (faqResponse) {
+      console.log(`[AI-Chat-Stream] 📚 FAQ response for: "${message.slice(0, 50)}..."`);
+      
+      const encoder = new TextEncoder();
+      
+      const readable = new ReadableStream({
+        start(controller) {
+          // Send metadata
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'metadata',
+            citations: [],
+            usedRealTimeSearch: false,
+            brainMode: 'educational',
+            followUps: [
+              'How do you calculate probabilities?',
+              'What is value in betting?',
+              'Analyze a match for me',
+            ],
+          })}\n\n`));
+          
+          // Stream the FAQ response
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'content',
+            content: faqResponse,
           })}\n\n`));
           
           // Send done
@@ -2375,6 +2529,45 @@ If their favorite team has a match today/tonight, lead with that information.`;
           // Log if we're going to refuse to answer
           if (!dataConfidence.canAnswer) {
             console.log(`[AI-Chat-Stream] ⚠️ Insufficient data to answer. Missing: ${dataConfidence.missingCritical.join(', ')}`);
+          }
+          
+          // STRICTER DATA REFUSAL: For data-critical queries with no data, refuse instead of hallucinating
+          const DATA_CRITICAL_CATEGORIES = ['STATS', 'STANDINGS', 'BETTING_ADVICE', 'PLAYER_PROP', 'OUR_PREDICTION', 'INJURY', 'COMPARISON'];
+          const isDataCriticalQuery = DATA_CRITICAL_CATEGORIES.includes(queryCategory.toUpperCase());
+          
+          if (!dataConfidence.canAnswer && isDataCriticalQuery) {
+            console.log(`[AI-Chat-Stream] 🛑 REFUSING to answer - data-critical query with insufficient data`);
+            
+            const refusalMessage = dataConfidence.missingCritical.length > 0
+              ? `I don't have verified data for this query. I'm missing: ${dataConfidence.missingCritical.join(', ')}.
+
+I could give you a guess, but that's not what we do here. SportBot only provides analysis backed by real data.
+
+**Try:**
+- A different match or player that I might have data for
+- Check back closer to match time for lineups/injuries
+- Ask about Premier League, La Liga, Serie A, or other major leagues`
+              : `I don't have enough verified data to answer this accurately.
+
+Rather than make something up, I'll be honest - I can't find reliable stats for this query.
+
+**Try:**
+- Rephrasing with a specific team, player, or match
+- Asking about major leagues where I have better coverage
+- Check back later as data updates regularly`;
+            
+            // Stream the refusal
+            return new Response(
+              new ReadableStream({
+                async start(controller) {
+                  const encoder = new TextEncoder();
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'text', content: refusalMessage })}\n\n`));
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+                  controller.close();
+                }
+              }),
+              { headers: STREAM_HEADERS }
+            );
           }
           
           const brainMode: BrainMode = 

@@ -82,6 +82,22 @@ const FALLBACK_QUESTIONS = [
   "When do Liverpool play next in the Premier League?",
 ];
 
+// ============================================
+// ROTATING PLACEHOLDER EXAMPLES
+// Shows users how to "ask like a pro"
+// ============================================
+
+const PLACEHOLDER_EXAMPLES = [
+  "Try: Real Madrid vs Barcelona prediction",
+  "Try: Jokic avg points this season",
+  "Try: Head to head Inter vs Milan",
+  "Try: Liverpool injury updates",
+  "Try: Champions League standings",
+  "Try: Who's the top scorer in La Liga?",
+  "Try: Analyze Man City vs Arsenal",
+  "Try: Mbappe stats this season",
+];
+
 // Get initial questions for SSR
 function getInitialQuestions(count: number): string[] {
   return FALLBACK_QUESTIONS.slice(0, count);
@@ -114,8 +130,19 @@ export default function AIDeskChat() {
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   
+  // Rotating placeholder state
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Rotate placeholder every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDER_EXAMPLES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch dynamic prompts on client mount
   useEffect(() => {
@@ -866,7 +893,7 @@ export default function AIDeskChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={voiceState === 'listening' ? 'Listening...' : 'Ask about any match...'}
+            placeholder={voiceState === 'listening' ? 'Listening...' : PLACEHOLDER_EXAMPLES[placeholderIndex]}
             disabled={isLoading || voiceState === 'listening'}
             className={`flex-1 bg-white/5 border rounded-xl px-3 sm:px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none disabled:opacity-50 ${
               voiceState === 'listening' 

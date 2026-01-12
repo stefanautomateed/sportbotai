@@ -220,10 +220,10 @@ function extractTeamNamesFromMessage(message: string): { team1: string; team2?: 
   const vsMatch = message.match(/([A-Z][a-zA-Z\s]+?)\s*(?:vs?\.?|versus|against|facing|plays?|playing|x|-|@)\s*([A-Z][a-zA-Z\s]+?)(?:\s|$|\?|,|today|tonight|tomorrow|will|who|can)/i);
   if (vsMatch) {
     // Clean up team names
-    let team1 = vsMatch[1].trim().replace(/\s+/g, ' ')
+    const team1 = vsMatch[1].trim().replace(/\s+/g, ' ')
       .replace(/^(will|can|should|today|tonight)\s+/i, '')
       .replace(/\s+(win|today|match|game)$/i, '');
-    let team2 = vsMatch[2].trim().replace(/\s+/g, ' ')
+    const team2 = vsMatch[2].trim().replace(/\s+/g, ' ')
       .replace(/\s+(today|tonight|tomorrow|will|who|can|should|win|match|game).*$/i, '');
     
     if (team1.length >= 2 && team2.length >= 2) {
