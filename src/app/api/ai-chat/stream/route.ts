@@ -73,6 +73,29 @@ const openai = new OpenAI({
 });
 
 // ============================================
+// TIMEOUT UTILITY
+// ============================================
+
+/**
+ * Wrap a promise with a timeout
+ * Returns null if timeout is reached instead of throwing
+ */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string
+): Promise<T | null> {
+  const timeoutPromise = new Promise<null>((resolve) => {
+    setTimeout(() => {
+      console.log(`[AI-Chat-Stream] ⏱️ ${label} timed out after ${ms}ms`);
+      resolve(null);
+    }, ms);
+  });
+  
+  return Promise.race([promise, timeoutPromise]);
+}
+
+// ============================================
 // HELPER FUNCTIONS (simplified from main route)
 // ============================================
 
@@ -1753,15 +1776,25 @@ If their favorite team has a match today/tonight, lead with that information.`;
     
     let queryUnderstanding: QueryUnderstanding | null = null;
     try {
-      queryUnderstanding = await understandQuery(message, abVariant);
-      console.log(`[AI-Chat-Stream] Query Intelligence: intent=${queryUnderstanding.intent} (${(queryUnderstanding.intentConfidence * 100).toFixed(0)}%), entities=${queryUnderstanding.entities.map(e => e.name).join(', ')}, sport=${queryUnderstanding.sport || 'unknown'}`);
+      // Timeout query intelligence to prevent slow LLM classification from hanging
+      queryUnderstanding = await withTimeout(
+        understandQuery(message, abVariant),
+        8000,
+        'Query Intelligence'
+      );
       
-      if (queryUnderstanding.isAmbiguous) {
-        console.log(`[AI-Chat-Stream] ⚠️ Ambiguous query detected. Alternatives: ${queryUnderstanding.alternativeIntents?.join(', ')}`);
+      if (queryUnderstanding) {
+        console.log(`[AI-Chat-Stream] Query Intelligence: intent=${queryUnderstanding.intent} (${(queryUnderstanding.intentConfidence * 100).toFixed(0)}%), entities=${queryUnderstanding.entities.map(e => e.name).join(', ')}, sport=${queryUnderstanding.sport || 'unknown'}`);
+        
+        if (queryUnderstanding.isAmbiguous) {
+          console.log(`[AI-Chat-Stream] ⚠️ Ambiguous query detected. Alternatives: ${queryUnderstanding.alternativeIntents?.join(', ')}`);
+        }
+      } else {
+        console.log('[AI-Chat-Stream] ⚠️ Query Intelligence timed out, proceeding with defaults');
       }
       
       // HANDLE CLARIFICATION NEEDED (e.g., "Dallas vs Chicago" - which sport?)
-      if (queryUnderstanding.needsClarification && queryUnderstanding.clarifyingQuestion) {
+      if (queryUnderstanding?.needsClarification && queryUnderstanding.clarifyingQuestion) {
         console.log(`[AI-Chat-Stream] 🤔 Needs clarification - returning question to user`);
         
         return new Response(
@@ -1991,13 +2024,18 @@ If their favorite team has a match today/tonight, lead with that information.`;
               // - Default: 'week'
               const recencyFilter = isLastGameQuery ? 'day' : isInjuryQuery ? 'month' : 'week';
               
-              const searchResult = await perplexity.search(enhancedSearch, {
-                recency: recencyFilter,
-                model: 'sonar-pro',
-                maxTokens: 1000,
-              });
+              // Use timeout to prevent hanging (15 second limit for Perplexity)
+              const searchResult = await withTimeout(
+                perplexity.search(enhancedSearch, {
+                  recency: recencyFilter,
+                  model: 'sonar-pro',
+                  maxTokens: 1000,
+                }),
+                15000,
+                'Perplexity search'
+              );
 
-              if (searchResult.success && searchResult.content) {
+              if (searchResult?.success && searchResult.content) {
                 perplexityContext = searchResult.content;
                 citations = searchResult.citations || [];
                 // Send found status for stats queries
@@ -2046,7 +2084,13 @@ If their favorite team has a match today/tonight, lead with that information.`;
             if (teams.homeTeam) {
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: 'Fetching team stats...' })}\n\n`));
               console.log('[AI-Chat-Stream] Fetching DataLayer stats for:', teams);
-              dataLayerContext = await fetchDataLayerContext(teams, detectedSport);
+              // Timeout DataLayer fetch to prevent hanging (10 second limit)
+              const dataLayerResult = await withTimeout(
+                fetchDataLayerContext(teams, detectedSport),
+                10000,
+                'DataLayer stats'
+              );
+              dataLayerContext = dataLayerResult || '';
               if (dataLayerContext) {
                 console.log('[AI-Chat-Stream] DataLayer context added');
               }
@@ -2071,36 +2115,52 @@ If their favorite team has a match today/tonight, lead with that information.`;
               console.log('[AI-Chat-Stream] ⚠️ Euroleague stats disabled - data quality issues');
               // Let Perplexity handle Euroleague queries instead
             } else if (isStatsQuery(searchMessage)) {
-              // NBA stats
-              const verifiedStatsResult = await getVerifiedPlayerStats(searchMessage);
-              if (verifiedStatsResult.success && verifiedStatsResult.data) {
+              // NBA stats (with 10s timeout)
+              const verifiedStatsResult = await withTimeout(
+                getVerifiedPlayerStats(searchMessage),
+                10000,
+                'NBA stats'
+              );
+              if (verifiedStatsResult?.success && verifiedStatsResult.data) {
                 const stats = verifiedStatsResult.data;
                 verifiedPlayerStatsContext = formatVerifiedPlayerStats(stats);
                 console.log(`[AI-Chat-Stream] ✅ NBA stats: ${stats.playerFullName} - ${stats.stats.pointsPerGame} PPG`);
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found NBA stats for ${stats.playerFullName}` })}\n\n`));
               }
             } else if (isNFLStatsQuery(searchMessage)) {
-              // NFL stats
-              const verifiedStatsResult = await getVerifiedNFLPlayerStats(searchMessage);
-              if (verifiedStatsResult.success && verifiedStatsResult.data) {
+              // NFL stats (with 10s timeout)
+              const verifiedStatsResult = await withTimeout(
+                getVerifiedNFLPlayerStats(searchMessage),
+                10000,
+                'NFL stats'
+              );
+              if (verifiedStatsResult?.success && verifiedStatsResult.data) {
                 const stats = verifiedStatsResult.data;
                 verifiedPlayerStatsContext = formatVerifiedNFLPlayerStats(stats);
                 console.log(`[AI-Chat-Stream] ✅ NFL stats: ${stats.playerFullName}`);
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found NFL stats for ${stats.playerFullName}` })}\n\n`));
               }
             } else if (isNHLStatsQuery(searchMessage)) {
-              // NHL stats
-              const verifiedStatsResult = await getVerifiedNHLPlayerStats(searchMessage);
-              if (verifiedStatsResult.success && verifiedStatsResult.data) {
+              // NHL stats (with 10s timeout)
+              const verifiedStatsResult = await withTimeout(
+                getVerifiedNHLPlayerStats(searchMessage),
+                10000,
+                'NHL stats'
+              );
+              if (verifiedStatsResult?.success && verifiedStatsResult.data) {
                 const stats = verifiedStatsResult.data;
                 verifiedPlayerStatsContext = formatVerifiedNHLPlayerStats(stats);
                 console.log(`[AI-Chat-Stream] ✅ NHL stats: ${stats.playerFullName}`);
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found NHL stats for ${stats.playerFullName}` })}\n\n`));
               }
             } else if (isSoccerStatsQuery(searchMessage)) {
-              // Soccer stats
-              const verifiedStatsResult = await getVerifiedSoccerPlayerStats(searchMessage);
-              if (verifiedStatsResult.success && verifiedStatsResult.data) {
+              // Soccer stats (with 10s timeout)
+              const verifiedStatsResult = await withTimeout(
+                getVerifiedSoccerPlayerStats(searchMessage),
+                10000,
+                'Soccer stats'
+              );
+              if (verifiedStatsResult?.success && verifiedStatsResult.data) {
                 const stats = verifiedStatsResult.data;
                 verifiedPlayerStatsContext = formatVerifiedSoccerPlayerStats(stats);
                 console.log(`[AI-Chat-Stream] ✅ Soccer stats: ${stats.playerFullName} - ${stats.stats.goals}G ${stats.stats.assists}A`);
@@ -2123,7 +2183,11 @@ If their favorite team has a match today/tonight, lead with that information.`;
             console.log('[AI-Chat-Stream] Standings query detected, fetching from API...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '📊 Fetching verified standings...' })}\n\n`));
             
-            const standingsResult = await fetchStandingsContext(searchMessage);
+            const standingsResult = await withTimeout(
+              fetchStandingsContext(searchMessage),
+              10000,
+              'Standings'
+            );
             if (standingsResult) {
               verifiedStandingsContext = standingsResult.context;
               console.log(`[AI-Chat-Stream] ✅ Got ${standingsResult.leagueName} standings`);
@@ -2143,11 +2207,20 @@ If their favorite team has a match today/tonight, lead with that information.`;
             console.log('[AI-Chat-Stream] Team match stats query detected...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '📊 Analyzing match statistics...' })}\n\n`));
             
-            const matchStatsResult = await getVerifiedTeamMatchStats(searchMessage);
-            if (matchStatsResult.success && matchStatsResult.data) {
+            // Wrap both calls with timeout
+            const matchStatsResult = await withTimeout(
+              getVerifiedTeamMatchStats(searchMessage),
+              10000,
+              'Team match stats'
+            );
+            if (matchStatsResult?.success && matchStatsResult.data) {
               // Also get opponent analysis for comparison queries
-              const opponentAnalysis = await getOpponentAnalysis(searchMessage);
-              verifiedTeamMatchStatsContext = formatTeamMatchStatsContext(matchStatsResult, opponentAnalysis);
+              const opponentAnalysis = await withTimeout(
+                getOpponentAnalysis(searchMessage),
+                5000,
+                'Opponent analysis'
+              );
+              verifiedTeamMatchStatsContext = formatTeamMatchStatsContext(matchStatsResult, opponentAnalysis || undefined);
               
               console.log(`[AI-Chat-Stream] ✅ Got ${matchStatsResult.data.fixtures.length} matches for ${matchStatsResult.data.team.name}`);
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Analyzed ${matchStatsResult.data.fixtures.length} matches` })}\n\n`));
@@ -2156,7 +2229,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
               perplexityContext = '';
               citations = [];
             } else {
-              console.log('[AI-Chat-Stream] ⚠️ Could not get team match stats:', matchStatsResult.error);
+              console.log('[AI-Chat-Stream] ⚠️ Could not get team match stats:', matchStatsResult?.error || 'timeout');
             }
           }
 
