@@ -637,9 +637,10 @@ const INTENT_PATTERNS: IntentPattern[] = [
       /\b(stats|statistics|numbers|average|averaging)\b.*\b(player|for)\b/i,
       /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b.*\b(stats|average|scoring|points|goals)\b/i,
       /\b(ppg|rpg|apg|gpg)\b/i,  // Per-game stats abbreviations
-      /\b(top|leading)\s*(scorers?|goal.?scorers?|assist(er)?s?)\b/i,  // "top scorers", "leading goalscorers"
-      /\bwho (has|have|leads?|is leading)\s*(the )?most (goals|points|assists)\b/i,  // "who has most goals"
+      /\b(top|leading|best)\s*(goal\s*)?(scorers?|goal.?scorers?|assist(er)?s?)\b/i,  // "top scorers", "top goal scorer", "leading goalscorers"
+      /\bwho (has|have|leads?|is leading|scored?)\s*(the )?(most|more) (goals|points|assists)\b/i,  // "who has most goals", "who scored most goals"
       /\bwho leads\b.*\b(in|the)\b/i,  // "who leads the NFL in passing yards"
+      /\b(most|highest)\s+(goals|points|assists|scoring)\b/i,  // "most goals this season"
     ],
     priority: 80,
   },

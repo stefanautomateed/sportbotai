@@ -104,7 +104,9 @@ const TEAM_TO_LEAGUE: Record<string, number> = {
  * Check if query is asking for league top scorers
  */
 export function isTopScorersQuery(message: string): boolean {
-  return /top\s*scor|best\s*scor|leading\s*scor|golden\s*boot|goal.*king|artilheir|goleador|najbol.+strel/i.test(message) &&
+  // Match various ways people ask for top scorers:
+  // "top scorer", "top goal scorer", "best scorers", "leading scorer", "golden boot", etc.
+  return /top\s*(goal\s*)?scor|best\s*(goal\s*)?scor|leading\s*(goal\s*)?scor|golden\s*boot|goal.*king|artilheir|goleador|najbol.+strel|who.*scor.*most|most\s*goals/i.test(message) &&
     !/last\s+game|yesterday|match|vs\s/i.test(message); // Exclude match-specific queries
 }
 

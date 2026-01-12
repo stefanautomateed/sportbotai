@@ -2327,9 +2327,21 @@ If their favorite team has a match today/tonight, lead with that information.`;
           }
 
           // Step 1.9: Verified League Leaders (top scorers/assists)
+          // USE QUERY INTELLIGENCE - check if intent is PLAYER_STATS with scorer/assist keywords
+          // This is smarter than regex - QI already normalized the intent
           let verifiedLeagueLeadersContext = '';
-          if (isTopScorersQuery(searchMessage)) {
-            console.log('[AI-Chat-Stream] Top scorers query detected...');
+          const isTopScorersIntent = (
+            queryUnderstanding?.intent === 'PLAYER_STATS' && 
+            /\b(top|leading|best|most)\b.*\b(scor|goal)/i.test(searchMessage)
+          ) || isTopScorersQuery(searchMessage); // Fallback to regex for backwards compat
+          
+          const isTopAssistsIntent = (
+            queryUnderstanding?.intent === 'PLAYER_STATS' && 
+            /\b(top|leading|best|most)\b.*\b(assist)/i.test(searchMessage)
+          ) || isTopAssistsQuery(searchMessage);
+          
+          if (isTopScorersIntent) {
+            console.log('[AI-Chat-Stream] Top scorers query detected (via QI or regex)...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🏆 Fetching top scorers...' })}\n\n`));
             
             const leadersResult = await withTimeout(
@@ -2346,8 +2358,8 @@ If their favorite team has a match today/tonight, lead with that information.`;
             } else {
               console.log('[AI-Chat-Stream] ⚠️ Could not get top scorers:', leadersResult?.error || 'timeout');
             }
-          } else if (isTopAssistsQuery(searchMessage)) {
-            console.log('[AI-Chat-Stream] Top assists query detected...');
+          } else if (isTopAssistsIntent) {
+            console.log('[AI-Chat-Stream] Top assists query detected (via QI or regex)...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🏆 Fetching top assists...' })}\n\n`));
             
             const leadersResult = await withTimeout(
