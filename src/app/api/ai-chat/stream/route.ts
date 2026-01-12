@@ -518,18 +518,27 @@ async function translateToEnglish(message: string): Promise<{
   }
   
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `Translate to English. Keep player/team names intact. Return ONLY the translation.`
-        },
-        { role: 'user', content: message }
-      ],
-      max_tokens: 200,
-      temperature: 0.1,
-    });
+    const response = await withTimeout(
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Translate to English. Keep player/team names intact. Return ONLY the translation.`
+          },
+          { role: 'user', content: message }
+        ],
+        max_tokens: 200,
+        temperature: 0.1,
+      }),
+      5000, // 5s timeout for translation
+      'translation-openai'
+    );
+    
+    if (!response) {
+      // Timeout - fall back to original message
+      return { originalLanguage: 'unknown', englishQuery: message, needsTranslation: false };
+    }
     
     const englishQuery = response.choices[0]?.message?.content?.trim() || message;
     
@@ -988,9 +997,13 @@ async function fetchStandingsContext(message: string): Promise<{ context: string
     url.searchParams.set('league', String(leagueInfo.league));
     url.searchParams.set('season', leagueInfo.season);
     
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      console.error('[AI-Chat-Stream] Standings API error:', response.status);
+    const response = await withTimeout(
+      fetch(url.toString()),
+      10000, // 10s timeout for standings
+      'standings-api'
+    );
+    if (!response || !response.ok) {
+      console.error('[AI-Chat-Stream] Standings API error:', response?.status || 'timeout');
       return null;
     }
     
@@ -1104,23 +1117,27 @@ async function fetchOurPrediction(message: string): Promise<string> {
     const searchTerms = [teams.homeTeam, teams.awayTeam].filter(Boolean);
     
     // Build OR conditions for fuzzy matching
-    const predictions = await prisma.prediction.findMany({
-      where: {
-        OR: searchTerms.map(term => ({
-          matchName: { contains: term, mode: 'insensitive' }
-        })),
-        ...(targetDate ? {
-          kickoff: {
-            gte: new Date(targetDate.setHours(0, 0, 0, 0)),
-            lte: new Date(targetDate.setHours(23, 59, 59, 999)),
-          }
-        } : {}),
-      },
-      orderBy: { kickoff: 'desc' },
-      take: 5,
-    });
+    const predictions = await withTimeout(
+      prisma.prediction.findMany({
+        where: {
+          OR: searchTerms.map(term => ({
+            matchName: { contains: term, mode: 'insensitive' }
+          })),
+          ...(targetDate ? {
+            kickoff: {
+              gte: new Date(targetDate.setHours(0, 0, 0, 0)),
+              lte: new Date(targetDate.setHours(23, 59, 59, 999)),
+            }
+          } : {}),
+        },
+        orderBy: { kickoff: 'desc' },
+        take: 5,
+      }),
+      5000, // 5s timeout for Prisma query
+      'prisma-predictions'
+    );
     
-    if (predictions.length === 0) {
+    if (!predictions || predictions.length === 0) {
       return `⚠️ NO PREDICTION FOUND: SportBot does not have a stored analysis for this match. Say: "I don't have a pre-match analysis stored for that game."`;
     }
     
@@ -1407,12 +1424,13 @@ async function generateSmartFollowUps(
     if (topics.length > 0) contextParts.push(`Topics: ${topics.join(', ')}`);
     
     // Use GPT to generate smart follow-ups
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `Generate 3 natural follow-up questions based on this sports conversation. 
+    const response = await withTimeout(
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Generate 3 natural follow-up questions based on this sports conversation. 
 Rules:
 - Questions must be DIRECTLY related to the entities and topics discussed
 - Use specific team/player names from the conversation
@@ -1427,21 +1445,29 @@ Example good follow-ups for "Liverpool vs Arsenal":
 
 Example bad follow-ups (too generic):
 ["What teams are playing?", "Tell me more", "Any other news?"]`
-        },
-        {
-          role: 'user',
-          content: `Question: "${question}"
+          },
+          {
+            role: 'user',
+            content: `Question: "${question}"
 Answer summary: "${answer.slice(0, 500)}..."
 ${contextParts.length > 0 ? `Context: ${contextParts.join(' | ')}` : ''}
 Category: ${category}
 ${sport ? `Sport: ${sport}` : ''}
 
 Generate 3 specific follow-up questions:`
-        }
-      ],
-      max_tokens: 150,
-      temperature: 0.8,
-    });
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.8,
+      }),
+      5000, // 5s timeout for follow-up generation
+      'followup-openai'
+    );
+    
+    if (!response) {
+      // Timeout - return generic fallbacks
+      return ['Any injury updates?', 'What about recent form?', 'Key stats to know?'];
+    }
     
     const content = response.choices[0]?.message?.content || '';
     
