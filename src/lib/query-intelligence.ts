@@ -1169,6 +1169,7 @@ export function mapIntentToCategory(intent: QueryIntent): QueryCategory {
     'SCHEDULE': 'FIXTURE',
     'GENERAL_INFO': 'GENERAL',
     'OUR_ANALYSIS': 'OUR_PREDICTION',
+    'EXPLAIN_UI': 'GENERAL',
     'UNCLEAR': 'GENERAL',
   };
   

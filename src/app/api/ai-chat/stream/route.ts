@@ -1544,7 +1544,8 @@ interface CachedChatResponse {
 export async function POST(request: NextRequest) {
   try {
     const body: ChatRequest = await request.json();
-    const { message, history = [] } = body;
+    let { message } = body;
+    const { history = [] } = body;
 
     if (!message || typeof message !== 'string') {
       return new Response(JSON.stringify({ error: 'Message is required' }), {
@@ -2566,7 +2567,13 @@ Rather than make something up, I'll be honest - I can't find reliable stats for 
                   controller.close();
                 }
               }),
-              { headers: STREAM_HEADERS }
+              {
+                headers: {
+                  'Content-Type': 'text/event-stream',
+                  'Cache-Control': 'no-cache',
+                  'Connection': 'keep-alive',
+                },
+              }
             );
           }
           
