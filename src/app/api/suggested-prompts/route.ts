@@ -79,7 +79,7 @@ async function getUpcomingMatchPrompts(): Promise<string[]> {
     // Priority sports to check
     const prioritySports = [
       'soccer_epl',
-      'soccer_spain_la_liga', 
+      'soccer_spain_la_liga',
       'soccer_germany_bundesliga',
       'soccer_italy_serie_a',
       'soccer_france_ligue_one',
@@ -102,10 +102,10 @@ async function getUpcomingMatchPrompts(): Promise<string[]> {
     // Check each sport for upcoming events
     for (const sportKey of prioritySports) {
       if (prompts.length >= 1) break; // Get only 1 match prompt as example
-      
+
       try {
         const { data: events } = await theOddsClient.getEvents(sportKey);
-        
+
         // Filter to upcoming matches (next 24 hours, not started yet)
         const upcomingMatches = events.filter(event => {
           const matchDate = new Date(event.commence_time);
@@ -114,10 +114,10 @@ async function getUpcomingMatchPrompts(): Promise<string[]> {
 
         if (upcomingMatches.length > 0) {
           // Sort by kickoff time (soonest first)
-          upcomingMatches.sort((a, b) => 
+          upcomingMatches.sort((a, b) =>
             new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime()
           );
-          
+
           // Take the first upcoming match from this sport
           const match = upcomingMatches[0];
           const prompt = `Analyze ${match.home_team} vs ${match.away_team}`;
@@ -133,7 +133,7 @@ async function getUpcomingMatchPrompts(): Promise<string[]> {
     if (prompts.length === 0) {
       console.log('[Suggested Prompts] No upcoming matches found');
     }
-    
+
     return prompts;
   } catch (error) {
     console.error('[Suggested Prompts] Error getting upcoming matches:', error);
@@ -147,17 +147,17 @@ async function getUpcomingMatchPrompts(): Promise<string[]> {
 async function getTrendingTopics(): Promise<string[]> {
   try {
     const perplexity = getPerplexityClient();
-    
+
     if (!perplexity.isConfigured()) {
       console.log('[Suggested Prompts] Perplexity not configured, using static prompts');
       return [];
     }
 
-    const today = new Date().toLocaleDateString('en-US', { 
+    const today = new Date().toLocaleDateString('en-US', {
       weekday: 'long',
-      month: 'long', 
-      day: 'numeric', 
-      year: 'numeric' 
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
     });
 
     const result = await perplexity.search(
@@ -264,15 +264,15 @@ async function buildPrompts(): Promise<string[]> {
   if (upcomingMatches.length > 0) {
     prompts.push(upcomingMatches[0]); // Only add the first one
   } else {
-    // Fallback match prompt if no live matches
-    prompts.push("Analyze Real Madrid vs Barcelona");
+    // Fallback to stats prompt if no live matches (always works, unlike match analysis)
+    prompts.push("How many goals has Haaland scored this season?");
   }
-  console.log(`[Suggested Prompts] Match prompt: ${prompts[0]}`);
+  console.log(`[Suggested Prompts] First prompt: ${prompts[0]}`);
 
   // 2. Get dynamic questions from Perplexity (priority - these are real-time)
   const dynamicQuestions = await getTrendingTopics();
   console.log(`[Suggested Prompts] Got ${dynamicQuestions.length} dynamic questions from Perplexity`);
-  
+
   // 3. Add ALL dynamic questions (up to 5) - these are the real-time prompts
   if (dynamicQuestions.length > 0) {
     prompts.push(...dynamicQuestions.slice(0, 5));
@@ -281,13 +281,13 @@ async function buildPrompts(): Promise<string[]> {
   // 4. ONLY if we don't have enough dynamic questions, fill with static
   if (prompts.length < 6) {
     console.log(`[Suggested Prompts] Only ${prompts.length} prompts, filling with static fallbacks`);
-    
+
     const allStatic = shuffleArray([
       ...STATIC_PROMPTS.general,
       ...STATIC_PROMPTS.seasonal,
       ...STATIC_PROMPTS.news,
     ]);
-    
+
     for (const prompt of allStatic) {
       if (prompts.length >= 6) break;
       if (!prompts.includes(prompt)) {
@@ -322,12 +322,12 @@ export async function GET(request: NextRequest) {
     const now = Date.now();
     if (promptsCache && (now - promptsCache.timestamp) < CACHE_TTL) {
       console.log('[Suggested Prompts] Returning cached prompts');
-      
+
       // Combine personalized + cached generic prompts
       const combinedPrompts = personalizedPrompts.length > 0
         ? [...personalizedPrompts, ...promptsCache.prompts.slice(0, 5)]
         : promptsCache.prompts;
-      
+
       return NextResponse.json({
         prompts: combinedPrompts,
         cached: true,
@@ -360,10 +360,11 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('[Suggested Prompts] Error:', error);
-    
-    // Return static fallback on error
+
+    // Return static fallback on error - use prompts that always work
     const fallback = shuffleArray([
-      "Analyze Real Madrid vs Barcelona",
+      "How many goals has Haaland scored this season?",
+      "What's the latest injury news for Arsenal?",
       ...STATIC_PROMPTS.general.slice(0, 5),
       ...STATIC_PROMPTS.seasonal.slice(0, 4),
     ]).slice(0, 10);

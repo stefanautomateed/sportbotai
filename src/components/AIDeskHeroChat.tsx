@@ -81,7 +81,7 @@ function stripMarkdown(text: string): string {
 // ============================================
 
 const FALLBACK_QUESTIONS = [
-  { text: "Analyze Real Madrid vs Barcelona", icon: "⚽", category: "Match" },
+  { text: "How many goals has Haaland scored this season?", icon: "⚽", category: "Stats" },
   { text: "What's the latest injury news for Arsenal?", icon: "🏥", category: "Injuries" },
   { text: "Who's top of the Serie A table?", icon: "🏆", category: "Standings" },
   { text: "How many goals has Haaland scored this season?", icon: "📊", category: "Stats" },
@@ -95,7 +95,7 @@ const FALLBACK_QUESTIONS = [
 // ============================================
 
 const PLACEHOLDER_EXAMPLES = [
-  "Try: Real Madrid vs Barcelona prediction",
+  "Try: Liverpool injury updates",
   "Try: Jokic avg points this season",
   "Try: Head to head Inter vs Milan",
   "Try: Liverpool injury updates",
@@ -118,26 +118,26 @@ export default function AIDeskHeroChat() {
   const { data: session } = useSession();
   const userPlan = (session?.user as any)?.plan || 'FREE';
   const isFreePlan = userPlan === 'FREE';
-  
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState(() => getRandomQuestions(6));
-  
+
   // Audio state for TTS
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const [audioState, setAudioState] = useState<AudioState>('idle');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
-  
+
   // Voice input state
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  
+
   // Rotating placeholder state
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -155,7 +155,7 @@ export default function AIDeskHeroChat() {
       try {
         const response = await fetch('/api/suggested-prompts');
         if (!response.ok) throw new Error('Failed to fetch prompts');
-        
+
         const data = await response.json();
         if (data.prompts && Array.isArray(data.prompts) && data.prompts.length > 0) {
           // Transform prompts to our format with icons
@@ -178,7 +178,7 @@ export default function AIDeskHeroChat() {
         setSuggestedQuestions(shuffled.slice(0, 6));
       }
     }
-    
+
     fetchDynamicPrompts();
   }, []);
 
@@ -208,7 +208,7 @@ export default function AIDeskHeroChat() {
   // ==========================================
   // TEXT-TO-SPEECH FUNCTIONS
   // ==========================================
-  
+
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -263,7 +263,7 @@ export default function AIDeskHeroChat() {
         [Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0))],
         { type: data.contentType }
       );
-      
+
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
 
@@ -294,7 +294,7 @@ export default function AIDeskHeroChat() {
   // ==========================================
   // VOICE INPUT FUNCTIONS
   // ==========================================
-  
+
   // Check for speech recognition support on mount
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -327,9 +327,9 @@ export default function AIDeskHeroChat() {
       const transcript = Array.from(event.results)
         .map(result => result[0].transcript)
         .join('');
-      
+
       setInput(transcript);
-      
+
       // If final result, process it
       if (event.results[event.results.length - 1].isFinal) {
         setVoiceState('processing');
@@ -365,14 +365,14 @@ export default function AIDeskHeroChat() {
   // ==========================================
   // FEEDBACK FUNCTIONS
   // ==========================================
-  
+
   const submitFeedback = useCallback(async (
     messageId: string,
     rating: 'up' | 'down',
     query: string,
     response: string,
-    meta?: { 
-      usedRealTimeSearch?: boolean; 
+    meta?: {
+      usedRealTimeSearch?: boolean;
       fromCache?: boolean;
       dataConfidenceLevel?: string;
       dataConfidenceScore?: number;
@@ -475,18 +475,18 @@ export default function AIDeskHeroChat() {
               if (line.startsWith('data: ')) {
                 try {
                   const data = JSON.parse(line.slice(6));
-                  
+
                   if (data.type === 'status') {
                     // Update status message (e.g., "Searching real-time data...")
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
                         ? { ...m, statusMessage: data.status, isStreaming: true }
                         : m
                     ));
                   } else if (data.type === 'metadata') {
                     // Clear status when metadata arrives (about to stream content)
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
                         ? { ...m, statusMessage: undefined }
                         : m
                     ));
@@ -497,37 +497,37 @@ export default function AIDeskHeroChat() {
                     const dataConfidenceLevel = data.dataConfidenceLevel;
                     const dataConfidenceScore = data.dataConfidenceScore;
                     // Store confidence in message for feedback
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
                         ? { ...m, dataConfidenceLevel, dataConfidenceScore }
                         : m
                     ));
                   } else if (data.type === 'content') {
                     streamedContent += data.content;
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
-                        ? { 
-                            ...m, 
-                            content: streamedContent, 
-                            citations: streamCitations, 
-                            usedRealTimeSearch: streamUsedSearch,
-                            followUps: streamFollowUps,
-                            fromCache: isFromCache,
-                            isStreaming: true,
-                          }
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
+                        ? {
+                          ...m,
+                          content: streamedContent,
+                          citations: streamCitations,
+                          usedRealTimeSearch: streamUsedSearch,
+                          followUps: streamFollowUps,
+                          fromCache: isFromCache,
+                          isStreaming: true,
+                        }
                         : m
                     ));
                   } else if (data.type === 'followUps') {
                     // Update with smart follow-ups (generated after response completes)
                     streamFollowUps = data.followUps || [];
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
                         ? { ...m, followUps: streamFollowUps }
                         : m
                     ));
                   } else if (data.type === 'done') {
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
                         ? { ...m, isStreaming: false }
                         : m
                     ));
@@ -540,9 +540,9 @@ export default function AIDeskHeroChat() {
               }
             }
           }
-          
-          setMessages(prev => prev.map(m => 
-            m.id === assistantMessageId 
+
+          setMessages(prev => prev.map(m =>
+            m.id === assistantMessageId
               ? { ...m, isStreaming: false }
               : m
           ));
@@ -634,11 +634,10 @@ export default function AIDeskHeroChat() {
                 className={`flex gap-2 sm:gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
                 {/* Avatar */}
-                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  msg.role === 'user' 
-                    ? 'bg-primary/20' 
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${msg.role === 'user'
+                    ? 'bg-primary/20'
                     : 'bg-gradient-to-br from-primary/20 to-accent/20'
-                }`}>
+                  }`}>
                   {msg.role === 'user' ? (
                     <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   ) : (
@@ -648,26 +647,24 @@ export default function AIDeskHeroChat() {
 
                 {/* Message content */}
                 <div className={`flex-1 max-w-[90%] sm:max-w-[85%] ${msg.role === 'user' ? 'text-right' : ''}`}>
-                  <div className={`inline-block px-4 sm:px-5 py-3 sm:py-4 rounded-xl sm:rounded-2xl ${
-                    msg.role === 'user'
+                  <div className={`inline-block px-4 sm:px-5 py-3 sm:py-4 rounded-xl sm:rounded-2xl ${msg.role === 'user'
                       ? 'bg-primary text-white rounded-tr-md'
                       : 'bg-white/[0.03] text-white/90 rounded-tl-md border border-white/[0.06]'
-                  }`}>
+                    }`}>
                     {/* Status message while loading */}
                     {msg.role === 'assistant' && msg.statusMessage && !msg.content && (
                       <div className="flex items-center gap-2 text-sm text-primary/80 animate-pulse">
                         <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
                         <span>{msg.statusMessage}</span>
                       </div>
                     )}
-                    <p className={`whitespace-pre-wrap ${
-                      msg.role === 'user'
+                    <p className={`whitespace-pre-wrap ${msg.role === 'user'
                         ? 'text-[13px] sm:text-sm leading-relaxed'
                         : 'text-[13px] sm:text-[15px] leading-[1.6] sm:leading-[1.7] tracking-[-0.01em] font-light'
-                    } ${msg.role === 'assistant' && msg.statusMessage && !msg.content ? 'hidden' : ''}`}>
+                      } ${msg.role === 'assistant' && msg.statusMessage && !msg.content ? 'hidden' : ''}`}>
                       {msg.role === 'assistant' ? stripMarkdown(msg.content) : msg.content}
                       {msg.role === 'assistant' && msg.isStreaming && !msg.statusMessage && (
                         <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse rounded-sm" />
@@ -694,13 +691,12 @@ export default function AIDeskHeroChat() {
                       <button
                         onClick={() => playMessage(msg.id, msg.content)}
                         disabled={audioState === 'loading' && playingMessageId === msg.id}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
-                          playingMessageId === msg.id && audioState === 'playing'
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${playingMessageId === msg.id && audioState === 'playing'
                             ? 'bg-primary/20 text-primary border border-primary/30'
                             : playingMessageId === msg.id && audioState === 'loading'
-                            ? 'bg-white/5 text-text-muted cursor-wait'
-                            : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-white'
-                        }`}
+                              ? 'bg-white/5 text-text-muted cursor-wait'
+                              : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-white'
+                          }`}
                         title={playingMessageId === msg.id && audioState === 'playing' ? 'Stop' : 'Listen'}
                       >
                         {playingMessageId === msg.id && audioState === 'loading' ? (
@@ -720,13 +716,13 @@ export default function AIDeskHeroChat() {
                           </>
                         )}
                       </button>
-                      
+
                       {/* Feedback buttons */}
                       {!msg.feedbackGiven ? (
                         <div className="flex items-center gap-1 ml-2">
                           <button
                             onClick={() => {
-                              const userMsg = messages.find((m, i) => 
+                              const userMsg = messages.find((m, i) =>
                                 m.role === 'user' && messages[i + 1]?.id === msg.id
                               );
                               submitFeedback(msg.id, 'up', userMsg?.content || '', msg.content, {
@@ -743,7 +739,7 @@ export default function AIDeskHeroChat() {
                           </button>
                           <button
                             onClick={() => {
-                              const userMsg = messages.find((m, i) => 
+                              const userMsg = messages.find((m, i) =>
                                 m.role === 'user' && messages[i + 1]?.id === msg.id
                               );
                               submitFeedback(msg.id, 'down', userMsg?.content || '', msg.content, {
@@ -764,7 +760,7 @@ export default function AIDeskHeroChat() {
                           {msg.feedbackGiven === 'up' ? '👍 Thanks!' : '👎 Noted'}
                         </span>
                       )}
-                      
+
                       {audioState === 'error' && playingMessageId === msg.id && (
                         <span className="text-xs text-red-400 flex items-center gap-1">
                           <VolumeX className="w-3 h-3" />
@@ -773,7 +769,7 @@ export default function AIDeskHeroChat() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Follow-up suggestions */}
                   {msg.role === 'assistant' && msg.followUps && msg.followUps.length > 0 && !msg.isStreaming && (
                     <div className="mt-3 space-y-1.5">
@@ -852,11 +848,10 @@ export default function AIDeskHeroChat() {
               placeholder={voiceState === 'listening' ? 'Listening...' : PLACEHOLDER_EXAMPLES[placeholderIndex]}
               disabled={isLoading || voiceState === 'listening'}
               rows={3}
-              className={`w-full bg-white/[0.03] border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-4 sm:py-5 pr-28 sm:pr-32 text-sm sm:text-base text-white placeholder-text-muted/50 focus:outline-none focus:bg-white/[0.05] disabled:opacity-50 resize-none min-h-[100px] sm:min-h-[140px] transition-all ${
-                voiceState === 'listening' 
-                  ? 'border-red-500/50 animate-pulse' 
+              className={`w-full bg-white/[0.03] border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-4 sm:py-5 pr-28 sm:pr-32 text-sm sm:text-base text-white placeholder-text-muted/50 focus:outline-none focus:bg-white/[0.05] disabled:opacity-50 resize-none min-h-[100px] sm:min-h-[140px] transition-all ${voiceState === 'listening'
+                  ? 'border-red-500/50 animate-pulse'
                   : 'border-white/10 focus:border-primary/30'
-              }`}
+                }`}
             />
             <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 flex items-center gap-2">
               {/* Voice input button */}
@@ -864,11 +859,10 @@ export default function AIDeskHeroChat() {
                 <button
                   onClick={voiceState === 'listening' ? stopVoiceInput : startVoiceInput}
                   disabled={isLoading}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
-                    voiceState === 'listening'
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${voiceState === 'listening'
                       ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                       : 'bg-white/10 hover:bg-white/20'
-                  }`}
+                    }`}
                   title={voiceState === 'listening' ? 'Stop listening' : 'Voice input'}
                 >
                   {voiceState === 'listening' ? (

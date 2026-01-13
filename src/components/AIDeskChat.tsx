@@ -68,8 +68,8 @@ function stripMarkdown(text: string): string {
 // ============================================
 
 const FALLBACK_QUESTIONS = [
-  // Match Analysis (shows users we can analyze matches)
-  "Analyze Real Madrid vs Barcelona",
+  // Trending question (reliable fallback)
+  "How many goals has Haaland scored this season?",
   // Injuries
   "What's the latest injury news for Arsenal?",
   // Standings
@@ -88,7 +88,7 @@ const FALLBACK_QUESTIONS = [
 // ============================================
 
 const PLACEHOLDER_EXAMPLES = [
-  "Try: Real Madrid vs Barcelona prediction",
+  "Try: Liverpool injury updates",
   "Try: Jokic avg points this season",
   "Try: Head to head Inter vs Milan",
   "Try: Liverpool injury updates",
@@ -111,7 +111,7 @@ export default function AIDeskChat() {
   const { data: session } = useSession();
   const userPlan = (session?.user as any)?.plan || 'FREE';
   const isFreePlan = userPlan === 'FREE';
-  
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -119,20 +119,20 @@ export default function AIDeskChat() {
   const [error, setError] = useState<string | null>(null);
   // Start with stable questions, fetch dynamic ones on mount
   const [suggestedQuestions, setSuggestedQuestions] = useState(() => getInitialQuestions(4));
-  
+
   // Audio state for TTS
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const [audioState, setAudioState] = useState<AudioState>('idle');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
-  
+
   // Voice input state
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  
+
   // Rotating placeholder state
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -150,7 +150,7 @@ export default function AIDeskChat() {
       try {
         const response = await fetch('/api/suggested-prompts');
         if (!response.ok) throw new Error('Failed to fetch prompts');
-        
+
         const data = await response.json();
         if (data.prompts && Array.isArray(data.prompts) && data.prompts.length > 0) {
           // Take first 4 prompts (first one should be today's match)
@@ -167,7 +167,7 @@ export default function AIDeskChat() {
         setSuggestedQuestions(shuffled.slice(0, 4));
       }
     }
-    
+
     fetchDynamicPrompts();
   }, []);
 
@@ -199,7 +199,7 @@ export default function AIDeskChat() {
   // ==========================================
   // TEXT-TO-SPEECH FUNCTIONS
   // ==========================================
-  
+
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -254,7 +254,7 @@ export default function AIDeskChat() {
         [Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0))],
         { type: data.contentType }
       );
-      
+
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
 
@@ -285,7 +285,7 @@ export default function AIDeskChat() {
   // ==========================================
   // VOICE INPUT FUNCTIONS
   // ==========================================
-  
+
   // Check for speech recognition support on mount
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -318,9 +318,9 @@ export default function AIDeskChat() {
       const transcript = Array.from(event.results)
         .map(result => result[0].transcript)
         .join('');
-      
+
       setInput(transcript);
-      
+
       // If final result, process it
       if (event.results[event.results.length - 1].isFinal) {
         setVoiceState('processing');
@@ -356,14 +356,14 @@ export default function AIDeskChat() {
   // ==========================================
   // FEEDBACK FUNCTIONS
   // ==========================================
-  
+
   const submitFeedback = useCallback(async (
     messageId: string,
     rating: 'up' | 'down',
     query: string,
     response: string,
-    meta?: { 
-      usedRealTimeSearch?: boolean; 
+    meta?: {
+      usedRealTimeSearch?: boolean;
       fromCache?: boolean;
       dataConfidenceLevel?: string;
       dataConfidenceScore?: number;
@@ -438,7 +438,7 @@ export default function AIDeskChat() {
       const contentType = response.headers.get('Content-Type') || '';
       const isStreamable = contentType.includes('text/event-stream') || response.body !== null;
       let isFromCache = false;
-      
+
       if (response.ok && isStreamable && response.body) {
         // Add assistant message with initial "Thinking..." status
         setMessages(prev => [...prev, {
@@ -462,7 +462,7 @@ export default function AIDeskChat() {
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
-            
+
             // Keep the last incomplete line in buffer
             buffer = lines.pop() || '';
 
@@ -470,11 +470,11 @@ export default function AIDeskChat() {
               if (line.startsWith('data: ')) {
                 try {
                   const data = JSON.parse(line.slice(6));
-                  
+
                   if (data.type === 'status') {
                     // Update status message (e.g., "Searching real-time data...")
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
                         ? { ...m, statusMessage: data.status, isStreaming: true }
                         : m
                     ));
@@ -486,40 +486,40 @@ export default function AIDeskChat() {
                     const dataConfidenceLevel = data.dataConfidenceLevel;
                     const dataConfidenceScore = data.dataConfidenceScore;
                     // Clear status message when we get metadata (about to stream content)
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
                         ? { ...m, statusMessage: undefined, dataConfidenceLevel, dataConfidenceScore }
                         : m
                     ));
                   } else if (data.type === 'content') {
                     streamedContent += data.content;
                     // Update the message with streamed content
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
-                        ? { 
-                            ...m, 
-                            content: streamedContent, 
-                            citations: streamCitations, 
-                            usedRealTimeSearch: streamUsedSearch,
-                            followUps: streamFollowUps,
-                            fromCache: isFromCache,
-                            isStreaming: true,
-                            statusMessage: undefined,  // Clear status when content arrives
-                          }
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
+                        ? {
+                          ...m,
+                          content: streamedContent,
+                          citations: streamCitations,
+                          usedRealTimeSearch: streamUsedSearch,
+                          followUps: streamFollowUps,
+                          fromCache: isFromCache,
+                          isStreaming: true,
+                          statusMessage: undefined,  // Clear status when content arrives
+                        }
                         : m
                     ));
                   } else if (data.type === 'followUps') {
                     // Update with smart follow-ups (generated after response completes)
                     streamFollowUps = data.followUps || [];
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
                         ? { ...m, followUps: streamFollowUps }
                         : m
                     ));
                   } else if (data.type === 'done') {
                     // Mark streaming as complete
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
                         ? { ...m, isStreaming: false, statusMessage: undefined }
                         : m
                     ));
@@ -533,10 +533,10 @@ export default function AIDeskChat() {
               }
             }
           }
-          
+
           // Ensure streaming is marked complete after reader is done
-          setMessages(prev => prev.map(m => 
-            m.id === assistantMessageId 
+          setMessages(prev => prev.map(m =>
+            m.id === assistantMessageId
               ? { ...m, isStreaming: false }
               : m
           ));
@@ -546,7 +546,7 @@ export default function AIDeskChat() {
       } else {
         // Non-streaming response (error or fallback)
         const data = await response.json();
-        
+
         // Handle rate limit specifically
         if (response.status === 429) {
           throw new Error(data.message || `You've reached your daily message limit. Upgrade for more!`);
@@ -656,7 +656,7 @@ export default function AIDeskChat() {
                 I combine real-time search with AI reasoning to give you the best answers.
               </p>
             </div>
-            
+
             {/* Suggested questions - show 4 random ones */}
             <div className="space-y-2">
               <p className="text-xs text-text-muted uppercase tracking-wider mb-2">Try asking:</p>
@@ -680,11 +680,10 @@ export default function AIDeskChat() {
                 className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
                 {/* Avatar */}
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  msg.role === 'user' 
-                    ? 'bg-primary/20' 
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${msg.role === 'user'
+                    ? 'bg-primary/20'
                     : 'bg-gradient-to-br from-primary/20 to-accent/20'
-                }`}>
+                  }`}>
                   {msg.role === 'user' ? (
                     <User className="w-4 h-4 text-primary" />
                   ) : (
@@ -694,11 +693,10 @@ export default function AIDeskChat() {
 
                 {/* Message content */}
                 <div className={`flex-1 ${msg.role === 'user' ? 'text-right' : ''}`}>
-                  <div className={`inline-block px-4 py-3 rounded-2xl max-w-[85%] ${
-                    msg.role === 'user'
+                  <div className={`inline-block px-4 py-3 rounded-2xl max-w-[85%] ${msg.role === 'user'
                       ? 'bg-primary text-white rounded-tr-md'
                       : 'bg-white/[0.03] text-white/90 rounded-tl-md border border-white/[0.06]'
-                  }`}>
+                    }`}>
                     {/* Status message (e.g., "Searching real-time data...") */}
                     {msg.role === 'assistant' && msg.statusMessage && !msg.content && (
                       <div className="flex items-center gap-2 text-sm text-primary/80 animate-pulse">
@@ -706,11 +704,10 @@ export default function AIDeskChat() {
                         <span>{msg.statusMessage}</span>
                       </div>
                     )}
-                    <p className={`whitespace-pre-wrap ${
-                      msg.role === 'user'
+                    <p className={`whitespace-pre-wrap ${msg.role === 'user'
                         ? 'text-sm'
                         : 'text-[14px] leading-[1.7] tracking-[-0.01em] font-light'
-                    } ${msg.role === 'assistant' && msg.statusMessage && !msg.content ? 'hidden' : ''}`}>
+                      } ${msg.role === 'assistant' && msg.statusMessage && !msg.content ? 'hidden' : ''}`}>
                       {msg.role === 'assistant' ? stripMarkdown(msg.content) : msg.content}
                       {msg.role === 'assistant' && msg.isStreaming && !msg.statusMessage && (
                         <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse rounded-sm" />
@@ -737,13 +734,12 @@ export default function AIDeskChat() {
                       <button
                         onClick={() => playMessage(msg.id, msg.content)}
                         disabled={audioState === 'loading' && playingMessageId === msg.id}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all ${
-                          playingMessageId === msg.id && audioState === 'playing'
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all ${playingMessageId === msg.id && audioState === 'playing'
                             ? 'bg-primary/20 text-primary border border-primary/30'
                             : playingMessageId === msg.id && audioState === 'loading'
-                            ? 'bg-white/5 text-text-muted cursor-wait'
-                            : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-white'
-                        }`}
+                              ? 'bg-white/5 text-text-muted cursor-wait'
+                              : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-white'
+                          }`}
                         title={playingMessageId === msg.id && audioState === 'playing' ? 'Stop' : 'Listen'}
                       >
                         {playingMessageId === msg.id && audioState === 'loading' ? (
@@ -763,13 +759,13 @@ export default function AIDeskChat() {
                           </>
                         )}
                       </button>
-                      
+
                       {/* Feedback buttons */}
                       {!msg.feedbackGiven ? (
                         <div className="flex items-center gap-1 ml-2">
                           <button
                             onClick={() => {
-                              const userMsg = messages.find((m, i) => 
+                              const userMsg = messages.find((m, i) =>
                                 m.role === 'user' && messages[i + 1]?.id === msg.id
                               );
                               submitFeedback(msg.id, 'up', userMsg?.content || '', msg.content, {
@@ -786,7 +782,7 @@ export default function AIDeskChat() {
                           </button>
                           <button
                             onClick={() => {
-                              const userMsg = messages.find((m, i) => 
+                              const userMsg = messages.find((m, i) =>
                                 m.role === 'user' && messages[i + 1]?.id === msg.id
                               );
                               submitFeedback(msg.id, 'down', userMsg?.content || '', msg.content, {
@@ -807,7 +803,7 @@ export default function AIDeskChat() {
                           {msg.feedbackGiven === 'up' ? '👍 Thanks!' : '👎 Noted'}
                         </span>
                       )}
-                      
+
                       {audioState === 'error' && playingMessageId === msg.id && (
                         <span className="text-xs text-red-400 flex items-center gap-1">
                           <VolumeX className="w-3 h-3" />
@@ -816,7 +812,7 @@ export default function AIDeskChat() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Follow-up suggestions */}
                   {msg.role === 'assistant' && msg.followUps && msg.followUps.length > 0 && msg.content && (
                     <div className="mt-3 space-y-1.5">
@@ -895,23 +891,21 @@ export default function AIDeskChat() {
             onKeyDown={handleKeyDown}
             placeholder={voiceState === 'listening' ? 'Listening...' : PLACEHOLDER_EXAMPLES[placeholderIndex]}
             disabled={isLoading || voiceState === 'listening'}
-            className={`flex-1 bg-white/5 border rounded-xl px-3 sm:px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none disabled:opacity-50 ${
-              voiceState === 'listening' 
-                ? 'border-red-500/50 animate-pulse' 
+            className={`flex-1 bg-white/5 border rounded-xl px-3 sm:px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none disabled:opacity-50 ${voiceState === 'listening'
+                ? 'border-red-500/50 animate-pulse'
                 : 'border-white/10 focus:border-primary/50'
-            }`}
+              }`}
           />
-          
+
           {/* Voice input button */}
           {voiceState !== 'unsupported' && (
             <button
               onClick={voiceState === 'listening' ? stopVoiceInput : startVoiceInput}
               disabled={isLoading}
-              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors active:scale-95 ${
-                voiceState === 'listening'
+              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors active:scale-95 ${voiceState === 'listening'
                   ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                   : 'bg-white/10 hover:bg-white/20'
-              }`}
+                }`}
               title={voiceState === 'listening' ? 'Stop listening' : 'Voice input'}
             >
               {voiceState === 'listening' ? (
@@ -921,7 +915,7 @@ export default function AIDeskChat() {
               )}
             </button>
           )}
-          
+
           <button
             onClick={() => sendMessage()}
             disabled={!input.trim() || isLoading}
