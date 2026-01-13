@@ -23,15 +23,16 @@ import { detectChatMode, buildSystemPrompt, type BrainMode, calculateDataConfide
 import { trackQuery } from '@/lib/sportbot-memory';
 import { saveKnowledge, buildLearnedContext, getTerminologyForSport } from '@/lib/sportbot-knowledge';
 import { routeQuery as routeToDataSource } from '@/lib/data-router';
-import { 
-  getVerifiedPlayerStats, 
-  getVerifiedTeamStats, 
-  isStatsQuery, 
+import {
+  getVerifiedPlayerStats,
+  getVerifiedTeamStats,
+  isStatsQuery,
   formatVerifiedPlayerStats,
   formatVerifiedTeamStats,
-  SeasonNormalizer 
+  SeasonNormalizer
 } from '@/lib/verified-nba-stats';
 import { authOptions, canUserChat, incrementChatCount, CHAT_LIMITS } from '@/lib/auth';
+import { classifyQuery, needsPerplexity, needsDataLayer, isBettingQuery, type ClassificationResult } from '@/lib/query-classifier';
 
 // ============================================
 // TYPES
@@ -77,7 +78,7 @@ async function translateToEnglish(message: string): Promise<{
   const hasArabic = /[\u0600-\u06FF]/.test(message);
   // Note: removed 'was', 'wo', 'match' as they are also common English words
   const hasCommonNonEnglish = /\b(je|da|li|sta|šta|što|kako|koliko|gdje|gde|kada|zašto|porque|qué|cómo|cuándo|dónde|wie|wann|warum|où|quand|pourquoi|comment|combien)\b/i.test(message);
-  
+
   // If message appears to be English, skip translation
   if (!hasNonAscii && !hasCyrillic && !hasChinese && !hasJapanese && !hasKorean && !hasArabic && !hasCommonNonEnglish) {
     return {
@@ -86,7 +87,7 @@ async function translateToEnglish(message: string): Promise<{
       needsTranslation: false
     };
   }
-  
+
   try {
     // Use GPT for quick translation
     const response = await openai.chat.completions.create({
@@ -107,9 +108,9 @@ If the message is already in English, return it unchanged.`
       max_tokens: 200,
       temperature: 0.1, // Low temperature for consistent translation
     });
-    
+
     const englishQuery = response.choices[0]?.message?.content?.trim() || message;
-    
+
     // Detect original language
     let originalLanguage = 'unknown';
     if (hasChinese) {
@@ -135,9 +136,9 @@ If the message is already in English, return it unchanged.`
     } else if (/\b(матч|игра|гол|команда|когда|как|почему)\b/i.test(message)) {
       originalLanguage = 'ru'; // Russian
     }
-    
+
     console.log(`[AI-Chat] Translated from ${originalLanguage}: "${message}" -> "${englishQuery}"`);
-    
+
     return {
       originalLanguage,
       englishQuery,
@@ -157,7 +158,7 @@ If the message is already in English, return it unchanged.`
 // QUERY CATEGORY DETECTION
 // ============================================
 
-type QueryCategory = 
+type QueryCategory =
   | 'PLAYER'      // Where does player X play? Who is player X?
   | 'ROSTER'      // Who plays for team X?
   | 'FIXTURE'     // When is the next game?
@@ -193,7 +194,7 @@ interface BulkPicksDetection {
  */
 function detectBulkPicksRequest(message: string): BulkPicksDetection {
   const lower = message.toLowerCase();
-  
+
   // Count potential match indicators
   const oddsPattern = /\b\d+\.\d{2}\b/g;
   const oddsMatches = message.match(oddsPattern) || [];
@@ -203,7 +204,7 @@ function detectBulkPicksRequest(message: string): BulkPicksDetection {
   const dateMatches = message.match(datePattern) || [];
   const marketPattern = /\b(under|over)\s*\(?[\d.]+\)?/gi;
   const marketMatches = message.match(marketPattern) || [];
-  
+
   // Tipster-style request patterns
   const tipsterPatterns = [
     /which\s+(one|ones?)\s*(to|should|do)\s*(bet|pick|play|take|change|win)/i,
@@ -214,33 +215,33 @@ function detectBulkPicksRequest(message: string): BulkPicksDetection {
     /sure\s*(bet|thing|winner|pick)/i,
     /guaranteed\s*(win|winner|bet)/i,
   ];
-  
+
   const hasTipsterRequest = tipsterPatterns.some(p => p.test(lower));
-  
+
   if (oddsMatches.length >= 5 && hasTipsterRequest) {
     return { isBulkPicks: true, matchCount: Math.floor(oddsMatches.length / 2), reason: 'bulk_odds_with_request' };
   }
-  
+
   if (timeMatches.length >= 3 && marketMatches.length >= 3 && hasTipsterRequest) {
     return { isBulkPicks: true, matchCount: timeMatches.length, reason: 'bulk_markets_with_times' };
   }
-  
+
   if (dateMatches.length >= 5 && timeMatches.length >= 5) {
     return { isBulkPicks: true, matchCount: Math.min(dateMatches.length, timeMatches.length), reason: 'schedule_dump' };
   }
-  
+
   if (message.length > 1000 && marketMatches.length >= 5) {
     return { isBulkPicks: true, matchCount: marketMatches.length, reason: 'long_message_with_markets' };
   }
-  
+
   return { isBulkPicks: false, matchCount: 0, reason: 'none' };
 }
 
 function generateBulkPicksResponse(detection: BulkPicksDetection): string {
-  const matchText = detection.matchCount > 1 
-    ? `I see you've shared ${detection.matchCount} matches` 
+  const matchText = detection.matchCount > 1
+    ? `I see you've shared ${detection.matchCount} matches`
     : "I see you've shared a list of matches";
-  
+
   return `${matchText} looking for picks — I get why that's tempting, but that's not what I do.
 
 **SportBot finds edges, not "winners."**
@@ -267,15 +268,15 @@ Drop a single match (e.g., "Newcastle vs Man City") and I'll give you the full b
  * Detect if query is asking for betting advice or player props
  * Supports multiple languages: English, Serbian/Croatian, Spanish, German, etc.
  */
-function detectBettingIntent(message: string): { 
-  isBettingAdvice: boolean; 
+function detectBettingIntent(message: string): {
+  isBettingAdvice: boolean;
   isPlayerProp: boolean;
   detectedType: 'over' | 'under' | 'points' | 'rebounds' | 'assists' | 'general' | null;
   playerMentioned: string | null;
   confidenceLevel: 'high' | 'medium' | 'low';
 } {
   const msg = message.toLowerCase();
-  
+
   // Multi-language betting keywords (EXPANDED)
   const bettingKeywords = {
     // English - comprehensive
@@ -376,7 +377,7 @@ function detectBettingIntent(message: string): {
       'sharp', 'square', 'public', 'steam', 'reverse line movement',
     ],
   };
-  
+
   // Player prop stat keywords (expanded)
   const propStats = {
     points: ['points', 'pts', 'poena', 'puntos', 'punkte', 'koseva', 'bodova', 'punti', 'pontos'],
@@ -391,11 +392,11 @@ function detectBettingIntent(message: string): {
     cards: ['cards', 'kartoni', 'tarjetas', 'karten', 'cartons', 'yellow', 'red'],
     fantasy: ['fantasy', 'fpts', 'fantasy points', 'dfs', 'draftkings', 'fanduel', 'prizepicks'],
   };
-  
+
   // Check for betting advice intent
   let isBettingAdvice = false;
   const matchedKeywords: string[] = [];
-  
+
   for (const keywords of Object.values(bettingKeywords)) {
     for (const kw of keywords) {
       if (msg.includes(kw)) {
@@ -404,11 +405,11 @@ function detectBettingIntent(message: string): {
       }
     }
   }
-  
+
   // Check for player prop patterns
   let isPlayerProp = false;
   let detectedType: 'over' | 'under' | 'points' | 'rebounds' | 'assists' | 'general' | null = null;
-  
+
   // Over/under pattern (expanded)
   if (/plus|over|\+|više|más|über|maggiore|plus de|mais de|больше|o\d|over \d|više od/i.test(msg)) {
     detectedType = 'over';
@@ -417,7 +418,7 @@ function detectBettingIntent(message: string): {
     detectedType = 'under';
     isPlayerProp = true;
   }
-  
+
   // Stat type detection
   for (const [statType, keywords] of Object.entries(propStats)) {
     if (keywords.some(kw => msg.includes(kw))) {
@@ -426,7 +427,7 @@ function detectBettingIntent(message: string): {
       break;
     }
   }
-  
+
   // Determine confidence level
   let confidenceLevel: 'high' | 'medium' | 'low' = 'low';
   if (matchedKeywords.length >= 3 || (isBettingAdvice && isPlayerProp)) {
@@ -434,7 +435,7 @@ function detectBettingIntent(message: string): {
   } else if (matchedKeywords.length >= 1 || isBettingAdvice || isPlayerProp) {
     confidenceLevel = 'medium';
   }
-  
+
   // Extract player name (look for capitalized words or known player patterns)
   let playerMentioned: string | null = null;
   const playerPatterns = [
@@ -466,7 +467,7 @@ function detectBettingIntent(message: string): {
     // Generic pattern: Capitalized FirstName LastName
     /([A-Z][a-z]+\s+[A-Z][a-z]+)/,
   ];
-  
+
   for (const pattern of playerPatterns) {
     const match = message.match(pattern);
     if (match) {
@@ -474,7 +475,7 @@ function detectBettingIntent(message: string): {
       break;
     }
   }
-  
+
   return { isBettingAdvice, isPlayerProp, detectedType, playerMentioned, confidenceLevel };
 }
 
@@ -494,7 +495,7 @@ function detectMatchAnalysisRequest(message: string): {
   sport: string | null;
 } {
   const msg = message.toLowerCase();
-  
+
   // Analysis trigger phrases (multi-language)
   const analysisPatterns = [
     // English with vs/versus
@@ -502,65 +503,65 @@ function detectMatchAnalysisRequest(message: string): {
     /(?:what do you think|thoughts on|your take on|give me a breakdown|break down)\s+(?:about\s+)?(?:the\s+)?(.+?)\s+(?:vs\.?|versus|v\.?|against|facing)\s+(.+?)(?:\s+(?:match|game))?$/i,
     /(?:can you analyze|could you analyze|please analyze|i want analysis)\s+(.+?)\s+(?:vs\.?|versus|v\.?|against)\s+(.+)/i,
     /(.+?)\s+(?:vs\.?|versus|v\.?)\s+(.+?)\s+(?:analysis|breakdown|preview|prediction)/i,
-    
+
     // CHINESE TRANSLATION PATTERNS - common structures from Chinese to English
     // "Roma's chances/odds of winning against Sassuolo"
     /([A-Za-z][A-Za-z\s]+?)(?:'s)?\s+(?:chances?|odds?|probability)\s+(?:of\s+)?(?:winning|beating|defeating)\s+(?:against\s+)?([A-Za-z][A-Za-z\s]+)/i,
-    
+
     // "Roma at home facing/against Sassuolo" (common Chinese translation pattern)
     /([A-Za-z][A-Za-z\s]+?)\s+(?:at home|away|home)\s+(?:facing|against|vs\.?|versus|playing)\s+([A-Za-z][A-Za-z\s]+)/i,
-    
+
     // "The match Roma vs Sassuolo" or "Roma vs Sassuolo match"
     /(?:the\s+)?(?:match|game)\s+(?:of\s+)?([A-Za-z][A-Za-z\s]+?)\s+(?:vs\.?|versus|against|and)\s+([A-Za-z][A-Za-z\s]+)/i,
-    
+
     // "Roma playing at home against Sassuolo"
     /([A-Za-z][A-Za-z\s]+?)\s+(?:playing|plays)\s+(?:at home|away)?\s*(?:against|vs\.?|versus)\s+([A-Za-z][A-Za-z\s]+)/i,
-    
+
     // "X against Y" patterns (common from Chinese/other translations)
     /(?:^|today|tonight|tomorrow)\s*([A-Za-z][A-Za-z\s]+?)\s+(?:against|facing|plays?|playing|vs\.?|versus|VS)\s+([A-Za-z][A-Za-z\s]+?)(?:\s+(?:will|who|can|should|what|match|game|today|tonight|tomorrow|at home|the game|this|\?|$))/i,
-    
+
     // "X at home against Y" pattern
     /([A-Za-z][A-Za-z\s]+?)\s+(?:at home|away)\s+(?:against|vs\.?|versus|facing)\s+([A-Za-z][A-Za-z\s]+)/i,
-    
+
     // Better generic "X vs Y" pattern - stops at common trailing words
     /(?:^|today|tonight|tomorrow|match|game|about)\s*([A-Za-z][A-Za-z\s]+?)\s+(?:vs\.?|versus|v\.?|VS)\s+([A-Za-z][A-Za-z\s]+?)(?:\s+(?:will|who|match|game|today|tonight|tomorrow|\?|$))/i,
-    
+
     // Multi-word teams with vs/VS (e.g., "Los Angeles Lakers vs Boston Celtics")
     /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})\s+(?:vs\.?|VS|against)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3})\b/i,
-    
+
     // Simple team1 vs team2 - fallback for any "X vs/against Y" at end of message
     /\b([A-Za-z][a-zA-Z]+(?:\s+[A-Za-z][a-zA-Z]+){0,3})\s+(?:vs\.?|VS|versus|against)\s+([A-Za-z][a-zA-Z]+(?:\s+[A-Za-z][a-zA-Z]+){0,3})$/i,
-    
+
     // "match between X and Y" pattern
     /(?:match|game)\s+(?:between|of)\s+([A-Za-z][A-Za-z\s]+?)\s+(?:and|vs\.?)\s+([A-Za-z][A-Za-z\s]+)/i,
-    
+
     // "will X win against Y" / "can X beat Y" - with optional words in between
     /(?:will|can|should)\s+([A-Za-z][A-Za-z\s]+?)\s+(?:win|beat|defeat)(?:\s+(?:today'?s?|tonight'?s?|tomorrow'?s?|the|this)?\s*(?:match|game)?)?\s+(?:against\s+)?([A-Za-z][A-Za-z\s]+)/i,
-    
+
     // "X vs Y" anywhere in sentence with match context
     /([A-Za-z]+)\s+(?:vs\.?|VS|versus)\s+([A-Za-z]+)/i,
-    
+
     // "X vs Y [followed by additional context]" - stops at team name repetition or common words
     /^([A-Za-z][A-Za-z\s]*?)\s+(?:vs\.?|VS|versus)\s+([A-Za-z][A-Za-z\s]*?)(?:\s+(?:Roma|Sassuolo|[A-Z][a-z]+\s+has|will|today|tonight|\.|\,))/i,
-    
+
     // "X versus Y." with period/punctuation ending
     /^([A-Za-z][A-Za-z\s]+?)\s+(?:vs\.?|VS|versus)\s+([A-Za-z][A-Za-z\s]+?)[\.!\?]/i,
-    
+
     // FALLBACK: Any mention of two known teams in the same sentence
     // This catches cases like "What are the chances Roma wins against Sassuolo today"
     /([A-Za-z]+)\s+(?:wins?|winning|beats?|beating|defeats?|defeating|vs\.?|versus|against|plays?|playing|facing|and)\s+([A-Za-z]+)/i,
-    
+
     // Serbian/Croatian
     /(?:analiziraj|analiza|analizu|pregledaj)\s+(?:utakmicu?\s+)?(.+?)\s+(?:vs\.?|protiv|v\.?|-)\s+(.+)/i,
     /(?:šta misliš|sta mislis|mišljenje|tvoje mišljenje)\s+(?:o\s+)?(.+?)\s+(?:vs\.?|protiv|v\.?|-)\s+(.+)/i,
-    
+
     // Spanish
     /(?:analiza|analizar|dame análisis)\s+(?:del?\s+)?(?:partido\s+)?(.+?)\s+(?:vs\.?|contra|v\.?)\s+(.+)/i,
-    
+
     // German
     /(?:analysiere|analyse)\s+(?:das\s+)?(?:spiel\s+)?(.+?)\s+(?:vs\.?|gegen|v\.?)\s+(.+)/i,
   ];
-  
+
   // Check for analysis patterns
   for (const pattern of analysisPatterns) {
     const match = message.match(pattern);
@@ -575,20 +576,20 @@ function detectMatchAnalysisRequest(message: string): {
         // Stop at common words that indicate end of team name
         .replace(/\s+(match|game|tonight|today|tomorrow|this|will|who|win|should|can|could|would|is|are|has|have|what|sunday|monday|tuesday|wednesday|thursday|friday|saturday|roma|considering|the|at home|\.|\?).*/i, '')
         .trim();
-      
+
       // Additional cleanup for edge cases
       homeTeam = homeTeam.replace(/^(today|tonight|tomorrow|what about|how about|will|can|should)\s+/i, '').trim();
       homeTeam = homeTeam.replace(/\s+(win|playing|plays)$/i, '').trim(); // "Roma playing" -> "Roma"
       awayTeam = awayTeam.replace(/^against\s+/i, '').trim(); // "against Sassuolo" -> "Sassuolo"
       awayTeam = awayTeam.replace(/\s+(will|this|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\s+.*$/i, '').trim();
-      
+
       // Must have reasonable team names (2+ chars each)
       if (homeTeam.length >= 2 && awayTeam.length >= 2) {
         // Detect sport from team names or message
         const sport = detectSportFromTeams(homeTeam, awayTeam, message);
-        
+
         console.log(`[AI-Chat] Team extraction: Home="${homeTeam}", Away="${awayTeam}", Sport="${sport}"`);
-        
+
         return {
           isMatchAnalysis: true,
           homeTeam,
@@ -598,7 +599,7 @@ function detectMatchAnalysisRequest(message: string): {
       }
     }
   }
-  
+
   return { isMatchAnalysis: false, homeTeam: null, awayTeam: null, sport: null };
 }
 
@@ -607,60 +608,60 @@ function detectMatchAnalysisRequest(message: string): {
  */
 function detectSportFromTeams(homeTeam: string, awayTeam: string, message: string): string {
   const combined = `${homeTeam} ${awayTeam} ${message}`.toLowerCase();
-  
+
   // ==========================================
   // BASKETBALL
   // ==========================================
-  
+
   // NBA teams
   const nbaTeams = /\b(lakers|celtics|warriors|bulls|heat|nets|knicks|76ers|sixers|bucks|nuggets|suns|mavs|mavericks|clippers|rockets|spurs|thunder|grizzlies|kings|pelicans|jazz|blazers|trail blazers|timberwolves|wolves|hornets|hawks|magic|pistons|pacers|wizards|cavaliers|cavs|raptors)\b/i;
   if (nbaTeams.test(combined) || /\bnba\b|basketball/i.test(message)) {
     return 'basketball_nba';
   }
-  
+
   // EuroLeague basketball
   const euroLeagueTeams = /\b(real madrid basket|barcelona basket|olympiacos|panathinaikos|fenerbahce|anadolu efes|cska moscow|maccabi tel aviv|zalgiris|baskonia|virtus bologna|partizan|red star|monaco basket|olympia milano|bayern munich basket)\b/i;
   if (euroLeagueTeams.test(combined) || /euroleague|eurocup/i.test(message)) {
     return 'basketball_euroleague';
   }
-  
+
   // NCAA Basketball
   if (/ncaa|college basketball|march madness|duke blue devils|tar heels|wildcats|jayhawks|spartans|wolverines|hoosiers/i.test(combined)) {
     return 'basketball_ncaab';
   }
-  
+
   // ==========================================
   // AMERICAN FOOTBALL
   // ==========================================
-  
+
   // NFL teams
   const nflTeams = /\b(chiefs|eagles|bills|49ers|niners|cowboys|ravens|lions|dolphins|bengals|chargers|broncos|jets|patriots|giants|raiders|saints|packers|steelers|seahawks|commanders|falcons|buccaneers|bucs|cardinals|rams|bears|vikings|browns|texans|colts|jaguars|jags|titans|panthers)\b/i;
   if (nflTeams.test(combined) || /\bnfl\b|super bowl|american football/i.test(message)) {
     return 'americanfootball_nfl';
   }
-  
+
   // NCAA Football
   if (/ncaaf|college football|cfb|alabama crimson|ohio state buckeyes|georgia bulldogs|clemson tigers|michigan wolverines/i.test(combined)) {
     return 'americanfootball_ncaaf';
   }
-  
+
   // ==========================================
   // ICE HOCKEY
   // ==========================================
-  
+
   // NHL teams
   const nhlTeams = /\b(bruins|rangers|maple leafs|leafs|canadiens|habs|blackhawks|penguins|flyers|red wings|oilers|flames|canucks|avalanche|lightning|panthers|stars|blues|wild|kraken|golden knights|knights|ducks|sharks|kings|senators|sabres|devils|islanders|hurricanes|predators|jets|coyotes|blue jackets)\b/i;
   if (nhlTeams.test(combined) || /\bnhl\b|hockey/i.test(message)) {
     return 'icehockey_nhl';
   }
-  
+
   // ==========================================
   // MMA / UFC
   // ==========================================
   if (/\bufc\b|\bmma\b|fight night|bellator|pfl|one championship/i.test(message)) {
     return 'mma_mixed_martial_arts';
   }
-  
+
   // ==========================================
   // BASEBALL
   // ==========================================
@@ -668,107 +669,107 @@ function detectSportFromTeams(homeTeam: string, awayTeam: string, message: strin
   if (mlbTeams.test(combined) || /\bmlb\b|baseball|world series/i.test(message)) {
     return 'baseball_mlb';
   }
-  
+
   // ==========================================
   // TENNIS
   // ==========================================
   if (/tennis|wimbledon|us open tennis|french open|australian open|atp|wta|grand slam/i.test(message)) {
     return 'tennis_atp_us_open'; // Default tennis
   }
-  
+
   // ==========================================
   // SOCCER - SPECIFIC LEAGUES (check before generic)
   // ==========================================
-  
+
   // Champions League / Europa League
   if (/champions league|ucl|europa league|uel|conference league/i.test(message)) {
     return 'soccer_uefa_champs_league';
   }
-  
+
   // Serie A (Italian) teams
   const serieATeams = /\b(roma|lazio|napoli|juventus|juve|inter milan|inter|ac milan|milan|atalanta|fiorentina|bologna|torino|genoa|sassuolo|udinese|verona|hellas verona|lecce|empoli|cagliari|monza|parma|sampdoria|salernitana|spezia|cremonese|frosinone|como|venezia)\b/i;
   if (serieATeams.test(combined) || /serie a|calcio|italian league/i.test(message)) {
     return 'soccer_italy_serie_a';
   }
-  
+
   // La Liga (Spanish) teams
   const laLigaTeams = /\b(real madrid|barcelona|barca|atletico madrid|atletico|sevilla|valencia|villarreal|betis|real betis|real sociedad|athletic bilbao|athletic club|getafe|osasuna|celta vigo|celta|mallorca|rayo vallecano|rayo|almeria|cadiz|las palmas|girona|alaves|leganes)\b/i;
   if (laLigaTeams.test(combined) || /la liga|spanish league|primera division/i.test(message)) {
     return 'soccer_spain_la_liga';
   }
-  
+
   // Bundesliga (German) teams
   const bundesligaTeams = /\b(bayern munich|bayern|borussia dortmund|dortmund|bvb|bayer leverkusen|leverkusen|rb leipzig|leipzig|eintracht frankfurt|frankfurt|wolfsburg|borussia monchengladbach|gladbach|freiburg|hoffenheim|mainz|augsburg|koln|cologne|stuttgart|union berlin|hertha berlin|hertha|bochum|werder bremen|bremen|schalke|darmstadt|heidenheim|st pauli)\b/i;
   if (bundesligaTeams.test(combined) || /bundesliga|german league/i.test(message)) {
     return 'soccer_germany_bundesliga';
   }
-  
+
   // Ligue 1 (French) teams
   const ligue1Teams = /\b(psg|paris saint-germain|paris|marseille|om|lyon|olympique lyon|monaco|lille|losc|nice|lens|rennes|strasbourg|nantes|montpellier|toulouse|reims|brest|lorient|clermont|metz|le havre|auxerre|angers)\b/i;
   if (ligue1Teams.test(combined) || /ligue 1|french league/i.test(message)) {
     return 'soccer_france_ligue_one';
   }
-  
+
   // Premier League (English) teams
   const eplTeams = /\b(arsenal|chelsea|liverpool|manchester united|man utd|man united|manchester city|man city|tottenham|spurs|newcastle|newcastle united|west ham|aston villa|villa|brighton|crystal palace|palace|fulham|brentford|everton|nottingham forest|forest|bournemouth|wolves|wolverhampton|burnley|sheffield united|sheffield|luton|luton town|ipswich|leicester)\b/i;
   if (eplTeams.test(combined) || /premier league|epl|english premier/i.test(message)) {
     return 'soccer_epl';
   }
-  
+
   // Primeira Liga (Portuguese) teams
   const primeiraTeams = /\b(benfica|porto|sporting cp|sporting lisbon|braga|vitoria guimaraes|boavista|famalicao|rio ave|gil vicente|santa clara|arouca|estoril|casa pia|vizela|portimonense|maritimo|chaves)\b/i;
   if (primeiraTeams.test(combined) || /primeira liga|portuguese league/i.test(message)) {
     return 'soccer_portugal_primeira_liga';
   }
-  
+
   // Eredivisie (Dutch) teams
   const eredivisieTeams = /\b(ajax|psv|psv eindhoven|feyenoord|az alkmaar|az|twente|utrecht|vitesse|heerenveen|groningen|sparta rotterdam|nec|rkc waalwijk|go ahead eagles|fortuna sittard|volendam|excelsior|cambuur|emmen)\b/i;
   if (eredivisieTeams.test(combined) || /eredivisie|dutch league/i.test(message)) {
     return 'soccer_netherlands_eredivisie';
   }
-  
+
   // Turkish Super Lig
   const turkishTeams = /\b(galatasaray|fenerbahce|besiktas|trabzonspor|basaksehir|konyaspor|antalyaspor|sivasspor|alanyaspor|kasimpasa|gaziantep|hatayspor|kayserispor|adana demirspor|giresunspor|rizespor|samsunspor|pendikspor)\b/i;
   if (turkishTeams.test(combined) || /super lig|turkish league/i.test(message)) {
     return 'soccer_turkey_super_league';
   }
-  
+
   // Belgian First Division
   const belgianTeams = /\b(club brugge|anderlecht|genk|standard liege|gent|antwerp|union saint-gilloise|union sg|cercle brugge|mechelen|oostende|charleroi|westerlo|oud-heverlee leuven|kortrijk|sint-truiden|eupen)\b/i;
   if (belgianTeams.test(combined) || /belgian league|jupiler/i.test(message)) {
     return 'soccer_belgium_first_div';
   }
-  
+
   // Scottish Premiership
   const scottishTeams = /\b(celtic|rangers|aberdeen|hearts|hibernian|hibs|dundee united|dundee|motherwell|st johnstone|kilmarnock|ross county|livingston|st mirren)\b/i;
   if (scottishTeams.test(combined) || /scottish premiership|scottish league|spfl/i.test(message)) {
     return 'soccer_spl';
   }
-  
+
   // MLS (USA)
   const mlsTeams = /\b(la galaxy|lafc|inter miami|atlanta united|seattle sounders|portland timbers|new york red bulls|nycfc|new york city|orlando city|austin fc|nashville sc|fc cincinnati|columbus crew|toronto fc|cf montreal|dc united|chicago fire|colorado rapids|minnesota united|sporting kc|houston dynamo|real salt lake|san jose earthquakes|vancouver whitecaps|new england revolution|philadelphia union|charlotte fc|st louis city)\b/i;
   if (mlsTeams.test(combined) || /\bmls\b|major league soccer/i.test(message)) {
     return 'soccer_usa_mls';
   }
-  
+
   // Liga MX (Mexico)
   const ligaMxTeams = /\b(club america|america|guadalajara|chivas|cruz azul|tigres|monterrey|pumas|toluca|santos laguna|leon|pachuca|necaxa|atlas|queretaro|puebla|mazatlan|tijuana|juarez)\b/i;
   if (ligaMxTeams.test(combined) || /liga mx|mexican league/i.test(message)) {
     return 'soccer_mexico_ligamx';
   }
-  
+
   // Brazilian Serie A
   const brazilTeams = /\b(flamengo|palmeiras|corinthians|sao paulo|santos|fluminense|botafogo|atletico mineiro|gremio|internacional|cruzeiro|vasco|bahia|fortaleza|athletico paranaense|ceara|coritiba|goias|cuiaba|america mineiro)\b/i;
   if (brazilTeams.test(combined) || /brasileirao|brazilian league/i.test(message)) {
     return 'soccer_brazil_serie_a';
   }
-  
+
   // Argentine Primera Division
   const argentinaTeams = /\b(boca juniors|boca|river plate|river|racing club|racing|independiente|san lorenzo|huracan|velez sarsfield|velez|estudiantes|lanus|defensa y justicia|talleres|godoy cruz|union|colon|central cordoba|newell's|rosario central|banfield|argentinos juniors)\b/i;
   if (argentinaTeams.test(combined) || /argentine league|primera division argentina/i.test(message)) {
     return 'soccer_argentina_primera_division';
   }
-  
+
   // ==========================================
   // GENERIC SOCCER FALLBACK
   // ==========================================
@@ -776,7 +777,7 @@ function detectSportFromTeams(homeTeam: string, awayTeam: string, message: strin
   if (soccerIndicators.test(combined) || /soccer|football|futbol|fussball/i.test(message)) {
     return 'soccer_epl'; // Default to EPL if can't determine specific league
   }
-  
+
   // Default to soccer (most common globally)
   return 'soccer_epl';
 }
@@ -799,28 +800,28 @@ async function performMatchAnalysis(
       const parts = sportKey.split('_');
       return parts.length >= 2 ? parts.slice(1).join('-') : sportKey;
     };
-    
+
     const homeSlug = slugify(homeTeam);
     const awaySlug = slugify(awayTeam);
     const sportCode = getSportCode(sport);
     const today = new Date().toISOString().split('T')[0];
-    
+
     // Proper format: roma-vs-sassuolo-italy-serie-a-2026-01-10
     const matchId = `${homeSlug}-vs-${awaySlug}-${sportCode}-${today}`;
-    
+
     // Get the host from the request
     const protocol = request.headers.get('x-forwarded-proto') || 'http';
     const host = request.headers.get('host') || 'localhost:3000';
     const baseUrl = `${protocol}://${host}`;
-    
+
     // Forward all headers for authentication (including cookies)
     const cookies = request.headers.get('cookie') || '';
     const authHeader = request.headers.get('authorization') || '';
-    
+
     console.log(`[AI-Chat] Calling match-preview API for: ${homeTeam} vs ${awayTeam}`);
     console.log(`[AI-Chat] Generated matchId: ${matchId}`);
     console.log(`[AI-Chat] Cookies present: ${cookies.length > 0}`);
-    
+
     // Try match-preview first for real data
     const previewResponse = await fetch(`${baseUrl}/api/match-preview/${encodeURIComponent(matchId)}`, {
       method: 'GET',
@@ -829,10 +830,10 @@ async function performMatchAnalysis(
         'Authorization': authHeader,
       },
     });
-    
+
     if (previewResponse.ok) {
       const previewData = await previewResponse.json();
-      
+
       // Check if this is a demo/random match instead of the real match we asked for
       // If isDemo is true and the teams don't match, skip this response
       if (previewData.isDemo) {
@@ -840,7 +841,7 @@ async function performMatchAnalysis(
       } else {
         // Format the rich preview data for chat
         const formattedResponse = formatMatchPreviewForChat(previewData, homeTeam, awayTeam);
-        
+
         return {
           success: true,
           response: formattedResponse,
@@ -849,7 +850,7 @@ async function performMatchAnalysis(
     } else {
       console.log(`[AI-Chat] Match-preview failed (${previewResponse.status}), falling back to analyze API`);
     }
-    
+
     // Fallback to analyze API with default odds
     const analyzeRequest = {
       matchData: {
@@ -866,7 +867,7 @@ async function performMatchAnalysis(
         },
       },
     };
-    
+
     // Call the analyze API
     const analyzeResponse = await fetch(`${baseUrl}/api/analyze`, {
       method: 'POST',
@@ -876,10 +877,10 @@ async function performMatchAnalysis(
       },
       body: JSON.stringify(analyzeRequest),
     });
-    
+
     if (!analyzeResponse.ok) {
       const errorData = await analyzeResponse.json().catch(() => ({}));
-      
+
       // Check for usage limit
       if (analyzeResponse.status === 403) {
         return {
@@ -887,7 +888,7 @@ async function performMatchAnalysis(
           response: `⚠️ **Analysis Limit Reached**\n\nYou've used your daily analysis quota. To get full match analysis for **${homeTeam} vs ${awayTeam}**, please upgrade your plan or wait until tomorrow.\n\n👉 [View Pricing](/pricing)`,
         };
       }
-      
+
       // Check for auth required
       if (analyzeResponse.status === 401) {
         return {
@@ -895,25 +896,25 @@ async function performMatchAnalysis(
           response: `🔐 **Sign In Required**\n\nTo get AI-powered match analysis for **${homeTeam} vs ${awayTeam}**, please sign in to your account.\n\n👉 [Sign In](/login) or [Create Account](/register)`,
         };
       }
-      
+
       return {
         success: false,
         error: errorData.error || 'Analysis failed',
         response: `Sorry, I couldn't analyze **${homeTeam} vs ${awayTeam}** right now. Please try using the [Match Analyzer](/analyzer) directly.`,
       };
     }
-    
+
     const analysisData = await analyzeResponse.json();
-    
+
     console.log(`[AI-Chat] Analyze API response success: ${analysisData.success}`);
     console.log(`[AI-Chat] Has briefing: ${!!analysisData.briefing}`);
     console.log(`[AI-Chat] Has probabilities: ${!!analysisData.probabilities}`);
-    
+
     // Format the analysis for chat display
     const formattedResponse = formatAnalysisForChat(analysisData, homeTeam, awayTeam);
-    
+
     console.log(`[AI-Chat] Formatted response length: ${formattedResponse.length}`);
-    
+
     return {
       success: true,
       response: formattedResponse,
@@ -933,12 +934,12 @@ async function performMatchAnalysis(
  */
 function formatMatchPreviewForChat(data: any, homeTeam: string, awayTeam: string): string {
   let response = `## 🔮 ${homeTeam} vs ${awayTeam}\n\n`;
-  
+
   // Story/Narrative
   if (data.story?.narrative) {
     response += `${data.story.narrative}\n\n`;
   }
-  
+
   // Prediction
   if (data.story?.favored) {
     const favored = data.story.favored;
@@ -947,7 +948,7 @@ function formatMatchPreviewForChat(data: any, homeTeam: string, awayTeam: string
     const emoji = confidence === 'strong' ? '💪' : confidence === 'moderate' ? '📊' : '🤔';
     response += `### ${emoji} Prediction: **${team}** (${confidence} confidence)\n\n`;
   }
-  
+
   // Market Edge
   if (data.marketIntel?.valueEdge) {
     const edge = data.marketIntel.valueEdge;
@@ -956,25 +957,25 @@ function formatMatchPreviewForChat(data: any, homeTeam: string, awayTeam: string
       response += `- **${edge.side}** @ ${edge.odds?.toFixed(2)} (${edge.edgePercent?.toFixed(1)}% edge)\n\n`;
     }
   }
-  
+
   // Form Data
   if (data.momentumAndForm?.homeForm?.length > 0 || data.momentumAndForm?.awayForm?.length > 0) {
     response += `### 📈 Recent Form\n`;
     if (data.momentumAndForm.homeForm?.length > 0) {
-      const homeFormStr = data.momentumAndForm.homeForm.slice(0, 5).map((m: any) => 
+      const homeFormStr = data.momentumAndForm.homeForm.slice(0, 5).map((m: any) =>
         m.result === 'W' ? '✅' : m.result === 'L' ? '❌' : '➖'
       ).join('');
       response += `- **${homeTeam}**: ${homeFormStr}\n`;
     }
     if (data.momentumAndForm.awayForm?.length > 0) {
-      const awayFormStr = data.momentumAndForm.awayForm.slice(0, 5).map((m: any) => 
+      const awayFormStr = data.momentumAndForm.awayForm.slice(0, 5).map((m: any) =>
         m.result === 'W' ? '✅' : m.result === 'L' ? '❌' : '➖'
       ).join('');
       response += `- **${awayTeam}**: ${awayFormStr}\n`;
     }
     response += '\n';
   }
-  
+
   // Key Factors
   if (data.universalSignals?.length > 0) {
     response += `### 🔑 Key Factors\n`;
@@ -985,7 +986,7 @@ function formatMatchPreviewForChat(data: any, homeTeam: string, awayTeam: string
     }
     response += '\n';
   }
-  
+
   // Injuries
   if (data.injuries?.home?.length > 0 || data.injuries?.away?.length > 0) {
     response += `### 🏥 Injury News\n`;
@@ -997,10 +998,10 @@ function formatMatchPreviewForChat(data: any, homeTeam: string, awayTeam: string
     }
     response += '\n';
   }
-  
+
   // Disclaimer
   response += `---\n⚠️ *This is educational analysis, not betting advice. Always gamble responsibly.*`;
-  
+
   return response;
 }
 
@@ -1010,9 +1011,9 @@ function formatMatchPreviewForChat(data: any, homeTeam: string, awayTeam: string
  */
 function formatAnalysisForChat(analysis: any, homeTeam: string, awayTeam: string): string {
   const { probabilities, briefing, valueAnalysis, oddsComparison, riskAnalysis, tacticalAnalysis, responsibleGambling } = analysis;
-  
+
   let response = `## 🎯 Match Analysis: ${homeTeam} vs ${awayTeam}\n\n`;
-  
+
   // AI Briefing - use headline and verdict (not narrative)
   if (briefing?.headline) {
     response += `### 💡 Key Insight\n${briefing.headline}\n`;
@@ -1021,7 +1022,7 @@ function formatAnalysisForChat(analysis: any, homeTeam: string, awayTeam: string
     }
     response += '\n';
   }
-  
+
   // Key points from briefing
   if (briefing?.keyPoints && briefing.keyPoints.length > 0) {
     response += `### 🔑 Key Factors\n`;
@@ -1030,7 +1031,7 @@ function formatAnalysisForChat(analysis: any, homeTeam: string, awayTeam: string
     }
     response += '\n';
   }
-  
+
   // Probabilities
   if (probabilities) {
     response += `### 📊 AI Probability Estimates\n`;
@@ -1045,7 +1046,7 @@ function formatAnalysisForChat(analysis: any, homeTeam: string, awayTeam: string
     }
     response += '\n';
   }
-  
+
   // Odds Comparison (edge) - preferred over deprecated valueAnalysis
   if (oddsComparison) {
     const edge = oddsComparison.homeEdge || oddsComparison.awayEdge || oddsComparison.drawEdge;
@@ -1056,7 +1057,7 @@ function formatAnalysisForChat(analysis: any, homeTeam: string, awayTeam: string
         Math.abs(oddsComparison.drawEdge || 0)
       );
       const edgeTeam = (oddsComparison.homeEdge || 0) === bestEdge ? homeTeam :
-                       (oddsComparison.awayEdge || 0) === bestEdge ? awayTeam : 'Draw';
+        (oddsComparison.awayEdge || 0) === bestEdge ? awayTeam : 'Draw';
       response += `### 💎 Value Indication\n`;
       response += `Best edge: **${edgeTeam}** (+${bestEdge.toFixed(1)}% edge)\n\n`;
     }
@@ -1069,7 +1070,7 @@ function formatAnalysisForChat(analysis: any, homeTeam: string, awayTeam: string
     }
     response += '\n\n';
   }
-  
+
   // Risk Level
   if (riskAnalysis?.riskLevel) {
     const riskEmoji = riskAnalysis.riskLevel === 'LOW' ? '🟢' : riskAnalysis.riskLevel === 'MEDIUM' ? '🟡' : '🔴';
@@ -1079,16 +1080,16 @@ function formatAnalysisForChat(analysis: any, homeTeam: string, awayTeam: string
     }
     response += '\n';
   }
-  
+
   // Expert one-liner from tactical analysis
   if (tacticalAnalysis?.expertConclusionOneLiner) {
     response += `**Expert Take:** ${tacticalAnalysis.expertConclusionOneLiner}\n\n`;
   }
-  
+
   // Disclaimer
   const disclaimer = responsibleGambling?.disclaimer || 'This is educational analysis, not betting advice. Always gamble responsibly.';
   response += `---\n⚠️ *${disclaimer}*`;
-  
+
   return response;
 }
 
@@ -1101,7 +1102,7 @@ function detectQueryCategory(message: string): QueryCategory {
   if (analysisIntent.isMatchAnalysis) {
     return 'MATCH_ANALYSIS';
   }
-  
+
   // Check for betting advice / player props
   const bettingIntent = detectBettingIntent(message);
   if (bettingIntent.isBettingAdvice) {
@@ -1114,77 +1115,77 @@ function detectQueryCategory(message: string): QueryCategory {
   if (/who (plays|is|are)|roster|squad|lineup|starting|player|team sheet|formation/i.test(message)) {
     return 'ROSTER';
   }
-  
+
   // Fixture/Schedule
   if (/when (is|does|do|are)|next (game|match|fixture)|schedule|kickoff|what time|upcoming/i.test(message)) {
     return 'FIXTURE';
   }
-  
+
   // Results/Scores
   if (/score|result|won|lost|beat|draw|final score|how did|did .* win/i.test(message)) {
     return 'RESULT';
   }
-  
+
   // Standings/Table
   if (/standings|table|position|rank|points|top of|bottom of|league table/i.test(message)) {
     return 'STANDINGS';
   }
-  
+
   // Statistics - THIS MUST COME BEFORE PLAYER to catch "player + stats" queries
   // Including current season questions about player performance
   // Supports multiple languages and sports
   if (/stats|statistics|goals|assists|top scorer|most|average|record|career/i.test(message) ||
-      // Serbian/Croatian - football
-      /koliko (golova|asistencija|utakmica)|golova je postigao/i.test(message) ||
-      // Serbian/Croatian - basketball  
-      /koliko (koseva|poena|skokova|asistencija)|postigao (koseva|poena)|ubacio|trojki/i.test(message) ||
-      // Serbian/Croatian - last game queries
-      /posledn(joj|ja|ju|ji|je|eg|oj|em) (utakmic|meč)|sinoć|jučer|juče/i.test(message) ||
-      // English - last game queries
-      /how many (goals|points|rebounds|assists)|scored (this|last)|last (game|match)/i.test(message) ||
-      /points (did|in)|rebounds (did|in)|assists (did|in)/i.test(message) ||
-      // Season queries
-      /goals this season|season stats|sezon|this season|current season|2024|2025/i.test(message) ||
-      // NBA specific
-      /ppg|rpg|apg|per game|game average|season average/i.test(message)) {
+    // Serbian/Croatian - football
+    /koliko (golova|asistencija|utakmica)|golova je postigao/i.test(message) ||
+    // Serbian/Croatian - basketball  
+    /koliko (koseva|poena|skokova|asistencija)|postigao (koseva|poena)|ubacio|trojki/i.test(message) ||
+    // Serbian/Croatian - last game queries
+    /posledn(joj|ja|ju|ji|je|eg|oj|em) (utakmic|meč)|sinoć|jučer|juče/i.test(message) ||
+    // English - last game queries
+    /how many (goals|points|rebounds|assists)|scored (this|last)|last (game|match)/i.test(message) ||
+    /points (did|in)|rebounds (did|in)|assists (did|in)/i.test(message) ||
+    // Season queries
+    /goals this season|season stats|sezon|this season|current season|2024|2025/i.test(message) ||
+    // NBA specific
+    /ppg|rpg|apg|per game|game average|season average/i.test(message)) {
     return 'STATS';
   }
-  
+
   // Injuries
   if (/injur|fit|available|out|miss|suspend|ban|ruled out|doubtful/i.test(message)) {
     return 'INJURY';
   }
-  
+
   // Transfers
   if (/transfer|sign|signing|rumor|buy|sell|loan|contract|free agent|deal/i.test(message)) {
     return 'TRANSFER';
   }
-  
+
   // Manager/Coach
   if (/manager|coach|boss|head coach|said|press conference|tactic|formation/i.test(message)) {
     return 'MANAGER';
   }
-  
+
   // Odds/Markets
   if (/odds|favorite|underdog|market|price|over under|spread|moneyline/i.test(message)) {
     return 'ODDS';
   }
-  
+
   // Comparisons
   if (/vs|versus|compare|better|who is better|difference between/i.test(message)) {
     return 'COMPARISON';
   }
-  
+
   // History/Records
   if (/history|all.time|record|ever|most .* in history|champion|trophy|won the/i.test(message)) {
     return 'HISTORY';
   }
-  
+
   // Broadcast/TV
   if (/watch|channel|tv|stream|broadcast|where .* watch|how .* watch/i.test(message)) {
     return 'BROADCAST';
   }
-  
+
   // Player/Athlete lookup patterns:
   // - "where does X play", "who is X", "tell me about X"
   // - "X player", "X career", "X biography"
@@ -1201,12 +1202,12 @@ function detectQueryCategory(message: string): QueryCategory {
       return 'PLAYER';
     }
   }
-  
+
   // Venue/Stadium - only if explicitly asking about stadium
   if (/stadium|venue|arena|capacity|home ground|where .* (team|club) play/i.test(message)) {
     return 'VENUE';
   }
-  
+
   return 'GENERAL';
 }
 
@@ -1266,19 +1267,19 @@ interface RoutingDecision {
 const REALTIME_TRIGGERS = {
   // Current season/form (changes weekly) - includes Serbian/Croatian
   currentSeason: /this season|current season|sez[oó]n|2024.?2025|2025.?2026|form|recent|últim|dernièr|letzte|koliko (golova|asistencija)|how many goals|goals (this|scored)|postig(ao|la)/i,
-  
+
   // Live/Today (changes hourly)  
   liveData: /today|tonight|now|live|score|result|playing|won|lost|beat|sinoć|večeras|hoy|heute|aujourd/i,
-  
+
   // Breaking news (changes daily)
   breakingNews: /news|update|breaking|announced|confirmed|sign|transfer|injur|out|miss|ruled out|povred/i,
-  
+
   // Current status questions - includes Serbian
   currentStatus: /where (does|is|do)|gde igra|gdje igra|koji klub|za koga igra|plays for|current (team|club)|juega en|spielt für/i,
-  
+
   // Standings/table (changes weekly)
   standings: /standing|table|position|rank|top of|lead|tabela|clasificación|classement|tabelle/i,
-  
+
   // Lineup/Squad
   lineup: /lineup|squad|roster|starting|bench|XI|postava|alineación|aufstellung/i,
 };
@@ -1290,19 +1291,19 @@ const GPT_SUFFICIENT = {
   rulesOf: /rules of|pravila|reglas|règles|regeln/i,
   howMany: /how many (players|substitut|minutes|halves|quarters|periods|sets)/i,
   explain: /explain .*(rule|offside|foul|tactic|formation|strategy)/i,
-  
+
   // Tactical knowledge
   tactics: /what is (a )?(4-4-2|4-3-3|3-5-2|false.?9|pressing|counter|possession|parking|tiki.?taka)/i,
   formations: /best formation|how to (play|defend|attack)|tactical|strategically/i,
-  
+
   // Historical facts (well-established)
   allTime: /all.time (record|top|best|most|greatest)|in history|ever (score|won|play)|of all time/i,
   trophies: /how many (trophies|titles|cups|championships) (has|did|have)/i,
-  
+
   // Greetings & meta
   greetings: /^(hello|hi|hey|thanks|thank you|bye|ok|okay|good|great|nice|cool)[\s!?.]*$/i,
   meta: /^(who are you|what can you do|help|how does this work)[\s!?.]*$/i,
-  
+
   // Hypotheticals
   hypothetical: /^(what if|imagine|suppose|hypothetically)/i,
 };
@@ -1312,13 +1313,13 @@ const WIKIPEDIA_PREFERRED = {
   // Player biography
   biography: /(who is|tell me about|biography|born|nationality|height|age|career) .* (player|footballer|athlete)/i,
   playerBio: /when was .* born|where was .* born|how old is|nationality of/i,
-  
+
   // Team history
   teamHistory: /(founded|history|origin|when was .* (formed|founded|created))/i,
-  
+
   // All-time records (stable data)
   records: /(record|most goals in|all.time|career (goals|assists|appearances)|total (goals|trophies))/i,
-  
+
   // Trophy/achievement counts (relatively stable)
   achievements: /how many (champions league|world cup|ballon d'or|mvp)|won the/i,
 };
@@ -1328,7 +1329,7 @@ const WIKIPEDIA_PREFERRED = {
  */
 function routeQuery(message: string, category: QueryCategory): RoutingDecision {
   const lower = message.toLowerCase();
-  
+
   // 1. Check GPT-ONLY patterns (highest priority for cost savings)
   for (const [key, pattern] of Object.entries(GPT_SUFFICIENT)) {
     if (pattern.test(message)) {
@@ -1339,12 +1340,12 @@ function routeQuery(message: string, category: QueryCategory): RoutingDecision {
       };
     }
   }
-  
+
   // 2. Check REALTIME triggers (highest priority for accuracy)
   for (const [key, pattern] of Object.entries(REALTIME_TRIGGERS)) {
     if (pattern.test(message)) {
-      const recency = key === 'liveData' ? 'hour' : 
-                      key === 'breakingNews' ? 'day' : 'week';
+      const recency = key === 'liveData' ? 'hour' :
+        key === 'breakingNews' ? 'day' : 'week';
       return {
         source: 'REALTIME',
         recency,
@@ -1353,7 +1354,7 @@ function routeQuery(message: string, category: QueryCategory): RoutingDecision {
       };
     }
   }
-  
+
   // 3. Check WIKIPEDIA preference
   for (const [key, pattern] of Object.entries(WIKIPEDIA_PREFERRED)) {
     if (pattern.test(message)) {
@@ -1374,7 +1375,7 @@ function routeQuery(message: string, category: QueryCategory): RoutingDecision {
       };
     }
   }
-  
+
   // 4. Category-based routing
   const categoryRoutes: Record<QueryCategory, RoutingDecision> = {
     PLAYER: {
@@ -1486,7 +1487,7 @@ function routeQuery(message: string, category: QueryCategory): RoutingDecision {
       reason: 'Unknown query type - search to be safe'
     }
   };
-  
+
   return categoryRoutes[category] || categoryRoutes.GENERAL;
 }
 
@@ -1497,11 +1498,11 @@ const GPT_ONLY_PATTERNS = [
   /rules of (football|soccer|basketball|tennis)/i,
   /how many players/i,
   /explain .*(rule|offside|foul)/i,
-  
+
   // Simple greetings (no search needed)
   /^(hello|hi|hey|thanks|thank you|bye|ok|okay)[\s!?.]*$/i,
   /^(who are you|what can you do|help me?)[\s!?.]*$/i,
-  
+
   // Pure hypotheticals with no real lookup
   /^what if .* (never|didn't|hadn't)/i,
   /^imagine if/i,
@@ -1514,9 +1515,9 @@ const GPT_ONLY_PATTERNS = [
 function getOptimalRoute(message: string): RoutingDecision & { shouldSearch: boolean } {
   const category = detectQueryCategory(message);
   const route = routeQuery(message, category);
-  
+
   console.log(`[Router] Category: ${category}, Source: ${route.source}, Confidence: ${route.confidence}%, Reason: ${route.reason}`);
-  
+
   return {
     ...route,
     shouldSearch: route.source !== 'GPT_ONLY'
@@ -1545,13 +1546,13 @@ function getCurrentSeasonForSport(sport: string): string {
   const now = new Date();
   const month = now.getMonth(); // 0-11
   const year = now.getFullYear();
-  
+
   // For most sports, season spans two calendar years
   // If we're in the first half (Jan-Jun), we're in the previous year's season
   // If we're in the second half (Jul-Dec), we're in the current year's season
-  
+
   let seasonStartYear: number;
-  
+
   if (sport === 'basketball' || sport === 'nba') {
     // NBA: Oct-Jun. If Jan-Jun, season started previous year
     seasonStartYear = (month >= 0 && month <= 5) ? year - 1 : year;
@@ -1565,7 +1566,7 @@ function getCurrentSeasonForSport(sport: string): string {
     // Football/Soccer: Aug-May. If Jan-May, season started previous year
     seasonStartYear = (month >= 0 && month <= 4) ? year - 1 : year;
   }
-  
+
   const seasonEndYear = (seasonStartYear + 1) % 100; // Get last 2 digits
   return `${seasonStartYear}-${seasonEndYear.toString().padStart(2, '0')}`;
 }
@@ -1575,12 +1576,12 @@ function buildOptimizedSearchQuery(message: string, route: RoutingDecision): str
     .replace(/\?/g, '')
     .replace(/please|can you|could you|tell me|what do you think|i want to know/gi, '')
     .trim();
-  
+
   // Detect sport for season context
   const sport = detectSport(message) || 'football';
   const currentSeason = getCurrentSeasonForSport(sport);
   const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  
+
   // Extract player/team name for better search - ROBUST extraction
   // Try multiple patterns, case-insensitive
   const namePatterns = [
@@ -1595,7 +1596,7 @@ function buildOptimizedSearchQuery(message: string, route: RoutingDecision): str
     // Generic: two words that look like names (2-15 chars each)
     /\b([a-zA-ZćčšžđĆČŠŽĐñüéáíóú]{2,15}\s+[a-zA-ZćčšžđĆČŠŽĐñüéáíóú]{3,20})\b/i,
   ];
-  
+
   let extractedName: string | null = null;
   for (const pattern of namePatterns) {
     const match = query.match(pattern);
@@ -1613,7 +1614,7 @@ function buildOptimizedSearchQuery(message: string, route: RoutingDecision): str
       }
     }
   }
-  
+
   // Sport-specific stat keywords (what to search for, not site names)
   const sportStatTerms: Record<string, string> = {
     basketball: 'PPG RPG APG points rebounds assists',
@@ -1633,19 +1634,19 @@ function buildOptimizedSearchQuery(message: string, route: RoutingDecision): str
     golf: 'wins ranking earnings',
     cricket: 'runs wickets average',
   };
-  
+
   const statTerms = sportStatTerms[sport] || 'stats statistics';
-  
+
   switch (route.source) {
     case 'GPT_ONLY':
       return ''; // No search needed
-      
+
     case 'WIKIPEDIA':
       if (extractedName) {
         return `"${extractedName}" site:wikipedia.org athlete career biography`;
       }
       return `${query} site:wikipedia.org`;
-      
+
     case 'REALTIME':
       if (extractedName) {
         // For current status queries (where does X play)
@@ -1665,13 +1666,13 @@ function buildOptimizedSearchQuery(message: string, route: RoutingDecision): str
       }
       // Default real-time enhancement
       return `${query} ${route.recency === 'hour' ? 'today' : route.recency === 'day' ? currentMonth : currentSeason}`;
-      
+
     case 'HYBRID':
       if (extractedName) {
         return `"${extractedName}" ${currentSeason} ${statTerms} career`;
       }
       return `${query} ${currentSeason}`;
-      
+
     default:
       return query;
   }
@@ -1682,82 +1683,82 @@ function buildOptimizedSearchQuery(message: string, route: RoutingDecision): str
  */
 function detectSport(message: string): string | undefined {
   const lower = message.toLowerCase();
-  
+
   // Basketball / NBA
   if (/basketball|nba|euroleague|lakers|celtics|warriors|nets|76ers|sixers|bucks|heat|knicks|bulls|suns|mavericks|nuggets|clippers|spurs|rockets|point guard|shooting guard|small forward|power forward|center|dunk|three.?pointer|ppg|rebounds|assists|embiid|lebron|curry|giannis|jokic|dončić|doncic|tatum|durant/i.test(lower)) {
     return 'basketball';
   }
-  
+
   // American Football / NFL
   if (/nfl|american football|quarterback|touchdown|super bowl|chiefs|eagles|cowboys|patriots|bills|dolphins|ravens|49ers|bengals|lions|packers|yards|rushing|passing|sack|interception|mahomes|allen|burrow|hurts|herbert/i.test(lower)) {
     return 'american_football';
   }
-  
+
   // Ice Hockey / NHL
   if (/hockey|nhl|ice hockey|puck|goalie|goaltender|rangers|bruins|maple leafs|canadiens|oilers|avalanche|lightning|panthers|penguins|capitals|power play|hat trick|mcdavid|crosby|ovechkin|draisaitl|mackinnon/i.test(lower)) {
     return 'hockey';
   }
-  
+
   // Football/Soccer (check after American sports to avoid false positives)
   if (/soccer|premier league|la liga|serie a|bundesliga|ligue 1|champions league|europa league|epl|fc barcelona|real madrid|manchester|liverpool|arsenal|chelsea|bayern|psg|juventus|inter milan|ac milan|borussia|atletico|tottenham|goal|striker|midfielder|defender|haaland|mbappe|mbappé|vinicius|bellingham|salah|de bruyne|rodri/i.test(lower)) {
     return 'football';
   }
-  
+
   // Tennis
   if (/tennis|atp|wta|grand slam|wimbledon|us open|french open|roland garros|australian open|nadal|djokovic|federer|alcaraz|sinner|swiatek|sabalenka|gauff|medvedev|zverev|serve|backhand|forehand|ace|break point/i.test(lower)) {
     return 'tennis';
   }
-  
+
   // MMA/UFC
   if (/mma|ufc|bellator|pfl|one championship|knockout|submission|fighter|octagon|weight class|pound.for.pound|heavyweight|lightweight|welterweight|featherweight|bantamweight|jones|adesanya|pereira|makhachev|volkanovski|o'malley|chimaev/i.test(lower)) {
     return 'mma';
   }
-  
+
   // Boxing
   if (/boxing|boxer|heavyweight champion|world title fight|canelo|fury|usyk|joshua|crawford|spence|haney|davis|knockdown|tko|uppercut|jab/i.test(lower)) {
     return 'boxing';
   }
-  
+
   // Baseball / MLB
   if (/baseball|mlb|yankees|dodgers|red sox|mets|cubs|cardinals|braves|astros|phillies|padres|home run|pitcher|batting average|era|strikeout|rbi|ohtani|judge|trout|betts|acuña|soto/i.test(lower)) {
     return 'baseball';
   }
-  
+
   // Formula 1 / Motorsport
   if (/formula.?1|f1|grand prix|verstappen|hamilton|leclerc|norris|russell|sainz|perez|alonso|red bull racing|ferrari|mercedes|mclaren|pit stop|pole position|fastest lap|drs|nascar|indycar/i.test(lower)) {
     return 'f1';
   }
-  
+
   // Golf
   if (/golf|pga|lpga|masters|us open golf|british open|pga championship|ryder cup|scottie scheffler|rory mcilroy|jon rahm|brooks koepka|birdie|eagle|bogey|fairway|green/i.test(lower)) {
     return 'golf';
   }
-  
+
   // Cricket
   if (/cricket|ipl|test match|odi|t20|ashes|world cup cricket|kohli|sharma|babar|root|stokes|williamson|wicket|bowler|batsman|innings|century/i.test(lower)) {
     return 'cricket';
   }
-  
+
   // Rugby
   if (/rugby|six nations|rugby world cup|all blacks|springboks|wallabies|england rugby|try|scrum|lineout|ruck/i.test(lower)) {
     return 'rugby';
   }
-  
+
   // Esports
   if (/esports|e-sports|csgo|cs2|counter.?strike|valorant|league of legends|lol|dota|overwatch|call of duty|fortnite|hltv|liquipedia|major tournament/i.test(lower)) {
     return 'esports';
   }
-  
+
   // Cycling
   if (/cycling|tour de france|giro|vuelta|pogačar|pogacar|vingegaard|evenepoel|van aert|wout|peloton|stage race/i.test(lower)) {
     return 'cycling';
   }
-  
+
   // Generic "football" without other context - default to soccer (more global)
   if (/\bfootball\b/i.test(lower) && !/american|nfl|super bowl|touchdown|quarterback/i.test(lower)) {
     return 'football';
   }
-  
+
   return undefined;
 }
 
@@ -1766,7 +1767,7 @@ function detectSport(message: string): string | undefined {
  */
 function detectLeague(message: string): string | undefined {
   const lower = message.toLowerCase();
-  
+
   // Basketball leagues
   if (/\bnba\b|lakers|celtics|warriors|nets|76ers|sixers|bucks|heat|knicks|bulls|suns|mavericks|nuggets|clippers|spurs|rockets|embiid|lebron|curry|giannis|jokic|dončić|doncic|tatum|durant/i.test(lower)) {
     return 'nba';
@@ -1777,7 +1778,7 @@ function detectLeague(message: string): string | undefined {
   if (/ncaa basketball|college basketball|march madness|duke basketball|kentucky basketball|kansas basketball/i.test(lower)) {
     return 'ncaa_basketball';
   }
-  
+
   // Football/Soccer leagues
   if (/premier league|epl|manchester (united|city)|liverpool|arsenal|chelsea|tottenham|newcastle|west ham|aston villa|brighton/i.test(lower)) {
     return 'premier_league';
@@ -1800,7 +1801,7 @@ function detectLeague(message: string): string | undefined {
   if (/mls|inter miami|lafc|la galaxy|atlanta united|seattle sounders/i.test(lower)) {
     return 'mls';
   }
-  
+
   // American Football
   if (/\bnfl\b|chiefs|eagles|cowboys|patriots|bills|dolphins|ravens|49ers|bengals|lions|packers|jets|giants|raiders|broncos|chargers|steelers|saints|buccaneers|seahawks|vikings|commanders|bears|panthers|falcons|cardinals|titans|colts|jaguars|texans|browns|mahomes|allen|burrow|hurts|herbert/i.test(lower)) {
     return 'nfl';
@@ -1808,7 +1809,7 @@ function detectLeague(message: string): string | undefined {
   if (/college football|cfb|ncaa football|alabama football|ohio state football|georgia football|michigan football/i.test(lower)) {
     return 'ncaa_football';
   }
-  
+
   // Hockey
   if (/\bnhl\b|rangers|bruins|maple leafs|canadiens|oilers|avalanche|lightning|panthers|penguins|capitals|flyers|devils|islanders|hurricanes|wild|jets|blues|predators|stars|flames|canucks|kraken|golden knights|blackhawks|red wings|senators|ducks|kings|sharks|coyotes|mcdavid|crosby|ovechkin|draisaitl|mackinnon/i.test(lower)) {
     return 'nhl';
@@ -1816,27 +1817,27 @@ function detectLeague(message: string): string | undefined {
   if (/khl|kontinental hockey|ska|cska moscow|ak bars|metallurg/i.test(lower)) {
     return 'khl';
   }
-  
+
   // Baseball
   if (/\bmlb\b|yankees|dodgers|mets|phillies|braves|astros|red sox|cubs|cardinals|giants|padres|rangers|mariners|guardians|orioles|rays|blue jays|twins|brewers|diamondbacks|rockies|marlins|reds|pirates|nationals|royals|tigers|white sox|angels|athletics/i.test(lower)) {
     return 'mlb';
   }
-  
+
   // Tennis
   if (/atp|wta|grand slam|wimbledon|us open tennis|french open|roland garros|australian open/i.test(lower)) {
     return 'tennis';
   }
-  
+
   // MMA/UFC
   if (/\bufc\b|bellator|pfl|one championship/i.test(lower)) {
     return 'ufc';
   }
-  
+
   // F1
   if (/formula.?1|\bf1\b|red bull racing|ferrari f1|mercedes f1|mclaren f1/i.test(lower)) {
     return 'f1';
   }
-  
+
   // Cricket
   if (/\bipl\b|indian premier league|mumbai indians|chennai super kings|royal challengers|kolkata knight|delhi capitals|rajasthan royals|sunrisers/i.test(lower)) {
     return 'ipl';
@@ -1844,7 +1845,7 @@ function detectLeague(message: string): string | undefined {
   if (/test cricket|ashes|test match|county cricket/i.test(lower)) {
     return 'test_cricket';
   }
-  
+
   return undefined;
 }
 
@@ -1857,7 +1858,7 @@ function getLeagueSources(league: string | undefined, sport: string): string | u
     nba: 'site:espn.com OR site:nba.com OR site:basketball-reference.com',
     euroleague: 'site:euroleaguebasketball.net OR site:eurohoops.net OR site:basketnews.com',
     ncaa_basketball: 'site:espn.com OR site:sports-reference.com/cbb',
-    
+
     // Football/Soccer
     premier_league: 'site:premierleague.com OR site:transfermarkt.com OR site:fbref.com',
     la_liga: 'site:laliga.com OR site:transfermarkt.com OR site:fbref.com',
@@ -1866,37 +1867,37 @@ function getLeagueSources(league: string | undefined, sport: string): string | u
     ligue_1: 'site:ligue1.com OR site:transfermarkt.com OR site:fbref.com',
     champions_league: 'site:uefa.com OR site:transfermarkt.com OR site:fbref.com',
     mls: 'site:mlssoccer.com OR site:transfermarkt.com',
-    
+
     // American Football
     nfl: 'site:espn.com OR site:nfl.com OR site:pro-football-reference.com',
     ncaa_football: 'site:espn.com OR site:sports-reference.com/cfb',
-    
+
     // Hockey
     nhl: 'site:espn.com OR site:nhl.com OR site:hockey-reference.com',
     khl: 'site:khl.ru OR site:eliteprospects.com',
-    
+
     // Baseball
     mlb: 'site:espn.com OR site:mlb.com OR site:baseball-reference.com',
-    
+
     // Tennis
     tennis: 'site:atptour.com OR site:wtatennis.com OR site:tennisabstract.com',
-    
+
     // MMA
     ufc: 'site:ufc.com OR site:espn.com/mma OR site:sherdog.com',
-    
+
     // F1
     f1: 'site:formula1.com OR site:motorsport.com OR site:espn.com/f1',
-    
+
     // Cricket
     ipl: 'site:iplt20.com OR site:espncricinfo.com OR site:cricbuzz.com',
     test_cricket: 'site:espncricinfo.com OR site:cricbuzz.com',
   };
-  
+
   // If we detected a specific league, use that
   if (league && sourcesMap[league]) {
     return sourcesMap[league];
   }
-  
+
   // Fallback to sport-level sources
   const sportSourcesMap: Record<string, string> = {
     basketball: 'site:espn.com OR site:basketball-reference.com',
@@ -1911,7 +1912,7 @@ function getLeagueSources(league: string | undefined, sport: string): string | u
     golf: 'site:pgatour.com OR site:espn.com/golf',
     cricket: 'site:espncricinfo.com OR site:cricbuzz.com',
   };
-  
+
   return sportSourcesMap[sport];
 }
 
@@ -1920,26 +1921,26 @@ function getLeagueSources(league: string | undefined, sport: string): string | u
  */
 function extractSearchQuery(message: string): { query: string; category: QueryCategory; recency: 'hour' | 'day' | 'week' | 'month' } {
   const category = detectQueryCategory(message);
-  
+
   // Clean up the message for search
   let query = message
     .replace(/\?/g, '')
     .replace(/please|can you|could you|tell me|what do you think|i want to know/gi, '')
     .trim();
-  
+
   // Category-specific query optimization
   // Get current date/season dynamically
   const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const currentSeason = getCurrentSeasonForSport(detectSport(message) || 'football');
-  
+
   let recency: 'hour' | 'day' | 'week' | 'month' = 'day';
-  
+
   switch (category) {
     case 'PLAYER':
       // For player lookups - check if asking about current team/status or biography
       const playerNameMatch = query.match(/([A-Z][a-zćčšžđ]+(?:\s+[A-Z][a-zćčšžđ]+)+)|(\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b)/i);
       const asksCurrentTeam = /where (does|do|is)|gde igra|koji klub|current team|current club|plays for|koje igra/i.test(query);
-      
+
       if (playerNameMatch) {
         const playerName = playerNameMatch[0];
         if (asksCurrentTeam) {
@@ -1956,39 +1957,39 @@ function extractSearchQuery(message: string): { query: string; category: QueryCa
         recency = 'week';
       }
       break;
-      
+
     case 'ROSTER':
       query += ` ${currentSeason} current roster squad players`;
       recency = 'week';
       break;
-      
+
     case 'FIXTURE':
       query += ` upcoming match schedule ${currentMonth}`;
       recency = 'day';
       break;
-      
+
     case 'RESULT':
       query += ' final score result';
       recency = 'day';
       break;
-      
+
     case 'STANDINGS':
       query += ` ${currentSeason} league table standings`;
       recency = 'day';
       break;
-      
+
     case 'STATS':
       // Get sport-specific season
       const statsSport = detectSport(query) || 'football';
       const statsSeason = getCurrentSeasonForSport(statsSport);
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      
+
       // Extract player name if mentioned
       const statsPlayerMatch = query.match(/([A-Z][a-zćčšžđ]+(?:\s+[A-Z][a-zćčšžđ]+)+)|Filip\s+\w+|(\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b)/i);
-      
+
       // Check if asking about last game specifically (not season averages)
       const isLastGameQuery = /last (game|match)|posledn(joj|ja|ju|ji|je|eg|oj|em) (utakmic|meč)|recent game|yesterday|sinoć|jučer|juče|latest (game|match)|most recent|previous (game|match)/i.test(query);
-      
+
       if (statsPlayerMatch) {
         const playerName = statsPlayerMatch[0];
         if (isLastGameQuery) {
@@ -2008,47 +2009,47 @@ function extractSearchQuery(message: string): { query: string; category: QueryCa
       // Use hour recency to get the freshest data
       recency = 'hour';
       break;
-      
+
     case 'INJURY':
       query += ` injury update ${currentMonth}`;
       recency = 'day';
       break;
-      
+
     case 'TRANSFER':
       query += ` transfer news ${currentMonth}`;
       recency = 'day';
       break;
-      
+
     case 'MANAGER':
       query += ' manager coach press conference';
       recency = 'day';
       break;
-      
+
     case 'ODDS':
       query += ' betting odds';
       recency = 'day';
       break;
-      
+
     case 'COMPARISON':
       query += ` comparison stats ${currentSeason}`;
       recency = 'week';
       break;
-      
+
     case 'HISTORY':
       query += ' history record all time';
       recency = 'month';
       break;
-      
+
     case 'BROADCAST':
       query += ' TV channel stream where to watch';
       recency = 'day';
       break;
-      
+
     case 'VENUE':
       query += ' stadium venue arena';
       recency = 'month';
       break;
-      
+
     case 'PLAYER_PROP':
       // For player prop questions - get current stats and recent performance
       const propIntent = detectBettingIntent(message);
@@ -2059,7 +2060,7 @@ function extractSearchQuery(message: string): { query: string; category: QueryCa
       }
       recency = 'day';
       break;
-      
+
     case 'BETTING_ADVICE':
       // For betting questions - still get stats but we'll reframe the response
       const bettingIntent = detectBettingIntent(message);
@@ -2070,14 +2071,14 @@ function extractSearchQuery(message: string): { query: string; category: QueryCa
       }
       recency = 'day';
       break;
-      
+
     case 'GENERAL':
     default:
       query += ` ${currentMonth}`;
       recency = 'day';
       break;
   }
-  
+
   return { query, category, recency };
 }
 
@@ -2099,10 +2100,10 @@ export async function POST(request: NextRequest) {
 
     // Check authentication and credits
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
-        { 
+        {
           error: 'Authentication required',
           requiresAuth: true,
           message: 'Please sign in to use AI Chat'
@@ -2113,14 +2114,14 @@ export async function POST(request: NextRequest) {
 
     // Check chat credits
     const creditCheck = await canUserChat(session.user.id);
-    
+
     if (!creditCheck.allowed) {
       const limit = CHAT_LIMITS[creditCheck.plan as keyof typeof CHAT_LIMITS];
-      
+
       if (limit === 0) {
         // FREE users have no chat access
         return NextResponse.json(
-          { 
+          {
             error: 'Chat not available on free plan',
             requiresUpgrade: true,
             message: 'Upgrade to Pro to access AI Chat with 50 questions per month'
@@ -2128,10 +2129,10 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
-      
+
       // PRO users out of credits
       return NextResponse.json(
-        { 
+        {
           error: 'Chat credits exhausted',
           requiresUpgrade: true,
           remaining: 0,
@@ -2156,10 +2157,10 @@ export async function POST(request: NextRequest) {
     const bulkPicksDetection = detectBulkPicksRequest(message);
     if (bulkPicksDetection.isBulkPicks) {
       console.log(`[AI-Chat] 🚫 Bulk picks detected: ${bulkPicksDetection.reason} (${bulkPicksDetection.matchCount} matches)`);
-      
+
       // Increment chat count since we're responding
       await incrementChatCount(session.user.id);
-      
+
       return NextResponse.json({
         response: generateBulkPicksResponse(bulkPicksDetection),
         citations: [],
@@ -2172,7 +2173,7 @@ export async function POST(request: NextRequest) {
     const translation = await translateToEnglish(message);
     const searchMessage = translation.englishQuery; // Use English for search
     const originalLanguage = translation.originalLanguage;
-    
+
     if (translation.needsTranslation) {
       console.log(`[AI-Chat] Original (${originalLanguage}): "${message}"`);
       console.log(`[AI-Chat] English for search: "${searchMessage}"`);
@@ -2181,16 +2182,37 @@ export async function POST(request: NextRequest) {
     let perplexityContext = '';
     let citations: string[] = [];
     let dataLayerContext = '';
-    
+
     // Use intelligent routing engine (with English query for better detection)
     const route = getOptimalRoute(searchMessage);
     const shouldSearch = route.shouldSearch;
-    
-    // Detect category for all queries (for tracking) - use English for better accuracy
-    const queryCategory = detectQueryCategory(searchMessage);
-    
+
+    // ============================================
+    // SMART QUERY CLASSIFICATION (GPT-powered)
+    // Uses AI to classify intent and extract entities
+    // Falls back to regex if GPT fails
+    // ============================================
+    let smartClassification: ClassificationResult | null = null;
+    let queryCategory: QueryCategory;
+
+    try {
+      // Use GPT-powered classification for better intent detection
+      smartClassification = await classifyQuery(searchMessage);
+
+      // Map the smart classification category to our existing QueryCategory type
+      queryCategory = smartClassification.category as QueryCategory;
+
+      console.log(`[AI-Chat] 🧠 Smart classification: category=${smartClassification.category}, sport=${smartClassification.sport}, confidence=${smartClassification.confidence.toFixed(2)}`);
+      console.log(`[AI-Chat] 📦 Entities:`, JSON.stringify(smartClassification.entities));
+      console.log(`[AI-Chat] 🔌 Needs: realtime=${smartClassification.needs_realtime}, api=${smartClassification.needs_api_data}, betting=${smartClassification.is_betting_related}`);
+    } catch (classifyError) {
+      // Fall back to regex-based detection
+      console.log(`[AI-Chat] ⚠️ Smart classification failed, using regex fallback:`, classifyError);
+      queryCategory = detectQueryCategory(searchMessage);
+    }
+
     // Debug logging for category detection
-    console.log(`[AI-Chat] Query category detected: ${queryCategory}`);
+    console.log(`[AI-Chat] Query category final: ${queryCategory}`);
     if (queryCategory !== 'MATCH_ANALYSIS') {
       // Also try match detection directly to see what's happening
       const debugIntent = detectMatchAnalysisRequest(searchMessage);
@@ -2201,19 +2223,19 @@ export async function POST(request: NextRequest) {
     // If user asks "Analyze X vs Y", call the /api/analyze endpoint
     if (queryCategory === 'MATCH_ANALYSIS') {
       const analysisIntent = detectMatchAnalysisRequest(searchMessage);
-      
+
       if (analysisIntent.isMatchAnalysis && analysisIntent.homeTeam && analysisIntent.awayTeam) {
         console.log(`[AI-Chat] Match analysis requested: ${analysisIntent.homeTeam} vs ${analysisIntent.awayTeam}`);
         console.log(`[AI-Chat] Detected sport: ${analysisIntent.sport}`);
         console.log(`[AI-Chat] User's language: ${originalLanguage}`);
-        
+
         const analysisResult = await performMatchAnalysis(
           analysisIntent.homeTeam,
           analysisIntent.awayTeam,
           analysisIntent.sport || 'soccer_epl',
           request
         );
-        
+
         // Translate response back to user's language if needed
         let finalResponse = analysisResult.response;
         if (translation.needsTranslation && originalLanguage !== 'en') {
@@ -2226,7 +2248,7 @@ export async function POST(request: NextRequest) {
               ar: 'Arabic', it: 'Italian', pt: 'Portuguese', ru: 'Russian'
             };
             const targetLanguage = languageNames[originalLanguage] || originalLanguage;
-            
+
             const translationResponse = await openai.chat.completions.create({
               model: 'gpt-4o-mini',
               messages: [
@@ -2242,7 +2264,7 @@ export async function POST(request: NextRequest) {
               temperature: 0.3,
               max_tokens: 2000
             });
-            
+
             finalResponse = translationResponse.choices[0]?.message?.content || finalResponse;
             console.log(`[AI-Chat] ✅ Translated match analysis to ${originalLanguage}`);
           } catch (translationError) {
@@ -2250,11 +2272,11 @@ export async function POST(request: NextRequest) {
             // Keep English response if translation fails
           }
         }
-        
+
         // Increment chat credits for match analysis via chat
         await incrementChatCount(session.user.id);
         const updatedCredits = await canUserChat(session.user.id);
-        
+
         return NextResponse.json({
           success: true,
           response: finalResponse,
@@ -2274,19 +2296,19 @@ export async function POST(request: NextRequest) {
     // Step 0: Try DataLayer first for stats/roster queries
     // This gives us accurate API data instead of web search
     // GUARDRAIL: For ANY numeric stats question, we MUST use API data, NOT LLM memory
-    
+
     // Check if this is a verified stats query (NBA player/team stats)
     if (isStatsQuery(searchMessage)) {
       console.log('[AI-Chat] Detected stats query - using Verified NBA Stats service');
       console.log('[AI-Chat] API_FOOTBALL_KEY configured:', !!process.env.API_FOOTBALL_KEY);
-      
+
       // Extract season from message (handles "this season", "2024-25", etc.)
       const seasonMatch = searchMessage.match(/(?:this|current|last|previous|\d{4}[-/]\d{2,4})\s*season/i);
       const seasonInput = seasonMatch ? seasonMatch[0] : undefined;
-      
+
       // Try player stats first, then team stats
       const playerResult = await getVerifiedPlayerStats(searchMessage, seasonInput);
-      
+
       if (playerResult.success && playerResult.data) {
         const stats = playerResult.data;
         dataLayerContext = formatVerifiedPlayerStats(stats);
@@ -2295,7 +2317,7 @@ export async function POST(request: NextRequest) {
         console.log(`[AI-Chat] ⚠️ Verified stats failed: ${playerResult.error}`);
         // Try team stats
         const teamResult = await getVerifiedTeamStats(searchMessage, seasonInput);
-        
+
         if (teamResult.success && teamResult.data) {
           const stats = teamResult.data;
           dataLayerContext = formatVerifiedTeamStats(stats);
@@ -2305,12 +2327,12 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-    
+
     // Fallback to original data router if verified stats didn't work
     if (!dataLayerContext) {
       const dataRoute = await routeToDataSource(searchMessage, queryCategory);
       console.log(`[AI-Chat] Data Router: source=${dataRoute.source}, hasData=${!!dataRoute.data}`);
-      
+
       if (dataRoute.source === 'datalayer' && dataRoute.data) {
         // We have accurate API data - use it instead of Perplexity
         dataLayerContext = dataRoute.data;
@@ -2322,23 +2344,23 @@ export async function POST(request: NextRequest) {
     // Skip Perplexity if we already have DataLayer context for stats
     if (shouldSearch && !dataLayerContext) {
       const perplexity = getPerplexityClient();
-      
+
       if (perplexity.isConfigured()) {
         console.log('[AI-Chat] Fetching real-time context from Perplexity...');
         console.log(`[AI-Chat] Route decision: ${route.source} (${route.confidence}% confidence)`);
         console.log(`[AI-Chat] Reason: ${route.reason}`);
-        
+
         // Build optimized search query using English translation
         const searchQuery = buildOptimizedSearchQuery(searchMessage, route);
         const recency = route.recency || 'week';
-        
+
         console.log(`[AI-Chat] Category: ${queryCategory} | Source: ${route.source} | Recency: ${recency}`);
         console.log(`[AI-Chat] Optimized search query: "${searchQuery}"`);
-        
+
         // Use higher token limit for detailed queries
         const needsMoreTokens = ['PLAYER', 'ROSTER', 'COMPARISON', 'STANDINGS', 'STATS', 'HYBRID'].includes(queryCategory) ||
-                                route.source === 'HYBRID';
-        
+          route.source === 'HYBRID';
+
         const searchResult = await perplexity.search(searchQuery, {
           recency,
           model: 'sonar-pro',
@@ -2366,41 +2388,41 @@ export async function POST(request: NextRequest) {
     } else {
       brainMode = detectChatMode(message);
     }
-    
+
     // Step 2.5: Get learned context from knowledge base
     let learnedContext = '';
     let sportTerminology: string[] = [];
     try {
       const { query: searchQuery, category } = extractSearchQuery(message);
       const detectedSport = detectSport(message);
-      
+
       // Get past similar answers for context
       learnedContext = await buildLearnedContext(message, detectedSport);
-      
+
       // Get sport terminology
       if (detectedSport) {
         sportTerminology = getTerminologyForSport(detectedSport);
       }
-      
+
       console.log('[AI-Chat] Learned context:', learnedContext ? 'Found' : 'None');
       console.log('[AI-Chat] Sport detected:', detectedSport || 'Unknown');
     } catch (err) {
       console.error('[AI-Chat] Knowledge lookup failed:', err);
     }
-    
+
     // Calculate data confidence for the response
     const dataConfidence: DataConfidence = calculateDataConfidence({
       hasPerplexityData: !!perplexityContext,
       queryCategory: brainMode,
     });
-    
+
     console.log(`[AI-Chat] Data Confidence: ${dataConfidence.level} (${dataConfidence.score}/100)`);
-    
+
     const systemPrompt = buildSystemPrompt(brainMode, {
       hasRealTimeData: !!perplexityContext,
       dataConfidence,
     });
-    
+
     // Enhance system prompt with learned knowledge
     let enhancedSystemPrompt = systemPrompt;
     if (learnedContext) {
@@ -2409,7 +2431,7 @@ export async function POST(request: NextRequest) {
     if (sportTerminology.length > 0) {
       enhancedSystemPrompt += `\n\nSPORT TERMINOLOGY TO USE: ${sportTerminology.slice(0, 10).join(', ')}`;
     }
-    
+
     // Add language instruction if user wrote in non-English
     if (translation.needsTranslation && originalLanguage !== 'en') {
       const languageNames: Record<string, string> = {
@@ -2418,7 +2440,7 @@ export async function POST(request: NextRequest) {
         'ko': 'Korean',
         'ar': 'Arabic',
         'sr': 'Serbian/Croatian',
-        'es': 'Spanish', 
+        'es': 'Spanish',
         'de': 'German',
         'fr': 'French',
         'it': 'Italian',
@@ -2429,12 +2451,12 @@ export async function POST(request: NextRequest) {
       const langName = languageNames[originalLanguage] || languageNames['unknown'];
       enhancedSystemPrompt += `\n\nIMPORTANT: The user wrote in ${langName}. RESPOND IN ${langName.toUpperCase()}, not English. Match the user's language exactly.`;
     }
-    
+
     console.log('[AI-Chat] Brain mode:', brainMode);
     if (translation.needsTranslation) {
       console.log(`[AI-Chat] Response language: ${originalLanguage}`);
     }
-    
+
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: 'system', content: enhancedSystemPrompt },
     ];
@@ -2450,13 +2472,13 @@ export async function POST(request: NextRequest) {
 
     // Add current message with Perplexity context
     let userContent = message;
-    
+
     // Special handling for betting/player prop questions - AIXBT sharp style
     if (queryCategory === 'BETTING_ADVICE' || queryCategory === 'PLAYER_PROP') {
       const bettingIntent = detectBettingIntent(message);
       const propType = bettingIntent.detectedType;
       const player = bettingIntent.playerMentioned;
-      
+
       // Build concise, sharp context prompt
       let analysisContext = '';
       if (bettingIntent.isPlayerProp && player) {
@@ -2466,7 +2488,7 @@ DIRECTION: ${propType === 'over' ? 'Over line' : propType === 'under' ? 'Under l
         analysisContext = `ANALYSIS TYPE: Match/outcome betting question
 CONFIDENCE: Detected with ${bettingIntent.confidenceLevel} confidence`;
       }
-      
+
       userContent = `${message}
 
 ${analysisContext}
@@ -2562,7 +2584,7 @@ Please answer the user's question using the real-time data above. Cite sources i
 
     // Step 3: Get GPT response
     console.log('[AI-Chat] Sending to GPT...');
-    
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini', // Fast and cost-effective
       messages,
@@ -2577,7 +2599,7 @@ Please answer the user's question using the real-time data above. Cite sources i
     // Track query in memory system (async, don't block response)
     const usedDataLayer = !!dataLayerContext;
     const usedPerplexity = !!perplexityContext;
-    
+
     trackQuery({
       query: message,
       category: queryCategory,
@@ -2633,9 +2655,9 @@ Please answer the user's question using the real-time data above. Cite sources i
 
   } catch (error) {
     console.error('[AI-Chat] Error:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to process chat message',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
@@ -2650,7 +2672,7 @@ Please answer the user's question using the real-time data above. Cite sources i
 
 export async function GET() {
   const perplexity = getPerplexityClient();
-  
+
   return NextResponse.json({
     status: 'ok',
     capabilities: {
