@@ -95,7 +95,7 @@ async function withTimeout<T>(
       resolve(null);
     }, ms);
   });
-  
+
   return Promise.race([promise, timeoutPromise]);
 }
 
@@ -129,14 +129,14 @@ function stripMarkdown(text: string): string {
  * INCLUDES ALL RICH DATA: form, injuries, insights, edge, etc.
  */
 function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: string): string {
-  const { 
-    probabilities, briefing, valueAnalysis, oddsComparison, riskAnalysis, 
+  const {
+    probabilities, briefing, valueAnalysis, oddsComparison, riskAnalysis,
     tacticalAnalysis, responsibleGambling, momentumAndForm, injuryContext,
     preMatchInsights, upsetPotential, marketStability
   } = analysis;
-  
+
   let context = `\n=== SPORTBOT MATCH ANALYSIS: ${homeTeam} vs ${awayTeam} ===\n\n`;
-  
+
   // AI Briefing (MOST IMPORTANT)
   if (briefing?.headline) {
     context += `📋 HEADLINE: ${briefing.headline}\n`;
@@ -154,7 +154,7 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
     }
     context += '\n';
   }
-  
+
   // Probabilities
   if (probabilities) {
     context += `📊 AI PROBABILITY ESTIMATES:\n`;
@@ -169,7 +169,7 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
     }
     context += '\n';
   }
-  
+
   // Edge/Value Detection
   if (oddsComparison) {
     const edges = [
@@ -177,7 +177,7 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
       { name: 'Draw', edge: oddsComparison.drawEdge || 0 },
       { name: awayTeam, edge: oddsComparison.awayEdge || 0 },
     ].filter(e => Math.abs(e.edge) > 1);
-    
+
     if (edges.length > 0) {
       context += `💎 VALUE ANALYSIS (AI vs Market):\n`;
       for (const e of edges) {
@@ -194,12 +194,12 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
     }
     context += '\n\n';
   }
-  
+
   // Form & Momentum
   if (momentumAndForm) {
     context += `📈 RECENT FORM:\n`;
     if (momentumAndForm.homeForm && momentumAndForm.homeForm.length > 0) {
-      const formStr = momentumAndForm.homeForm.slice(0, 5).map((m: any) => 
+      const formStr = momentumAndForm.homeForm.slice(0, 5).map((m: any) =>
         m.result === 'W' ? 'W' : m.result === 'L' ? 'L' : 'D'
       ).join('-');
       context += `• ${homeTeam}: ${formStr}`;
@@ -207,7 +207,7 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
       context += '\n';
     }
     if (momentumAndForm.awayForm && momentumAndForm.awayForm.length > 0) {
-      const formStr = momentumAndForm.awayForm.slice(0, 5).map((m: any) => 
+      const formStr = momentumAndForm.awayForm.slice(0, 5).map((m: any) =>
         m.result === 'W' ? 'W' : m.result === 'L' ? 'L' : 'D'
       ).join('-');
       context += `• ${awayTeam}: ${formStr}`;
@@ -219,12 +219,12 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
     }
     context += '\n';
   }
-  
+
   // Injuries
   if (injuryContext) {
     const hasHomeInjuries = injuryContext.homeTeamInjuries?.length > 0;
     const hasAwayInjuries = injuryContext.awayTeamInjuries?.length > 0;
-    
+
     if (hasHomeInjuries || hasAwayInjuries) {
       context += `🏥 INJURY REPORT:\n`;
       if (hasHomeInjuries) {
@@ -241,7 +241,7 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
       context += '\n';
     }
   }
-  
+
   // Upset Potential
   if (upsetPotential) {
     if (upsetPotential.upsetLikely || upsetPotential.probability > 0.25) {
@@ -252,14 +252,14 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
       context += '\n';
     }
   }
-  
+
   // Market Stability
   if (marketStability) {
     if (marketStability.isUnstable || marketStability.significantMovement) {
       context += `📉 MARKET ALERT: ${marketStability.narrative || 'Significant line movement detected'}\n\n`;
     }
   }
-  
+
   // Risk Level
   if (riskAnalysis?.riskLevel) {
     context += `⚠️ RISK LEVEL: ${riskAnalysis.riskLevel}`;
@@ -271,7 +271,7 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
     }
     context += '\n\n';
   }
-  
+
   // Pre-Match Insights (viral stats)
   if (preMatchInsights?.viralStats && preMatchInsights.viralStats.length > 0) {
     context += `🔥 INTERESTING STATS:\n`;
@@ -280,7 +280,7 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
     }
     context += '\n';
   }
-  
+
   // Tactical Analysis
   if (tacticalAnalysis) {
     if (tacticalAnalysis.keyBattles && tacticalAnalysis.keyBattles.length > 0) {
@@ -294,10 +294,10 @@ function formatLiveAnalysisForChat(analysis: any, homeTeam: string, awayTeam: st
       context += `💡 EXPERT VERDICT: ${tacticalAnalysis.expertConclusionOneLiner}\n\n`;
     }
   }
-  
+
   context += `⚠️ DISCLAIMER: ${responsibleGambling?.disclaimer || 'This is educational analysis, not betting advice. Always gamble responsibly.'}\n`;
   context += `=== END SPORTBOT ANALYSIS ===\n`;
-  
+
   return context;
 }
 
@@ -321,7 +321,7 @@ interface ConversationResolution {
 
 function resolveConversationReferences(message: string, history: ChatMessage[]): ConversationResolution {
   const lower = message.toLowerCase().trim();
-  
+
   // SPECIAL CASE: Short clarification responses like "nba", "nfl", "basketball", "football"
   // Check if previous assistant message was a clarification request
   const isClarificationResponse = /^(nba|nfl|nhl|mlb|basketball|football|hockey|baseball|soccer)$/i.test(lower);
@@ -329,28 +329,28 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
     // Look for the clarification request and the original query
     const lastAssistant = history.filter(m => m.role === 'assistant').slice(-1)[0];
     const lastUserQuery = history.filter(m => m.role === 'user').slice(-1)[0];
-    
+
     console.log(`[Conversation] Checking clarification: lastAssistant="${lastAssistant?.content.substring(0, 50)}...", lastUserQuery="${lastUserQuery?.content}"`);
-    
+
     if (lastAssistant?.content.includes('Which sport are you asking about?')) {
       // This is a response to our clarification - find the original teams
       // Match patterns: "dallas vs chicago", "dallas or chicago", "dallas versus chicago"
       // Also handles: "who will win dallas or chicago", "what about dallas vs chicago"
       const teamsMatch = lastUserQuery?.content.match(/\b([a-zA-Z]+)\s+(?:vs?\.?|or|versus|against|v)\s+([a-zA-Z]+)\b/i);
       console.log(`[Conversation] Teams match result:`, teamsMatch);
-      
+
       if (teamsMatch) {
         const team1 = teamsMatch[1].trim();
         const team2 = teamsMatch[2].trim();
         const sportKey = lower.toUpperCase();
-        
+
         // Map city to team name based on sport
         const cityToTeam: Record<string, Record<string, string>> = {
           'NBA': { 'dallas': 'Mavericks', 'chicago': 'Bulls', 'los angeles': 'Lakers', 'boston': 'Celtics', 'miami': 'Heat', 'denver': 'Nuggets', 'phoenix': 'Suns', 'new york': 'Knicks' },
           'NFL': { 'dallas': 'Cowboys', 'chicago': 'Bears', 'los angeles': 'Rams', 'boston': 'Patriots', 'miami': 'Dolphins', 'denver': 'Broncos', 'phoenix': 'Cardinals', 'new york': 'Giants' },
           'NHL': { 'dallas': 'Stars', 'chicago': 'Blackhawks', 'los angeles': 'Kings', 'boston': 'Bruins', 'miami': 'Panthers', 'denver': 'Avalanche', 'phoenix': 'Coyotes', 'new york': 'Rangers' },
         };
-        
+
         // Map sport key to API sport code
         const sportCodeMap: Record<string, string> = {
           'NBA': 'basketball_nba',
@@ -363,15 +363,15 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
           'BASEBALL': 'baseball_mlb',
           'SOCCER': 'soccer_epl',
         };
-        
+
         const sportMap = cityToTeam[sportKey] || {};
         const resolvedTeam1 = sportMap[team1.toLowerCase()] || team1;
         const resolvedTeam2 = sportMap[team2.toLowerCase()] || team2;
         const sportCode = sportCodeMap[sportKey] || 'basketball_nba';
-        
+
         const resolved = `Who will win ${resolvedTeam1} vs ${resolvedTeam2} ${sportKey}`;
         console.log(`[Conversation] Resolved clarification: "${message}" → "${resolved}" (sport: ${sportCode})`);
-        
+
         return {
           resolvedMessage: resolved,
           wasClarificationResponse: true,
@@ -381,27 +381,27 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
       }
     }
   }
-  
+
   // SPECIAL CASE: Follow-up prediction request like "so who wins" or "your prediction"
   const isFollowUpPrediction = /\b(so|then|now|ok|okay)\b.*\b(who|what|will|win|prediction|think)\b/i.test(lower) ||
-                               /^(who wins|prediction|your pick|what do you think)/i.test(lower);
-  
+    /^(who wins|prediction|your pick|what do you think)/i.test(lower);
+
   if (isFollowUpPrediction && history.length >= 1) {
     // Look for teams mentioned in recent conversation
     let lastTeam1: string | null = null;
     let lastTeam2: string | null = null;
     let lastSport: string | null = null;
-    
+
     for (const msg of history.slice(-6)) {
       const content = msg.content;
-      
+
       // Look for "Team vs Team" pattern
       const matchPattern = content.match(/([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+(?:vs?\.?|versus|against|or|facing)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)/i);
       if (matchPattern) {
         lastTeam1 = matchPattern[1].trim();
         lastTeam2 = matchPattern[2].trim();
       }
-      
+
       // Look for sport context
       if (/\b(NBA|basketball)\b/i.test(content)) lastSport = 'NBA';
       else if (/\b(NFL|football)\b/i.test(content)) lastSport = 'NFL';
@@ -410,7 +410,7 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
       else if (/\b(Cowboys|Bears|Eagles|Chiefs|49ers)\b/i.test(content)) lastSport = 'NFL';
       else if (/\b(Stars|Blackhawks|Bruins|Rangers)\b/i.test(content)) lastSport = 'NHL';
     }
-    
+
     if (lastTeam1 && lastTeam2) {
       const sportCodeMap: Record<string, string> = {
         'NBA': 'basketball_nba',
@@ -427,20 +427,20 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
       };
     }
   }
-  
+
   // Check if message has unresolved references
   const hasPronouns = /\b(his|her|their|them|he|she|they|that|it|the team|the player|the game|the match)\b/i.test(lower);
   if (!hasPronouns) return { resolvedMessage: message };
-  
+
   // Look back through history for entities mentioned
   let lastPlayer: string | null = null;
   let lastTeam: string | null = null;
   let lastMatch: string | null = null;
-  
+
   // Process history from oldest to newest (most recent overrides)
   for (const msg of history.slice(-6)) { // Last 6 messages
     const content = msg.content;
-    
+
     // Extract player names (Capitalized First Last)
     const playerMatch = content.match(/\b([A-Z][a-z]+\s+[A-Z][a-z]+)\b/);
     if (playerMatch) {
@@ -451,42 +451,42 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
         lastPlayer = name;
       }
     }
-    
+
     // Extract team names
     const teamPatterns = [
       /\b(Lakers|Warriors|Celtics|Heat|Bucks|Nuggets|Mavericks|76ers|Nets|Knicks|Suns|Clippers)\b/i,
       /\b(Manchester (United|City)|Liverpool|Chelsea|Arsenal|Tottenham|Real Madrid|Barcelona|Bayern|Juventus|PSG)\b/i,
       /\b(Chiefs|Eagles|Bills|Cowboys|49ers|Ravens|Bengals|Dolphins|Lions|Vikings)\b/i,
     ];
-    
+
     for (const pattern of teamPatterns) {
       const match = content.match(pattern);
       if (match) {
         lastTeam = match[0];
       }
     }
-    
+
     // Extract match references (Team vs Team)
     const matchMatch = content.match(/([A-Z][a-zA-Z\s]+?)\s+(?:vs?\.?|versus|@)\s+([A-Z][a-zA-Z\s]+)/i);
     if (matchMatch) {
       lastMatch = `${matchMatch[1].trim()} vs ${matchMatch[2].trim()}`;
     }
   }
-  
+
   let resolved = message;
-  
+
   // Replace player pronouns
   if (lastPlayer && /\b(his|him|he)\b/i.test(lower)) {
     resolved = resolved.replace(/\b(his|him|he)\b/gi, lastPlayer);
     console.log(`[Conversation] Resolved pronoun to player: ${lastPlayer}`);
   }
-  
+
   // Replace team references
   if (lastTeam && /\b(their|them|they|the team)\b/i.test(lower)) {
     resolved = resolved.replace(/\b(their|them|they|the team)\b/gi, lastTeam);
     console.log(`[Conversation] Resolved pronoun to team: ${lastTeam}`);
   }
-  
+
   // Replace match references
   if (lastMatch && /\b(that game|the game|that match|the match|it)\b/i.test(lower)) {
     resolved = resolved.replace(/\b(that game|the game|that match|the match)\b/gi, lastMatch);
@@ -496,7 +496,7 @@ function resolveConversationReferences(message: string, history: ChatMessage[]):
     }
     console.log(`[Conversation] Resolved reference to match: ${lastMatch}`);
   }
-  
+
   return { resolvedMessage: resolved };
 }
 
@@ -512,11 +512,11 @@ async function translateToEnglish(message: string): Promise<{
   const hasCyrillic = /[\u0400-\u04FF]/.test(message);
   // Note: removed 'was', 'wo', 'match' as they are also common English words
   const hasCommonNonEnglish = /\b(je|da|li|sta|šta|što|kako|koliko|gdje|gde|kada|zašto|porque|qué|cómo|cuándo|dónde|wie|wann|warum|où|quand|pourquoi|comment|combien)\b/i.test(message);
-  
+
   if (!hasNonAscii && !hasCyrillic && !hasCommonNonEnglish) {
     return { originalLanguage: 'en', englishQuery: message, needsTranslation: false };
   }
-  
+
   try {
     const response = await withTimeout(
       openai.chat.completions.create({
@@ -534,14 +534,14 @@ async function translateToEnglish(message: string): Promise<{
       5000, // 5s timeout for translation
       'translation-openai'
     );
-    
+
     if (!response) {
       // Timeout - fall back to original message
       return { originalLanguage: 'unknown', englishQuery: message, needsTranslation: false };
     }
-    
+
     const englishQuery = response.choices[0]?.message?.content?.trim() || message;
-    
+
     let originalLanguage = 'unknown';
     if (hasCyrillic || /\b(je|da|li|koliko|postigao|utakmic)\b/i.test(message)) {
       originalLanguage = 'sr';
@@ -557,7 +557,7 @@ async function translateToEnglish(message: string): Promise<{
       // Note: removed "match" as it's also English
       originalLanguage = 'fr';
     }
-    
+
     return { originalLanguage, englishQuery, needsTranslation: true };
   } catch {
     return { originalLanguage: 'unknown', englishQuery: message, needsTranslation: false };
@@ -586,27 +586,27 @@ interface BulkPicksDetection {
  */
 function detectBulkPicksRequest(message: string): BulkPicksDetection {
   const lower = message.toLowerCase();
-  
+
   // Count potential match indicators (odds patterns like 1.39, 1.45, etc.)
   const oddsPattern = /\b\d+\.\d{2}\b/g;
   const oddsMatches = message.match(oddsPattern) || [];
-  
+
   // Count "vs" or team separator patterns
   const vsPattern = /\b\w+\s*[-–—]\s*\w+\b/g;
   const vsMatches = message.match(vsPattern) || [];
-  
+
   // Count time patterns (21:30, 22:00, etc.)
   const timePattern = /\b\d{1,2}:\d{2}\b/g;
   const timeMatches = message.match(timePattern) || [];
-  
+
   // Count date patterns (13 Jan, 14 Jan, Today, etc.)
   const datePattern = /\b(\d{1,2}\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|today|tomorrow)\b/gi;
   const dateMatches = message.match(datePattern) || [];
-  
+
   // Betting market patterns (Under 5.5, Over 2.5, etc.)
   const marketPattern = /\b(under|over)\s*\(?[\d.]+\)?/gi;
   const marketMatches = message.match(marketPattern) || [];
-  
+
   // Tipster-style request patterns
   const tipsterPatterns = [
     /which\s+(one|ones?)\s*(to|should|do)\s*(bet|pick|play|take|change|win)/i,
@@ -624,9 +624,9 @@ function detectBulkPicksRequest(message: string): BulkPicksDetection {
     /choose\s*(for|from)\s*(me|these)/i,
     /winner.*from\s*(these|this\s*list)/i,
   ];
-  
+
   const hasTipsterRequest = tipsterPatterns.some(p => p.test(lower));
-  
+
   // If message has 5+ odds values AND a tipster-style request, it's bulk picks
   if (oddsMatches.length >= 5 && hasTipsterRequest) {
     return {
@@ -635,7 +635,7 @@ function detectBulkPicksRequest(message: string): BulkPicksDetection {
       reason: 'bulk_odds_with_request',
     };
   }
-  
+
   // If message has 3+ time patterns AND market patterns AND tipster request
   if (timeMatches.length >= 3 && marketMatches.length >= 3 && hasTipsterRequest) {
     return {
@@ -644,7 +644,7 @@ function detectBulkPicksRequest(message: string): BulkPicksDetection {
       reason: 'bulk_markets_with_times',
     };
   }
-  
+
   // If message has 5+ date patterns with times (schedule dump)
   if (dateMatches.length >= 5 && timeMatches.length >= 5) {
     return {
@@ -653,7 +653,7 @@ function detectBulkPicksRequest(message: string): BulkPicksDetection {
       reason: 'schedule_dump',
     };
   }
-  
+
   // Long message (1000+ chars) with betting market terms - likely a paste job
   if (message.length > 1000 && marketMatches.length >= 5) {
     return {
@@ -662,7 +662,7 @@ function detectBulkPicksRequest(message: string): BulkPicksDetection {
       reason: 'long_message_with_markets',
     };
   }
-  
+
   // Simple tipster request without bulk data
   if (hasTipsterRequest && message.length < 500) {
     // Not bulk, but still tipster-style - handle differently
@@ -672,7 +672,7 @@ function detectBulkPicksRequest(message: string): BulkPicksDetection {
       reason: 'tipster_request_only',
     };
   }
-  
+
   return {
     isBulkPicks: false,
     matchCount: 0,
@@ -684,10 +684,10 @@ function detectBulkPicksRequest(message: string): BulkPicksDetection {
  * Generate a polite educational response for bulk picks requests
  */
 function generateBulkPicksResponse(detection: BulkPicksDetection): string {
-  const matchText = detection.matchCount > 1 
-    ? `I see you've shared ${detection.matchCount} matches` 
+  const matchText = detection.matchCount > 1
+    ? `I see you've shared ${detection.matchCount} matches`
     : "I see you've shared a list of matches";
-  
+
   return `${matchText} looking for picks — I get why that's tempting, but that's not what I do.
 
 **SportBot finds edges, not "winners."**
@@ -796,7 +796,7 @@ Value is another way of describing **positive edge** — when our model thinks a
  */
 function getExplainUIResponse(message: string): string | null {
   const lower = message.toLowerCase();
-  
+
   // Check for specific feature questions
   if (/\b(what|explain|how).*(edge|value difference|market vs model)\b/i.test(lower)) {
     return FAQ_RESPONSES.edge;
@@ -813,20 +813,20 @@ function getExplainUIResponse(message: string): string | null {
   if (/\b(what|explain).*(value|value bet)\b/i.test(lower) && !/player|stat/i.test(lower)) {
     return FAQ_RESPONSES.value;
   }
-  
+
   return null;
 }
 
 function detectQueryCategory(message: string): QueryCategory {
   const msg = message.toLowerCase();
-  
+
   // Check if asking about OUR prediction/analysis first
   if (/\b(your|sua|vaš[ae]?|sportbot|our)\b.*\b(analysis|prediction|previsão|prognos|analiz|call|tip)\b/i.test(msg) ||
-      /\b(how did you|como foi|kako si|what did you predict|šta si predvideo)\b/i.test(msg) ||
-      /\b(your pre.?match|your pre.?game|nossa análise)\b/i.test(msg)) {
+    /\b(how did you|como foi|kako si|what did you predict|šta si predvideo)\b/i.test(msg) ||
+    /\b(your pre.?match|your pre.?game|nossa análise)\b/i.test(msg)) {
     return 'OUR_PREDICTION';
   }
-  
+
   // Betting patterns
   if (/should i bet|over|under|plus|minus|prop|parlay|odds|spread|line/i.test(msg)) {
     if (/player|points|rebounds|assists|pts|reb|ast/i.test(msg)) {
@@ -834,7 +834,7 @@ function detectQueryCategory(message: string): QueryCategory {
     }
     return 'BETTING_ADVICE';
   }
-  
+
   if (/who (plays|is|are)|roster|squad|lineup/i.test(msg)) return 'ROSTER';
   if (/when (is|does)|next (game|match)|schedule/i.test(msg)) return 'FIXTURE';
   if (/score|result|won|lost|beat/i.test(msg)) return 'RESULT';
@@ -849,7 +849,7 @@ function detectQueryCategory(message: string): QueryCategory {
   if (/watch|channel|tv|stream/i.test(msg)) return 'BROADCAST';
   if (/stadium|venue|arena/i.test(msg)) return 'VENUE';
   if (/where (does|is).*play|who is/i.test(msg)) return 'PLAYER';
-  
+
   return 'GENERAL';
 }
 
@@ -860,11 +860,11 @@ function needsSearch(message: string): boolean {
     /what (is|are) (offside|a foul|the rules|handball)/i,
     /rules of (football|soccer|basketball)/i,
     /how many players/i,
-    
+
     // Greetings and meta
     /^(hello|hi|hey|thanks|thank you|bye|ok)[\s!?.]*$/i,
     /^(who are you|what can you do|help)[\s!?.]*$/i,
-    
+
     // Player biography & team affiliation (stable data, 10-11 month seasons)
     // "where does X play", "which team does X play for", "who is X"
     /where does .+ play/i,
@@ -881,7 +881,7 @@ function needsSearch(message: string): boolean {
     /where was .+ born/i,
     /how tall is/i,
     /what number does .+ wear/i,
-    
+
     // Historical facts (won't change)
     /who won .+ (in|back in) \d{4}/i,
     /who won the \d{4}/i,
@@ -889,14 +889,14 @@ function needsSearch(message: string): boolean {
     /all.?time .+ (scorer|record|leader)/i,
     /most .+ in history/i,
   ];
-  
+
   for (const pattern of gptOnlyPatterns) {
     if (pattern.test(message)) {
       console.log('[AI-Chat] Skipping search - GPT can handle:', message.slice(0, 50));
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -925,55 +925,55 @@ function detectStandingsLeague(message: string): { sport: string; league: number
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
-  
+
   // NHL - season runs Oct-June
   if (/nhl|hockey|bruins|rangers|oilers|maple leafs|penguins|lightning|avalanche|panthers|canucks|jets|flames|senators|devils|hurricanes|islanders|kings|ducks|sharks|kraken|wild|stars|blues|predators|blackhawks|red wings|sabres|flyers|capitals|blue jackets/i.test(lower)) {
     const season = month >= 9 ? year : year - 1;
     return { sport: 'hockey', league: 57, season: String(season), leagueName: 'NHL' };
   }
-  
+
   // NBA - season runs Oct-June
   if (/nba|basketball|lakers|celtics|warriors|heat|bucks|nets|knicks|76ers|sixers|clippers|suns|nuggets|mavericks|grizzlies|timberwolves|cavaliers|bulls|hawks|raptors|pacers|magic|hornets|wizards|pistons|thunder|trail blazers|jazz|kings|spurs|pelicans|rockets/i.test(lower)) {
     const season = month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
     return { sport: 'basketball', league: 12, season, leagueName: 'NBA' };
   }
-  
+
   // NFL - season runs Sep-Feb
   if (/nfl|american football|chiefs|eagles|bills|cowboys|dolphins|ravens|bengals|49ers|lions|seahawks|packers|vikings|steelers|chargers|broncos|raiders|commanders|giants|jets|patriots|titans|jaguars|colts|texans|browns|bears|saints|buccaneers|falcons|panthers|cardinals|rams/i.test(lower)) {
     const season = month >= 8 ? year : year - 1;
     return { sport: 'nfl', league: 1, season: String(season), leagueName: 'NFL' };
   }
-  
+
   // Premier League
   if (/premier league|epl|english|arsenal|chelsea|liverpool|man(chester)? (city|united)|tottenham|newcastle|west ham|aston villa|brighton|fulham|bournemouth|wolves|crystal palace|nottingham|brentford|everton|luton|burnley|sheffield/i.test(lower)) {
     const season = month >= 7 ? year : year - 1;
     return { sport: 'soccer', league: 39, season: String(season), leagueName: 'Premier League' };
   }
-  
+
   // La Liga
   if (/la liga|spanish|real madrid|barcelona|atletico|sevilla|villarreal|sociedad|betis|athletic bilbao|valencia|osasuna|girona|getafe|celta|mallorca|rayo|cadiz|almeria|granada|las palmas/i.test(lower)) {
     const season = month >= 7 ? year : year - 1;
     return { sport: 'soccer', league: 140, season: String(season), leagueName: 'La Liga' };
   }
-  
+
   // Serie A
   if (/serie a|italian|juventus|inter|milan|napoli|roma|lazio|atalanta|fiorentina|bologna|torino|monza|udinese|sassuolo|empoli|verona|cagliari|lecce|genoa|salernitana|frosinone/i.test(lower)) {
     const season = month >= 7 ? year : year - 1;
     return { sport: 'soccer', league: 135, season: String(season), leagueName: 'Serie A' };
   }
-  
+
   // Bundesliga
   if (/bundesliga|german|bayern|dortmund|leverkusen|leipzig|frankfurt|wolfsburg|freiburg|hoffenheim|mainz|union berlin|koln|werder|gladbach|stuttgart|augsburg|bochum|heidenheim|darmstadt/i.test(lower)) {
     const season = month >= 7 ? year : year - 1;
     return { sport: 'soccer', league: 78, season: String(season), leagueName: 'Bundesliga' };
   }
-  
+
   // Ligue 1
   if (/ligue 1|french|psg|paris saint.germain|marseille|monaco|lyon|lille|nice|lens|rennes|toulouse|montpellier|reims|strasbourg|nantes|lorient|metz|clermont|brest|le havre/i.test(lower)) {
     const season = month >= 7 ? year : year - 1;
     return { sport: 'soccer', league: 61, season: String(season), leagueName: 'Ligue 1' };
   }
-  
+
   return null;
 }
 
@@ -986,9 +986,9 @@ async function fetchStandingsContext(message: string): Promise<{ context: string
     console.log('[AI-Chat-Stream] Could not detect league for standings query');
     return null;
   }
-  
+
   console.log(`[AI-Chat-Stream] Fetching ${leagueInfo.leagueName} standings (season ${leagueInfo.season})...`);
-  
+
   try {
     // Call our internal standings API
     const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
@@ -996,7 +996,7 @@ async function fetchStandingsContext(message: string): Promise<{ context: string
     url.searchParams.set('sport', leagueInfo.sport);
     url.searchParams.set('league', String(leagueInfo.league));
     url.searchParams.set('season', leagueInfo.season);
-    
+
     const response = await withTimeout(
       fetch(url.toString()),
       10000, // 10s timeout for standings
@@ -1006,23 +1006,23 @@ async function fetchStandingsContext(message: string): Promise<{ context: string
       console.error('[AI-Chat-Stream] Standings API error:', response?.status || 'timeout');
       return null;
     }
-    
+
     const data = await response.json();
     if (!data.success || !data.data?.standings) {
       console.error('[AI-Chat-Stream] Standings API returned no data');
       return null;
     }
-    
+
     const standings = data.data.standings;
     const league = data.data.league;
-    
+
     // Format standings into context string
     let context = `=== VERIFIED ${league.name.toUpperCase()} STANDINGS (${league.season} Season) ===\n`;
     context += `Last updated: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}\n\n`;
-    
+
     // For basketball/hockey/NFL, show wins-losses instead of points
     const isPointsBased = leagueInfo.sport === 'soccer';
-    
+
     if (isPointsBased) {
       context += 'Pos | Team | P | W | D | L | GD | Pts\n';
       context += '-'.repeat(50) + '\n';
@@ -1030,7 +1030,7 @@ async function fetchStandingsContext(message: string): Promise<{ context: string
       context += 'Pos | Team | W | L | Streak\n';
       context += '-'.repeat(40) + '\n';
     }
-    
+
     // Show top standings (or all for NHL/NBA with divisions)
     const maxToShow = 32; // Show all teams for major leagues
     for (const team of standings.slice(0, maxToShow)) {
@@ -1041,11 +1041,11 @@ async function fetchStandingsContext(message: string): Promise<{ context: string
         context += `${team.position}. ${team.teamName} | ${team.won}-${team.lost} | ${streak}\n`;
       }
     }
-    
+
     if (standings.length > maxToShow) {
       context += `\n... and ${standings.length - maxToShow} more teams`;
     }
-    
+
     console.log(`[AI-Chat-Stream] ✅ Got ${standings.length} teams for ${leagueInfo.leagueName}`);
     return { context, leagueName: leagueInfo.leagueName };
   } catch (error) {
@@ -1065,7 +1065,7 @@ function needsDataLayerStats(message: string, category: QueryCategory): boolean 
   // Categories that benefit from DataLayer stats
   const statCategories: QueryCategory[] = ['STATS', 'COMPARISON', 'BETTING_ADVICE', 'PLAYER_PROP', 'RESULT', 'STANDINGS'];
   if (statCategories.includes(category)) return true;
-  
+
   // Patterns that suggest form/H2H needs
   const statsPatterns = [
     /form|streak|recent (games|matches|results)/i,
@@ -1076,7 +1076,7 @@ function needsDataLayerStats(message: string, category: QueryCategory): boolean 
     /over|under|points|goals|score/i,
     /last \d+ (games|matches)/i,
   ];
-  
+
   return statsPatterns.some(p => p.test(message));
 }
 
@@ -1087,14 +1087,14 @@ async function fetchOurPrediction(message: string): Promise<string> {
   try {
     // Extract team names and date from the message
     const teams = extractTeamNames(message);
-    
+
     // Try to extract date from message
     const datePatterns = [
       /(\d{1,2})[\s/.-](?:de\s+)?(\w+)[\s/.-](\d{4})/i,  // "01 de janeiro de 2026" or "01/01/2026"
       /(\w+)\s+(\d{1,2}),?\s+(\d{4})/i,  // "January 1, 2026"
       /(\d{4})[\s/.-](\d{1,2})[\s/.-](\d{1,2})/i,  // "2026-01-01"
     ];
-    
+
     let targetDate: Date | null = null;
     for (const pattern of datePatterns) {
       const match = message.match(pattern);
@@ -1108,14 +1108,14 @@ async function fetchOurPrediction(message: string): Promise<string> {
         }
       }
     }
-    
+
     if (!teams.homeTeam && !teams.awayTeam) {
       return '';  // Can't identify the match
     }
-    
+
     // Search for predictions matching the teams
     const searchTerms = [teams.homeTeam, teams.awayTeam].filter(Boolean);
-    
+
     // Build OR conditions for fuzzy matching
     const predictions = await withTimeout(
       prisma.prediction.findMany({
@@ -1136,11 +1136,11 @@ async function fetchOurPrediction(message: string): Promise<string> {
       5000, // 5s timeout for Prisma query
       'prisma-predictions'
     );
-    
+
     if (!predictions || predictions.length === 0) {
       return `⚠️ NO PREDICTION FOUND: SportBot does not have a stored analysis for this match. Say: "I don't have a pre-match analysis stored for that game."`;
     }
-    
+
     // Format predictions for context
     let context = '=== SPORTBOT\'S PAST PREDICTIONS ===\n';
     for (const pred of predictions) {
@@ -1156,7 +1156,7 @@ async function fetchOurPrediction(message: string): Promise<string> {
       }
       context += '\n---';
     }
-    
+
     return context;
   } catch (error) {
     console.error('[AI-Chat] Error fetching our prediction:', error);
@@ -1171,14 +1171,14 @@ function extractTeamNames(message: string): { homeTeam?: string; awayTeam?: stri
   // Common team patterns
   const vsPattern = /([A-Z][a-zA-Z\s]+?)\s+(?:vs?\.?|versus|@)\s+([A-Z][a-zA-Z\s]+)/i;
   const match = message.match(vsPattern);
-  
+
   if (match) {
     return {
       homeTeam: match[1].trim(),
       awayTeam: match[2].trim(),
     };
   }
-  
+
   // NBA team names
   const nbaTeams = [
     'Lakers', 'Celtics', 'Warriors', 'Heat', 'Bucks', 'Nets', 'Knicks', '76ers', 'Sixers',
@@ -1186,14 +1186,14 @@ function extractTeamNames(message: string): { homeTeam?: string; awayTeam?: stri
     'Cavaliers', 'Cavs', 'Bulls', 'Hawks', 'Raptors', 'Pacers', 'Magic', 'Hornets', 'Wizards',
     'Pistons', 'Thunder', 'Trail Blazers', 'Blazers', 'Jazz', 'Kings', 'Spurs', 'Pelicans', 'Rockets'
   ];
-  
+
   // NHL teams
   const nhlTeams = [
     'Maple Leafs', 'Canadiens', 'Bruins', 'Rangers', 'Penguins', 'Blackhawks', 'Red Wings',
     'Oilers', 'Flames', 'Canucks', 'Jets', 'Senators', 'Lightning', 'Panthers', 'Avalanche',
     'Golden Knights', 'Kraken', 'Stars', 'Blues', 'Wild', 'Predators', 'Hurricanes', 'Devils'
   ];
-  
+
   // NFL teams
   const nflTeams = [
     'Chiefs', 'Eagles', 'Bills', 'Cowboys', 'Dolphins', 'Ravens', 'Bengals', '49ers', 'Niners',
@@ -1201,7 +1201,7 @@ function extractTeamNames(message: string): { homeTeam?: string; awayTeam?: stri
     'Commanders', 'Giants', 'Jets', 'Patriots', 'Titans', 'Jaguars', 'Colts', 'Texans',
     'Browns', 'Bears', 'Saints', 'Buccaneers', 'Bucs', 'Falcons', 'Panthers', 'Cardinals', 'Rams'
   ];
-  
+
   // Soccer teams (common)
   const soccerTeams = [
     'Manchester United', 'Man United', 'Man Utd', 'Liverpool', 'Arsenal', 'Chelsea', 'Man City',
@@ -1209,22 +1209,22 @@ function extractTeamNames(message: string): { homeTeam?: string; awayTeam?: stri
     'Real Madrid', 'Barcelona', 'Barca', 'Atletico Madrid', 'Bayern Munich', 'Bayern', 'Dortmund',
     'PSG', 'Paris Saint-Germain', 'Juventus', 'Juve', 'Inter Milan', 'AC Milan', 'Napoli'
   ];
-  
+
   const allTeams = [...nbaTeams, ...nhlTeams, ...nflTeams, ...soccerTeams];
   const foundTeams: string[] = [];
-  
+
   for (const team of allTeams) {
     if (new RegExp(`\\b${team}\\b`, 'i').test(message)) {
       foundTeams.push(team);
     }
   }
-  
+
   if (foundTeams.length >= 2) {
     return { homeTeam: foundTeams[0], awayTeam: foundTeams[1] };
   } else if (foundTeams.length === 1) {
     return { homeTeam: foundTeams[0] };
   }
-  
+
   return {};
 }
 
@@ -1236,12 +1236,12 @@ async function fetchDataLayerContext(
   sport: string | undefined
 ): Promise<string> {
   if (!teams.homeTeam || !sport) return '';
-  
+
   try {
-    const sportKey = sport === 'football' ? 'soccer' : 
-                     sport === 'american_football' ? 'american_football' :
-                     sport;
-    
+    const sportKey = sport === 'football' ? 'soccer' :
+      sport === 'american_football' ? 'american_football' :
+        sport;
+
     // If we have two teams, get matchup data via Unified Service (with 10s timeout)
     if (teams.awayTeam) {
       const matchId: MatchIdentifier = {
@@ -1249,64 +1249,64 @@ async function fetchDataLayerContext(
         awayTeam: teams.awayTeam,
         sport: sportKey,
       };
-      
+
       const unifiedData = await withTimeout(
         getUnifiedMatchData(matchId, { includeOdds: false }),
         10000,
         'Unified match data'
       );
-      
+
       if (!unifiedData) {
         console.log('[AI-Chat-Stream] ⚠️ Unified match data timed out');
         return '';
       }
-      
+
       const data = unifiedData.enrichedData;
-      
+
       if (data.dataSource === 'UNAVAILABLE') return '';
-      
+
       let context = '\\n\\n=== STRUCTURED STATS (DataLayer) ===\\n';
-      
+
       // Home team form
       if (data.homeForm && data.homeForm.length > 0) {
         context += `\\n${teams.homeTeam} Recent Form: `;
         context += data.homeForm.slice(0, 5).map(m => m.result).join('');
         context += ` (${data.homeForm.filter(m => m.result === 'W').length}W-${data.homeForm.filter(m => m.result === 'L').length}L last ${data.homeForm.length})`;
       }
-      
+
       // Away team form
       if (data.awayForm && data.awayForm.length > 0) {
         context += `\\n${teams.awayTeam} Recent Form: `;
         context += data.awayForm.slice(0, 5).map(m => m.result).join('');
         context += ` (${data.awayForm.filter(m => m.result === 'W').length}W-${data.awayForm.filter(m => m.result === 'L').length}L last ${data.awayForm.length})`;
       }
-      
+
       // Season stats
       if (data.homeStats) {
         context += `\\n${teams.homeTeam} Season: ${data.homeStats.wins}W-${data.homeStats.losses}L`;
         if (data.homeStats.draws) context += `-${data.homeStats.draws}D`;
         context += ` | Scored: ${data.homeStats.goalsScored}, Conceded: ${data.homeStats.goalsConceded}`;
       }
-      
+
       if (data.awayStats) {
         context += `\\n${teams.awayTeam} Season: ${data.awayStats.wins}W-${data.awayStats.losses}L`;
         if (data.awayStats.draws) context += `-${data.awayStats.draws}D`;
         context += ` | Scored: ${data.awayStats.goalsScored}, Conceded: ${data.awayStats.goalsConceded}`;
       }
-      
+
       // H2H summary
       if (data.h2hSummary && data.h2hSummary.totalMatches > 0) {
         context += `\\nHead-to-Head (${data.h2hSummary.totalMatches} games): `;
         context += `${teams.homeTeam} ${data.h2hSummary.homeWins}W - ${data.h2hSummary.draws}D - ${data.h2hSummary.awayWins}W ${teams.awayTeam}`;
       }
-      
+
       context += '\\n';
       return context;
     }
-    
+
     // Single team - just get their form/stats (would need a different endpoint)
     return '';
-    
+
   } catch (error) {
     console.error('[AI-Chat] DataLayer fetch error:', error);
     return '';
@@ -1320,9 +1320,9 @@ async function fetchDataLayerContext(
 /**
  * Extract entities from text - teams, players, leagues, topics
  */
-function extractEntities(text: string): { 
-  teams: string[]; 
-  players: string[]; 
+function extractEntities(text: string): {
+  teams: string[];
+  players: string[];
   leagues: string[];
   topics: string[];
 } {
@@ -1330,22 +1330,22 @@ function extractEntities(text: string): {
   const players: string[] = [];
   const leagues: string[] = [];
   const topics: string[] = [];
-  
+
   // Known teams (major leagues)
   const knownTeams: Record<string, string[]> = {
     soccer: ['Manchester United', 'Man United', 'Liverpool', 'Arsenal', 'Chelsea', 'Manchester City', 'Man City', 'Tottenham', 'Spurs', 'Newcastle', 'West Ham', 'Aston Villa', 'Brighton', 'Real Madrid', 'Barcelona', 'Barca', 'Atletico Madrid', 'Bayern Munich', 'Bayern', 'Dortmund', 'Borussia Dortmund', 'PSG', 'Paris Saint-Germain', 'Juventus', 'Juve', 'Inter Milan', 'AC Milan', 'Napoli', 'Roma', 'Lazio'],
     basketball: ['Lakers', 'Celtics', 'Warriors', 'Heat', 'Bucks', 'Nets', 'Knicks', '76ers', 'Sixers', 'Clippers', 'Suns', 'Nuggets', 'Mavericks', 'Mavs', 'Grizzlies', 'Timberwolves', 'Cavaliers', 'Bulls', 'Hawks', 'Raptors', 'Pelicans', 'Thunder', 'Kings', 'Spurs'],
     nfl: ['Chiefs', 'Eagles', 'Bills', 'Cowboys', 'Dolphins', 'Ravens', 'Bengals', '49ers', 'Niners', 'Lions', 'Seahawks', 'Packers', 'Vikings', 'Steelers', 'Chargers', 'Broncos', 'Raiders', 'Patriots', 'Titans', 'Texans', 'Browns', 'Bears', 'Saints', 'Buccaneers', 'Falcons', 'Cardinals', 'Rams'],
   };
-  
+
   // Known leagues
   const knownLeagues = ['Premier League', 'La Liga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Champions League', 'UCL', 'Europa League', 'NBA', 'NFL', 'NHL', 'MLS', 'EuroLeague'];
-  
+
   // Known players (sample - expand as needed)
   const knownPlayers = ['Haaland', 'Salah', 'Mbappe', 'Mbappé', 'Messi', 'Ronaldo', 'Kane', 'Bellingham', 'Vinicius', 'Saka', 'Palmer', 'LeBron', 'Curry', 'Durant', 'Giannis', 'Luka', 'Jokic', 'Tatum', 'Edwards', 'Mahomes', 'Hurts', 'Allen', 'Burrow', 'Lamar'];
-  
+
   const lowerText = text.toLowerCase();
-  
+
   // Find teams
   for (const sportTeams of Object.values(knownTeams)) {
     for (const team of sportTeams) {
@@ -1354,21 +1354,21 @@ function extractEntities(text: string): {
       }
     }
   }
-  
+
   // Find leagues
   for (const league of knownLeagues) {
     if (lowerText.includes(league.toLowerCase())) {
       leagues.push(league);
     }
   }
-  
+
   // Find players
   for (const player of knownPlayers) {
     if (lowerText.includes(player.toLowerCase())) {
       players.push(player);
     }
   }
-  
+
   // Extract topics from the conversation
   const topicPatterns = [
     { pattern: /injur|hurt|out|miss|sidelined/i, topic: 'injuries' },
@@ -1381,13 +1381,13 @@ function extractEntities(text: string): {
     { pattern: /next|upcoming|fixture|schedule/i, topic: 'fixtures' },
     { pattern: /head.to.head|h2h|history|vs/i, topic: 'h2h' },
   ];
-  
+
   for (const { pattern, topic } of topicPatterns) {
     if (pattern.test(text)) {
       topics.push(topic);
     }
   }
-  
+
   return {
     teams: Array.from(new Set(teams)).slice(0, 3),
     players: Array.from(new Set(players)).slice(0, 2),
@@ -1409,20 +1409,20 @@ async function generateSmartFollowUps(
     // Extract entities from both Q&A
     const qEntities = extractEntities(question);
     const aEntities = extractEntities(answer);
-    
+
     // Merge entities, prioritizing from question
     const teams = Array.from(new Set([...qEntities.teams, ...aEntities.teams])).slice(0, 3);
     const players = Array.from(new Set([...qEntities.players, ...aEntities.players])).slice(0, 2);
     const leagues = Array.from(new Set([...qEntities.leagues, ...aEntities.leagues])).slice(0, 2);
     const topics = Array.from(new Set([...qEntities.topics, ...aEntities.topics])).slice(0, 3);
-    
+
     // Build context summary for GPT
     const contextParts: string[] = [];
     if (teams.length > 0) contextParts.push(`Teams: ${teams.join(', ')}`);
     if (players.length > 0) contextParts.push(`Players: ${players.join(', ')}`);
     if (leagues.length > 0) contextParts.push(`Leagues: ${leagues.join(', ')}`);
     if (topics.length > 0) contextParts.push(`Topics: ${topics.join(', ')}`);
-    
+
     // Use GPT to generate smart follow-ups
     const response = await withTimeout(
       openai.chat.completions.create({
@@ -1471,14 +1471,14 @@ Generate 3 specific follow-up questions:`
       5000, // 5s timeout for follow-up generation
       'followup-openai'
     );
-    
+
     if (!response) {
       // Timeout - return suggestions we can actually answer
       return ['Any injury updates?', 'Recent form check?', 'League standings?'];
     }
-    
+
     const content = response.choices[0]?.message?.content || '';
-    
+
     // Parse JSON array from response
     try {
       const parsed = JSON.parse(content);
@@ -1495,10 +1495,10 @@ Generate 3 specific follow-up questions:`
         return questions.slice(0, 3);
       }
     }
-    
+
     // Fallback to rule-based if GPT fails
     return generateFallbackFollowUps(teams, players, topics, category, sport);
-    
+
   } catch (error) {
     console.error('[AI-Chat] Follow-up generation error:', error);
     return generateFallbackFollowUps([], [], [], category, sport);
@@ -1519,7 +1519,7 @@ function generateFallbackFollowUps(
   const suggestions: string[] = [];
   const team = teams[0];
   const player = players[0];
-  
+
   if (team && teams[1]) {
     // Match context - suggest things we CAN answer
     suggestions.push(
@@ -1549,7 +1549,7 @@ function generateFallbackFollowUps(
       suggestions.push('Any injury news?', 'Upcoming matches?', 'League standings?');
     }
   }
-  
+
   return suggestions.slice(0, 3);
 }
 
@@ -1559,14 +1559,14 @@ function generateFallbackFollowUps(
  * ONLY suggest questions SportBot can reliably answer!
  */
 function generateQuickFollowUps(
-  message: string, 
-  category: QueryCategory, 
+  message: string,
+  category: QueryCategory,
   sport: string | undefined
 ): string[] {
   const { teams, players } = extractEntities(message);
   const team = teams[0];
   const player = players[0];
-  
+
   if (team) {
     return [
       `${team} recent form?`,
@@ -1580,7 +1580,7 @@ function generateQuickFollowUps(
       `${player} recent form?`
     ];
   }
-  
+
   // Category-based defaults - ONLY suggest what we can answer
   switch (category) {
     case 'STANDINGS':
@@ -1634,7 +1634,7 @@ export async function POST(request: NextRequest) {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
+
     // ============================================
     // BULK PICKS DETECTION: Politely decline tipster-style requests
     // "Which of these 25 matches should I bet on?" → Educational response
@@ -1642,10 +1642,10 @@ export async function POST(request: NextRequest) {
     const bulkPicksDetection = detectBulkPicksRequest(message);
     if (bulkPicksDetection.isBulkPicks) {
       console.log(`[AI-Chat-Stream] 🚫 Bulk picks detected: ${bulkPicksDetection.reason} (${bulkPicksDetection.matchCount} matches)`);
-      
+
       const encoder = new TextEncoder();
       const educationalResponse = generateBulkPicksResponse(bulkPicksDetection);
-      
+
       const readable = new ReadableStream({
         start(controller) {
           // Send metadata
@@ -1660,19 +1660,19 @@ export async function POST(request: NextRequest) {
               'What makes a good value bet?',
             ],
           })}\n\n`));
-          
+
           // Stream the educational response
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({
             type: 'content',
             content: educationalResponse,
           })}\n\n`));
-          
+
           // Send done
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
           controller.close();
         },
       });
-      
+
       return new Response(readable, {
         headers: {
           'Content-Type': 'text/event-stream',
@@ -1681,7 +1681,7 @@ export async function POST(request: NextRequest) {
         },
       });
     }
-    
+
     // ============================================
     // EXPLAIN_UI: Instant FAQ responses (no API calls needed)
     // "What does edge mean?" → Static educational response
@@ -1689,9 +1689,9 @@ export async function POST(request: NextRequest) {
     const faqResponse = getExplainUIResponse(message);
     if (faqResponse) {
       console.log(`[AI-Chat-Stream] 📚 FAQ response for: "${message.slice(0, 50)}..."`);
-      
+
       const encoder = new TextEncoder();
-      
+
       const readable = new ReadableStream({
         start(controller) {
           // Send metadata
@@ -1706,19 +1706,19 @@ export async function POST(request: NextRequest) {
               'Analyze a match for me',
             ],
           })}\n\n`));
-          
+
           // Stream the FAQ response
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({
             type: 'content',
             content: faqResponse,
           })}\n\n`));
-          
+
           // Send done
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
           controller.close();
         },
       });
-      
+
       return new Response(readable, {
         headers: {
           'Content-Type': 'text/event-stream',
@@ -1727,7 +1727,7 @@ export async function POST(request: NextRequest) {
         },
       });
     }
-    
+
     // ============================================
     // CONVERSATION MEMORY: Resolve pronouns/references from history
     // "his stats" → "LeBron James stats" (if we talked about LeBron earlier)
@@ -1752,26 +1752,25 @@ export async function POST(request: NextRequest) {
     const userId = session?.user?.id;
     const userPlan = session?.user?.plan || null;
     const identifier = userId || getClientIp(request);
-    
+
     const rateLimit = await withTimeout(
       checkChatRateLimit(identifier, userPlan),
       3000,
       'Rate limit check'
     ) || { success: true, tier: 'FREE', remaining: 10, reset: Date.now() + 86400000 };
-    
+
     if (!rateLimit.success) {
       const limits = CHAT_RATE_LIMITS[rateLimit.tier as keyof typeof CHAT_RATE_LIMITS];
       const retryAfter = Math.ceil((rateLimit.reset - Date.now()) / 1000);
-      
+
       return new Response(JSON.stringify({
         error: 'Rate limit exceeded',
-        message: `You've reached your daily limit of ${limits.requests} messages. ${
-          !userPlan || userPlan === 'FREE' 
-            ? 'Upgrade to Pro for 50/day or Premium for unlimited.' 
+        message: `You've reached your daily limit of ${limits.requests} messages. ${!userPlan || userPlan === 'FREE'
+            ? 'Upgrade to Pro for 50/day or Premium for unlimited.'
             : userPlan === 'PRO'
-            ? 'Upgrade to Premium for unlimited messages.'
-            : ''
-        }`,
+              ? 'Upgrade to Premium for unlimited messages.'
+              : ''
+          }`,
         remaining: 0,
         limit: limits.requests,
         retryAfter,
@@ -1804,10 +1803,10 @@ export async function POST(request: NextRequest) {
           3000,
           'Favorite teams lookup'
         );
-        
+
         if (favorites && favorites.length > 0) {
           favoriteTeamsList = favorites.map(f => f.teamName);
-          const teamsList = favorites.map(f => 
+          const teamsList = favorites.map(f =>
             `${f.teamName} (${f.sport}${f.league ? `, ${f.league}` : ''})`
           ).join(', ');
           favoriteTeamsContext = `USER'S FAVORITE TEAMS: ${teamsList}. 
@@ -1825,14 +1824,14 @@ If their favorite team has a match today/tonight, lead with that information.`;
     // Use LLM-backed classification for better intent detection
     // ============================================
     const requestStartTime = Date.now(); // Track latency for learning
-    
+
     // A/B Test: Query Classification Strategy
     const abTestId = 'query-classification-2026-01';
     const abCookieName = getTestCookieName(abTestId);
     const abCookieValue = request.cookies.get(abCookieName)?.value;
     const abVariant = getVariantFromCookies(abTestId, abCookieValue) as Variant;
     console.log(`[AI-Chat-Stream] A/B Test ${abTestId}: Variant ${abVariant}`);
-    
+
     let queryUnderstanding: QueryUnderstanding | null = null;
     try {
       // Timeout query intelligence to prevent slow LLM classification from hanging
@@ -1841,34 +1840,34 @@ If their favorite team has a match today/tonight, lead with that information.`;
         8000,
         'Query Intelligence'
       );
-      
+
       if (queryUnderstanding) {
         console.log(`[AI-Chat-Stream] Query Intelligence: intent=${queryUnderstanding.intent} (${(queryUnderstanding.intentConfidence * 100).toFixed(0)}%), entities=${queryUnderstanding.entities.map(e => e.name).join(', ')}, sport=${queryUnderstanding.sport || 'unknown'}`);
-        
+
         if (queryUnderstanding.isAmbiguous) {
           console.log(`[AI-Chat-Stream] ⚠️ Ambiguous query detected. Alternatives: ${queryUnderstanding.alternativeIntents?.join(', ')}`);
         }
       } else {
         console.log('[AI-Chat-Stream] ⚠️ Query Intelligence timed out, proceeding with defaults');
       }
-      
+
       // HANDLE CLARIFICATION NEEDED (e.g., "Dallas vs Chicago" - which sport?)
       if (queryUnderstanding?.needsClarification && queryUnderstanding.clarifyingQuestion) {
         console.log(`[AI-Chat-Stream] 🤔 Needs clarification - returning question to user`);
-        
+
         return new Response(
           new ReadableStream({
             async start(controller) {
               const encoder = new TextEncoder();
-              
+
               // Send the clarifying question as the response
               const clarificationResponse = queryUnderstanding!.clarifyingQuestion!;
-              
+
               // Stream the response character by character for nice UX
               for (const char of clarificationResponse) {
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', content: char })}\n\n`));
               }
-              
+
               // Send done signal
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
               controller.close();
@@ -1883,23 +1882,23 @@ If their favorite team has a match today/tonight, lead with that information.`;
           }
         );
       }
-      
+
       // HANDLE OFF_TOPIC QUERIES - Politely decline non-sports questions
       if (queryUnderstanding?.intent === 'OFF_TOPIC') {
         console.log(`[AI-Chat-Stream] 🚫 OFF_TOPIC query detected: "${message.slice(0, 50)}..."`);
-        
+
         const offTopicResponse = "I'm SportBot - sports is my specialty! 🏀⚽🏈\n\nI can help you with:\n• Match predictions and analysis\n• Player stats and form\n• Team standings and schedules\n• Injury news and transfers\n• Betting analysis and value picks\n\nWhat sports question can I answer for you?";
-        
+
         return new Response(
           new ReadableStream({
             async start(controller) {
               const encoder = new TextEncoder();
-              
+
               // Stream the response
               for (const char of offTopicResponse) {
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', content: char })}\n\n`));
               }
-              
+
               // Send done signal
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
               controller.close();
@@ -1924,24 +1923,24 @@ If their favorite team has a match today/tonight, lead with that information.`;
     // Use smart classification if available, fallback to legacy
     const queryCategory = queryUnderstanding ? mapIntentToCategory(queryUnderstanding.intent) : detectQueryCategory(message);
     const detectedSport = queryUnderstanding?.sport || detectSport(message);
-    
+
     // Skip cache for player stats queries to ensure verified stats are used
     // This covers NBA, NFL, NHL, and Soccer player stats
     const statsKeywords = /\b(average|averaging|ppg|rpg|apg|points|rebounds|assists|stats|statistics|goals|assists|touchdowns|yards|passing|rushing|receiving|saves|shutouts)\b/i;
     const playerKeywords = /\b(player|embiid|jokic|lebron|curry|durant|wembanyama|tatum|doncic|giannis|morant|mahomes|allen|burrow|jackson|henry|mccaffrey|hill|jefferson|chase|kelce|mcdavid|crosby|matthews|draisaitl|ovechkin|haaland|salah|mbappe|bellingham|kane|ronaldo|messi)\b/i;
     const isPlayerStatsQuery = statsKeywords.test(message) && playerKeywords.test(message);
-    
+
     // Also skip cache for time-sensitive queries (live scores, today's games, etc.)
     const isTimeSensitive = shouldSkipCache(message);
-    
+
     if (history.length === 0 && !isPlayerStatsQuery && !isTimeSensitive) {
       const cached = await withTimeout(cacheGet<CachedChatResponse>(cacheKey), 3000, 'Redis cache lookup');
       if (cached) {
         console.log(`[AI-Chat-Stream] Cache HIT for: "${message.slice(0, 50)}..."`);
-        
+
         // Generate follow-up suggestions based on cached response
         const followUps = generateQuickFollowUps(message, queryCategory, detectedSport);
-        
+
         // Return cached response as a streaming-like response
         const encoder = new TextEncoder();
         const readable = new ReadableStream({
@@ -1955,19 +1954,19 @@ If their favorite team has a match today/tonight, lead with that information.`;
               fromCache: true,
               followUps,
             })}\n\n`));
-            
+
             // Send content all at once (cached)
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'content',
               content: cached.response,
             })}\n\n`));
-            
+
             // Send done
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
             controller.close();
           },
         });
-        
+
         return new Response(readable, {
           headers: {
             'Content-Type': 'text/event-stream',
@@ -1976,14 +1975,14 @@ If their favorite team has a match today/tonight, lead with that information.`;
           },
         });
       }
-      
+
       // Check database cache (longer-term storage) - with 5s timeout to prevent DB hangs
       const dbCached = await withTimeout(getCachedAnswer(message), 5000, 'DB cache lookup');
       if (dbCached) {
         console.log(`[AI-Chat-Stream] DB Cache HIT for: "${message.slice(0, 50)}..."`);
-        
+
         const followUps = generateQuickFollowUps(message, queryCategory, detectedSport);
-        
+
         const encoder = new TextEncoder();
         const readable = new ReadableStream({
           start(controller) {
@@ -1996,17 +1995,17 @@ If their favorite team has a match today/tonight, lead with that information.`;
               fromDbCache: true,
               followUps,
             })}\n\n`));
-            
+
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'content',
               content: dbCached.answer,
             })}\n\n`));
-            
+
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
             controller.close();
           },
         });
-        
+
         return new Response(readable, {
           headers: {
             'Content-Type': 'text/event-stream',
@@ -2025,7 +2024,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
     ) || { englishQuery: message, originalLanguage: 'en', needsTranslation: false };
     let searchMessage = translation.englishQuery;
     const originalLanguage = translation.originalLanguage;
-    
+
     // Step 0.5: Expand short queries with player/team context
     // "LeBron stats" → "LeBron James Los Angeles Lakers NBA stats 2025-26 season"
     const { expandedQuery, playerContext } = expandQuery(searchMessage);
@@ -2033,47 +2032,47 @@ If their favorite team has a match today/tonight, lead with that information.`;
       console.log(`[AI-Chat-Stream] Query expanded: "${searchMessage}" → "${expandedQuery}"`);
       searchMessage = expandedQuery;
     }
-    
+
     let perplexityContext = '';
     let citations: string[] = [];
-    
+
     // Smart data source selection based on query understanding
     // If we have verified data sources suggested, try those FIRST before Perplexity
-    const shouldSkipPerplexity = queryUnderstanding && 
-      queryUnderstanding.needsVerifiedStats && 
+    const shouldSkipPerplexity = queryUnderstanding &&
+      queryUnderstanding.needsVerifiedStats &&
       !queryUnderstanding.needsRealTimeData;
-    
+
     const shouldSearch = !shouldSkipPerplexity && needsSearch(searchMessage);
-    
+
     console.log(`[AI-Chat-Stream] Data strategy: ${shouldSkipPerplexity ? 'VERIFIED-FIRST' : 'PERPLEXITY-FIRST'}, sources: ${queryUnderstanding?.suggestedDataSources?.join(', ') || 'auto'}`);
-    
+
     // queryCategory already defined above for caching
 
     // Create streaming response early so we can send status updates
     const encoder = new TextEncoder();
     let fullResponse = '';
     let streamController: ReadableStreamDefaultController | null = null;
-    
+
     // Helper to send status updates
     const sendStatus = (status: string) => {
       if (streamController) {
         streamController.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status })}\n\n`));
       }
     };
-    
+
     const readable = new ReadableStream({
       async start(controller) {
         streamController = controller;
-        
+
         try {
           // ============================================
           // SMART DATA FETCHING: Verified sources FIRST, Perplexity as fallback
           // ============================================
-          
+
           // Step 1: Perplexity search if needed (skipped if verified data expected)
           if (shouldSearch) {
             const perplexity = getPerplexityClient();
-            
+
             if (perplexity.isConfigured()) {
               // Send category-specific status message
               const statusMessages: Record<string, string> = {
@@ -2091,16 +2090,16 @@ If their favorite team has a match today/tonight, lead with that information.`;
               const statusMsg = statusMessages[queryCategory] || 'Searching real-time data...';
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: statusMsg })}\n\n`));
               console.log('[AI-Chat-Stream] Fetching real-time context...');
-              
+
               // Detect query types that need different recency windows
               const isLastGameQuery = /last (game|match|night)|yesterday|most recent|tonight|scored last|played last/i.test(searchMessage);
               const isInjuryQuery = /injur|injured|injury|is .+ (out|hurt|playing|available)|status|health/i.test(searchMessage);
               const isBreakingNewsQuery = /breaking|latest|recent|any\s*news|what('s| is)\s*(happening|new|going on)/i.test(searchMessage);
-              
+
               // Add current date to search for recency context
               const today = new Date();
               const dateStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-              
+
               // For injury queries, ask for CURRENT STATUS (not just news)
               // This helps find ongoing injuries that aren't in recent news
               let enhancedSearch = searchMessage;
@@ -2115,14 +2114,14 @@ If their favorite team has a match today/tonight, lead with that information.`;
                 const playerName = playerMatch ? playerMatch[1] : '';
                 enhancedSearch = `${playerName || searchMessage} current injury status ${dateStr} - is player injured, out, or available to play? Check official injury reports and team news.`;
               }
-              
+
               // Determine recency filter:
               // - Breaking news: 'day' (most recent)
               // - Last game queries: 'day' (very recent)
               // - Injury queries: 'month' (injuries can last weeks without new articles)
               // - Default: 'week'
               const recencyFilter = isBreakingNewsQuery || isLastGameQuery ? 'day' : isInjuryQuery ? 'month' : 'week';
-              
+
               // Use timeout to prevent hanging (15 second limit for Perplexity)
               const searchResult = await withTimeout(
                 perplexity.search(enhancedSearch, {
@@ -2150,7 +2149,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
                 // DO NOT set perplexityContext to a warning - keep it empty so data confidence knows we have no real data
                 // The warning will be in the system prompt instead
                 perplexityContext = ''; // Keep empty!
-                
+
                 // Set a flag for the system prompt
                 if (queryCategory === 'INJURY') {
                   // Will be handled in system prompt via dataConfidence
@@ -2180,9 +2179,9 @@ If their favorite team has a match today/tonight, lead with that information.`;
           // Step 1.5: DataLayer stats if needed (form, H2H, season stats)
           // USE QUERY INTELLIGENCE FLAGS - not pattern matching
           let dataLayerContext = '';
-          const needsOurStats = queryUnderstanding?.needsVerifiedStats || 
+          const needsOurStats = queryUnderstanding?.needsVerifiedStats ||
             ['PLAYER_STATS', 'TEAM_STATS', 'FORM_CHECK', 'HEAD_TO_HEAD'].includes(queryUnderstanding?.intent || '');
-          
+
           if (needsOurStats) {
             const teams = extractTeamNames(searchMessage);
             if (teams.homeTeam) {
@@ -2205,12 +2204,12 @@ If their favorite team has a match today/tonight, lead with that information.`;
           let verifiedPlayerStatsContext = '';
           const isPlayerStatsIntent = queryUnderstanding?.intent === 'PLAYER_STATS';
           const isAnyStatsQuery = isPlayerStatsIntent || isStatsQuery(searchMessage) || isNFLStatsQuery(searchMessage) || isNHLStatsQuery(searchMessage) || isSoccerStatsQuery(searchMessage) || isEuroleagueStatsQuery(searchMessage);
-          
+
           if (isAnyStatsQuery) {
             console.log('[AI-Chat-Stream] Stats query detected, determining sport...');
             console.log(`[AI-Chat-Stream] API_FOOTBALL_KEY configured: ${!!process.env.API_FOOTBALL_KEY}`);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🔍 Fetching verified player stats...' })}\n\n`));
-            
+
             // Try each sport in order of likelihood based on query
             // DISABLED: Euroleague stats - API data unreliable for team assignments
             // TODO: Re-enable when we have reliable Euroleague data source
@@ -2271,7 +2270,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Found soccer stats for ${stats.playerFullName}` })}\n\n`));
               }
             }
-            
+
             // If we got verified stats, override Perplexity context to prevent wrong data
             if (verifiedPlayerStatsContext) {
               perplexityContext = '';
@@ -2286,7 +2285,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
           if (isStandingsQuery(searchMessage)) {
             console.log('[AI-Chat-Stream] Standings query detected, fetching from API...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '📊 Fetching verified standings...' })}\n\n`));
-            
+
             const standingsResult = await withTimeout(
               fetchStandingsContext(searchMessage),
               10000,
@@ -2296,7 +2295,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
               verifiedStandingsContext = standingsResult.context;
               console.log(`[AI-Chat-Stream] ✅ Got ${standingsResult.leagueName} standings`);
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Loaded ${standingsResult.leagueName} standings` })}\n\n`));
-              
+
               // Override Perplexity context to prevent outdated data
               perplexityContext = '';
               citations = [];
@@ -2310,7 +2309,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
           if (isTeamMatchStatsQuery(searchMessage)) {
             console.log('[AI-Chat-Stream] Team match stats query detected...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '📊 Analyzing match statistics...' })}\n\n`));
-            
+
             // Wrap both calls with timeout
             const matchStatsResult = await withTimeout(
               getVerifiedTeamMatchStats(searchMessage),
@@ -2325,10 +2324,10 @@ If their favorite team has a match today/tonight, lead with that information.`;
                 'Opponent analysis'
               );
               verifiedTeamMatchStatsContext = formatTeamMatchStatsContext(matchStatsResult, opponentAnalysis || undefined);
-              
+
               console.log(`[AI-Chat-Stream] ✅ Got ${matchStatsResult.data.fixtures.length} matches for ${matchStatsResult.data.team.name}`);
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `✅ Analyzed ${matchStatsResult.data.fixtures.length} matches` })}\n\n`));
-              
+
               // Override Perplexity context to use verified data
               perplexityContext = '';
               citations = [];
@@ -2342,24 +2341,24 @@ If their favorite team has a match today/tonight, lead with that information.`;
           let verifiedLeagueLeadersContext = '';
           const isSoccerSport = !detectedSport || detectedSport === 'soccer' || detectedSport === 'football';
           const isNonSoccerSport = /\b(nba|nfl|nhl|mlb|basketball|hockey|baseball|american football)\b/i.test(searchMessage);
-          
+
           // Only try soccer league leaders API for soccer queries
           const isTopScorersIntent = isSoccerSport && !isNonSoccerSport && (
-            (queryUnderstanding?.intent === 'PLAYER_STATS' && 
-             /\b(top|leading|best|most)\b.*\b(scor|goal)/i.test(searchMessage)) ||
+            (queryUnderstanding?.intent === 'PLAYER_STATS' &&
+              /\b(top|leading|best|most)\b.*\b(scor|goal)/i.test(searchMessage)) ||
             isTopScorersQuery(searchMessage)
           );
-          
+
           const isTopAssistsIntent = isSoccerSport && !isNonSoccerSport && (
-            (queryUnderstanding?.intent === 'PLAYER_STATS' && 
-             /\b(top|leading|best|most)\b.*\b(assist)/i.test(searchMessage)) ||
+            (queryUnderstanding?.intent === 'PLAYER_STATS' &&
+              /\b(top|leading|best|most)\b.*\b(assist)/i.test(searchMessage)) ||
             isTopAssistsQuery(searchMessage)
           );
-          
+
           if (isTopScorersIntent) {
             console.log('[AI-Chat-Stream] Soccer top scorers query detected...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🏆 Fetching top scorers...' })}\n\n`));
-            
+
             const leadersResult = await withTimeout(
               getVerifiedTopScorers(searchMessage),
               10000,
@@ -2377,7 +2376,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
           } else if (isTopAssistsIntent) {
             console.log('[AI-Chat-Stream] Top assists query detected (via QI or regex)...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🏆 Fetching top assists...' })}\n\n`));
-            
+
             const leadersResult = await withTimeout(
               getVerifiedTopAssists(searchMessage),
               10000,
@@ -2399,7 +2398,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
           if (isLineupQuery(searchMessage)) {
             console.log('[AI-Chat-Stream] Lineup query detected...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '📋 Fetching team lineups...' })}\n\n`));
-            
+
             const lineupResult = await withTimeout(
               getVerifiedLineup(searchMessage),
               10000,
@@ -2421,7 +2420,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
           if (isCoachQuery(searchMessage)) {
             console.log('[AI-Chat-Stream] Coach query detected...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '👔 Fetching coach info...' })}\n\n`));
-            
+
             const coachResult = await withTimeout(
               getVerifiedCoach(searchMessage),
               10000,
@@ -2443,7 +2442,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
           if (isMatchEventsQuery(searchMessage)) {
             console.log('[AI-Chat-Stream] Match events query detected...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '⚽ Fetching match events...' })}\n\n`));
-            
+
             const eventsResult = await withTimeout(
               getVerifiedMatchEvents(searchMessage),
               10000,
@@ -2465,27 +2464,27 @@ If their favorite team has a match today/tonight, lead with that information.`;
           // SIMPLIFIED: Only trigger for MATCH_PREDICTION or OUR_ANALYSIS intent
           // Trust Query Intelligence - don't duplicate pattern matching here
           let verifiedMatchPredictionContext = '';
-          
+
           // FAST PATH: If this is a resolved clarification response, skip query intelligence and call analyze directly
-          const hasClarificationTeams = clarificationContext?.wasClarificationResponse && 
-                                        clarificationContext?.resolvedTeams?.home && 
-                                        clarificationContext?.resolvedTeams?.away;
-          
+          const hasClarificationTeams = clarificationContext?.wasClarificationResponse &&
+            clarificationContext?.resolvedTeams?.home &&
+            clarificationContext?.resolvedTeams?.away;
+
           if (hasClarificationTeams) {
             console.log(`[AI-Chat-Stream] 🚀 FAST PATH: Clarification resolved to ${clarificationContext!.resolvedTeams!.home} vs ${clarificationContext!.resolvedTeams!.away}`);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🎯 Generating match analysis...' })}\n\n`));
-            
+
             const homeTeam = clarificationContext!.resolvedTeams!.home;
             const awayTeam = clarificationContext!.resolvedTeams!.away;
             const sport = clarificationContext!.resolvedSport || 'basketball_nba';
-            
+
             try {
               // Call the analyze API directly
               const protocol = request.headers.get('x-forwarded-proto') || 'https';
               const host = request.headers.get('host') || 'sportbot.ai';
               const baseUrl = `${protocol}://${host}`;
               const cookies = request.headers.get('cookie') || '';
-              
+
               const analyzeRequest = {
                 matchData: {
                   sport: sport,
@@ -2501,9 +2500,9 @@ If their favorite team has a match today/tonight, lead with that information.`;
                   },
                 },
               };
-              
+
               console.log(`[AI-Chat-Stream] Calling analyze API for clarified query: ${homeTeam} vs ${awayTeam} (${sport})`);
-              
+
               const analyzeResponse = await withTimeout(
                 fetch(`${baseUrl}/api/analyze`, {
                   method: 'POST',
@@ -2516,10 +2515,10 @@ If their favorite team has a match today/tonight, lead with that information.`;
                 30000,
                 'Analyze API (clarified)'
               );
-              
+
               if (analyzeResponse?.ok) {
                 const analysisData = await analyzeResponse.json();
-                
+
                 if (analysisData.success) {
                   // Format the analysis for chat using our proper formatter
                   verifiedMatchPredictionContext = formatLiveAnalysisForChat(analysisData, homeTeam, awayTeam);
@@ -2542,19 +2541,19 @@ If their favorite team has a match today/tonight, lead with that information.`;
               console.error('[AI-Chat-Stream] Clarification analyze error:', analyzeError);
             }
           }
-          
+
           // NORMAL PATH: Use query intelligence for prediction intent
-          const isPredictionIntent = queryUnderstanding?.intent === 'MATCH_PREDICTION' || 
-                                     queryUnderstanding?.intent === 'OUR_ANALYSIS' ||
-                                     queryUnderstanding?.intent === 'BETTING_ANALYSIS';
-          
+          const isPredictionIntent = queryUnderstanding?.intent === 'MATCH_PREDICTION' ||
+            queryUnderstanding?.intent === 'OUR_ANALYSIS' ||
+            queryUnderstanding?.intent === 'BETTING_ANALYSIS';
+
           console.log(`[AI-Chat-Stream] Match Prediction Check: isPredictionIntent=${isPredictionIntent}, intent=${queryUnderstanding?.intent}, entities=${queryUnderstanding?.entities?.length || 0}, searchMessage="${searchMessage.substring(0, 50)}"`);
-          
+
           // Skip if we already got context from clarification fast path
           if (!verifiedMatchPredictionContext && isPredictionIntent && (queryUnderstanding?.entities?.length ?? 0) > 0) {
             console.log(`[AI-Chat-Stream] Prediction query detected (intent: ${queryUnderstanding?.intent})...`);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🎯 Fetching our match analysis...' })}\n\n`));
-            
+
             const predictionResult = await withTimeout(
               getUpcomingMatchPrediction(searchMessage),
               15000,
@@ -2575,11 +2574,11 @@ If their favorite team has a match today/tonight, lead with that information.`;
               // No stored prediction - try to generate one using the analyze API!
               console.log('[AI-Chat-Stream] ⚠️ No stored prediction, attempting live analysis via analyze API...');
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🔬 Generating live analysis...' })}\n\n`));
-              
+
               // Extract team names from entities OR parse from MATCH entity
               let homeTeam: string | null = null;
               let awayTeam: string | null = null;
-              
+
               // First, check for MATCH entity (e.g., "Real Madrid vs Barcelona")
               const matchEntity = queryUnderstanding?.entities.find(e => e.type === 'MATCH');
               if (matchEntity) {
@@ -2591,19 +2590,19 @@ If their favorite team has a match today/tonight, lead with that information.`;
                   console.log(`[AI-Chat-Stream] Parsed MATCH entity: home="${homeTeam}", away="${awayTeam}"`);
                 }
               }
-              
+
               // If no MATCH entity, try extracting from TEAM/UNKNOWN entities
               if (!homeTeam || !awayTeam) {
-                const teamEntities = queryUnderstanding?.entities.filter(e => 
+                const teamEntities = queryUnderstanding?.entities.filter(e =>
                   e.type === 'TEAM' || e.type === 'UNKNOWN'
                 ).map(e => e.name.replace(/^Will\s+/i, '')) || [];
-                
+
                 if (teamEntities.length >= 2) {
                   homeTeam = teamEntities[0];
                   awayTeam = teamEntities[1];
                 }
               }
-              
+
               // Last resort: try to parse directly from the search message
               if (!homeTeam || !awayTeam) {
                 const directMatch = searchMessage.match(/(?:analy[sz]e|preview|predict|breakdown)?\s*([A-Za-z\s]+?)\s+(?:vs?\.?|versus|@|against)\s+([A-Za-z\s]+)/i);
@@ -2613,7 +2612,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
                   console.log(`[AI-Chat-Stream] Parsed from message directly: home="${homeTeam}", away="${awayTeam}"`);
                 }
               }
-              
+
               if (homeTeam && awayTeam) {
                 // Detect sport from team names if not already detected
                 let sport = queryUnderstanding?.sport;
@@ -2643,16 +2642,16 @@ If their favorite team has a match today/tonight, lead with that information.`;
                     sport = 'soccer_epl';
                   }
                 }
-                
+
                 console.log(`[AI-Chat-Stream] Calling analyze API for: ${homeTeam} vs ${awayTeam} (${sport})`);
-                
+
                 try {
                   // Call the analyze API
                   const protocol = request.headers.get('x-forwarded-proto') || 'https';
                   const host = request.headers.get('host') || 'sportbot.ai';
                   const baseUrl = `${protocol}://${host}`;
                   const cookies = request.headers.get('cookie') || '';
-                  
+
                   const analyzeRequest = {
                     matchData: {
                       sport: sport,
@@ -2668,7 +2667,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
                       },
                     },
                   };
-                  
+
                   const analyzeResponse = await withTimeout(
                     fetch(`${baseUrl}/api/analyze`, {
                       method: 'POST',
@@ -2681,10 +2680,10 @@ If their favorite team has a match today/tonight, lead with that information.`;
                     30000,
                     'Analyze API (live)'
                   );
-                  
+
                   if (analyzeResponse?.ok) {
                     const analysisData = await analyzeResponse.json();
-                    
+
                     if (analysisData.success) {
                       // Format the analysis for chat
                       verifiedMatchPredictionContext = formatLiveAnalysisForChat(analysisData, homeTeam, awayTeam);
@@ -2711,15 +2710,15 @@ If their favorite team has a match today/tonight, lead with that information.`;
           // ============================================
           // PERPLEXITY FALLBACK: If we skipped Perplexity but got no verified data
           // ============================================
-          const hasAnyVerifiedData = verifiedPlayerStatsContext || verifiedTeamMatchStatsContext || 
-            verifiedStandingsContext || verifiedLineupContext || verifiedMatchPredictionContext || 
-            verifiedMatchEventsContext || verifiedLeagueLeadersContext || verifiedCoachContext || 
+          const hasAnyVerifiedData = verifiedPlayerStatsContext || verifiedTeamMatchStatsContext ||
+            verifiedStandingsContext || verifiedLineupContext || verifiedMatchPredictionContext ||
+            verifiedMatchEventsContext || verifiedLeagueLeadersContext || verifiedCoachContext ||
             ourPredictionContext;
-          
+
           if (shouldSkipPerplexity && !hasAnyVerifiedData && needsSearch(searchMessage)) {
             console.log('[AI-Chat-Stream] No verified data found, falling back to Perplexity...');
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: '🔍 Searching for additional data...' })}\n\n`));
-            
+
             const perplexity = getPerplexityClient();
             if (perplexity.isConfigured()) {
               try {
@@ -2732,7 +2731,7 @@ If their favorite team has a match today/tonight, lead with that information.`;
                   15000,
                   'Perplexity fallback'
                 );
-                
+
                 if (searchResult?.success && searchResult.content) {
                   perplexityContext = searchResult.content;
                   citations = searchResult.citations || [];
@@ -2758,26 +2757,40 @@ If their favorite team has a match today/tonight, lead with that information.`;
             hasDataLayerStats: !!dataLayerContext,
             queryCategory: queryCategory,
           });
-          
+
           console.log(`[AI-Chat-Stream] Data Confidence: ${dataConfidence.level} (${dataConfidence.score}/100), sources: ${dataConfidence.sources.join(', ') || 'none'}`);
-          
+
           // Log if we're going to refuse to answer
           if (!dataConfidence.canAnswer) {
             console.log(`[AI-Chat-Stream] ⚠️ Insufficient data to answer. Missing: ${dataConfidence.missingCritical.join(', ')}`);
           }
-          
+
           // STRICTER DATA REFUSAL: For data-critical queries with no data, refuse instead of hallucinating
           const DATA_CRITICAL_CATEGORIES = ['STATS', 'STANDINGS', 'BETTING_ADVICE', 'PLAYER_PROP', 'OUR_PREDICTION', 'INJURY', 'COMPARISON'];
           const isDataCriticalQuery = DATA_CRITICAL_CATEGORIES.includes(queryCategory.toUpperCase());
-          
-          // BUT: For basic questions GPT can answer, don't refuse - just let GPT handle it
-          // NBA leading scorer is common knowledge, not something we need verified stats for
-          const isBasicKnowledgeQuery = /\b(who leads|who is leading|top scorer|mvp|best player)\b/i.test(searchMessage) && 
+
+          // EXCEPTIONS: Don't refuse if we have good enough data to answer
+          // 1. Basic knowledge questions GPT can answer
+          const isBasicKnowledgeQuery = /\b(who leads|who is leading|top scorer|mvp|best player)\b/i.test(searchMessage) &&
             /\b(nba|nfl|nhl|mlb)\b/i.test(searchMessage);
-          
-          if (!dataConfidence.canAnswer && isDataCriticalQuery && !isBasicKnowledgeQuery) {
+
+          // 2. General team form/performance questions - Perplexity data is sufficient
+          const isGeneralTeamQuestion = /\b(how is|how are|how's|performing|performance|doing|form|season|playing)\b/i.test(searchMessage) &&
+            /\b(team|club|fc|united|city|villa|arsenal|chelsea|liverpool|barcelona|madrid|juventus|bayern|milan)\b/i.test(searchMessage);
+
+          // 3. If we have Perplexity data, that's good enough for general questions
+          const hasPerplexityFallback = !!perplexityContext && perplexityContext.length > 100;
+
+          // Only refuse if: no data confidence AND is data-critical AND none of the exceptions apply
+          const shouldRefuse = !dataConfidence.canAnswer &&
+            isDataCriticalQuery &&
+            !isBasicKnowledgeQuery &&
+            !isGeneralTeamQuestion &&
+            !hasPerplexityFallback;
+
+          if (shouldRefuse) {
             console.log(`[AI-Chat-Stream] 🛑 REFUSING to answer - data-critical query with insufficient data`);
-            
+
             const refusalMessage = dataConfidence.missingCritical.length > 0
               ? `I don't have verified data for this query. I'm missing: ${dataConfidence.missingCritical.join(', ')}.
 
@@ -2795,24 +2808,24 @@ Rather than make something up, I'll be honest - I can't find reliable stats for 
 - Rephrasing with a specific team, player, or match
 - Asking about major leagues where I have better coverage
 - Check back later as data updates regularly`;
-            
+
             // Send refusal using existing controller
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', content: refusalMessage })}\n\n`));
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
             controller.close();
             return; // Exit the start() callback
           }
-          
-          const brainMode: BrainMode = 
-            (queryCategory === 'BETTING_ADVICE' || queryCategory === 'PLAYER_PROP') 
-              ? 'betting' 
+
+          const brainMode: BrainMode =
+            (queryCategory === 'BETTING_ADVICE' || queryCategory === 'PLAYER_PROP')
+              ? 'betting'
               : detectChatMode(message);
-          
+
           let systemPrompt = buildSystemPrompt(brainMode, {
             hasRealTimeData: !!perplexityContext,
             dataConfidence, // NEW: pass confidence scoring
           });
-          
+
           // Enhance system prompt when DataLayer stats are available
           if (dataLayerContext) {
             systemPrompt += `\n\nYou have access to VERIFIED STRUCTURED DATA including team form, head-to-head records, and season statistics. Prioritize this data for factual claims about records and stats.`;
@@ -2826,7 +2839,7 @@ Rather than make something up, I'll be honest - I can't find reliable stats for 
               'Learned context'
             );
             const sportTerminology = detectedSport ? getTerminologyForSport(detectedSport) : [];
-            
+
             if (learnedContext) systemPrompt += `\n\n${learnedContext}`;
             if (sportTerminology.length > 0) {
               systemPrompt += `\n\nSPORT TERMINOLOGY: ${sportTerminology.slice(0, 10).join(', ')}`;
@@ -2837,7 +2850,7 @@ Rather than make something up, I'll be honest - I can't find reliable stats for 
           if (favoriteTeamsContext) {
             systemPrompt += `\n\n${favoriteTeamsContext}`;
           }
-          
+
           // Add language instruction
           if (translation.needsTranslation && originalLanguage !== 'en') {
             const langNames: Record<string, string> = {
@@ -2859,7 +2872,7 @@ Rather than make something up, I'll be honest - I can't find reliable stats for 
           // Add user message with context
           let userContent = message;
           const hasContext = perplexityContext || dataLayerContext || verifiedPlayerStatsContext || ourPredictionContext || verifiedStandingsContext || verifiedTeamMatchStatsContext || verifiedLeagueLeadersContext || verifiedLineupContext || verifiedCoachContext || verifiedMatchEventsContext || verifiedMatchPredictionContext;
-          
+
           if (hasContext) {
             // For match prediction queries (who will win, prediction for match)
             if (verifiedMatchPredictionContext) {
@@ -2887,7 +2900,7 @@ FORMAT GUIDELINES:
 - Lead with the most impactful insight (often the edge or verdict)
 - Make it feel like expert analysis, not just data dumps
 - If something is missing from the data, just skip that section`;
-            // For league leaders queries (top scorers/assists)
+              // For league leaders queries (top scorers/assists)
             } else if (verifiedLeagueLeadersContext) {
               userContent = `USER QUESTION: ${message}
 
@@ -2900,7 +2913,7 @@ RESPONSE RULES:
 2. Include player name, team, and goals/assists count
 3. Use the exact numbers from the data - they are VERIFIED
 4. Answer in the user's language`;
-            // For lineup queries
+              // For lineup queries
             } else if (verifiedLineupContext) {
               userContent = `USER QUESTION: ${message}
 
@@ -2914,7 +2927,7 @@ RESPONSE RULES:
 3. List substitutes
 4. Mention the coach
 5. Answer in the user's language`;
-            // For coach queries
+              // For coach queries
             } else if (verifiedCoachContext) {
               userContent = `USER QUESTION: ${message}
 
@@ -2927,7 +2940,7 @@ RESPONSE RULES:
 2. Mention current position and tenure
 3. List recent career history
 4. Answer in the user's language`;
-            // For match events queries
+              // For match events queries
             } else if (verifiedMatchEventsContext) {
               userContent = `USER QUESTION: ${message}
 
@@ -2940,7 +2953,7 @@ RESPONSE RULES:
 2. Include cards if asked
 3. Use the exact data provided - it's VERIFIED
 4. Answer in the user's language`;
-            // For team match statistics queries (shots, corners per game)
+              // For team match statistics queries (shots, corners per game)
             } else if (verifiedTeamMatchStatsContext) {
               userContent = `USER QUESTION: ${message}
 
@@ -2961,7 +2974,7 @@ RESPONSE FORMAT:
 - Include the opponent name, date, and specific stats
 - Summarize any patterns you notice
 - Mention this is verified data from official match statistics`;
-            // For OUR_PREDICTION queries, use our stored analysis
+              // For OUR_PREDICTION queries, use our stored analysis
             } else if (queryCategory === 'OUR_PREDICTION' && ourPredictionContext) {
               userContent = `USER QUESTION: ${message}
 
@@ -2999,7 +3012,7 @@ RESPONSE FORMAT:
             } else if (queryCategory === 'STATS') {
               // Prioritize verified player stats over Perplexity
               const statsData = verifiedPlayerStatsContext || perplexityContext || 'No real-time data available';
-              
+
               userContent = `USER QUESTION: ${message}
 
 ⚠️ CRITICAL: The user is asking about CURRENT SEASON STATISTICS. Your training data is OUTDATED.
@@ -3021,15 +3034,15 @@ RESPONSE FORMAT:
 - Keep it factual and concise`;
             } else {
               userContent = `USER QUESTION: ${message}`;
-            
+
               if (dataLayerContext) {
                 userContent += `\n\nSTRUCTURED STATS (verified data):\n${dataLayerContext}`;
               }
-            
+
               if (perplexityContext) {
                 userContent += `\n\nREAL-TIME NEWS & INFO:\n${perplexityContext}`;
               }
-            
+
               userContent += '\n\nIMPORTANT: Use ONLY the data provided above for current season stats. Your training data may be outdated. Be sharp and specific.';
             }
           }
@@ -3043,23 +3056,23 @@ RESPONSE FORMAT:
             temperature: 0.7,
             stream: true,
           });
-          
+
           const stream = await withTimeout(streamPromise, 30000, 'OpenAI stream creation');
-          
+
           if (!stream) {
             console.error('[AI-Chat-Stream] OpenAI stream creation timed out');
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-              type: 'content', 
-              content: "I'm having trouble connecting right now. Please try again in a moment." 
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'content',
+              content: "I'm having trouble connecting right now. Please try again in a moment."
             })}\n\n`));
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
             controller.close();
             return;
           }
-          
+
           // Generate quick follow-ups initially (will be replaced by smart ones after response)
           const quickFollowUps = generateQuickFollowUps(message, queryCategory, detectedSport);
-          
+
           // Send metadata (including data confidence for feedback tracking)
           const metadata = {
             type: 'metadata',
@@ -3077,7 +3090,7 @@ RESPONSE FORMAT:
           let streamTimedOut = false;
           const STREAM_CHUNK_TIMEOUT = 30000; // 30s max wait between chunks
           let lastChunkTime = Date.now();
-          
+
           // Create a promise race for streaming with timeout
           const streamWithTimeout = async () => {
             for await (const chunk of stream) {
@@ -3089,7 +3102,7 @@ RESPONSE FORMAT:
                 break;
               }
               lastChunkTime = now;
-              
+
               const content = chunk.choices[0]?.delta?.content || '';
               if (content) {
                 fullResponse += content;
@@ -3097,24 +3110,24 @@ RESPONSE FORMAT:
               }
             }
           };
-          
+
           // Race the stream against an absolute timeout
           const streamPromiseRace = Promise.race([
             streamWithTimeout(),
-            new Promise<void>((_, reject) => 
+            new Promise<void>((_, reject) =>
               setTimeout(() => reject(new Error('Stream absolute timeout')), 45000)
             )
           ]);
-          
+
           try {
             await streamPromiseRace;
           } catch (streamErr) {
             console.error('[AI-Chat-Stream] Stream error:', streamErr);
             streamTimedOut = true;
             if (!fullResponse) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                type: 'content', 
-                content: "I'm having trouble completing this response. Please try again." 
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'content',
+                content: "I'm having trouble completing this response. Please try again."
               })}\n\n`));
             }
           }
@@ -3133,7 +3146,7 @@ RESPONSE FORMAT:
           } catch (err) {
             console.error('[AI-Chat] Smart follow-up generation failed:', err);
           }
-          
+
           // Send updated follow-ups
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'followUps', followUps: smartFollowUps })}\n\n`));
 
@@ -3143,7 +3156,7 @@ RESPONSE FORMAT:
 
           // Calculate response latency
           const latencyMs = Date.now() - requestStartTime;
-          
+
           // Determine primary response source for learning
           let responseSource: 'CACHE' | 'VERIFIED_STATS' | 'PERPLEXITY' | 'OUR_PREDICTION' | 'LLM' | 'HYBRID' = 'LLM';
           if (verifiedPlayerStatsContext || verifiedTeamMatchStatsContext || verifiedStandingsContext) {
@@ -3170,11 +3183,11 @@ RESPONSE FORMAT:
             dataConfidenceLevel: dataConfidence.level,
             dataConfidenceScore: dataConfidence.score,
             dataSources: dataConfidence.sources,
-            
+
             // ============================================
             // QUERY LEARNING FIELDS (for systematic improvement)
             // ============================================
-            
+
             // Classification tracking
             detectedIntent: queryUnderstanding?.intent,
             intentConfidence: queryUnderstanding?.intentConfidence,
@@ -3182,17 +3195,17 @@ RESPONSE FORMAT:
             expandedQuery: expandedQuery !== message ? expandedQuery : undefined,
             patternMatched: queryUnderstanding?.patternMatched,
             wasLLMClassified: queryUnderstanding?.usedLLM ?? false,
-            
+
             // Response tracking
             responseSource,
             cacheHit: false,
             latencyMs,
-            
+
             // A/B Testing
             abTestVariant: abVariant,
             abTestId: abTestId,
-          }).catch(() => {});
-          
+          }).catch(() => { });
+
           // Detect entity mismatch (asked about X, answered about Y)
           // This helps us learn from mistakes
           if (queryUnderstanding && queryUnderstanding.entities.length > 0) {
@@ -3200,7 +3213,7 @@ RESPONSE FORMAT:
             if (mismatch.hasMismatch && mismatch.details) {
               console.warn(`[AI-Chat-Stream] ⚠️ ENTITY MISMATCH DETECTED: ${mismatch.details}`);
               // Record for learning - fire and forget
-              recordMismatch(queryHash, mismatch.details).catch(() => {});
+              recordMismatch(queryHash, mismatch.details).catch(() => { });
             }
           }
 
@@ -3211,7 +3224,7 @@ RESPONSE FORMAT:
             category: queryCategory,
             hadRealTimeData: !!perplexityContext,
             citations,
-          }).catch(() => {});
+          }).catch(() => { });
 
           // Cache the response (only for queries without history context)
           if (history.length === 0 && fullResponse.length > 50) {
@@ -3222,7 +3235,7 @@ RESPONSE FORMAT:
               usedRealTimeSearch: !!perplexityContext,
               brainMode,
               cachedAt: Date.now(),
-            }, cacheTTL).catch(() => {});
+            }, cacheTTL).catch(() => { });
             console.log(`[AI-Chat-Stream] Cached response (TTL: ${cacheTTL}s)`);
           }
 
@@ -3244,7 +3257,7 @@ RESPONSE FORMAT:
 
   } catch (error) {
     console.error('[AI-Chat-Stream] Error:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: 'Failed to process chat message',
       details: error instanceof Error ? error.message : 'Unknown error',
     }), {
