@@ -134,35 +134,35 @@ export interface MatchPredictionResult {
  */
 export function isMatchPredictionQuery(message: string): boolean {
   const lower = message.toLowerCase();
-  
+
   // EXCLUDE schedule queries - "when do they play" is NOT a prediction query
   const isScheduleQuery = /\bwhen\b.*\b(play|playing|game|match|face|next)\b/i.test(lower) ||
     /\bnext (game|match|fixture|opponent)\b/i.test(lower) ||
     /\b(schedule|fixture|calendar)\b/i.test(lower) ||
     /\bwhat time\b/i.test(lower);
-  
+
   if (isScheduleQuery) {
     return false;
   }
-  
+
   // EXCLUDE injury/status queries - "is X injured" is NOT a prediction query
   const isInjuryQuery = /\b(injur(y|ed|ies)?|hurt|status|health|available|fit|recovery)\b/i.test(lower);
   if (isInjuryQuery) {
     return false;
   }
-  
+
   // EXCLUDE stats queries - "Jokic stats" is NOT a prediction query
   const isStatsQuery = /\b(stats|statistics|average|scoring|points|assists|rebounds)\b/i.test(lower);
   if (isStatsQuery) {
     return false;
   }
-  
+
   // Check for explicit "vs" pattern - this is a match query
   const hasVsPattern = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*(?:vs?\.?|x|@)\s*[A-Z][a-z]+/i.test(message);
-  
+
   // Check for two team names side by side (common shorthand: "Man City Arsenal", "Barcelona Real Madrid")
   const hasTwoTeamsPattern = /\b(man\s*(city|utd|united)|liverpool|chelsea|arsenal|tottenham|newcastle|brighton|barcelona|barca|real\s*madrid|bayern|dortmund|juventus|juve|inter|milan|psg|lakers|warriors|celtics|heat|bucks|nets|knicks|nuggets|mavericks|mavs|chiefs|eagles|bills|cowboys)\b.*\b(man\s*(city|utd|united)|liverpool|chelsea|arsenal|tottenham|newcastle|brighton|barcelona|barca|real\s*madrid|bayern|dortmund|juventus|juve|inter|milan|psg|lakers|warriors|celtics|heat|bucks|nets|knicks|nuggets|mavericks|mavs|chiefs|eagles|bills|cowboys)\b/i.test(message);
-  
+
   // If we have "Team vs Team" or two team names, it's likely a match prediction query
   if (hasVsPattern || hasTwoTeamsPattern) {
     // But exclude if it's clearly asking for past results, not prediction
@@ -171,13 +171,13 @@ export function isMatchPredictionQuery(message: string): boolean {
       return true;
     }
   }
-  
+
   // Also check for match context with prediction keywords
   const hasMatchContext = hasVsPattern ||
     /\b(match|game|fixture|utakmica|meč)\b/i.test(lower);
-  
+
   if (!hasMatchContext) return false;
-  
+
   // Must ask for prediction/analysis
   const predictionPatterns = [
     // English
@@ -208,7 +208,7 @@ export function isMatchPredictionQuery(message: string): boolean {
     /quien\s+va\s+a\s+ganar/i,
     /predicci[oó]n\s+para/i,
   ];
-  
+
   return predictionPatterns.some(pattern => pattern.test(lower));
 }
 
@@ -225,12 +225,12 @@ function extractTeamNamesFromMessage(message: string): { team1: string; team2?: 
       .replace(/\s+(win|today|match|game)$/i, '');
     const team2 = vsMatch[2].trim().replace(/\s+/g, ' ')
       .replace(/\s+(today|tonight|tomorrow|will|who|can|should|win|match|game).*$/i, '');
-    
+
     if (team1.length >= 2 && team2.length >= 2) {
       return { team1, team2 };
     }
   }
-  
+
   // Pattern: "win against Team" / "beat Team"
   const againstMatch = message.match(/\b(?:win|beat|defeat)\s+(?:against\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|$|\?|,|today|tonight)/i);
   if (againstMatch) {
@@ -241,13 +241,13 @@ function extractTeamNamesFromMessage(message: string): { team1: string; team2?: 
       return { team1: beforeMatch[1].trim(), team2 };
     }
   }
-  
+
   // Single team: "Arsenal match prediction"
   const singleMatch = message.match(/([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+(?:match|game|utakmica|meč)/i);
   if (singleMatch) {
     return { team1: singleMatch[1].trim() };
   }
-  
+
   // Look for common team names AND city names
   const teamPatterns = [
     // Premier League
@@ -267,7 +267,7 @@ function extractTeamNamesFromMessage(message: string): { team1: string; team2?: 
     // NHL (with city names!)
     /(Maple Leafs|Canadiens|Bruins|Rangers|Penguins|Blackhawks|Red Wings|Flyers|Devils|Islanders|Oilers|Flames|Canucks|Avalanche|Blues|Stars|Lightning|Panthers|Capitals|Kings|Ducks|Sharks|Kraken|Knights|Wild|Jets|Sabres|Hurricanes|Senators|Blue Jackets|Predators|Coyotes|Toronto|Montreal|Boston|New York|Pittsburgh|Chicago|Detroit|Edmonton|Calgary|Vancouver|Winnipeg|Ottawa|Tampa Bay|Florida|Colorado|Vegas|Seattle|Dallas|St Louis|Minnesota|Nashville|Carolina|New Jersey)/gi,
   ];
-  
+
   const foundTeams: string[] = [];
   for (const pattern of teamPatterns) {
     const matches = message.match(pattern);
@@ -279,17 +279,17 @@ function extractTeamNamesFromMessage(message: string): { team1: string; team2?: 
       }
     }
   }
-  
+
   if (foundTeams.length >= 2) {
     // Normalize city names to team names for DB lookup
-    return { 
-      team1: normalizeTeamName(foundTeams[0]), 
-      team2: normalizeTeamName(foundTeams[1]) 
+    return {
+      team1: normalizeTeamName(foundTeams[0]),
+      team2: normalizeTeamName(foundTeams[1])
     };
   } else if (foundTeams.length === 1) {
     return { team1: normalizeTeamName(foundTeams[0]) };
   }
-  
+
   return null;
 }
 
@@ -302,14 +302,14 @@ function extractTeamNamesFromMessage(message: string): { team1: string; team2?: 
  */
 export async function getUpcomingMatchPrediction(message: string): Promise<MatchPredictionResult> {
   const teams = extractTeamNamesFromMessage(message);
-  
+
   if (!teams) {
-    return { 
-      success: false, 
-      data: null, 
+    return {
+      success: false,
+      data: null,
       isUpcoming: false,
       hoursUntilKickoff: 0,
-      error: 'Could not identify teams from query' 
+      error: 'Could not identify teams from query'
     };
   }
 
@@ -416,6 +416,86 @@ export async function getUpcomingMatchPrediction(message: string): Promise<Match
       hoursUntilKickoff: 0,
       error: 'Database error',
     };
+  }
+}
+
+// ============================================================================
+// Past Match Detection
+// ============================================================================
+
+export interface PastMatchResult {
+  isPast: boolean;
+  matchName?: string;
+  kickoff?: Date;
+  hoursAgo?: number;
+  actualResult?: string | null;
+  outcome?: string | null;
+  prediction?: string | null;
+}
+
+/**
+ * Check if a match has already been played (kickoff is in the past)
+ * Returns match info if found so chat can inform users appropriately
+ */
+export async function checkIfMatchIsInPast(message: string): Promise<PastMatchResult> {
+  const teams = extractTeamNamesFromMessage(message);
+
+  if (!teams) {
+    return { isPast: false };
+  }
+
+  console.log(`[Match-Prediction] Checking for past match: ${teams.team1} ${teams.team2 ? 'vs ' + teams.team2 : ''}`);
+
+  const now = new Date();
+  // Look for matches in the past 7 days
+  const past7days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  try {
+    const searchTerms = [teams.team1];
+    if (teams.team2) searchTerms.push(teams.team2);
+
+    // Search for predictions that have already kicked off
+    const pastPredictions = await prisma.prediction.findMany({
+      where: {
+        AND: [
+          // Match has already started (kickoff in the past)
+          {
+            kickoff: {
+              lt: now,
+              gte: past7days,
+            },
+          },
+          // Match name must contain ALL specified teams
+          ...searchTerms.map(term => ({
+            matchName: { contains: term, mode: 'insensitive' as const }
+          })),
+        ],
+      },
+      orderBy: { kickoff: 'desc' },
+      take: 1,
+    });
+
+    if (pastPredictions.length > 0) {
+      const pred = pastPredictions[0];
+      const hoursAgo = Math.round((now.getTime() - pred.kickoff.getTime()) / (1000 * 60 * 60));
+
+      console.log(`[Match-Prediction] ⚠️ Found PAST match: ${pred.matchName}, played ${hoursAgo}h ago`);
+
+      return {
+        isPast: true,
+        matchName: pred.matchName,
+        kickoff: pred.kickoff,
+        hoursAgo,
+        actualResult: pred.actualResult,
+        outcome: pred.outcome,
+        prediction: pred.prediction,
+      };
+    }
+
+    return { isPast: false };
+  } catch (error) {
+    console.error('[Match-Prediction] Database error checking past match:', error);
+    return { isPast: false };
   }
 }
 
