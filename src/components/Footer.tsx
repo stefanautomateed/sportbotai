@@ -22,10 +22,10 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="md:col-span-2">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <Image 
-                src="/favicon.svg" 
-                alt="SportBot AI" 
-                width={36} 
+              <Image
+                src="/favicon.svg"
+                alt="SportBot AI"
+                width={36}
                 height={36}
                 className="rounded-lg"
               />
@@ -35,11 +35,11 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-text-muted text-sm leading-relaxed max-w-md">
-              AI-powered sports analytics for educational purposes. 
+              AI-powered sports analytics for educational purposes.
               Understand probabilities, value, and risk—not betting tips.
             </p>
             <div className="mt-4">
-              <a 
+              <a
                 href={`mailto:${SITE_CONFIG.email}`}
                 className="text-text-muted hover:text-accent transition-colors text-sm flex items-center gap-2"
               >
@@ -126,8 +126,8 @@ export default function Footer() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p className="text-text-muted text-xs leading-relaxed">
-              SportBot AI provides analytical insights for educational purposes only. 
-              We do not offer betting tips, guarantees, or financial advice. 
+              SportBot AI provides analytical insights for educational purposes only.
+              We do not offer betting tips, guarantees, or financial advice.
               All betting carries risk. Gamble responsibly. <strong className="text-text-secondary">18+ only.</strong>
             </p>
           </div>
@@ -138,9 +138,24 @@ export default function Footer() {
               © {currentYear} SportBot AI. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
-              <a 
-                href="https://www.begambleaware.org/" 
-                target="_blank" 
+              {/* Product Hunt Badge */}
+              <a
+                href="https://www.producthunt.com/products/sportbot-ai?utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-sportbot-ai"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1063032&theme=dark"
+                  alt="SportBot AI on Product Hunt"
+                  width="150"
+                  height="33"
+                  className="opacity-80 hover:opacity-100 transition-opacity"
+                />
+              </a>
+              <span className="text-divider hidden sm:inline">|</span>
+              <a
+                href="https://www.begambleaware.org/"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-text-muted hover:text-text-secondary text-xs transition-colors"
               >

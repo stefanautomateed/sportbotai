@@ -56,7 +56,7 @@ interface FooterI18nProps {
 export default function FooterI18n({ locale: localeProp }: FooterI18nProps) {
   const pathname = usePathname();
   const currentYear = CURRENT_YEAR;
-  
+
   // Auto-detect locale from pathname if not provided
   const locale: Locale = localeProp || (pathname?.startsWith('/sr') ? 'sr' : 'en');
   const t = translations[locale];
@@ -70,10 +70,10 @@ export default function FooterI18n({ locale: localeProp }: FooterI18nProps) {
           {/* Brand Column */}
           <div className="md:col-span-2">
             <Link href={`${localePath}/`} className="flex items-center gap-2.5 mb-4">
-              <Image 
-                src="/favicon.svg" 
-                alt="SportBot AI" 
-                width={36} 
+              <Image
+                src="/favicon.svg"
+                alt="SportBot AI"
+                width={36}
                 height={36}
                 className="rounded-lg"
               />
@@ -86,7 +86,7 @@ export default function FooterI18n({ locale: localeProp }: FooterI18nProps) {
               {t.tagline}
             </p>
             <div className="mt-4">
-              <a 
+              <a
                 href={`mailto:${SITE_CONFIG.email}`}
                 className="text-text-muted hover:text-accent transition-colors text-sm flex items-center gap-2"
               >
@@ -183,9 +183,24 @@ export default function FooterI18n({ locale: localeProp }: FooterI18nProps) {
               {t.copyright.replace('{year}', String(currentYear))}
             </p>
             <div className="flex items-center gap-4">
-              <a 
-                href="https://www.begambleaware.org/" 
-                target="_blank" 
+              {/* Product Hunt Badge */}
+              <a
+                href="https://www.producthunt.com/products/sportbot-ai?utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-sportbot-ai"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1063032&theme=dark"
+                  alt="SportBot AI on Product Hunt"
+                  width="150"
+                  height="33"
+                  className="opacity-80 hover:opacity-100 transition-opacity"
+                />
+              </a>
+              <span className="text-divider hidden sm:inline">|</span>
+              <a
+                href="https://www.begambleaware.org/"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-text-muted hover:text-text-secondary text-xs transition-colors"
               >
