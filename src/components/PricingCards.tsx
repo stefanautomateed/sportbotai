@@ -86,6 +86,8 @@ export default function PricingCards() {
   // Single billing period toggle - yearly is default (true = yearly)
   const [isYearlyBilling, setIsYearlyBilling] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<string>('FREE');
+  // Payment method selection
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>('stripe');
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -131,7 +133,12 @@ export default function PricingCards() {
     setError(null);
 
     try {
-      const response = await fetch('/api/stripe/create-checkout-session', {
+      // Use the selected payment method
+      const apiUrl = paymentMethod === 'paypal'
+        ? '/api/paypal/create-subscription'
+        : '/api/stripe/create-checkout-session';
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,7 +155,7 @@ export default function PricingCards() {
         throw new Error(data.error || 'Error creating checkout session');
       }
 
-      // Redirect to Stripe Checkout
+      // Redirect to Stripe/PayPal Checkout
       if (data.url) {
         window.location.href = data.url;
       }
@@ -178,14 +185,12 @@ export default function PricingCards() {
           role="switch"
           aria-checked={isYearlyBilling}
           aria-label="Toggle between monthly and yearly billing"
-          className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
-            isYearlyBilling ? 'bg-accent' : 'bg-gray-600'
-          }`}
+          className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${isYearlyBilling ? 'bg-accent' : 'bg-gray-600'
+            }`}
         >
           <span
-            className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-200 ${
-              isYearlyBilling ? 'translate-x-7' : 'translate-x-0'
-            }`}
+            className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-200 ${isYearlyBilling ? 'translate-x-7' : 'translate-x-0'
+              }`}
           />
         </button>
         <span className={`text-sm font-medium transition-colors ${isYearlyBilling ? 'text-white' : 'text-gray-400'}`}>
@@ -194,11 +199,33 @@ export default function PricingCards() {
         </span>
       </div>
 
+      {/* Payment Method Selection */}
+      <div className="flex items-center justify-center gap-3 mb-8">
+        <span className="text-sm text-gray-400">Pay with:</span>
+        <button
+          onClick={() => setPaymentMethod('stripe')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${paymentMethod === 'stripe'
+            ? 'bg-accent text-black'
+            : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
+            }`}
+        >
+          💳 Card
+        </button>
+        <button
+          onClick={() => setPaymentMethod('paypal')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${paymentMethod === 'paypal'
+            ? 'bg-[#0070ba] text-white'
+            : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
+            }`}
+        >
+          <span className="font-bold">Pay</span><span className="font-bold text-[#003087]">Pal</span>
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
         {/* Free Plan Card */}
-        <div className={`card-glass p-5 sm:p-6 border border-accent/20 ${
-          currentPlan === 'FREE' ? 'border-2 border-accent shadow-glow-accent' : ''
-        } relative`}>
+        <div className={`card-glass p-5 sm:p-6 border border-accent/20 ${currentPlan === 'FREE' ? 'border-2 border-accent shadow-glow-accent' : ''
+          } relative`}>
           {currentPlan === 'FREE' && (
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-accent-dark text-bg text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-glow-accent">
               YOUR PLAN
@@ -226,11 +253,10 @@ export default function PricingCards() {
           <button
             onClick={handleFreePlan}
             disabled={currentPlan === 'FREE'}
-            className={`w-full py-3 px-6 rounded-btn font-semibold transition-all duration-200 min-h-[48px] ${
-              currentPlan === 'FREE'
-                ? 'bg-accent/20 text-accent border border-accent/30 cursor-default'
-                : 'btn-gradient-border'
-            }`}
+            className={`w-full py-3 px-6 rounded-btn font-semibold transition-all duration-200 min-h-[48px] ${currentPlan === 'FREE'
+              ? 'bg-accent/20 text-accent border border-accent/30 cursor-default'
+              : 'btn-gradient-border'
+              }`}
           >
             {currentPlan === 'FREE' ? '✓ Current Plan' : 'Start Free'}
           </button>
@@ -247,14 +273,14 @@ export default function PricingCards() {
           const isCurrentPlan = currentPlan === planKey;
           const isDowngrade = currentPlanRank > thisPlanRank;
           const canUpgrade = !isCurrentPlan && !isDowngrade;
-          
+
           // Determine button text based on subscription state
           const getButtonText = () => {
             if (isCurrentPlan) return '✓ Current Plan';
             if (isDowngrade) return 'Manage Subscription';
             return plan.buttonText;
           };
-          
+
           // Handle button click
           const handleButtonClick = () => {
             if (isCurrentPlan) return; // Do nothing for current plan
@@ -265,19 +291,18 @@ export default function PricingCards() {
             }
             handleCheckout(plan);
           };
-          
+
           return (
             <div
               key={plan.id}
-              className={`card-glass p-5 sm:p-6 relative ${
-                isCurrentPlan
-                  ? 'border-2 border-accent shadow-glow-accent'
-                  : plan.highlighted && canUpgrade
+              className={`card-glass p-5 sm:p-6 relative ${isCurrentPlan
+                ? 'border-2 border-accent shadow-glow-accent'
+                : plan.highlighted && canUpgrade
                   ? 'border-2 border-accent/50 md:scale-105'
                   : canUpgrade
-                  ? 'border-2 border-accent/30'
-                  : ''
-              }`}
+                    ? 'border-2 border-accent/30'
+                    : ''
+                }`}
             >
               {/* Badge */}
               {isCurrentPlan ? (
@@ -338,15 +363,14 @@ export default function PricingCards() {
               <button
                 onClick={handleButtonClick}
                 disabled={loading === checkoutId || isCurrentPlan}
-                className={`w-full py-3 px-6 rounded-btn font-semibold transition-all duration-200 min-h-[48px] ${
-                  isCurrentPlan
-                    ? 'bg-accent/20 text-accent border border-accent/30 cursor-default'
-                    : isDowngrade
+                className={`w-full py-3 px-6 rounded-btn font-semibold transition-all duration-200 min-h-[48px] ${isCurrentPlan
+                  ? 'bg-accent/20 text-accent border border-accent/30 cursor-default'
+                  : isDowngrade
                     ? 'btn-gradient-border'
                     : plan.highlighted
-                    ? 'bg-accent-dark hover:bg-accent text-white'
-                    : 'bg-accent-dark hover:bg-accent/90 text-white'
-                } ${loading === checkoutId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      ? 'bg-accent-dark hover:bg-accent text-white'
+                      : 'bg-accent-dark hover:bg-accent/90 text-white'
+                  } ${loading === checkoutId ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {loading === checkoutId ? (
                   <span className="flex items-center justify-center gap-2">
