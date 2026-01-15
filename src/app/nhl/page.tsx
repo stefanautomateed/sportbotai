@@ -1,7 +1,7 @@
 /**
  * NHL Landing Page (/nhl)
  * 
- * Premium SEO-optimized page targeting "NHL odds", "hockey odds"
+ * Premium SEO-optimized page for NHL betting odds
  */
 
 import { Metadata } from 'next';
@@ -9,12 +9,12 @@ import SportMatchGrid from '@/components/SportMatchGrid';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-    title: 'NHL Odds & Lines Today',
-    description: 'Get today\'s NHL odds, puck lines, and AI-powered analysis for every hockey game. Live moneylines, totals, and value detection.',
-    keywords: ['nhl odds', 'nhl betting odds', 'hockey odds', 'nhl puck line', 'nhl moneyline', 'hockey betting'],
+    title: 'NHL Odds Today - Live Hockey Betting Lines & Puck Lines',
+    description: 'Get today\'s NHL odds, puck lines, moneylines, and totals for every hockey game. Live NHL betting odds with AI analysis. Find value on hockey bets and Stanley Cup futures.',
+    keywords: ['nhl odds', 'nhl betting odds', 'hockey odds', 'nhl puck line', 'nhl moneyline', 'hockey betting', 'nhl totals', 'stanley cup odds', 'hockey odds today'],
     openGraph: {
-        title: 'NHL Odds & Lines Today | SportBot AI',
-        description: 'Today\'s NHL betting odds with AI analysis.',
+        title: 'NHL Odds Today - Live Hockey Betting Lines | SportBot AI',
+        description: 'Today\'s NHL betting odds with AI analysis. Live puck lines, moneylines, and totals.',
         url: 'https://sportbotai.com/nhl',
         type: 'website',
     },
@@ -43,6 +43,12 @@ const TotalsIcon = () => (
     </svg>
 );
 
+const FuturesIcon = () => (
+    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    </svg>
+);
+
 const NHL_LEAGUES = [
     { key: 'icehockey_nhl', name: 'NHL' },
 ];
@@ -50,9 +56,32 @@ const NHL_LEAGUES = [
 const nhlSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'NHL Odds & Lines Today',
-    description: 'Live NHL betting odds with AI analysis.',
+    name: 'NHL Odds Today - Live Hockey Betting Lines',
+    description: 'Live NHL betting odds, puck lines, moneylines, and AI-powered analysis.',
     url: 'https://sportbotai.com/nhl',
+};
+
+const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+        {
+            '@type': 'Question',
+            name: 'What is an NHL puck line?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'The NHL puck line is typically -1.5 for favorites (they must win by 2+ goals) or +1.5 for underdogs (they can lose by 1 and still cover).',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Why are NHL moneylines popular?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'NHL moneylines are popular because hockey is competitive—underdogs win often. Unlike football, the puck line (-1.5) is harder to cover.',
+            },
+        },
+    ],
 };
 
 export default function NhlPage() {
@@ -61,6 +90,10 @@ export default function NhlPage() {
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(nhlSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
             />
 
             <div className="min-h-screen bg-bg relative overflow-hidden">
@@ -88,25 +121,36 @@ export default function NhlPage() {
                                     </span>
                                 </div>
                                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-3">
-                                    NHL Odds & Lines
+                                    NHL Odds Today
                                 </h1>
                                 <p className="text-gray-400 text-base sm:text-lg max-w-xl">
-                                    AI-powered analysis for every NHL game. Get puck lines, moneylines,
-                                    totals, and value detection.
+                                    Live NHL betting odds for every hockey game. Get puck lines, moneylines,
+                                    totals, and AI-powered value detection.
                                 </p>
                             </div>
 
                             <div className="flex gap-4">
                                 <div className="text-center px-4 py-3 bg-white/5 rounded-xl border border-white/10">
                                     <div className="text-2xl font-bold text-blue-400">24/7</div>
-                                    <div className="text-xs text-gray-400">Live Data</div>
+                                    <div className="text-xs text-gray-400">Live Odds</div>
                                 </div>
                                 <div className="text-center px-4 py-3 bg-white/5 rounded-xl border border-white/10">
                                     <div className="text-2xl font-bold text-accent">AI</div>
-                                    <div className="text-xs text-gray-400">Powered</div>
+                                    <div className="text-xs text-gray-400">Analysis</div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                {/* Intro */}
+                <section className="border-b border-white/5">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <p className="text-gray-400 leading-relaxed max-w-4xl">
+                            Find today&apos;s <strong className="text-white">NHL odds</strong> and betting lines for every hockey game.
+                            Whether you&apos;re betting on the <strong className="text-white">puck line</strong>, moneyline, or total,
+                            our AI analyzes <strong className="text-white">hockey odds</strong> to help bettors find value.
+                        </p>
                     </div>
                 </section>
 
@@ -117,67 +161,148 @@ export default function NhlPage() {
                     maxMatches={12}
                 />
 
-                {/* Educational Content */}
-                <section className="border-t border-white/10">
+                {/* Betting Markets */}
+                <section className="border-t border-white/10 bg-white/[0.01]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
                         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-8">
                             NHL Betting Markets Explained
                         </h2>
 
-                        <div className="grid md:grid-cols-3 gap-6">
-                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-6 hover:border-blue-500/30 transition-colors">
-                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                                <div className="relative">
-                                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4">
-                                        <PuckLineIcon />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Puck Line</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        NHL puck line is typically -1.5 for favorites. The favorite must win by 2+ goals to cover.
-                                        Offers better odds but requires a larger margin of victory.
-                                    </p>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-5 hover:border-blue-500/30 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-3">
+                                    <PuckLineIcon />
                                 </div>
+                                <h3 className="text-base font-semibold text-white mb-2">Puck Line</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    The NHL puck line is -1.5 for favorites. They must win by 2+ goals for your bet to win.
+                                </p>
                             </div>
 
-                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-6 hover:border-blue-500/30 transition-colors">
-                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                                <div className="relative">
-                                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4">
-                                        <MoneylineIcon />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Moneylines</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        NHL moneylines are popular due to hockey&apos;s competitive nature—underdogs win often.
-                                        Our AI analyzes goaltender matchups, home ice, and recent form.
-                                    </p>
+                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-5 hover:border-blue-500/30 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-3">
+                                    <MoneylineIcon />
                                 </div>
+                                <h3 className="text-base font-semibold text-white mb-2">Moneyline</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Pick which team wins outright. NHL moneylines are popular—underdogs win often in hockey.
+                                </p>
                             </div>
 
-                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-6 hover:border-blue-500/30 transition-colors">
-                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                                <div className="relative">
-                                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4">
-                                        <TotalsIcon />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Totals (O/U)</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        NHL totals range 5.5-7 goals. Back-to-back games, goalie performance, and scoring trends
-                                        are key factors in our analysis.
-                                    </p>
+                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-5 hover:border-blue-500/30 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-3">
+                                    <TotalsIcon />
                                 </div>
+                                <h3 className="text-base font-semibold text-white mb-2">Totals (O/U)</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Bet on total goals scored. NHL totals typically range 5.5-7 goals. Goalie matchups matter.
+                                </p>
+                            </div>
+
+                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-5 hover:border-blue-500/30 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-3">
+                                    <FuturesIcon />
+                                </div>
+                                <h3 className="text-base font-semibold text-white mb-2">Stanley Cup Futures</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Bet on which team will win the Stanley Cup. Long-term bets with big payouts.
+                                </p>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        <div className="mt-10 text-center">
-                            <p className="text-gray-400 mb-4">Need help with betting math?</p>
-                            <div className="flex flex-wrap justify-center gap-3">
-                                <Link href="/tools/odds-converter" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors">
-                                    Odds Converter
-                                </Link>
-                                <Link href="/tools/parlay-calculator" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors">
-                                    Parlay Calculator
-                                </Link>
+                {/* Example */}
+                <section className="border-t border-white/10">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                            NHL Betting Example
+                        </h2>
+
+                        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 max-w-3xl">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-2xl">🏒</span>
+                                <h3 className="text-lg font-semibold text-white">Bruins vs. Rangers - Sample NHL Bet</h3>
                             </div>
+                            <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                                <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
+                                    <div className="text-sm text-gray-500 mb-1">Bruins</div>
+                                    <div className="text-white font-semibold">Puck Line: -1.5 (+165)</div>
+                                    <div className="text-white font-semibold">Moneyline: -145</div>
+                                </div>
+                                <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
+                                    <div className="text-sm text-gray-500 mb-1">Rangers</div>
+                                    <div className="text-white font-semibold">Puck Line: +1.5 (-190)</div>
+                                    <div className="text-white font-semibold">Moneyline: +125</div>
+                                </div>
+                            </div>
+                            <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5 mb-4">
+                                <div className="text-sm text-gray-500 mb-1">Game Total</div>
+                                <div className="text-white font-semibold">Over/Under 6 goals (-110 each)</div>
+                            </div>
+                            <p className="text-gray-400 text-sm">
+                                The Bruins are favorites at -145. The +1.5 puck line on the Rangers means they can lose by 1 goal and still cover.
+                                Most bettors prefer NHL moneylines since games are often decided by 1 goal.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* FAQ */}
+                <section className="border-t border-white/10 bg-white/[0.01]">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-8">
+                            NHL Betting FAQ
+                        </h2>
+
+                        <div className="space-y-4">
+                            <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                                <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                    What is an NHL puck line?
+                                    <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                    The NHL puck line is hockey&apos;s version of a point spread. It&apos;s typically -1.5 for favorites (must win by 2+ goals)
+                                    or +1.5 for underdogs (can lose by 1 and still cover). The puck line offers better odds than moneylines but is harder to hit.
+                                </div>
+                            </details>
+
+                            <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                                <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                    Why do bettors prefer NHL moneylines?
+                                    <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                    NHL moneylines are popular because hockey games are often decided by 1 goal, making the -1.5 puck line risky.
+                                    Underdogs win frequently in the NHL, offering value on positive moneylines.
+                                </div>
+                            </details>
+
+                            <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                                <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                    How do NHL totals work?
+                                    <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                    NHL totals are bets on combined goals scored by both teams. Totals typically range 5.5-7 goals.
+                                    Goaltender matchups, back-to-back games, and team scoring trends all impact the total.
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                {/* CTA */}
+                <section className="border-t border-white/10">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
+                        <p className="text-gray-400 mb-4">Need help with betting math?</p>
+                        <div className="flex flex-wrap justify-center gap-3">
+                            <Link href="/tools/odds-converter" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors">
+                                Odds Converter
+                            </Link>
+                            <Link href="/tools/parlay-calculator" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors">
+                                Parlay Calculator
+                            </Link>
                         </div>
                     </div>
                 </section>

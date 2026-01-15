@@ -1,8 +1,8 @@
 /**
  * NBA Landing Page (/nba)
  * 
- * Premium SEO-optimized page targeting "NBA odds", "NBA lines", "NBA betting odds"
- * Shows today's NBA games with AI-powered analysis links.
+ * Premium SEO-optimized page targeting "NBA odds", "NBA betting odds", "NBA lines"
+ * Enhanced with competitor keyword analysis.
  */
 
 import { Metadata } from 'next';
@@ -10,12 +10,12 @@ import SportMatchGrid from '@/components/SportMatchGrid';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-    title: 'NBA Odds & Lines Today',
-    description: 'Get today\'s NBA odds, betting lines, and AI-powered analysis for every basketball game. Live spreads, moneylines, totals, and value detection for NBA betting.',
-    keywords: ['nba odds', 'nba lines', 'nba betting odds', 'nba spreads', 'nba moneyline', 'basketball odds today', 'nba betting lines', 'nba point spreads'],
+    title: 'NBA Odds Today - Live Basketball Betting Lines & Spreads',
+    description: 'Get today\'s NBA odds, point spreads, moneylines, and totals for every basketball game. Live NBA betting odds from top sportsbooks with AI-powered analysis. Find value on NBA bets, player props, and futures.',
+    keywords: ['nba odds', 'nba betting odds', 'nba lines', 'nba spreads', 'nba moneyline', 'basketball betting', 'nba point spread', 'nba totals', 'nba player props', 'nba futures', 'basketball odds today', 'nba game odds'],
     openGraph: {
-        title: 'NBA Odds & Lines Today | SportBot AI',
-        description: 'Today\'s NBA betting odds with AI analysis. Live spreads, moneylines, and value detection.',
+        title: 'NBA Odds Today - Live Betting Lines & Spreads | SportBot AI',
+        description: 'Today\'s NBA betting odds with AI analysis. Live spreads, moneylines, totals, and player props.',
         url: 'https://sportbotai.com/nba',
         type: 'website',
     },
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     },
 };
 
-// Icon components for educational cards
+// Icon components
 const SpreadIcon = () => (
     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h18M3 18h18M8 6v12M16 6v12" />
@@ -43,24 +43,67 @@ const TotalsIcon = () => (
     </svg>
 );
 
-// NBA leagues configuration
+const PropsIcon = () => (
+    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+);
+
+const FuturesIcon = () => (
+    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    </svg>
+);
+
 const NBA_LEAGUES = [
     { key: 'basketball_nba', name: 'NBA' },
     { key: 'basketball_euroleague', name: 'EuroLeague' },
 ];
 
-// Schema markup
+// Enhanced schema
 const nbaSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'NBA Odds & Lines Today',
-    description: 'Live NBA betting odds, spreads, moneylines, and AI-powered analysis for today\'s basketball games.',
+    name: 'NBA Odds Today - Live Basketball Betting Lines',
+    description: 'Live NBA betting odds, point spreads, moneylines, totals, and AI-powered analysis for today\'s basketball games.',
     url: 'https://sportbotai.com/nba',
     mainEntity: {
         '@type': 'SportsOrganization',
         name: 'NBA',
         sport: 'Basketball',
     },
+};
+
+// FAQ Schema
+const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+        {
+            '@type': 'Question',
+            name: 'What are NBA point spreads?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'NBA point spreads are betting lines that give the underdog a head start in points. If a team is -6.5, they must win by 7+ points for the bet to win. This levels the playing field between favorites and underdogs.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'How do NBA moneylines work?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'NBA moneylines are bets on which team will win the game outright. Negative odds like -180 mean you bet $180 to win $100. Positive odds like +150 mean a $100 bet wins $150.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'What are NBA player props?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'NBA player props are bets on individual player performance, like total points scored, rebounds, or assists. Example: LeBron James Over 25.5 points at -110.',
+            },
+        },
+    ],
 };
 
 export default function NbaPage() {
@@ -70,6 +113,10 @@ export default function NbaPage() {
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(nbaSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
             />
 
             <div className="min-h-screen bg-bg relative overflow-hidden">
@@ -99,11 +146,11 @@ export default function NbaPage() {
                                     </span>
                                 </div>
                                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-3">
-                                    NBA Odds & Lines
+                                    NBA Odds Today
                                 </h1>
                                 <p className="text-gray-400 text-base sm:text-lg max-w-xl">
-                                    AI-powered analysis for every NBA game. Get spreads, moneylines,
-                                    totals, and value detection.
+                                    Live NBA betting odds for every basketball game. Get spreads, moneylines,
+                                    totals, and player props with AI-powered value detection.
                                 </p>
                             </div>
 
@@ -111,14 +158,26 @@ export default function NbaPage() {
                             <div className="flex gap-4">
                                 <div className="text-center px-4 py-3 bg-white/5 rounded-xl border border-white/10">
                                     <div className="text-2xl font-bold text-orange-400">24/7</div>
-                                    <div className="text-xs text-gray-400">Live Data</div>
+                                    <div className="text-xs text-gray-400">Live Odds</div>
                                 </div>
                                 <div className="text-center px-4 py-3 bg-white/5 rounded-xl border border-white/10">
                                     <div className="text-2xl font-bold text-accent">AI</div>
-                                    <div className="text-xs text-gray-400">Powered</div>
+                                    <div className="text-xs text-gray-400">Analysis</div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                {/* Intro Content - SEO Text */}
+                <section className="border-b border-white/5">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <p className="text-gray-400 leading-relaxed max-w-4xl">
+                            Find today&apos;s <strong className="text-white">NBA odds</strong> and betting lines for every basketball game.
+                            Whether you&apos;re looking to place an <strong className="text-white">NBA bet</strong> on the point spread,
+                            moneyline, or total, our AI analyzes sportsbook odds to help bettors find value.
+                            Compare <strong className="text-white">NBA betting odds</strong> and make smarter wagers on your favorite teams.
+                        </p>
                     </div>
                 </section>
 
@@ -130,83 +189,236 @@ export default function NbaPage() {
                     maxMatches={12}
                 />
 
-                {/* Educational Content - Premium Cards */}
+                {/* How to Bet Section */}
                 <section className="border-t border-white/10">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                            How to Bet on NBA Games
+                        </h2>
+                        <p className="text-gray-400 mb-8 max-w-3xl">
+                            Sports betting on NBA games is straightforward once you understand the basics.
+                            Here&apos;s how to place an NBA bet at any sportsbook:
+                        </p>
+
+                        <div className="grid sm:grid-cols-4 gap-4 mb-8">
+                            <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                                <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-400 font-bold mb-3">1</div>
+                                <h3 className="text-white font-semibold mb-2">Choose Your Wager</h3>
+                                <p className="text-gray-400 text-sm">Pick spread, moneyline, total, or player props for your NBA bet.</p>
+                            </div>
+                            <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                                <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-400 font-bold mb-3">2</div>
+                                <h3 className="text-white font-semibold mb-2">Compare Odds</h3>
+                                <p className="text-gray-400 text-sm">Check betting odds across sportsbooks to get the best number.</p>
+                            </div>
+                            <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                                <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-400 font-bold mb-3">3</div>
+                                <h3 className="text-white font-semibold mb-2">Analyze Value</h3>
+                                <p className="text-gray-400 text-sm">Use our AI to find which team will win against the spread.</p>
+                            </div>
+                            <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                                <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-400 font-bold mb-3">4</div>
+                                <h3 className="text-white font-semibold mb-2">Place Your Bet</h3>
+                                <p className="text-gray-400 text-sm">Enter your stake and confirm your basketball bet on the sportsbook.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* NBA Betting Markets */}
+                <section className="border-t border-white/10 bg-white/[0.01]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
                         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-8">
                             NBA Betting Markets Explained
                         </h2>
 
-                        <div className="grid md:grid-cols-3 gap-6">
-                            {/* Point Spreads Card */}
-                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-6 hover:border-orange-500/30 transition-colors">
-                                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                                <div className="relative">
-                                    <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-4">
-                                        <SpreadIcon />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Point Spreads</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        NBA spreads level the playing field. A spread of -6.5 means the favorite must win by 7+ to cover.
-                                        Our AI analyzes recent form, home/away splits, and injury reports to assess value.
-                                    </p>
+                        <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            {/* Point Spreads */}
+                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-5 hover:border-orange-500/30 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-3">
+                                    <SpreadIcon />
                                 </div>
+                                <h3 className="text-base font-semibold text-white mb-2">Point Spread</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    The NBA point spread levels the playing field. A -6.5 spread means the favorite must win by 7+ points for your bet to win.
+                                </p>
                             </div>
 
-                            {/* Moneylines Card */}
-                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-6 hover:border-orange-500/30 transition-colors">
-                                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                                <div className="relative">
-                                    <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-4">
-                                        <MoneylineIcon />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Moneylines</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        Pick the outright winner. Odds like -180 mean betting $180 to win $100 on favorites.
-                                        We compare implied probability with AI predictions to detect mispriced lines.
-                                    </p>
+                            {/* Moneylines */}
+                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-5 hover:border-orange-500/30 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-3">
+                                    <MoneylineIcon />
                                 </div>
+                                <h3 className="text-base font-semibold text-white mb-2">Moneyline</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Pick which team will win the NBA game outright. The underdog offers higher payouts if they pull off the upset.
+                                </p>
                             </div>
 
-                            {/* Totals Card */}
-                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-6 hover:border-orange-500/30 transition-colors">
-                                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                                <div className="relative">
-                                    <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-4">
-                                        <TotalsIcon />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Totals (O/U)</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        NBA totals typically range 210-240 points. Our analysis considers pace factors,
-                                        defensive efficiency, and recent scoring trends to find over/under value.
-                                    </p>
+                            {/* Totals */}
+                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-5 hover:border-orange-500/30 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-3">
+                                    <TotalsIcon />
                                 </div>
+                                <h3 className="text-base font-semibold text-white mb-2">Totals (O/U)</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Bet on the total number of points scored by both teams. NBA totals typically range from 210-240 points.
+                                </p>
+                            </div>
+
+                            {/* Player Props */}
+                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-5 hover:border-orange-500/30 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-3">
+                                    <PropsIcon />
+                                </div>
+                                <h3 className="text-base font-semibold text-white mb-2">Player Props</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Wager on individual performance: points scored, rebounds, assists. Popular for star players each game.
+                                </p>
+                            </div>
+
+                            {/* Futures */}
+                            <div className="group relative bg-white/[0.02] rounded-2xl border border-white/10 p-5 hover:border-orange-500/30 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-3">
+                                    <FuturesIcon />
+                                </div>
+                                <h3 className="text-base font-semibold text-white mb-2">Futures Bet</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Bet on which team will win the NBA Finals or conference. Long-term bets with bigger payouts.
+                                </p>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        {/* CTA */}
-                        <div className="mt-10 text-center">
-                            <p className="text-gray-400 mb-4">Need help with betting math?</p>
-                            <div className="flex flex-wrap justify-center gap-3">
-                                <Link
-                                    href="/tools/odds-converter"
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors"
-                                >
-                                    Odds Converter
-                                </Link>
-                                <Link
-                                    href="/tools/parlay-calculator"
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors"
-                                >
-                                    Parlay Calculator
-                                </Link>
-                                <Link
-                                    href="/tools/hedge-calculator"
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors"
-                                >
-                                    Hedge Calculator
-                                </Link>
+                {/* NBA Betting Example */}
+                <section className="border-t border-white/10">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                            NBA Betting Example
+                        </h2>
+
+                        <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 max-w-3xl">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-2xl">🏀</span>
+                                <h3 className="text-lg font-semibold text-white">Lakers vs. Celtics - Sample NBA Bet</h3>
                             </div>
+                            <p className="text-gray-400 mb-4">
+                                Here&apos;s how NBA odds might look for a bettor considering this matchup:
+                            </p>
+                            <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                                <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
+                                    <div className="text-sm text-gray-500 mb-1">Lakers</div>
+                                    <div className="text-white font-semibold">Spread: +4.5 (-110)</div>
+                                    <div className="text-white font-semibold">Moneyline: +160</div>
+                                </div>
+                                <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
+                                    <div className="text-sm text-gray-500 mb-1">Celtics</div>
+                                    <div className="text-white font-semibold">Spread: -4.5 (-110)</div>
+                                    <div className="text-white font-semibold">Moneyline: -190</div>
+                                </div>
+                            </div>
+                            <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5 mb-4">
+                                <div className="text-sm text-gray-500 mb-1">Game Total</div>
+                                <div className="text-white font-semibold">Over/Under 224.5 points (-110 each)</div>
+                            </div>
+                            <p className="text-gray-400 text-sm">
+                                In this example, the Celtics are 4.5-point favorites. A bet on Lakers +4.5 wins if LA wins outright or loses by 4 or fewer points.
+                                The total of 224.5 means bettors expect roughly 225 points scored in the game.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* FAQ Section */}
+                <section className="border-t border-white/10 bg-white/[0.01]">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-8">
+                            NBA Betting FAQ
+                        </h2>
+
+                        <div className="space-y-4">
+                            <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                                <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                    What are NBA point spreads?
+                                    <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                    NBA point spreads are betting odds that give the underdog a head start. If a team is -6.5, they must win by 7+ points for your bet to win.
+                                    Spreads level the playing field between favorites and underdogs, making the wager more competitive for sports betting.
+                                </div>
+                            </details>
+
+                            <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                                <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                    How do I bet on NBA games?
+                                    <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                    To bet on an NBA game: (1) Choose a legal sportsbook, (2) Find the NBA game you want to wager on, (3) Select your bet type (spread, moneyline, total, or player props),
+                                    (4) Enter your stake, and (5) Confirm your basketball bet. Compare betting odds to get the best value.
+                                </div>
+                            </details>
+
+                            <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                                <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                    What are NBA player props?
+                                    <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                    NBA player props are bets on individual player performance rather than the game outcome. Common prop bets include points scored, rebounds, assists, and three-pointers made.
+                                    Example: betting on whether LeBron James will score over or under 25.5 points.
+                                </div>
+                            </details>
+
+                            <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                                <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                    How do NBA futures bets work?
+                                    <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                    A futures bet is a wager on a long-term outcome, like which team will win the NBA Finals or NBA MVP.
+                                    These bets offer higher payouts because you&apos;re betting before the season or playoffs. For example, betting on the Celtics to win the NBA championship at +350.
+                                </div>
+                            </details>
+
+                            <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                                <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                    How are NBA totals (over/under) calculated?
+                                    <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                    NBA totals represent the number of points sportsbooks expect both teams to score combined.
+                                    If the total is 224.5, you bet whether the actual points scored will go over or under that number. High-paced teams typically have higher totals.
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                {/* CTA */}
+                <section className="border-t border-white/10">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
+                        <p className="text-gray-400 mb-4">Need help with betting math?</p>
+                        <div className="flex flex-wrap justify-center gap-3">
+                            <Link
+                                href="/tools/odds-converter"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors"
+                            >
+                                Odds Converter
+                            </Link>
+                            <Link
+                                href="/tools/parlay-calculator"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors"
+                            >
+                                Parlay Calculator
+                            </Link>
+                            <Link
+                                href="/tools/hedge-calculator"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors"
+                            >
+                                Hedge Calculator
+                            </Link>
                         </div>
                     </div>
                 </section>
