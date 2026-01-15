@@ -304,11 +304,111 @@ export default function OddsConverterPage() {
                 </div>
             </section>
 
-            {/* FAQ Section */}
+            {/* How to Use Section */}
+            <section className="border-t border-white/10">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                        How to Use This Odds Converter
+                    </h2>
+                    <p className="text-gray-400 mb-6">
+                        The odds converter instantly converts between American, Decimal, and Fractional odds formats.
+                        Whether you&apos;re betting on NFL, NBA, soccer, or any sport, this free odds converter shows the equivalent odds in all formats plus implied probability.
+                    </p>
+
+                    <div className="grid sm:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold mb-3">1</div>
+                            <h3 className="text-white font-semibold mb-2">Select Format</h3>
+                            <p className="text-gray-400 text-sm">Choose the format of the odds you want to convert: American, Decimal, or Fractional.</p>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold mb-3">2</div>
+                            <h3 className="text-white font-semibold mb-2">Enter Odds</h3>
+                            <p className="text-gray-400 text-sm">Input your odds value. Examples: -150, +200, 2.50, 5/1</p>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold mb-3">3</div>
+                            <h3 className="text-white font-semibold mb-2">View All Formats</h3>
+                            <p className="text-gray-400 text-sm">The odds converter instantly shows equivalent odds in all formats plus implied probability.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Conversion Table */}
+            <section className="border-t border-white/10 bg-white/[0.01]">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                        Odds Conversion Chart
+                    </h2>
+                    <p className="text-gray-400 mb-6">
+                        Common odds conversions for quick reference. Use the odds converter above for precise calculations.
+                    </p>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="border-b border-white/10">
+                                    <th className="px-4 py-3 text-white font-semibold">American</th>
+                                    <th className="px-4 py-3 text-white font-semibold">Decimal</th>
+                                    <th className="px-4 py-3 text-white font-semibold">Fractional</th>
+                                    <th className="px-4 py-3 text-white font-semibold">Implied Prob.</th>
+                                </tr>
+                            </thead>
+                            <tbody className="text-gray-400">
+                                <tr className="border-b border-white/5">
+                                    <td className="px-4 py-3">-500</td>
+                                    <td className="px-4 py-3">1.20</td>
+                                    <td className="px-4 py-3">1/5</td>
+                                    <td className="px-4 py-3">83.3%</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="px-4 py-3">-200</td>
+                                    <td className="px-4 py-3">1.50</td>
+                                    <td className="px-4 py-3">1/2</td>
+                                    <td className="px-4 py-3">66.7%</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="px-4 py-3">-110</td>
+                                    <td className="px-4 py-3">1.91</td>
+                                    <td className="px-4 py-3">10/11</td>
+                                    <td className="px-4 py-3">52.4%</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="px-4 py-3">+100</td>
+                                    <td className="px-4 py-3">2.00</td>
+                                    <td className="px-4 py-3">1/1 (Evens)</td>
+                                    <td className="px-4 py-3">50.0%</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="px-4 py-3">+150</td>
+                                    <td className="px-4 py-3">2.50</td>
+                                    <td className="px-4 py-3">3/2</td>
+                                    <td className="px-4 py-3">40.0%</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="px-4 py-3">+200</td>
+                                    <td className="px-4 py-3">3.00</td>
+                                    <td className="px-4 py-3">2/1</td>
+                                    <td className="px-4 py-3">33.3%</td>
+                                </tr>
+                                <tr className="border-b border-white/5">
+                                    <td className="px-4 py-3">+500</td>
+                                    <td className="px-4 py-3">6.00</td>
+                                    <td className="px-4 py-3">5/1</td>
+                                    <td className="px-4 py-3">16.7%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ Section - Expanded */}
             <section className="border-t border-white/10">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
                     <h2 className="text-2xl sm:text-3xl font-bold text-white mb-8">
-                        Frequently Asked Questions
+                        Odds Converter FAQ
                     </h2>
 
                     <div className="space-y-4">
@@ -320,6 +420,19 @@ export default function OddsConverterPage() {
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
                                 For positive American odds: Decimal = (American / 100) + 1. For example, +200 becomes (200/100) + 1 = 3.00.
                                 For negative American odds: Decimal = (100 / |American|) + 1. For example, -150 becomes (100/150) + 1 = 1.67.
+                                The odds converter handles this calculation automatically.
+                            </div>
+                        </details>
+
+                        <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                            <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                How do I convert decimal odds to American?
+                                <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                For decimal odds ≥ 2.00: American = (Decimal - 1) × 100. Example: 3.00 becomes +200.
+                                For decimal odds &lt; 2.00: American = -100 / (Decimal - 1). Example: 1.50 becomes -200.
+                                Use the odds converter for instant, accurate conversions.
                             </div>
                         </details>
 
@@ -329,7 +442,7 @@ export default function OddsConverterPage() {
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                Implied probability is the likelihood of an outcome as suggested by the betting odds. It tells you what chance the market believes an event has of happening. For example, -200 odds imply a 66.7% probability, while +200 odds imply a 33.3% probability.
+                                Implied probability is the likelihood of an outcome as suggested by the betting odds. It tells you what chance the market believes an event has of happening. For example, -200 odds imply a 66.7% probability, while +200 odds imply a 33.3% probability. The odds converter shows this automatically.
                             </div>
                         </details>
 
@@ -339,7 +452,7 @@ export default function OddsConverterPage() {
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                Decimal odds are the easiest for calculating payouts. Simply multiply your stake by the decimal odds to get your total return. For example, a $50 bet at 2.40 odds returns $50 × 2.40 = $120 total ($70 profit + $50 stake).
+                                Decimal odds are the easiest for calculating payouts. Simply multiply your stake by the decimal odds to get your total return. For example, a $50 bet at 2.40 odds returns $50 × 2.40 = $120 total ($70 profit + $50 stake). Use the odds converter to switch to decimal format.
                             </div>
                         </details>
 
@@ -350,6 +463,26 @@ export default function OddsConverterPage() {
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
                                 Negative odds (-) indicate the favorite and show how much you must bet to win $100. Positive odds (+) indicate the underdog and show how much you win from a $100 bet. This format quickly tells you which side is favored and the relative payout.
+                            </div>
+                        </details>
+
+                        <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                            <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                What are fractional odds?
+                                <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                Fractional odds are traditional UK/Irish format written as fractions like 5/1 or 3/2. The first number is your profit relative to the second number (your stake). 5/1 means you win $5 for every $1 bet. &quot;Evens&quot; or 1/1 means you double your money. The odds converter handles fractional conversions.
+                            </div>
+                        </details>
+
+                        <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                            <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                Where are different odds formats used?
+                                <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                American odds are used primarily in the US (NFL, NBA, MLB betting). Decimal odds are standard in Europe, Canada, and Australia. Fractional odds are traditional in the UK and Ireland, especially for horse racing. The odds converter lets you switch between all three formats.
                             </div>
                         </details>
                     </div>

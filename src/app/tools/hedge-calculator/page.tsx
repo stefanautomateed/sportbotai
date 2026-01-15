@@ -257,11 +257,89 @@ export default function HedgeCalculatorPage() {
                 </div>
             </section>
 
-            {/* FAQ Section */}
+            {/* How to Use Section */}
+            <section className="border-t border-white/10">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                        How to Use This Hedge Calculator
+                    </h2>
+                    <p className="text-gray-400 mb-6">
+                        The hedge calculator helps you lock in guaranteed profit or minimize loss on an existing bet.
+                        Whether you have a futures bet, parlay, or single bet in a favorable position, this free hedge bet calculator shows exactly how much to wager.
+                    </p>
+
+                    <div className="grid sm:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                            <div className="w-8 h-8 rounded-full bg-violet/10 flex items-center justify-center text-violet font-bold mb-3">1</div>
+                            <h3 className="text-white font-semibold mb-2">Enter Original Bet</h3>
+                            <p className="text-gray-400 text-sm">Input your original stake and the odds you placed it at.</p>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                            <div className="w-8 h-8 rounded-full bg-violet/10 flex items-center justify-center text-violet font-bold mb-3">2</div>
+                            <h3 className="text-white font-semibold mb-2">Enter Hedge Odds</h3>
+                            <p className="text-gray-400 text-sm">Input the current odds for the opposite outcome.</p>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                            <div className="w-8 h-8 rounded-full bg-violet/10 flex items-center justify-center text-violet font-bold mb-3">3</div>
+                            <h3 className="text-white font-semibold mb-2">See Hedge Amount</h3>
+                            <p className="text-gray-400 text-sm">The hedge calculator shows exactly how much to bet for guaranteed profit.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Examples Section */}
+            <section className="border-t border-white/10 bg-white/[0.01]">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                        Hedge Bet Calculator Examples
+                    </h2>
+
+                    <div className="space-y-6">
+                        {/* Futures Example */}
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-2xl">🏈</span>
+                                <h3 className="text-lg font-semibold text-white">NFL Futures Hedge Example</h3>
+                            </div>
+                            <p className="text-gray-400 mb-4">
+                                You bet $100 on the Chiefs to win the Super Bowl at +1000 before the season. They make the Super Bowl and face the Eagles.
+                            </p>
+                            <ul className="text-gray-300 space-y-1 mb-4 text-sm">
+                                <li>• <strong>Original bet:</strong> $100 on Chiefs at +1000 (to win $1,000)</li>
+                                <li>• <strong>Hedge option:</strong> Eagles moneyline at -130</li>
+                            </ul>
+                            <p className="text-gray-400 text-sm">
+                                Using the hedge calculator: Bet approximately $458 on the Eagles. If Chiefs win, you profit $542 ($1,000 - $458). If Eagles win, you profit $252 ($352 payout - $100 original). Guaranteed profit either way!
+                            </p>
+                        </div>
+
+                        {/* Parlay Example */}
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-2xl">🏀</span>
+                                <h3 className="text-lg font-semibold text-white">NBA Parlay Hedge Example</h3>
+                            </div>
+                            <p className="text-gray-400 mb-4">
+                                You have a 4-leg NBA parlay with 3 legs already won. The final leg is Lakers -5.5.
+                            </p>
+                            <ul className="text-gray-300 space-y-1 mb-4 text-sm">
+                                <li>• <strong>Original:</strong> $50 parlay now worth $800 if Lakers cover</li>
+                                <li>• <strong>Hedge option:</strong> Celtics +5.5 at -110</li>
+                            </ul>
+                            <p className="text-gray-400 text-sm">
+                                The hedge calculator determines your optimal bet on Celtics +5.5 to lock in profit regardless of the final game&apos;s outcome.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ Section - Expanded */}
             <section className="border-t border-white/10">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
                     <h2 className="text-2xl sm:text-3xl font-bold text-white mb-8">
-                        Frequently Asked Questions
+                        Hedge Calculator FAQ
                     </h2>
 
                     <div className="space-y-4">
@@ -271,7 +349,7 @@ export default function HedgeCalculatorPage() {
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                Hedge betting is placing a bet on the opposite outcome of an existing bet to reduce risk or lock in profit. For example, if you have a futures bet on a team to win a championship, you can hedge by betting on their opponent in the final to guarantee profit regardless of the outcome.
+                                Hedge betting is placing a bet on the opposite outcome of an existing bet to reduce risk or lock in profit. For example, if you have a futures bet on a team to win a championship, you can hedge by betting on their opponent in the final to guarantee profit regardless of the outcome. The hedge calculator shows you exactly how much to bet.
                             </div>
                         </details>
 
@@ -281,17 +359,17 @@ export default function HedgeCalculatorPage() {
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                Consider hedging when: (1) Your original bet has significant value and you want to lock in guaranteed profit, (2) The potential loss would be financially significant, or (3) Circumstances have changed and you want to reduce exposure. Many bettors hedge futures bets when their team reaches the final.
+                                Consider hedging when: (1) Your original bet has significant value and you want to lock in guaranteed profit, (2) The potential loss would be financially significant, (3) Circumstances have changed and you want to reduce exposure, or (4) You&apos;re on the final leg of a big parlay. Use the hedge calculator to see if hedging makes sense.
                             </div>
                         </details>
 
                         <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
                             <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
-                                How is the hedge amount calculated?
+                                How is the hedge bet amount calculated?
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                The formula for equal profit hedging is: Hedge Bet = (Original Stake × Original Decimal Odds) / Hedge Decimal Odds. This calculates the exact amount to bet on the opposite side so that you win the same amount regardless of which bet wins.
+                                The formula for equal profit hedging is: Hedge Bet = (Original Stake × Original Decimal Odds) / Hedge Decimal Odds. This calculates the exact amount to bet on the opposite side so that you win the same amount regardless of which bet wins. The hedge calculator handles this automatically.
                             </div>
                         </details>
 
@@ -301,7 +379,27 @@ export default function HedgeCalculatorPage() {
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                Not always. If the combined odds (original + hedge) create too much vig, you might lock in a small loss instead of profit. However, hedging is still valuable for risk management—accepting a small guaranteed loss is often better than risking a large loss.
+                                Not always. If the combined odds (original + hedge) create too much vig, you might lock in a small loss instead of profit. However, hedging is still valuable for risk management—accepting a small guaranteed loss is often better than risking a large loss. The hedge calculator shows both scenarios.
+                            </div>
+                        </details>
+
+                        <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                            <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                Can I hedge a parlay bet?
+                                <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                Yes! Hedging parlays is common when you&apos;re on the final leg(s). If you have a 4-leg parlay with 3 legs won, you can hedge the final leg. Enter your original stake and the parlay&apos;s total odds into the hedge calculator to determine your optimal hedge amount.
+                            </div>
+                        </details>
+
+                        <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                            <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                What&apos;s the difference between hedging and arbitrage?
+                                <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                Hedging protects an existing bet that&apos;s now in a favorable position. Arbitrage (arbing) involves placing bets on all outcomes simultaneously when odds discrepancies guarantee profit. Use this hedge calculator for hedging; arbitrage requires identifying odds differences across sportsbooks.
                             </div>
                         </details>
                     </div>

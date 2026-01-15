@@ -1,17 +1,21 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Hedge Bet Calculator - Lock In Guaranteed Profit | SportBot AI',
-    description: 'Free hedge calculator. Calculate the optimal hedge bet amount to guarantee profit or minimize loss on your open bets. Works with American and Decimal odds.',
-    keywords: ['hedge calculator', 'hedge bet calculator', 'hedging calculator', 'betting hedge calculator', 'lock in profit calculator'],
+    title: 'Hedge Calculator - Free Hedge Bet Calculator',
+    description: 'Free hedge bet calculator for sports betting. Calculate how much to hedge on NFL, NBA, MLB bets to lock in guaranteed profit. Works with parlays and futures.',
+    keywords: ['hedge calculator', 'hedge bet calculator', 'hedging calculator', 'betting hedge calculator', 'lock in profit calculator', 'parlay hedge calculator', 'futures hedge calculator', 'arbitrage calculator'],
     openGraph: {
         title: 'Free Hedge Bet Calculator | SportBot AI',
         description: 'Calculate the optimal hedge bet to lock in guaranteed profit on your open bets.',
         type: 'website',
+        url: 'https://sportbotai.com/tools/hedge-calculator',
+    },
+    alternates: {
+        canonical: 'https://sportbotai.com/tools/hedge-calculator',
     },
 };
 
-// FAQ Schema for SEO rich results
+// FAQ Schema for SEO rich results - expanded
 const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -29,12 +33,12 @@ const faqSchema = {
             name: 'When should I hedge a bet?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'Consider hedging when your original bet has significant value and you want to lock in guaranteed profit, the potential loss would be financially significant, or circumstances have changed and you want to reduce exposure.',
+                text: 'Consider hedging when your original bet has significant value and you want to lock in guaranteed profit, the potential loss would be financially significant, circumstances have changed, or you are on the final leg of a big parlay.',
             },
         },
         {
             '@type': 'Question',
-            name: 'How is the hedge amount calculated?',
+            name: 'How is the hedge bet amount calculated?',
             acceptedAnswer: {
                 '@type': 'Answer',
                 text: 'Hedge Bet = (Original Stake × Original Decimal Odds) / Hedge Decimal Odds. This calculates the exact amount to bet so you win the same regardless of which bet wins.',
@@ -46,6 +50,22 @@ const faqSchema = {
             acceptedAnswer: {
                 '@type': 'Answer',
                 text: 'Not always. If combined odds create too much vig, you might lock in a small loss. However, hedging is valuable for risk management—a small guaranteed loss is often better than risking a large loss.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Can I hedge a parlay bet?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Yes! Hedging parlays is common when you are on the final leg(s). If you have a 4-leg parlay with 3 legs won, you can hedge the final leg using this calculator.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'What is the difference between hedging and arbitrage?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Hedging protects an existing bet that is now in a favorable position. Arbitrage involves placing bets on all outcomes simultaneously when odds discrepancies guarantee profit.',
             },
         },
     ],

@@ -294,11 +294,110 @@ export default function ParlayCalculatorPage() {
                 </div>
             </section>
 
-            {/* FAQ Section */}
+            {/* How to Use Section */}
+            <section className="border-t border-white/10">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                        How to Use This Parlay Calculator
+                    </h2>
+                    <p className="text-gray-400 mb-6">
+                        The parlay calculator allows you to quickly calculate the payout of your parlay bet by inputting the odds for each leg.
+                        Whether you&apos;re betting NFL, NBA, MLB, or any other sport, this free parlay calculator shows your total odds and potential winnings.
+                    </p>
+
+                    <div className="grid sm:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold mb-3">1</div>
+                            <h3 className="text-white font-semibold mb-2">Enter Your Stake</h3>
+                            <p className="text-gray-400 text-sm">Input the amount you want to wager on your parlay bet.</p>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold mb-3">2</div>
+                            <h3 className="text-white font-semibold mb-2">Add Parlay Legs</h3>
+                            <p className="text-gray-400 text-sm">Enter the odds for each leg. Add up to 15 legs to your parlay.</p>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-5">
+                            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold mb-3">3</div>
+                            <h3 className="text-white font-semibold mb-2">See Your Payout</h3>
+                            <p className="text-gray-400 text-sm">The parlay calculator instantly shows your total odds and potential payout.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Examples Section */}
+            <section className="border-t border-white/10 bg-white/[0.01]">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                        Parlay Calculator Examples by Sport
+                    </h2>
+
+                    <div className="space-y-6">
+                        {/* NFL Example */}
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-2xl">🏈</span>
+                                <h3 className="text-lg font-semibold text-white">NFL Parlay Example</h3>
+                            </div>
+                            <p className="text-gray-400 mb-4">
+                                Let&apos;s say you want to bet a 3-leg NFL parlay with a $100 stake:
+                            </p>
+                            <ul className="text-gray-300 space-y-1 mb-4 text-sm">
+                                <li>• <strong>Leg 1:</strong> Kansas City Chiefs -6.5 at -110</li>
+                                <li>• <strong>Leg 2:</strong> Buffalo Bills Moneyline at +150</li>
+                                <li>• <strong>Leg 3:</strong> Over 45.5 points (Eagles vs. Cowboys) at -105</li>
+                            </ul>
+                            <p className="text-gray-400 text-sm">
+                                Using the parlay calculator: The combined odds equal approximately +597, meaning a $100 bet returns $697 total ($597 profit) if all three legs win.
+                            </p>
+                        </div>
+
+                        {/* NBA Example */}
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-2xl">🏀</span>
+                                <h3 className="text-lg font-semibold text-white">NBA Parlay Example</h3>
+                            </div>
+                            <p className="text-gray-400 mb-4">
+                                Here&apos;s a 2-leg NBA parlay example with $50 stake:
+                            </p>
+                            <ul className="text-gray-300 space-y-1 mb-4 text-sm">
+                                <li>• <strong>Leg 1:</strong> Lakers -4.5 at -110</li>
+                                <li>• <strong>Leg 2:</strong> Celtics Moneyline at -140</li>
+                            </ul>
+                            <p className="text-gray-400 text-sm">
+                                The parlay calculator shows combined odds of +188. A $50 wager would return $144 total ($94 profit) if both teams cover.
+                            </p>
+                        </div>
+
+                        {/* MLB Example */}
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-2xl">⚾</span>
+                                <h3 className="text-lg font-semibold text-white">MLB Parlay Example</h3>
+                            </div>
+                            <p className="text-gray-400 mb-4">
+                                MLB same-game parlays are popular. Here&apos;s a 4-leg example:
+                            </p>
+                            <ul className="text-gray-300 space-y-1 mb-4 text-sm">
+                                <li>• <strong>Leg 1:</strong> Yankees Moneyline at -130</li>
+                                <li>• <strong>Leg 2:</strong> Over 8.5 runs at -115</li>
+                                <li>• <strong>Leg 3:</strong> Aaron Judge 1+ hit at -200</li>
+                                <li>• <strong>Leg 4:</strong> Dodgers Moneyline at -150</li>
+                            </ul>
+                            <p className="text-gray-400 text-sm">
+                                Input these odds into the parlay calculator to see your exact payout. Four favorites like this typically result in +300 to +400 parlay odds.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ Section - Expanded */}
             <section className="border-t border-white/10">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
                     <h2 className="text-2xl sm:text-3xl font-bold text-white mb-8">
-                        Frequently Asked Questions
+                        Parlay Calculator FAQ
                     </h2>
 
                     <div className="space-y-4">
@@ -308,7 +407,17 @@ export default function ParlayCalculatorPage() {
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                A parlay (also called an accumulator or multi) is a single bet that combines multiple selections into one wager. All selections must win for the parlay to pay out. The odds multiply together, creating higher potential payouts but with lower probability of winning.
+                                A parlay (also called an accumulator or multi) is a single bet that combines multiple selections into one wager. All selections must win for the parlay to pay out. The parlay calculator multiplies the odds together, creating higher potential payouts but with lower probability of winning. For example, a 3-leg NFL parlay with each leg at -110 pays approximately +597.
+                            </div>
+                        </details>
+
+                        <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                            <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                How does the parlay calculator work?
+                                <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                The parlay calculator converts all odds to decimal format, then multiplies them together to get the total parlay odds. For American odds: +200 becomes 3.0 in decimal, -150 becomes 1.67. The calculator then multiplies your stake by the combined decimal odds to show your potential payout. Sportsbooks automatically calculate this too, but a parlay calculator lets you check the math yourself.
                             </div>
                         </details>
 
@@ -318,7 +427,17 @@ export default function ParlayCalculatorPage() {
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                Parlay odds are calculated by multiplying the decimal odds of each leg together. For example: Leg 1 (1.91) × Leg 2 (2.00) × Leg 3 (1.80) = 6.88 total decimal odds. Your stake is then multiplied by this total to get your potential payout.
+                                Parlay odds are calculated by multiplying the decimal odds of each leg. Example: Leg 1 (-110 = 1.91) × Leg 2 (+100 = 2.00) × Leg 3 (-105 = 1.95) = 7.45 total decimal odds, or approximately +645 in American odds. A $100 stake would return $745 total. The parlay calculator handles this conversion automatically.
+                            </div>
+                        </details>
+
+                        <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                            <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                Are a parlay calculator and odds payout calculator the same thing?
+                                <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                No. A parlay calculator is designed to figure out the total payout for multi-leg bets, combining the odds of each leg to show your potential return. An odds payout calculator is typically used for single bets, calculating how much you&apos;d win based on the odds and your stake. A parlay calculator handles the compounding nature of parlays, while an odds calculator does not.
                             </div>
                         </details>
 
@@ -328,7 +447,7 @@ export default function ParlayCalculatorPage() {
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                Parlays offer higher payouts but have lower expected value than straight bets. The more legs you add, the more the house edge compounds. Most professional bettors avoid large parlays, but 2-3 leg correlated parlays can occasionally offer value.
+                                Parlays offer higher payouts but have lower expected value than straight bets. The more legs you add, the more the house edge compounds. Most professional bettors avoid large parlays (5+ legs), but 2-3 leg correlated parlays can occasionally offer value. Use the parlay calculator to see exactly how much the odds compound.
                             </div>
                         </details>
 
@@ -338,7 +457,27 @@ export default function ParlayCalculatorPage() {
                                 <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                             </summary>
                             <div className="px-5 pb-5 text-gray-400 leading-relaxed">
-                                If a leg pushes (ties), that leg is typically removed from the parlay and the odds are recalculated with the remaining legs. A 4-leg parlay becomes a 3-leg parlay. Some sportsbooks have different rules, so check your book&apos;s terms.
+                                If a leg pushes (ties), that leg is typically removed from the parlay and the odds are recalculated with the remaining legs. A 4-leg parlay becomes a 3-leg parlay. Some sportsbooks have different rules—DraftKings and FanDuel typically remove the leg, while some books may grade the entire parlay as a push. Always check your book&apos;s terms.
+                            </div>
+                        </details>
+
+                        <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                            <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                What is a same game parlay (SGP)?
+                                <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                A same game parlay (SGP) combines multiple bets from the same event—like an NFL moneyline, over/under, and player props all in one parlay. Most sportsbooks offer SGPs with adjusted odds since the outcomes are correlated. You can use this parlay calculator for SGPs by entering the odds shown for each leg on your sportsbook.
+                            </div>
+                        </details>
+
+                        <details className="group bg-white/[0.02] border border-white/10 rounded-xl">
+                            <summary className="flex items-center justify-between cursor-pointer p-5 text-white font-medium">
+                                How many legs can I add to a parlay?
+                                <span className="ml-4 text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div className="px-5 pb-5 text-gray-400 leading-relaxed">
+                                Most sportsbooks allow parlays with 2-15 legs. This parlay calculator supports up to 15 legs. Keep in mind that while 10+ leg parlays have huge payouts, they&apos;re extremely difficult to hit. A 10-leg parlay at -110 each has only about a 0.09% chance of winning (roughly 1 in 1,100).
                             </div>
                         </details>
                     </div>
