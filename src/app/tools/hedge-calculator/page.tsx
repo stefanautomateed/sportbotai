@@ -113,7 +113,10 @@ export default function HedgeCalculatorPage() {
                     {/* Page Header */}
                     <div className="text-center mb-10 sm:mb-12">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl rounded-full text-xs sm:text-sm font-medium text-gray-300 border border-white/10 mb-6">
-                            <span className="text-lg">🛡️</span>
+                            <svg className="w-4 h-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                <path d="M9 12l2 2 4-4" />
+                            </svg>
                             Free Betting Tool
                         </div>
 
@@ -147,8 +150,8 @@ export default function HedgeCalculatorPage() {
                                             setError(null);
                                         }}
                                         className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 capitalize ${oddsFormat === format
-                                                ? 'bg-accent text-primary-900 shadow-glow-accent'
-                                                : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                                            ? 'bg-accent text-primary-900 shadow-glow-accent'
+                                            : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
                                             }`}
                                     >
                                         {format}

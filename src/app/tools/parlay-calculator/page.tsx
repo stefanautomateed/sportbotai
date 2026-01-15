@@ -147,7 +147,10 @@ export default function ParlayCalculatorPage() {
                     {/* Page Header */}
                     <div className="text-center mb-10 sm:mb-12">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl rounded-full text-xs sm:text-sm font-medium text-gray-300 border border-white/10 mb-6">
-                            <span className="text-lg">📊</span>
+                            <svg className="w-4 h-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 3v18h18" />
+                                <path d="M7 16l4-4 4 4 5-6" />
+                            </svg>
                             Free Betting Tool
                         </div>
 
@@ -180,8 +183,8 @@ export default function ParlayCalculatorPage() {
                                             setError(null);
                                         }}
                                         className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 capitalize ${oddsFormat === format
-                                                ? 'bg-accent text-primary-900 shadow-glow-accent'
-                                                : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                                            ? 'bg-accent text-primary-900 shadow-glow-accent'
+                                            : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
                                             }`}
                                     >
                                         {format}

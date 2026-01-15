@@ -170,7 +170,9 @@ export default function OddsConverterPage() {
                     {/* Page Header */}
                     <div className="text-center mb-10 sm:mb-12">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl rounded-full text-xs sm:text-sm font-medium text-gray-300 border border-white/10 mb-6">
-                            <span className="text-lg">🧮</span>
+                            <svg className="w-4 h-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" />
+                            </svg>
                             Free Betting Tool
                         </div>
 
