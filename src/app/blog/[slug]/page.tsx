@@ -92,9 +92,9 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   // Twitter/X requires PNG/JPG images with absolute URLs
   // SVG images don't work on Twitter, so we use dynamic /api/og for all match previews
   const baseUrl = 'https://www.sportbotai.com'; // Must be absolute URL for Twitter
-  
+
   let ogImageUrl: string;
-  
+
   // Always use /api/og for match previews - it generates PNG that works on Twitter
   // SVG images from Vercel Blob don't display on Twitter/X
   if (post.homeTeam && post.awayTeam) {
@@ -103,17 +103,17 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       away: post.awayTeam,
       league: post.league || post.sport || 'Match Preview',
       verdict: 'AI Match Analysis',
-      date: post.matchDate ? new Date(post.matchDate).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
+      date: post.matchDate ? new Date(post.matchDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
       }) : '',
     });
     ogImageUrl = `${baseUrl}/api/og?${ogParams.toString()}`;
   } else if (post.featuredImage && !post.featuredImage.endsWith('.svg')) {
     // Use existing PNG/JPG image if available
-    ogImageUrl = post.featuredImage.startsWith('http') 
-      ? post.featuredImage 
+    ogImageUrl = post.featuredImage.startsWith('http')
+      ? post.featuredImage
       : `${baseUrl}${post.featuredImage}`;
   } else {
     // Generic fallback for non-match posts
@@ -126,8 +126,8 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     url: ogImageUrl,
     width: 1200,
     height: 630,
-    alt: post.homeTeam && post.awayTeam 
-      ? `${post.homeTeam} vs ${post.awayTeam} - Match Preview` 
+    alt: post.homeTeam && post.awayTeam
+      ? `${post.homeTeam} vs ${post.awayTeam} - Match Preview`
       : post.title,
   };
 
@@ -211,6 +211,41 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   const breadcrumbSchema = getBlogPostBreadcrumb(post.title, post.category || undefined);
 
+  // FAQ Schema for tool reviews - helps with Google rich snippets
+  const isToolReview = slug.endsWith('-review');
+  const toolName = isToolReview ? post.title.replace(/ Review.*$/i, '').trim() : '';
+
+  const faqSchema = isToolReview ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `What is ${toolName}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: post.excerpt || `${toolName} is a sports betting analytics tool reviewed by SportBot AI.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `Is ${toolName} worth it?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Read our comprehensive ${toolName} review to understand its features, pros, cons, and whether it's the right fit for your sports betting strategy.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `What are the pros and cons of ${toolName}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Our ${toolName} review covers key advantages and disadvantages based on real testing. Check the full review for detailed analysis.`,
+        },
+      },
+    ],
+  } : null;
+
   return (
     <>
       <ViewTracker postId={post.id} />
@@ -222,10 +257,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
 
       <article className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 relative">
         {/* Glass morphism overlay with newspaper texture */}
-        <div 
+        <div
           className="absolute inset-0 bg-white/40 z-0"
           style={{
             backgroundImage: `
@@ -285,10 +326,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 <span>
                   {post.publishedAt
                     ? new Date(post.publishedAt).toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
                     : 'Draft'}
                 </span>
                 <span>•</span>
@@ -318,7 +359,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto">
               {/* Article Content - Custom Blog Styling with auto-linked team names */}
-              <article 
+              <article
                 className="blog-content bg-white rounded-2xl shadow-lg p-8 md:p-12 border border-slate-200"
                 dangerouslySetInnerHTML={{ __html: autoLinkTeamsSimple(post.content) }}
               />
@@ -366,21 +407,21 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     </Link>
                     <p className="text-emerald-600 text-sm mb-2">{AUTHOR.jobTitle}</p>
                     <p className="text-slate-600 text-sm leading-relaxed">
-                      Sports analyst with expertise in data-driven match analysis and betting markets. 
+                      Sports analyst with expertise in data-driven match analysis and betting markets.
                       Combining AI technology with deep sports knowledge to deliver actionable insights.
                     </p>
                     <div className="flex gap-3 mt-3">
-                      <a 
-                        href={AUTHOR.sameAs[0]} 
-                        target="_blank" 
+                      <a
+                        href={AUTHOR.sameAs[0]}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-slate-600 hover:text-emerald-600 transition-colors text-sm"
                       >
                         Upwork
                       </a>
-                      <a 
-                        href={AUTHOR.sameAs[1]} 
-                        target="_blank" 
+                      <a
+                        href={AUTHOR.sameAs[1]}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-slate-600 hover:text-emerald-600 transition-colors text-sm"
                       >
@@ -393,7 +434,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
               {/* Featured Badge Snippet - Only for tool reviews */}
               {post.slug.endsWith('-review') && (
-                <FeaturedBadgeSnippet 
+                <FeaturedBadgeSnippet
                   toolName={post.title.replace(' Review', '').replace(' review', '')}
                   reviewUrl={`${SITE_CONFIG.url}/blog/${post.slug}`}
                 />
@@ -430,7 +471,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Content below image */}
                     <div className="p-4">
                       <span className="inline-block px-2 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wide rounded-sm mb-2">
