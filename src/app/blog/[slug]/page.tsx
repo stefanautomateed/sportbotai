@@ -211,40 +211,108 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   const breadcrumbSchema = getBlogPostBreadcrumb(post.title, post.category || undefined);
 
-  // FAQ Schema for tool reviews - helps with Google rich snippets
+  // FAQ Schema - helps with Google rich snippets
+  // Different FAQs for different post types
   const isToolReview = slug.endsWith('-review');
+  const isMatchPreview = post.homeTeam && post.awayTeam;
   const toolName = isToolReview ? post.title.replace(/ Review.*$/i, '').trim() : '';
+  const matchName = isMatchPreview ? `${post.homeTeam} vs ${post.awayTeam}` : '';
 
-  const faqSchema = isToolReview ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: `What is ${toolName}?`,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: post.excerpt || `${toolName} is a sports betting analytics tool reviewed by SportBot AI.`,
+  // Build FAQ schema based on post type
+  let faqSchema: object | null = null;
+
+  if (isToolReview) {
+    // Tool review FAQs
+    faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: `What is ${toolName}?`,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: post.excerpt || `${toolName} is a sports betting analytics tool reviewed by SportBot AI.`,
+          },
         },
-      },
-      {
-        '@type': 'Question',
-        name: `Is ${toolName} worth it?`,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: `Read our comprehensive ${toolName} review to understand its features, pros, cons, and whether it's the right fit for your sports betting strategy.`,
+        {
+          '@type': 'Question',
+          name: `Is ${toolName} worth it?`,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: `Read our comprehensive ${toolName} review to understand its features, pros, cons, and whether it's the right fit for your sports betting strategy.`,
+          },
         },
-      },
-      {
-        '@type': 'Question',
-        name: `What are the pros and cons of ${toolName}?`,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: `Our ${toolName} review covers key advantages and disadvantages based on real testing. Check the full review for detailed analysis.`,
+        {
+          '@type': 'Question',
+          name: `What are the pros and cons of ${toolName}?`,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: `Our ${toolName} review covers key advantages and disadvantages based on real testing. Check the full review for detailed analysis.`,
+          },
         },
-      },
-    ],
-  } : null;
+      ],
+    };
+  } else if (isMatchPreview) {
+    // Match preview FAQs
+    const matchDateStr = post.matchDate
+      ? new Date(post.matchDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      : 'scheduled date';
+    faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: `When is ${matchName}?`,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: `${matchName} is scheduled for ${matchDateStr}. Check our analysis for the latest kickoff time and TV coverage.`,
+          },
+        },
+        {
+          '@type': 'Question',
+          name: `Who will win ${matchName}?`,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: post.excerpt || `Our AI analysis breaks down the probabilities for ${matchName}, covering form, head-to-head records, and key factors.`,
+          },
+        },
+        {
+          '@type': 'Question',
+          name: `What is the prediction for ${matchName}?`,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: `Read our full ${matchName} preview for AI-powered predictions, value bets, and risk assessment based on data analysis.`,
+          },
+        },
+      ],
+    };
+  } else {
+    // General blog posts - sports betting FAQs
+    faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'What is SportBot AI?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'SportBot AI is an AI-powered sports analytics platform that provides match predictions, value betting insights, and data-driven analysis for football, basketball, tennis, and more.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'How accurate are AI sports predictions?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'AI sports predictions use statistical models and machine learning to analyze form, head-to-head records, and market data. While no prediction is guaranteed, AI helps identify value opportunities the market may have missed.',
+          },
+        },
+      ],
+    };
+  }
 
   return (
     <>
