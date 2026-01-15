@@ -49,6 +49,11 @@ model User {
   stripeSubscriptionId   String?        @unique
   stripePriceId          String?
   stripeCurrentPeriodEnd DateTime?
+  // PayPal subscription fields
+  paypalSubscriptionId   String?        @unique
+  paypalPlanId           String?
+  paypalCurrentPeriodEnd DateTime?
+  paymentProvider        String?        // 'stripe' or 'paypal'
   // Analysis credits (per billing period for PRO, reset on subscription renewal)
   analysisCount          Int            @default(0)
   lastAnalysisDate       DateTime?

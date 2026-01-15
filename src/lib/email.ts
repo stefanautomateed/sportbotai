@@ -151,7 +151,7 @@ export async function sendWelcomeEmail(
   // Normalize plan name for comparison
   const plan = planName.toUpperCase();
   const displayName = plan === 'PREMIUM' ? 'Premium' : 'Pro';
-  
+
   const proFeatures = `
     <li>✅ 10 AI analyses per day</li>
     <li>✅ 50 AI chat messages per day</li>
@@ -162,7 +162,7 @@ export async function sendWelcomeEmail(
     <li>✅ My Teams favorites</li>
     <li>✅ Priority support</li>
   `;
-  
+
   const premiumFeatures = `
     <li>✅ Unlimited AI analyses</li>
     <li>✅ Unlimited AI chat messages</li>
@@ -378,7 +378,7 @@ export async function sendRegistrationWelcomeEmail(
   name?: string
 ): Promise<boolean> {
   const displayName = name || 'there';
-  
+
   const html = emailWrapper(`
     <h2 style="color: #10B981;">Welcome to SportBot AI! 🎉</h2>
     
@@ -482,73 +482,58 @@ export async function sendToolReviewOutreach(
 ): Promise<boolean> {
   // Use PNG for email compatibility (SVG doesn't work in most email clients)
   const logoUrl = 'https://www.sportbotai.com/logo-icon.png';
-  
+
   // Clean URL for the badge page (review URL + #badge anchor or dedicated page)
   const badgePageUrl = `${reviewUrl}#badge`;
 
-  const html = emailWrapper(`
-    <h2 style="color: #10B981;">We featured ${toolName}! 🎉</h2>
-    
-    <p>Hey there!</p>
-    
-    <p>Hope you're doing well. I'm Stefan from SportBot AI - we help sports fans find value using AI-powered analysis.</p>
-    
-    <p>I wanted to let you know that we just published a detailed review of <strong>${toolName}</strong> on our site. We genuinely think it's a great tool and wanted to share it with our audience.</p>
-    
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${reviewUrl}" style="${buttonStyle}">
-        View Your Review →
-      </a>
+  // More human, less corporate email
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <p>Hey!</p>
+  
+  <p>I just wanted to give you a heads up – we wrote a review of <strong>${toolName}</strong> and published it on our site.</p>
+  
+  <p style="margin: 25px 0;">
+    <a href="${reviewUrl}" style="display: inline-block; background: #10B981; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">Check out the review →</a>
+  </p>
+  
+  <p>We run <a href="https://sportbotai.com" style="color: #10B981;">SportBot AI</a> (sports analytics) and thought ${toolName} was worth featuring. Hope you like what we wrote!</p>
+  
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+  
+  <p><strong>Quick thing:</strong> Right now the link to your site is nofollow (standard for reviews). But if you'd like it changed to <strong>dofollow</strong>, I'm happy to do that.</p>
+  
+  <p>Just add our small badge somewhere on your site and let me know. Takes like 2 minutes:</p>
+  
+  <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: #1e293b; border-radius: 8px;">
+      <img src="${logoUrl}" alt="SportBot AI" width="20" height="20" style="border-radius: 4px;">
+      <span style="color: white; font-size: 13px;">Featured on SportBot AI</span>
     </div>
-    
-    <h3 style="color: #f8fafc; margin-top: 30px;">Quick note about the link</h3>
-    
-    <p>Currently, the link to your site is <strong>nofollow</strong> (standard for reviews). But here's the thing - if you'd like us to make it a <strong>dofollow</strong> link, we're happy to do that!</p>
-    
-    <p>All we ask is that you add our small "Featured on SportBot AI" badge somewhere on your site. It's a win-win: you get SEO juice from a dofollow link, and we get a little visibility. 🤝</p>
-    
-    <div style="background: #1e293b; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <p style="margin: 0 0 15px 0; color: #fbbf24;"><strong>How it works:</strong></p>
-      <ol style="color: #cbd5e1; margin: 0; padding-left: 20px; line-height: 1.8;">
-        <li>Click the button below to get the badge code</li>
-        <li>Add it anywhere on your site (footer, about page, anywhere works!)</li>
-        <li>Reply to this email to let us know</li>
-        <li>We'll update your link to dofollow within 24 hours ✓</li>
-      </ol>
-    </div>
-    
-    <h3 style="color: #f8fafc;">Your badge:</h3>
-    
-    <!-- Badge Preview -->
-    <div style="background: #0f172a; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-      <p style="color: #64748b; font-size: 12px; margin: 0 0 12px 0;">Preview of how it looks:</p>
-      <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 8px; border: 1px solid #475569;">
-        <img src="${logoUrl}" alt="SportBot AI" width="24" height="24" style="border-radius: 4px;">
-        <span style="color: white; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 500;">Featured on SportBot AI</span>
-      </div>
-    </div>
-    
-    <!-- Get Code Button -->
-    <div style="text-align: center; margin: 25px 0;">
-      <a href="${badgePageUrl}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #059669 0%, #10B981 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
-        Get Badge Code →
-      </a>
-    </div>
-    
-    <p style="color: #94a3b8; font-size: 14px;">
-      No pressure at all - the review stays up either way! Just wanted to offer the option. 😊
+    <p style="margin: 15px 0 0 0;">
+      <a href="${badgePageUrl}" style="color: #10B981; font-size: 14px;">Get the code →</a>
     </p>
-    
-    <p style="margin-top: 30px;">
-      Cheers,<br>
-      <strong>Stefan</strong><br>
-      <span style="color: #94a3b8;">SportBot AI</span>
-    </p>
-  `);
+  </div>
+  
+  <p style="color: #666; font-size: 14px;">No pressure though – the review stays up either way. Just thought I'd offer.</p>
+  
+  <p style="margin-top: 30px;">
+    Cheers,<br>
+    Stefan<br>
+    <span style="color: #888; font-size: 14px;">SportBot AI</span>
+  </p>
+</body>
+</html>
+  `.trim();
 
   return sendEmail({
     to: email,
-    subject: `We featured ${toolName} on SportBot AI 🎉`,
+    subject: `Wrote a review of ${toolName}`,
     html,
   });
 }
