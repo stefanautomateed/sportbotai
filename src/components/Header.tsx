@@ -47,8 +47,8 @@ function NavLink({
       href={href}
       onClick={onClick}
       className={`flex items-center gap-1.5 font-medium transition-all duration-300 text-sm ${className} ${isActive
-          ? 'text-accent'
-          : 'text-text-secondary hover:text-text-primary'
+        ? 'text-accent'
+        : 'text-text-secondary hover:text-text-primary'
         }`}
     >
       {icon && <span className="text-base">{icon}</span>}
@@ -83,8 +83,8 @@ function MobileNavLink({
     <Link
       href={href}
       className={`flex items-center gap-3 font-medium px-4 py-3.5 rounded-btn transition-all duration-300 active:scale-[0.98] ${isActive
-          ? 'text-accent bg-accent/10 border-l-2 border-accent shadow-[inset_0_0_20px_rgba(16,185,129,0.1)]'
-          : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
+        ? 'text-accent bg-accent/10 border-l-2 border-accent shadow-[inset_0_0_20px_rgba(16,185,129,0.1)]'
+        : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
         } ${className}`}
       onClick={onClick}
     >
@@ -170,7 +170,7 @@ export default function Header() {
             <NavLink href="/blog">
               Blog
             </NavLink>
-            <NavLink href="/tools" icon="🧮">
+            <NavLink href="/tools">
               Tools
             </NavLink>
             <LanguageSwitcher currentLocale={locale} />

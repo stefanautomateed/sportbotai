@@ -187,7 +187,7 @@ export default function HeaderI18n({ locale: propLocale }: HeaderI18nProps) {
             <NavLink href={localePath('/blog')}>
               {t.header.blog}
             </NavLink>
-            <NavLink href={localePath('/tools')} icon="🧮">
+            <NavLink href={localePath('/tools')}>
               {t.header.tools}
             </NavLink>
             <LanguageSwitcher currentLocale={locale} />
