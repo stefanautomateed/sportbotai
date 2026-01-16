@@ -9,8 +9,8 @@ import { put } from '@vercel/blob';
 import { getTeamLogo, getLeagueLogo } from '@/lib/logos';
 import { getMatchRostersV2, normalizeSport } from '@/lib/data-layer/bridge';
 import type { Sport } from '@/lib/data-layer/types';
-import { 
-  getUnifiedMatchData, 
+import {
+  getUnifiedMatchData,
   type UnifiedMatchData,
   type ComputedAnalysis,
 } from '@/lib/unified-match-service';
@@ -107,15 +107,15 @@ function replacePlaceholders(
   } | null
 ): string {
   let result = content;
-  
+
   if (analysis) {
     // Replace probability placeholders
     const homeWinPct = (analysis.probabilities.homeWin * 100).toFixed(1);
     const awayWinPct = (analysis.probabilities.awayWin * 100).toFixed(1);
-    const drawPct = analysis.probabilities.draw !== null 
-      ? (analysis.probabilities.draw * 100).toFixed(1) 
+    const drawPct = analysis.probabilities.draw !== null
+      ? (analysis.probabilities.draw * 100).toFixed(1)
       : 'N/A';
-    
+
     // Replace common placeholder patterns
     result = result
       // [HOME_%]% style
@@ -134,12 +134,12 @@ function replacePlaceholders(
       .replace(/\[AWAY_FORM_DRAWS\]/gi, String(analysis.awayForm.draws))
       .replace(/\[AWAY_FORM_LOSSES\]/gi, String(analysis.awayForm.losses));
   }
-  
+
   // Replace team name placeholders
   result = result
     .replace(/\[HOME_TEAM\]/gi, match.homeTeam)
     .replace(/\[AWAY_TEAM\]/gi, match.awayTeam);
-  
+
   return result;
 }
 
@@ -156,18 +156,18 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
     if (url.startsWith('data:')) {
       return url;
     }
-    
-    const response = await fetch(url, { 
+
+    const response = await fetch(url, {
       headers: { 'Accept': 'image/*' },
       signal: AbortSignal.timeout(5000) // 5s timeout
     });
-    
+
     if (!response.ok) return null;
-    
+
     const buffer = await response.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
     const contentType = response.headers.get('content-type') || 'image/png';
-    
+
     return `data:${contentType};base64,${base64}`;
   } catch (error) {
     console.warn('[Match Image] Failed to fetch logo:', url, error);
@@ -180,20 +180,20 @@ async function generateMatchFeaturedImage(
   title: string
 ): Promise<{ url: string; alt: string }> {
   const matchDate = new Date(match.commenceTime);
-  const dateStr = matchDate.toLocaleDateString('en-US', { 
+  const dateStr = matchDate.toLocaleDateString('en-US', {
     weekday: 'short',
-    month: 'short', 
+    month: 'short',
     day: 'numeric'
   });
-  
+
   // Truncate team names for SVG display (max 18 chars)
-  const homeTeamDisplay = match.homeTeam.length > 18 
-    ? match.homeTeam.substring(0, 16) + '...' 
+  const homeTeamDisplay = match.homeTeam.length > 18
+    ? match.homeTeam.substring(0, 16) + '...'
     : match.homeTeam;
-  const awayTeamDisplay = match.awayTeam.length > 18 
-    ? match.awayTeam.substring(0, 16) + '...' 
+  const awayTeamDisplay = match.awayTeam.length > 18
+    ? match.awayTeam.substring(0, 16) + '...'
     : match.awayTeam;
-  
+
   // Escape special characters for SVG
   const escapeXml = (str: string) => str
     .replace(/&/g, '&amp;')
@@ -206,7 +206,7 @@ async function generateMatchFeaturedImage(
   const homeLogoUrl = getTeamLogo(match.homeTeam, match.sport, match.league);
   const awayLogoUrl = getTeamLogo(match.awayTeam, match.sport, match.league);
   const leagueLogoUrl = getLeagueLogo(match.league, match.sport);
-  
+
   console.log('[Match Image] Fetching logos:', { homeLogoUrl, awayLogoUrl, leagueLogoUrl });
 
   try {
@@ -216,18 +216,18 @@ async function generateMatchFeaturedImage(
       fetchImageAsBase64(awayLogoUrl),
       fetchImageAsBase64(leagueLogoUrl),
     ]);
-    
+
     // Build logo elements for SVG
-    const homeLogoElement = homeLogoData 
+    const homeLogoElement = homeLogoData
       ? `<image x="200" y="260" width="150" height="150" href="${homeLogoData}" preserveAspectRatio="xMidYMid meet"/>`
       : `<circle cx="275" cy="335" r="60" fill="#334155"/>
          <text x="275" y="350" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="36" font-weight="700">${escapeXml(match.homeTeam.substring(0, 2).toUpperCase())}</text>`;
-    
+
     const awayLogoElement = awayLogoData
       ? `<image x="850" y="260" width="150" height="150" href="${awayLogoData}" preserveAspectRatio="xMidYMid meet"/>`
       : `<circle cx="925" cy="335" r="60" fill="#334155"/>
          <text x="925" y="350" text-anchor="middle" fill="#ef4444" font-family="Arial, sans-serif" font-size="36" font-weight="700">${escapeXml(match.awayTeam.substring(0, 2).toUpperCase())}</text>`;
-    
+
     const leagueLogoElement = leagueLogoData && !leagueLogoData.startsWith('data:image/svg')
       ? `<image x="565" y="35" width="70" height="70" href="${leagueLogoData}" preserveAspectRatio="xMidYMid meet"/>`
       : '';
@@ -304,7 +304,7 @@ async function generateMatchFeaturedImage(
   <text x="600" y="575" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="20" font-weight="600">SportBot AI</text>
   <text x="600" y="598" text-anchor="middle" fill="#64748b" font-family="Arial, sans-serif" font-size="12">AI-Powered Match Preview &amp; Prediction</text>
 </svg>`;
-    
+
     // Upload SVG to Vercel Blob storage
     // Note: Twitter/X doesn't support SVG, so blog page falls back to /api/og for social sharing
     const timestamp = Date.now();
@@ -316,20 +316,20 @@ async function generateMatchFeaturedImage(
         contentType: 'image/svg+xml',
       }
     );
-    
+
     console.log('[Match Image] Generated SVG:', blob.url);
-    
+
     return {
       url: blob.url,
       alt: `${match.homeTeam} vs ${match.awayTeam} - ${match.league} Match Preview`,
     };
   } catch (error) {
     console.warn('[Match Image] Image generation failed:', error);
-    
+
     // Fallback: Use a placeholder with match info
     const placeholderText = encodeURIComponent(`${match.homeTeam} vs ${match.awayTeam}`);
     const placeholderSubtext = encodeURIComponent(`${match.league} | ${dateStr}`);
-    
+
     return {
       url: `https://placehold.co/1200x630/1e293b/10b981?text=${placeholderText}%0A${placeholderSubtext}`,
       alt: `${match.homeTeam} vs ${match.awayTeam} - Match Preview`,
@@ -343,12 +343,12 @@ async function generateMatchFeaturedImage(
 
 async function generateSEOKeywords(match: MatchInfo): Promise<SEOKeywords> {
   const matchDate = new Date(match.commenceTime);
-  const dateStr = matchDate.toLocaleDateString('en-US', { 
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric' 
+  const dateStr = matchDate.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
   });
-  
+
   const prompt = `Generate SEO keywords for a sports match preview article.
 
 MATCH DETAILS:
@@ -383,7 +383,7 @@ Focus on:
 
     const content = response.choices[0]?.message?.content;
     if (!content) throw new Error('No keywords generated');
-    
+
     return JSON.parse(content) as SEOKeywords;
   } catch (error) {
     // Fallback keywords
@@ -472,19 +472,19 @@ async function fetchMatchInjuries(
 ): Promise<{ home: string[]; away: string[] }> {
   try {
     const sportLower = sport.toLowerCase();
-    const isUSASport = sportLower.includes('basketball') || 
-                       sportLower.includes('nba') ||
-                       sportLower.includes('football') || 
-                       sportLower.includes('nfl') ||
-                       sportLower.includes('hockey') || 
-                       sportLower.includes('nhl') ||
-                       sportLower.includes('ncaa');
+    const isUSASport = sportLower.includes('basketball') ||
+      sportLower.includes('nba') ||
+      sportLower.includes('football') ||
+      sportLower.includes('nfl') ||
+      sportLower.includes('hockey') ||
+      sportLower.includes('nhl') ||
+      sportLower.includes('ncaa');
 
     // US Sports: Use Perplexity (real-time web search)
     if (isUSASport) {
       console.log(`[Blog Generator] Fetching injuries via Perplexity for ${homeTeam} vs ${awayTeam}`);
       const result = await getMatchInjuriesViaPerplexity(homeTeam, awayTeam, sport, league);
-      
+
       if (result.success && (result.home.length > 0 || result.away.length > 0)) {
         console.log(`[Blog Generator] Perplexity injuries: home=${result.home.length}, away=${result.away.length}`);
         return {
@@ -498,7 +498,7 @@ async function fetchMatchInjuries(
     // Soccer: Use API-Sports
     console.log(`[Blog Generator] Fetching injuries via API-Sports for ${homeTeam} vs ${awayTeam}`);
     const injuries = await getMatchInjuries(homeTeam, awayTeam, league);
-    
+
     if (injuries && (injuries.home.length > 0 || injuries.away.length > 0)) {
       console.log(`[Blog Generator] API-Sports injuries: home=${injuries.home.length}, away=${injuries.away.length}`);
       return {
@@ -506,7 +506,7 @@ async function fetchMatchInjuries(
         away: injuries.away.slice(0, 5).map((i: any) => `${i.playerName || i.player?.name || 'Unknown'} (${i.type || i.reason || 'injured'})`),
       };
     }
-    
+
     return { home: [], away: [] };
   } catch (error) {
     console.warn(`[Blog Generator] Failed to fetch injuries for ${homeTeam} vs ${awayTeam}:`, error);
@@ -528,7 +528,7 @@ async function fetchMatchInjuries(
 async function fetchMatchAnalysis(match: MatchInfo): Promise<MatchAnalysisResult> {
   try {
     console.log(`[Match Analysis] Fetching via Unified Match Service: ${match.homeTeam} vs ${match.awayTeam}`);
-    
+
     // Fetch unified data and injuries in parallel
     const [unifiedData, injuries] = await Promise.all([
       getUnifiedMatchData(
@@ -550,25 +550,25 @@ async function fetchMatchAnalysis(match: MatchInfo): Promise<MatchAnalysisResult
       ),
       fetchMatchInjuries(match.homeTeam, match.awayTeam, match.sportKey || match.sport, match.league),
     ]);
-    
+
     // Check if we have real data (form or H2H)
     const hasHomeForm = (unifiedData.enrichedData.homeForm?.length || 0) > 0;
     const hasAwayForm = (unifiedData.enrichedData.awayForm?.length || 0) > 0;
     const hasH2H = (unifiedData.enrichedData.headToHead?.length || 0) > 0;
     const hasRealData = hasHomeForm && hasAwayForm;
-    
+
     // Determine data quality
-    const dataQuality: 'HIGH' | 'MEDIUM' | 'LOW' | 'INSUFFICIENT' = 
+    const dataQuality: 'HIGH' | 'MEDIUM' | 'LOW' | 'INSUFFICIENT' =
       hasHomeForm && hasAwayForm && hasH2H ? 'HIGH' :
-      hasHomeForm && hasAwayForm ? 'MEDIUM' : 
-      hasHomeForm || hasAwayForm ? 'LOW' : 'INSUFFICIENT';
-    
+        hasHomeForm && hasAwayForm ? 'MEDIUM' :
+          hasHomeForm || hasAwayForm ? 'LOW' : 'INSUFFICIENT';
+
     console.log(`[Match Analysis] Data quality: ${dataQuality} (homeForm: ${hasHomeForm}, awayForm: ${hasAwayForm}, h2h: ${hasH2H})`);
     console.log(`[Match Analysis] Injuries: home=${injuries.home.length}, away=${injuries.away.length}`);
-    
+
     // Convert unified data to MatchAnalysisData format, including injuries
     const analysis = convertUnifiedToAnalysisData(unifiedData, match, injuries);
-    
+
     return {
       analysis,
       dataQuality,
@@ -594,27 +594,27 @@ function convertUnifiedToAnalysisData(
   injuries: { home: string[]; away: string[] } = { home: [], away: [] }
 ): MatchAnalysisData | null {
   const { enrichedData, analysis } = unified;
-  
+
   // If no analysis available, compute basic probabilities from odds
   let probabilities = {
     homeWin: 33.33,
     draw: 33.33 as number | null,
     awayWin: 33.33,
   };
-  
+
   let confidenceLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'MEDIUM';
   let recommendation = '';
-  
+
   if (analysis) {
     probabilities = {
       homeWin: analysis.probabilities.home,
       draw: analysis.probabilities.draw,
       awayWin: analysis.probabilities.away,
     };
-    
-    confidenceLevel = analysis.dataQuality === 'HIGH' ? 'HIGH' : 
-                       analysis.dataQuality === 'MEDIUM' ? 'MEDIUM' : 'LOW';
-    
+
+    confidenceLevel = analysis.dataQuality === 'HIGH' ? 'HIGH' :
+      analysis.dataQuality === 'MEDIUM' ? 'MEDIUM' : 'LOW';
+
     // Build recommendation from favored outcome
     if (analysis.favored === 'home') {
       recommendation = `${match.homeTeam} Win (${analysis.edge.percentage.toFixed(1)}% edge)`;
@@ -631,7 +631,7 @@ function convertUnifiedToAnalysisData(
     const awayImplied = 1 / unified.odds.away;
     const drawImplied = unified.odds.draw ? 1 / unified.odds.draw : 0;
     const total = homeImplied + awayImplied + drawImplied;
-    
+
     probabilities = {
       homeWin: (homeImplied / total) * 100,
       draw: drawImplied > 0 ? (drawImplied / total) * 100 : null,
@@ -640,19 +640,19 @@ function convertUnifiedToAnalysisData(
     confidenceLevel = 'LOW';
     recommendation = 'Analysis based on market odds';
   }
-  
+
   // Extract form data
   const homeFormMatches = enrichedData.homeForm || [];
   const awayFormMatches = enrichedData.awayForm || [];
-  
+
   const homeWins = homeFormMatches.filter(m => m.result === 'W').length;
   const homeDraws = homeFormMatches.filter(m => m.result === 'D').length;
   const homeLosses = homeFormMatches.filter(m => m.result === 'L').length;
-  
+
   const awayWins = awayFormMatches.filter(m => m.result === 'W').length;
   const awayDraws = awayFormMatches.filter(m => m.result === 'D').length;
   const awayLosses = awayFormMatches.filter(m => m.result === 'L').length;
-  
+
   // Calculate trends
   const calculateTrend = (form: typeof homeFormMatches): 'improving' | 'declining' | 'stable' => {
     if (form.length < 3) return 'stable';
@@ -662,13 +662,13 @@ function convertUnifiedToAnalysisData(
     if (recentWins < olderWins) return 'declining';
     return 'stable';
   };
-  
+
   // Extract H2H data
   const h2hMatches = enrichedData.headToHead || [];
   const h2hHomeWins = h2hMatches.filter(m => m.homeScore > m.awayScore).length;
   const h2hDraws = h2hMatches.filter(m => m.homeScore === m.awayScore).length;
   const h2hAwayWins = h2hMatches.filter(m => m.awayScore > m.homeScore).length;
-  
+
   // Build narrative from analysis
   let narrative = '';
   if (analysis) {
@@ -685,7 +685,7 @@ function convertUnifiedToAnalysisData(
       narrative = `${match.homeTeam} faces ${match.awayTeam} in what promises to be a competitive fixture.`;
     }
   }
-  
+
   // Build key factors from edge and quality
   const keyFactors: string[] = [];
   if (analysis) {
@@ -701,15 +701,15 @@ function convertUnifiedToAnalysisData(
       keyFactors.push(`H2H: ${h2hHomeWins}-${h2hDraws}-${h2hAwayWins} in last ${h2hMatches.length} meetings`);
     }
   }
-  
+
   return {
     probabilities,
     recommendation,
     confidenceLevel,
     keyFactors,
-    riskLevel: analysis?.dataQuality === 'LOW' ? 'HIGH' : 
-               analysis?.dataQuality === 'MEDIUM' ? 'MEDIUM' : 'LOW',
-    valueAssessment: analysis ? 
+    riskLevel: analysis?.dataQuality === 'LOW' ? 'HIGH' :
+      analysis?.dataQuality === 'MEDIUM' ? 'MEDIUM' : 'LOW',
+    valueAssessment: analysis ?
       `${analysis.edge.percentage >= 5 ? 'Value detected' : 'Fair odds'} (${analysis.edge.quality} confidence)` : '',
     homeForm: {
       wins: homeWins,
@@ -727,8 +727,8 @@ function convertUnifiedToAnalysisData(
       homeWins: h2hHomeWins,
       draws: h2hDraws,
       awayWins: h2hAwayWins,
-      summary: h2hMatches.length > 0 ? 
-        `${match.homeTeam} has won ${h2hHomeWins} of the last ${h2hMatches.length} meetings` : 
+      summary: h2hMatches.length > 0 ?
+        `${match.homeTeam} has won ${h2hHomeWins} of the last ${h2hMatches.length} meetings` :
         'No recent head-to-head data available',
     },
     injuries: {
@@ -747,12 +747,12 @@ function convertUnifiedToAnalysisData(
 
 async function researchMatch(match: MatchInfo): Promise<MatchResearch> {
   // Determine sport type for roster lookup using DataLayer
-  const rosterSport: Sport | null = 
+  const rosterSport: Sport | null =
     match.sportKey?.includes('basketball') || match.league?.includes('NBA') ? 'basketball'
-    : match.sportKey?.includes('hockey') || match.league?.includes('NHL') ? 'hockey'
-    : match.sportKey?.includes('americanfootball') || match.league?.includes('NFL') ? 'american_football'
-    : null;
-  
+      : match.sportKey?.includes('hockey') || match.league?.includes('NHL') ? 'hockey'
+        : match.sportKey?.includes('americanfootball') || match.league?.includes('NFL') ? 'american_football'
+          : null;
+
   // Fetch roster context from DataLayer - this is the ONLY source for player data
   // No more Perplexity dependency - all data comes from DataLayer
   let rosterContext: string | null = null;
@@ -766,7 +766,7 @@ async function researchMatch(match: MatchInfo): Promise<MatchResearch> {
       console.warn('[Match Research] DataLayer roster lookup failed:', rosterError);
     }
   }
-  
+
   // Return structured data - all other context comes from AI analysis via DataLayer
   // homeTeamInfo, awayTeamInfo, headToHead etc. are populated by fetchMatchAnalysis()
   return {
@@ -813,11 +813,11 @@ async function generatePreviewContent(
   analysis: MatchAnalysisData | null
 ): Promise<GeneratedMatchContent> {
   const matchDate = new Date(match.commenceTime);
-  const dateStr = matchDate.toLocaleDateString('en-US', { 
+  const dateStr = matchDate.toLocaleDateString('en-US', {
     weekday: 'long',
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric' 
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
   });
   const timeStr = matchDate.toLocaleTimeString('en-US', {
     hour: '2-digit',
@@ -1076,9 +1076,9 @@ ${research.rosterContext}
 ${formTableTemplate}
 
 3. HEAD-TO-HEAD BOX (in H2H section):
-${(analysis?.headToHead?.homeWins || 0) > 0 || (analysis?.headToHead?.awayWins || 0) > 0 
-  ? h2hBoxTemplate 
-  : `<!-- No H2H data available - write a brief paragraph noting that these teams rarely face each other or historical data is limited. Do NOT include the H2H visual box with zeros. -->`}
+${(analysis?.headToHead?.homeWins || 0) > 0 || (analysis?.headToHead?.awayWins || 0) > 0
+      ? h2hBoxTemplate
+      : `<!-- No H2H data available - write a brief paragraph noting that these teams rarely face each other or historical data is limited. Do NOT include the H2H visual box with zeros. -->`}
 
 4. PREDICTION BOX (in prediction section):
 ${predictionBoxTemplate}
@@ -1141,6 +1141,64 @@ ${predictionBoxTemplate}
   <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
     <a href="/register" style="display: inline-block; background: #fff; color: #10b981; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">Start Free Trial</a>
     <a href="/pricing" style="display: inline-block; background: transparent; color: #fff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; border: 2px solid #fff;">View Plans</a>
+  </div>
+</div>
+
+11. SPORTBOT EDGE METHODOLOGY BOX (NEW - adds word density + E-E-A-T):
+<div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 24px; margin: 24px 0;">
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+    <span style="font-size: 24px;">🔬</span>
+    <h3 style="color: #fff; font-size: 18px; font-weight: bold; margin: 0;">How We Calculate Our Prediction</h3>
+  </div>
+  <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+    Our AI-powered prediction model analyzes multiple data layers to generate probability estimates:
+  </p>
+  <ul style="list-style: none; padding: 0; margin: 0;">
+    <li style="color: #fff; padding: 10px 0; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 12px;">
+      <span style="background: #10b981/20; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #10b981;">Step 1</span>
+      <span>Historical form analysis (last 5-10 matches, weighted by recency)</span>
+    </li>
+    <li style="color: #fff; padding: 10px 0; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 12px;">
+      <span style="background: #0ea5e9/20; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #0ea5e9;">Step 2</span>
+      <span>Head-to-head record analysis with venue weighting</span>
+    </li>
+    <li style="color: #fff; padding: 10px 0; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 12px;">
+      <span style="background: #f59e0b/20; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #f59e0b;">Step 3</span>
+      <span>Market odds comparison & vig removal for fair probabilities</span>
+    </li>
+    <li style="color: #fff; padding: 10px 0; display: flex; align-items: center; gap: 12px;">
+      <span style="background: #ef4444/20; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #ef4444;">Step 4</span>
+      <span>Edge calculation: Model probability minus market implied probability</span>
+    </li>
+  </ul>
+  <p style="color: #64748b; font-size: 12px; margin-top: 16px; font-style: italic;">
+    A positive edge suggests our model sees more value than the market. However, betting always involves risk.
+  </p>
+</div>
+
+12. BETTING MARKET ANGLE BOX (NEW - adds word density):
+<div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 24px 0;">
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+    <span style="font-size: 20px;">📈</span>
+    <h3 style="color: #f59e0b; font-size: 16px; font-weight: bold; margin: 0;">Market Insight</h3>
+  </div>
+  <p style="color: #fff; font-size: 15px; line-height: 1.6; margin: 0;">
+    [Write 2-3 sentences about what the betting market is pricing in and whether there's disagreement with our model. Mention the implied probability from odds vs our model's estimate. Example: "The market has ${match.homeTeam} at X% implied probability, but our model sees them at Y% - a Z% edge worth noting."]
+  </p>
+</div>
+
+13. TACTICAL MATCHUP GRID (NEW - adds word density):
+<div style="background: #1e293b; border-radius: 12px; padding: 20px; margin: 24px 0;">
+  <h3 style="color: #fff; font-size: 16px; font-weight: bold; margin: 0 0 16px 0;">⚔️ Key Tactical Matchups</h3>
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+    <div style="background: #0f172a; padding: 16px; border-radius: 8px;">
+      <p style="color: #10b981; font-size: 12px; margin: 0 0 4px 0;">Advantage: ${match.homeTeam}</p>
+      <p style="color: #fff; font-size: 14px; margin: 0;">[Describe one tactical advantage]</p>
+    </div>
+    <div style="background: #0f172a; padding: 16px; border-radius: 8px;">
+      <p style="color: #ef4444; font-size: 12px; margin: 0 0 4px 0;">Advantage: ${match.awayTeam}</p>
+      <p style="color: #fff; font-size: 14px; margin: 0;">[Describe one tactical advantage]</p>
+    </div>
   </div>
 </div>
 
@@ -1227,12 +1285,14 @@ REQUIREMENTS:
    - Form Comparison (use FORM COMPARISON TABLE)
    - Head-to-Head Record (use HEAD-TO-HEAD BOX, add CTA BOX #7 after)
    - Key Players to Watch (use KEY PLAYERS BOXES)
-   - Tactical Analysis (add CTA BOX #8 after this section)
+   - Tactical Analysis (use TACTICAL MATCHUP GRID #13, add CTA BOX #8 after)
+   - Betting Market Perspective (use BETTING MARKET ANGLE BOX #12) - NEW
    - SportBot AI Prediction (use PREDICTION BOX with actual percentages)
+   - How We Calculate This (use SPORTBOT EDGE METHODOLOGY BOX #11) - NEW
    - Value Assessment
    - Responsible Gambling Notice (MANDATORY)
    - (add CTA BOX #10 at the very end)
-4. Target 1800-2200 words for better SEO
+4. Target 2200-2800 words for competitive SEO (INCREASED from 1800-2200)
 5. Use HTML formatting (h2, h3, p, ul, li, strong, em) PLUS the styled boxes above
 6. Include 2-3 internal links to related blog posts naturally within content
    - IMPORTANT: Use SHORT anchor text (2-3 words max), NOT full titles
@@ -1241,12 +1301,15 @@ REQUIREMENTS:
    - BAD: "<a href="/blog/some-slug">Liverpool vs Manchester United Match Preview and Prediction 2025</a>"
    - GOOD: "<a href="/blog/some-slug">Liverpool preview</a>" or "<a href="/blog/some-slug">our analysis</a>"
 7. Replace all [PLACEHOLDER] values with actual data from the analysis
-8. MANDATORY: Include AT LEAST 4 CTA BOXES throughout the article:
+8. MANDATORY: Include AT LEAST 5 CTA/INSIGHT BOXES throughout the article:
    - CTA BOX #6: After Form Analysis section
    - CTA BOX #7: After Head-to-Head section
    - CTA BOX #8: After Tactical Analysis section  
    - CTA BOX #9: Sprinkle 1-2 mini CTAs within paragraphs
    - CTA BOX #10: As the final element before the article ends
+   - EDGE METHODOLOGY BOX #11: In "How We Calculate This" section
+   - BETTING MARKET ANGLE BOX #12: In "Betting Market Perspective" section
+   - TACTICAL MATCHUP GRID #13: In "Tactical Analysis" section
 
 CRITICAL RULES:
 - This is EDUCATIONAL ANALYSIS, not betting tips
@@ -1288,10 +1351,10 @@ Return JSON:
     return JSON.parse(content) as GeneratedMatchContent;
   } catch (parseError) {
     console.error('[Match Preview] JSON parse error, attempting to fix truncated response');
-    
+
     // Try to fix common truncation issues
     let fixedContent = content;
-    
+
     // If it ends mid-string, try to close it
     if (!fixedContent.endsWith('}')) {
       // Find last complete property
@@ -1305,7 +1368,7 @@ Return JSON:
         }
       }
     }
-    
+
     try {
       return JSON.parse(fixedContent) as GeneratedMatchContent;
     } catch {
@@ -1373,62 +1436,62 @@ Return the HTML content ONLY (no JSON wrapper).`;
  */
 function stripPromotionalContent(content: string): string {
   let result = content;
-  
+
   // Remove the entire "SportBot AI Prediction" section (heading + following prediction box)
   result = result.replace(/<h2[^>]*>\s*SportBot AI Prediction\s*<\/h2>/gi, '');
-  
+
   // Remove prediction boxes - specifically the ones with "🎯" emoji and prediction content
   result = result.replace(
     /<div[^>]*style="[^"]*#10b981[^"]*"[^>]*>\s*<div[^>]*>\s*<span[^>]*>🎯<\/span>[\s\S]*?<\/div>\s*<\/div>/gi,
     ''
   );
-  
+
   // Remove CTA boxes with class="cta-box" where link is at the end: <div class="cta-box">...<a>...</a></div>
   result = result.replace(
     /<div[^>]*class="cta-box"[^>]*>(?:(?!<div)[\s\S])*?<a[^>]*>[^<]*<\/a>\s*<\/div>/gi,
     ''
   );
-  
+
   // Remove CTA boxes with class="cta-box" where link is inside p: <div class="cta-box">...<a>...</a>...</p></div>
   result = result.replace(
     /<div[^>]*class="cta-box"[^>]*>(?:(?!<div)[\s\S])*?<\/p>\s*<\/div>/gi,
     ''
   );
-  
+
   // Remove promotional phrases that appear inline
   result = result.replace(/🤖\s*Want Real-Time AI Analysis\?/gi, '');
   result = result.replace(/🤖\s*Want Deep Insights\?/gi, '');
   result = result.replace(/Ready for Deeper Analysis\?/gi, '');
   result = result.replace(/Unlock Advanced Stats/gi, '');
   result = result.replace(/Get live probability updates[^<]*/gi, '');
-  
+
   // Remove standalone promotional links
   result = result.replace(/<a[^>]*href="\/(?:register|pricing|login)"[^>]*>[^<]*<\/a>/gi, '');
-  
+
   // Remove "Pro tip" paragraphs
   result = result.replace(/<p[^>]*>\s*(?:<[^>]+>)*\s*Pro tip[^<]*(?:<[^>]+>)*\s*<\/p>/gi, '');
-  
+
   // Remove standalone promotional text
   result = result.replace(/Try SportBot AI free|Get Started Free|Start Your Free|Join now|Subscribe today|See Pro Features/gi, '');
-  
+
   // Remove probability percentages shown in prediction boxes like "55%", "Win: 55%"
   result = result.replace(/\b(win|probability|chance):\s*\d+%/gi, '');
   result = result.replace(/\b\d+(\.\d+)?%\s*(probability|chance|win)/gi, '');
-  
+
   // Replace betting language with neutral terms
   result = result.replace(/best bet|betting value|value bet/gi, 'key factor');
   result = result.replace(/\bstake\b|\bwager\b/gi, 'consideration');
   result = result.replace(/gamblers?|bettors?/gi, 'fans');
   result = result.replace(/betting tips|betting preview/gi, 'match analysis');
-  
+
   // Clean up empty paragraphs that may have just had promotional text
   result = result.replace(/<p[^>]*>\s*<\/p>/gi, '');
-  
+
   // Clean up empty divs
   for (let i = 0; i < 3; i++) {
     result = result.replace(/<div[^>]*>\s*<\/div>/gi, '');
   }
-  
+
   return result;
 }
 
@@ -1444,13 +1507,13 @@ function generateNewsTitle(
   matchDate?: Date
 ): string {
   // Get day of week
-  const dayName = matchDate 
+  const dayName = matchDate
     ? matchDate.toLocaleDateString('en-US', { weekday: 'long' })
     : new Date().toLocaleDateString('en-US', { weekday: 'long' });
-  
+
   // Pick a random template style
   const templateStyle = Math.floor(Math.random() * 10);
-  
+
   // Varied headline templates
   const templates: string[] = [
     // Action-focused
@@ -1458,49 +1521,49 @@ function generateNewsTitle(
     `${awayTeam} Travel to Face ${homeTeam} in Crucial ${league || ''} Clash`,
     `${homeTeam} Look to Extend Form Against Visiting ${awayTeam}`,
     `${awayTeam} Eye Road Victory as They Face ${homeTeam}`,
-    
+
     // Stakes-focused
     `High Stakes as ${homeTeam} Welcome ${awayTeam} to Town`,
     `${homeTeam} vs ${awayTeam}: What's at Stake This ${dayName}`,
     `Crucial Points on the Line as ${homeTeam} Meet ${awayTeam}`,
     `${dayName} Spotlight: ${homeTeam} Take On ${awayTeam}`,
-    
+
     // Narrative-focused  
     `Can ${awayTeam} Upset ${homeTeam} on the Road?`,
     `${homeTeam} Aim to Bounce Back Against ${awayTeam}`,
     `${awayTeam} Put Unbeaten Run to Test at ${homeTeam}`,
     `Form Guide Favors ${homeTeam} Ahead of ${awayTeam} Visit`,
-    
+
     // Time-focused
     `${dayName} ${league || 'Action'}: ${homeTeam} vs ${awayTeam} Preview`,
     `This ${dayName}: ${homeTeam} Set to Battle ${awayTeam}`,
     `${league || 'Sports'} ${dayName}: ${homeTeam} Welcome ${awayTeam}`,
-    
+
     // Question style
     `${homeTeam} or ${awayTeam}: Who Will Prevail This ${dayName}?`,
     `Will ${homeTeam} Continue Home Dominance vs ${awayTeam}?`,
-    
+
     // Analysis style
     `Inside the Matchup: ${homeTeam} vs ${awayTeam} Breakdown`,
     `Key Factors in ${homeTeam}'s Clash with ${awayTeam}`,
     `What to Watch: ${homeTeam} Against ${awayTeam}`,
   ];
-  
+
   let newsTitle = templates[templateStyle % templates.length];
-  
+
   // Clean up any double spaces or trailing league text
   newsTitle = newsTitle.replace(/\s+/g, ' ').trim();
-  
+
   // Ensure it doesn't exceed reasonable length
   if (newsTitle.length > 90) {
     // Fall back to simpler format
     newsTitle = `${homeTeam} vs ${awayTeam}: ${dayName}'s ${league || ''} Clash`.trim();
   }
-  
+
   if (newsTitle.length > 90) {
     newsTitle = `${homeTeam} Face ${awayTeam} in ${league || dayName} Clash`;
   }
-  
+
   return newsTitle;
 }
 
@@ -1516,7 +1579,7 @@ function transformToNewsContent(
 ): string {
   // Start with stripped content
   const newsContent = stripPromotionalContent(blogContent);
-  
+
   // Add news-style end box (editorial, not promotional)
   const newsEndBox = `
 <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; padding: 32px; margin: 32px 0; text-align: center; border: 1px solid #334155;">
@@ -1531,17 +1594,17 @@ function transformToNewsContent(
     View All Matches →
   </a>
 </div>`;
-  
+
   // Don't strip/replace - just use the first few sections of the blog content for news
   // Take content up to and including tactical analysis (exclude betting predictions)
   const sections = newsContent.split(/<h2[^>]*>/i);
-  
+
   // Keep all analytical sections, exclude betting-focused ones:
   // Include: Match Overview, Home Form, Away Form, Form Comparison, H2H, Key Players, Tactical Matchup
   // Exclude: SportBot AI Prediction, Value Assessment, Responsible Gambling Notice
   let newsArticle = '';
   const maxSections = 9; // All analysis sections including tactical matchup
-  
+
   for (let i = 0; i < Math.min(sections.length, maxSections); i++) {
     if (i === 0) {
       // First part is before first <h2>
@@ -1550,15 +1613,15 @@ function transformToNewsContent(
       newsArticle += '<h2>' + sections[i];
     }
   }
-  
+
   // Clean up any trailing incomplete HTML
   newsArticle = newsArticle.replace(/<h2[^>]*>[^<]*$/, '');
-  
+
   // Add the news end box
   if (!newsArticle.includes('More ' + league + ' Coverage')) {
     newsArticle += newsEndBox;
   }
-  
+
   return newsArticle;
 }
 
@@ -1601,7 +1664,7 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
     console.log('[Match Preview] Step 3/6: Fetching AI analysis...');
     const analysisResult = await fetchMatchAnalysis(match);
     const { analysis, dataQuality, hasRealData } = analysisResult;
-    
+
     // DATA QUALITY GATE: Only generate blogs when we have real match data
     // This prevents generating content with AI estimation only (no form/H2H)
     if (!hasRealData) {
@@ -1613,7 +1676,7 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
         duration: Date.now() - startTime,
       };
     }
-    
+
     if (analysis) {
       totalCost += 0.02; // Analysis API cost
       console.log(`[Match Preview] AI analysis data received (quality: ${dataQuality})`);
@@ -1634,7 +1697,7 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
     console.log('[Match Preview] Step 5/6: Generating image...');
     let featuredImage: string;
     let imageAlt: string;
-    
+
     try {
       const imageResult = await generateMatchFeaturedImage(match, content.title);
       featuredImage = imageResult.url;
@@ -1656,11 +1719,11 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
       match.awayTeam,
       match.league
     );
-    
+
     // VALIDATION: Ensure newsContent has proper structure
     const newsH2Count = (newsContent.match(/<h2/gi) || []).length;
     const contentH2Count = (processedContent.match(/<h2/gi) || []).length;
-    
+
     if (newsH2Count === 0 && contentH2Count > 0) {
       console.warn('[Match Preview] ⚠️ newsContent has no H2 sections! Regenerating...');
       // Try regenerating from full content
@@ -1673,17 +1736,17 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
       const retryH2Count = (newsContent.match(/<h2/gi) || []).length;
       console.log(`[Match Preview] Retry newsContent H2 count: ${retryH2Count}`);
     }
-    
+
     // Final validation - minimum length check
     if (newsContent.length < 3000) {
       console.warn(`[Match Preview] ⚠️ newsContent too short: ${newsContent.length} chars (expected 5000+)`);
     }
-    
+
     console.log(`[Match Preview] News title: ${newsTitle} (${newsContent.length} chars, ${newsH2Count} H2s)`);
 
     // Step 7: Save to database (Blog + News in ONE record)
     console.log('[Match Preview] Step 7/7: Saving to database...');
-    
+
     // Ensure unique slug
     let slug = content.slug;
     const existingSlug = await prisma.blogPost.findUnique({ where: { slug } });
@@ -1749,7 +1812,7 @@ export async function generateMatchPreview(match: MatchInfo): Promise<MatchPrevi
           newsContentSr: translations.newsContentSr,
         },
       });
-      
+
       console.log('[Match Preview] ✅ Serbian translation complete!');
     } catch (translationError) {
       console.error('[Match Preview] ⚠️ Translation failed (post still created):', translationError);
@@ -1840,8 +1903,8 @@ export async function updateWithMatchRecap(
         finalScore,
         postType: 'MATCH_COMBINED',
         // Update title to indicate it includes recap
-        title: existingPost.title.includes('Result') 
-          ? existingPost.title 
+        title: existingPost.title.includes('Result')
+          ? existingPost.title
           : `${existingPost.title} | Result: ${finalScore}`,
         // Append recap to main content
         content: `${existingPost.content}
@@ -1914,11 +1977,11 @@ export async function generatePreviewsForUpcomingMatches(
 
   // If specific sport requested, use that; otherwise cycle through all sports
   const sportsToProcess = sportKey ? [sportKey] : ALL_BLOG_SPORTS;
-  
+
   console.log(`[Batch Preview] Starting batch generation - sports: ${sportsToProcess.length}, limit: ${limit} NEW posts`);
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.sportbotai.com');
 
     // Only generate previews for matches within 48 hours (when we have good data)
@@ -1935,7 +1998,7 @@ export async function generatePreviewsForUpcomingMatches(
 
       const url = `${baseUrl}/api/match-data?sportKey=${sport}`;
       console.log(`[Batch Preview] 🏟️ Fetching ${sport}...`);
-      
+
       const response = await fetch(url);
       const data = await response.json();
 
@@ -2031,7 +2094,7 @@ export async function getMatchesNeedingRecap(): Promise<{
   slug: string;
 }[]> {
   const now = new Date();
-  
+
   // Find match previews where:
   // 1. Match date has passed
   // 2. No post-match content yet
