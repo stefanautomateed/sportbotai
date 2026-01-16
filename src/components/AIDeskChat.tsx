@@ -14,95 +14,18 @@ import Link from 'next/link';
 import TypingIndicator from '@/components/ui/TypingIndicator';
 import { trackChatMessage } from '@/lib/analytics';
 
-// ============================================
-// TYPES
-// ============================================
-
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  citations?: string[];
-  usedRealTimeSearch?: boolean;
-  followUps?: string[];
-  fromCache?: boolean;
-  isStreaming?: boolean;
-  statusMessage?: string;  // Shows "Searching..." or "Generating..." during processing
-  feedbackGiven?: 'up' | 'down' | null;
-  timestamp: Date;
-  // Data confidence for quality tracking
-  dataConfidenceLevel?: string;
-  dataConfidenceScore?: number;
-}
-
-// Audio playback states
-type AudioState = 'idle' | 'loading' | 'playing' | 'error';
-
-// Voice input states
-type VoiceState = 'idle' | 'listening' | 'processing' | 'error' | 'unsupported';
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-/**
- * Strip markdown formatting from AI responses
- * Removes bold (**text**), headers (##), and other markdown syntax
- */
-function stripMarkdown(text: string): string {
-  return text
-    // Remove bold markers: **text** or __text__
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/__([^_]+)__/g, '$1')
-    // Remove italic markers: *text* or _text_ (single)
-    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1')
-    .replace(/(?<!_)_([^_]+)_(?!_)/g, '$1')
-    // Remove headers: ## text or ### text
-    .replace(/^#{1,6}\s+/gm, '')
-    // Clean up numbered list markers at start: 1. 2. etc
-    .replace(/^\d+\.\s+/gm, '')
-    .trim();
-}
-
-// ============================================
-// SUGGESTED QUESTIONS - Dynamic from API, fallback to static
-// ============================================
-
-const FALLBACK_QUESTIONS = [
-  // Trending question (reliable fallback)
-  "How many goals has Haaland scored this season?",
-  // Injuries
-  "What's the latest injury news for Arsenal?",
-  // Standings
-  "Who's top of the Serie A table?",
-  // Stats
-  "How many goals has Haaland scored this season?",
-  // Transfers
-  "Any transfer rumors for the January window?",
-  // Fixtures
-  "When do Liverpool play next in the Premier League?",
-];
-
-// ============================================
-// ROTATING PLACEHOLDER EXAMPLES
-// Shows users how to "ask like a pro"
-// ============================================
-
-const PLACEHOLDER_EXAMPLES = [
-  "Try: Liverpool injury updates",
-  "Try: Jokic avg points this season",
-  "Try: Head to head Inter vs Milan",
-  "Try: Liverpool injury updates",
-  "Try: Champions League standings",
-  "Try: Who's the top scorer in La Liga?",
-  "Try: Analyze Man City vs Arsenal",
-  "Try: Mbappe stats this season",
-];
-
-// Get initial questions for SSR
-function getInitialQuestions(count: number): string[] {
-  return FALLBACK_QUESTIONS.slice(0, count);
-}
+// Import extracted types and constants
+import {
+  ChatMessage,
+  AudioState,
+  VoiceState
+} from './ai-desk/types';
+import {
+  FALLBACK_QUESTIONS,
+  PLACEHOLDER_EXAMPLES,
+  getInitialQuestions,
+  stripMarkdown
+} from './ai-desk/constants';
 
 // ============================================
 // COMPONENT
