@@ -4,18 +4,18 @@ const { withSentryConfig } = require('@sentry/nextjs');
 const nextConfig = {
   // Omogućava striktni React mode za bolje debagovanje
   reactStrictMode: true,
-  
+
   // Ignore ESLint warnings during build (still runs, just doesn't fail)
   eslint: {
     ignoreDuringBuilds: true,
   },
-  
+
   // Optimize for modern browsers only and CSS
   experimental: {
     optimizePackageImports: ['lucide-react', 'date-fns'],
     optimizeCss: true, // Inline critical CSS for faster FCP/LCP
   },
-  
+
   // Configure external image domains for Next.js Image component
   images: {
     remotePatterns: [
@@ -67,7 +67,7 @@ const nextConfig = {
       },
     ],
   },
-  
+
   // Custom headers for AI/LLM discoverability
   async headers() {
     return [
@@ -133,26 +133,43 @@ const nextConfig = {
       },
     ];
   },
+  // Redirect non-www to www (critical for SEO - consolidates ranking signals)
+  async redirects() {
+    return [
+      // Non-www to www redirect
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'sportbotai.com',
+          },
+        ],
+        destination: 'https://www.sportbotai.com/:path*',
+        permanent: true, // 308 redirect - tells Google this is permanent
+      },
+    ];
+  },
 };
 
 // Sentry configuration
 const sentryWebpackPluginOptions = {
   // Suppresses source map uploading logs during build
   silent: true,
-  
+
   // Organization and project in Sentry
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
-  
+
   // Auth token for uploading source maps
   authToken: process.env.SENTRY_AUTH_TOKEN,
-  
+
   // Routes to ignore for performance monitoring
   widenClientFileUpload: true,
-  
+
   // Hides source maps from generated client bundles
   hideSourceMaps: true,
-  
+
   // Disables logger for cleaner output
   disableLogger: true,
 };
