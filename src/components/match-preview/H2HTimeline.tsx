@@ -9,6 +9,30 @@
 
 import { format, parseISO } from 'date-fns';
 
+// i18n translations
+const translations = {
+  en: {
+    headToHead: 'Head to Head',
+    previousMeetings: 'previous meetings',
+    firstMeeting: 'First Meeting',
+    noPreviousMeetings: 'No previous meetings between these teams',
+    draws: 'Draws',
+    wins: 'wins',
+    recentMeetings: 'Recent Meetings',
+    hasTheEdge: 'has the edge in head-to-head meetings',
+  },
+  sr: {
+    headToHead: 'Međusobni Susreti',
+    previousMeetings: 'prethodnih susreta',
+    firstMeeting: 'Prvi Susret',
+    noPreviousMeetings: 'Nema prethodnih susreta između ovih timova',
+    draws: 'Nerešeno',
+    wins: 'pobeda',
+    recentMeetings: 'Nedavni Susreti',
+    hasTheEdge: 'ima prednost u međusobnim susretima',
+  },
+};
+
 interface H2HMeeting {
   date: string;
   homeTeam: string;
@@ -29,20 +53,24 @@ interface H2HTimelineProps {
   homeTeam: string;
   awayTeam: string;
   h2h: H2HData;
+  locale?: 'en' | 'sr';
 }
 
 export default function H2HTimeline({
   homeTeam,
   awayTeam,
   h2h,
+  locale = 'en',
 }: H2HTimelineProps) {
+  const t = translations[locale];
+
   if (!h2h || h2h.totalMeetings === 0) {
     return (
       <div className="bg-[#0F1114] rounded-2xl border border-white/10 p-6 text-center">
         <span className="text-3xl mb-3 block">🤝</span>
-        <h3 className="text-base font-bold text-white mb-1">First Meeting</h3>
+        <h3 className="text-base font-bold text-white mb-1">{t.firstMeeting}</h3>
         <p className="text-sm text-text-secondary">
-          No previous meetings between these teams
+          {t.noPreviousMeetings}
         </p>
       </div>
     );
@@ -63,8 +91,8 @@ export default function H2HTimeline({
             <span className="text-xl">⚔️</span>
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Head to Head</h3>
-            <p className="text-xs text-text-muted">{h2h.totalMeetings} previous meetings</p>
+            <h3 className="text-base font-bold text-white">{t.headToHead}</h3>
+            <p className="text-xs text-text-muted">{h2h.totalMeetings} {t.previousMeetings}</p>
           </div>
         </div>
       </div>
@@ -75,26 +103,26 @@ export default function H2HTimeline({
           {/* Team names */}
           <div className="flex justify-between text-sm mb-3">
             <span className="font-medium text-white">{homeTeam}</span>
-            <span className="text-text-muted">Draws</span>
+            <span className="text-text-muted">{t.draws}</span>
             <span className="font-medium text-white">{awayTeam}</span>
           </div>
 
           {/* Visual bar */}
           <div className="h-4 rounded-full overflow-hidden flex bg-white/10">
             {homePercent > 0 && (
-              <div 
+              <div
                 className="bg-green-500 h-full transition-all duration-500"
                 style={{ width: `${homePercent}%` }}
               />
             )}
             {drawPercent > 0 && (
-              <div 
+              <div
                 className="bg-yellow-500 h-full transition-all duration-500"
                 style={{ width: `${drawPercent}%` }}
               />
             )}
             {awayPercent > 0 && (
-              <div 
+              <div
                 className="bg-red-500 h-full transition-all duration-500"
                 style={{ width: `${awayPercent}%` }}
               />
@@ -103,29 +131,29 @@ export default function H2HTimeline({
 
           {/* Numbers */}
           <div className="flex justify-between text-sm mt-3">
-            <span className="text-green-400 font-bold">{h2h.homeWins} wins</span>
+            <span className="text-green-400 font-bold">{h2h.homeWins} {t.wins}</span>
             <span className="text-yellow-400 font-bold">{h2h.draws}</span>
-            <span className="text-red-400 font-bold">{h2h.awayWins} wins</span>
+            <span className="text-red-400 font-bold">{h2h.awayWins} {t.wins}</span>
           </div>
         </div>
 
         {/* Recent meetings timeline */}
         {h2h.recentMeetings && h2h.recentMeetings.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-text-secondary">Recent Meetings</h4>
-            
+            <h4 className="text-sm font-medium text-text-secondary">{t.recentMeetings}</h4>
+
             {h2h.recentMeetings.slice(0, 5).map((meeting, index) => {
               const [homeScore, awayScore] = meeting.score.split('-').map(s => parseInt(s.trim()));
               const isHomeWin = homeScore > awayScore;
               const isAwayWin = awayScore > homeScore;
               const isDraw = homeScore === awayScore;
-              
+
               // Determine if current home team won this meeting
               const currentHomeWon = meeting.homeTeam === homeTeam ? isHomeWin : isAwayWin;
               const currentAwayWon = meeting.homeTeam === awayTeam ? isHomeWin : isAwayWin;
-              
+
               return (
-                <div 
+                <div
                   key={index}
                   className="flex items-center gap-3 bg-white/5 rounded-xl p-3"
                 >
@@ -139,7 +167,7 @@ export default function H2HTimeline({
                     <span className={`text-sm ${meeting.homeTeam === homeTeam ? 'font-semibold text-white' : 'text-text-secondary'}`}>
                       {meeting.homeTeam === homeTeam ? homeTeam : awayTeam}
                     </span>
-                    
+
                     <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-lg">
                       <span className={`text-sm font-bold ${currentHomeWon ? 'text-green-400' : isDraw ? 'text-yellow-400' : 'text-text-secondary'}`}>
                         {meeting.homeTeam === homeTeam ? homeScore : awayScore}
@@ -149,7 +177,7 @@ export default function H2HTimeline({
                         {meeting.homeTeam === homeTeam ? awayScore : homeScore}
                       </span>
                     </div>
-                    
+
                     <span className={`text-sm ${meeting.awayTeam === awayTeam ? 'font-semibold text-white' : 'text-text-secondary'}`}>
                       {meeting.awayTeam === awayTeam ? awayTeam : homeTeam}
                     </span>
@@ -174,7 +202,7 @@ export default function H2HTimeline({
               <span className="text-white font-medium">
                 {h2h.homeWins > h2h.awayWins ? homeTeam : awayTeam}
               </span>
-              {' '}has the edge in head-to-head meetings
+              {' '}{t.hasTheEdge}
             </p>
           </div>
         )}

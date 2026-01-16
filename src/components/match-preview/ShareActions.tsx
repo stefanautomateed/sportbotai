@@ -9,12 +9,43 @@
 
 import { useState } from 'react';
 
+// i18n translations
+const translations = {
+  en: {
+    shareThisPreview: 'Share This Preview',
+    spreadTheWord: 'Spread the match intelligence',
+    more: 'More',
+    copy: 'Copy',
+    copied: 'Copied!',
+    loading: 'Loading...',
+    generating: 'Generating...',
+    generateShareImage: 'Generate Share Image',
+    readFullPreview: 'Read Full Match Preview',
+    inDepthAnalysis: 'In-depth analysis, betting angles & AI predictions',
+    checkOutPreview: 'Check out my match preview for',
+  },
+  sr: {
+    shareThisPreview: 'Podeli Ovaj Pregled',
+    spreadTheWord: 'Podeli informacije o meču',
+    more: 'Više',
+    copy: 'Kopiraj',
+    copied: 'Kopirano!',
+    loading: 'Učitavanje...',
+    generating: 'Generisanje...',
+    generateShareImage: 'Generiši Sliku za Deljenje',
+    readFullPreview: 'Pročitaj Ceo Pregled Meča',
+    inDepthAnalysis: 'Detaljna analiza, uglovi klađenja i AI predikcije',
+    checkOutPreview: 'Pogledaj moj pregled meča za',
+  },
+};
+
 interface ShareActionsProps {
   matchId: string;
   homeTeam: string;
   awayTeam: string;
   headline?: string;
   kickoff?: string;
+  locale?: 'en' | 'sr';
 }
 
 export default function ShareActions({
@@ -23,12 +54,14 @@ export default function ShareActions({
   awayTeam,
   headline,
   kickoff,
+  locale = 'en',
 }: ShareActionsProps) {
+  const t = translations[locale];
   const [showCopied, setShowCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const matchTitle = `${homeTeam} vs ${awayTeam}`;
-  const shareText = headline || `Check out my match preview for ${matchTitle}`;
+  const shareText = headline || `${t.checkOutPreview} ${matchTitle}`;
   const shareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/match/${matchId}`
     : '';
@@ -92,8 +125,8 @@ export default function ShareActions({
             <span className="text-xl">📤</span>
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Share This Preview</h3>
-            <p className="text-xs text-text-muted">Spread the match intelligence</p>
+            <h3 className="text-base font-bold text-white">{t.shareThisPreview}</h3>
+            <p className="text-xs text-text-muted">{t.spreadTheWord}</p>
           </div>
         </div>
       </div>
@@ -139,7 +172,7 @@ export default function ShareActions({
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
-              <span className="text-sm font-medium">More</span>
+              <span className="text-sm font-medium">{t.more}</span>
             </button>
           )}
         </div>
@@ -156,8 +189,8 @@ export default function ShareActions({
               <div className="flex items-center gap-3">
                 <span className="text-xl">📰</span>
                 <div>
-                  <p className="text-sm font-medium text-white">Read Full Match Preview</p>
-                  <p className="text-xs text-text-muted">In-depth analysis, betting angles & AI predictions</p>
+                  <p className="text-sm font-medium text-white">{t.readFullPreview}</p>
+                  <p className="text-xs text-text-muted">{t.inDepthAnalysis}</p>
                 </div>
               </div>
               <svg className="w-5 h-5 text-accent group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,16 +204,16 @@ export default function ShareActions({
         {/* Copy link */}
         <div className="flex items-center gap-2">
           <div className="flex-1 bg-white/5 rounded-xl px-4 py-2.5 text-sm text-text-muted truncate">
-            {shareUrl || 'Loading...'}
+            {shareUrl || t.loading}
           </div>
           <button
             onClick={copyLink}
             className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${showCopied
-                ? 'bg-green-500 text-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
+              ? 'bg-green-500 text-white'
+              : 'bg-white/10 text-white hover:bg-white/20'
               }`}
           >
-            {showCopied ? '✓ Copied!' : 'Copy'}
+            {showCopied ? `✓ ${t.copied}` : t.copy}
           </button>
         </div>
 
@@ -196,14 +229,14 @@ export default function ShareActions({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <span className="font-medium">Generating...</span>
+              <span className="font-medium">{t.generating}</span>
             </>
           ) : (
             <>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="font-medium">Generate Share Image</span>
+              <span className="font-medium">{t.generateShareImage}</span>
             </>
           )}
         </button>
