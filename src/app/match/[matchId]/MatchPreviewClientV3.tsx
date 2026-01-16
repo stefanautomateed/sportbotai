@@ -1470,6 +1470,32 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
           />
         </div>
 
+        {/* Read Full Preview - Link to News Article */}
+        {(() => {
+          const slug = `${data.matchInfo.homeTeam.toLowerCase().replace(/\s+/g, '-')}-vs-${data.matchInfo.awayTeam.toLowerCase().replace(/\s+/g, '-')}`;
+          return (
+            <Link
+              href={`${localePath}/news/${slug}-2026-preview-prediction`}
+              className="mt-6 flex items-center justify-between px-5 py-4 bg-gradient-to-r from-accent/10 to-accent/5 hover:from-accent/20 hover:to-accent/10 border border-accent/20 hover:border-accent/40 rounded-xl transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">📰</span>
+                <div>
+                  <p className="text-sm font-medium text-white">
+                    {locale === 'sr' ? 'Pročitaj Ceo Pregled Meča' : 'Read Full Match Preview'}
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    {locale === 'sr' ? 'Detaljna analiza i AI predikcije' : 'In-depth analysis & AI predictions'}
+                  </p>
+                </div>
+              </div>
+              <svg className="w-5 h-5 text-accent group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          );
+        })()}
+
         {/* Footer */}
         <div className="mt-12 text-center">
           <p className="text-[11px] text-zinc-600 max-w-sm mx-auto">
