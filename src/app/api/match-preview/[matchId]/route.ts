@@ -304,8 +304,34 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           }
         }
 
-        // Add expectedScores for DB stored responses (not stored in DB)
+        // Add expectedScores for DB stored responses - use odds if available for better estimation
         const dbExpectedScores = responseData.expectedScores || (() => {
+          // Try to use odds for more accurate prediction
+          const odds = responseData.odds;
+          if (odds?.homeOdds && odds?.awayOdds) {
+            // Convert odds to implied probabilities
+            const homeProb = 1 / odds.homeOdds;
+            const awayProb = 1 / odds.awayOdds;
+            const drawProb = odds.drawOdds ? 1 / odds.drawOdds : 0;
+            const total = homeProb + awayProb + drawProb;
+
+            // Normalize probabilities
+            const normHomeProb = homeProb / total;
+            const normAwayProb = awayProb / total;
+
+            // Estimate expected goals based on probabilities
+            // Favorites typically score more - weight toward the favorite
+            const avgGoals = 2.8; // Average total goals in soccer match
+            const homeGoals = avgGoals * (normHomeProb * 1.1 + 0.5 - normAwayProb * 0.4);
+            const awayGoals = avgGoals * (normAwayProb * 1.1 + 0.5 - normHomeProb * 0.4);
+
+            return {
+              home: Math.max(0.5, Math.min(3.5, homeGoals)),
+              away: Math.max(0.5, Math.min(3.5, awayGoals))
+            };
+          }
+
+          // Fallback to story.favored if no odds
           const favored = responseData.story?.favored || 'draw';
           if (favored === 'home') return { home: 1.8, away: 1.1 };
           if (favored === 'away') return { home: 1.1, away: 1.8 };
@@ -614,8 +640,33 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               console.error(`[Match-Preview] Failed to save analysis for cached response:`, saveError);
             }
           }
-          // Add expectedScores for cached responses (fallback based on favored team)
+          // Add expectedScores for cached responses - use odds if available for better estimation
           const cachedExpectedScores = responseData.expectedScores || (() => {
+            // Try to use odds for more accurate prediction
+            const odds = responseData.odds;
+            if (odds?.homeOdds && odds?.awayOdds) {
+              // Convert odds to implied probabilities
+              const homeProb = 1 / odds.homeOdds;
+              const awayProb = 1 / odds.awayOdds;
+              const drawProb = odds.drawOdds ? 1 / odds.drawOdds : 0;
+              const total = homeProb + awayProb + drawProb;
+
+              // Normalize probabilities
+              const normHomeProb = homeProb / total;
+              const normAwayProb = awayProb / total;
+
+              // Estimate expected goals based on probabilities
+              const avgGoals = 2.8; // Average total goals in soccer match
+              const homeGoals = avgGoals * (normHomeProb * 1.1 + 0.5 - normAwayProb * 0.4);
+              const awayGoals = avgGoals * (normAwayProb * 1.1 + 0.5 - normHomeProb * 0.4);
+
+              return {
+                home: Math.max(0.5, Math.min(3.5, homeGoals)),
+                away: Math.max(0.5, Math.min(3.5, awayGoals))
+              };
+            }
+
+            // Fallback to story.favored if no odds
             const favored = responseData.story?.favored || 'draw';
             if (favored === 'home') return { home: 1.8, away: 1.1 };
             if (favored === 'away') return { home: 1.1, away: 1.8 };
