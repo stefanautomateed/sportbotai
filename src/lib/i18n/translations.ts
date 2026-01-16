@@ -363,6 +363,76 @@ export const translations = {
       alreadyHaveAccount: 'Already have an account?',
       errorOccurred: 'An error occurred. Please try again.',
     },
+
+    // Analysis Page
+    analysis: {
+      // Error state
+      analysisFailed: 'Analysis Failed',
+
+      // Match info
+      home: 'Home',
+      away: 'Away',
+      vs: 'vs',
+
+      // Verdict
+      aiVerdict: 'AI Verdict',
+      probability: 'probability',
+
+      // Badges
+      strongFavorite: 'Strong Favorite',
+      moderateFavorite: 'Moderate Favorite',
+      slightFavorite: 'Slight Favorite',
+      lowRisk: 'LOW Risk',
+      mediumRisk: 'MEDIUM Risk',
+      highRisk: 'HIGH Risk',
+      valueOn: 'Value on',
+      upsetAlert: 'Upset Alert',
+
+      // Sections
+      whyThisCall: 'Why This Call?',
+      deepDive: 'Deep Dive',
+
+      // Tabs
+      formStats: 'Form & Stats',
+      injuries: 'Injuries',
+      valueAnalysis: 'Value Analysis',
+      fullAnalysis: 'Full Analysis',
+
+      // Form
+      rising: 'Rising',
+      falling: 'Falling',
+      stable: 'Stable',
+      noFormData: 'No form data available',
+      keyFactors: 'Key Factors',
+
+      // Injuries
+      noInjuryData: 'No injury data available for this match.',
+      out: 'out',
+      unavailable: 'Unavailable',
+      noReportedInjuries: 'No reported injuries',
+      more: 'more',
+
+      // Value
+      fairOdds: 'Fair odds',
+      smallEdge: 'Small edge',
+      valueFound: 'Value found',
+      strongValue: 'Strong value',
+      bestValue: 'Best Value',
+
+      // Full Analysis
+      riskAssessment: 'Risk Assessment',
+      bankrollImpact: 'Bankroll impact',
+      upsetPotential: 'Upset Potential',
+      matchNarrative: 'Match Narrative',
+
+      // Pro upsell
+      goProForMore: 'Go Pro for More',
+      proDescription: '30 analyses/day, team profiles, full history, and advanced value detection.',
+      upgradeToPro: 'Upgrade to Pro',
+
+      // Disclaimer
+      defaultDisclaimer: 'This analysis is for educational purposes only. Past performance does not guarantee future results. Please gamble responsibly. 18+ only.',
+    },
   },
 
   sr: {
@@ -720,6 +790,76 @@ export const translations = {
       alreadyHaveAccount: 'Već imaš nalog?',
       errorOccurred: 'Došlo je do greške. Molimo pokušaj ponovo.',
     },
+
+    // Analysis Page
+    analysis: {
+      // Error state
+      analysisFailed: 'Analiza Neuspešna',
+
+      // Match info
+      home: 'Domaćin',
+      away: 'Gost',
+      vs: 'vs',
+
+      // Verdict
+      aiVerdict: 'AI Presuda',
+      probability: 'verovatnoća',
+
+      // Badges
+      strongFavorite: 'Jak Favorit',
+      moderateFavorite: 'Umeren Favorit',
+      slightFavorite: 'Blag Favorit',
+      lowRisk: 'NIZAK Rizik',
+      mediumRisk: 'SREDNJI Rizik',
+      highRisk: 'VISOK Rizik',
+      valueOn: 'Vrednost na',
+      upsetAlert: 'Alarm za Iznenađenje',
+
+      // Sections
+      whyThisCall: 'Zašto Ovaj Zaključak?',
+      deepDive: 'Dublja Analiza',
+
+      // Tabs
+      formStats: 'Forma i Statistike',
+      injuries: 'Povrede',
+      valueAnalysis: 'Analiza Vrednosti',
+      fullAnalysis: 'Puna Analiza',
+
+      // Form
+      rising: 'Raste',
+      falling: 'Pada',
+      stable: 'Stabilna',
+      noFormData: 'Nema dostupnih podataka o formi',
+      keyFactors: 'Ključni Faktori',
+
+      // Injuries
+      noInjuryData: 'Nema dostupnih podataka o povredama za ovaj meč.',
+      out: 'van',
+      unavailable: 'Nedostupan',
+      noReportedInjuries: 'Nema prijavljenih povreda',
+      more: 'više',
+
+      // Value
+      fairOdds: 'Fer kvote',
+      smallEdge: 'Mala prednost',
+      valueFound: 'Pronađena vrednost',
+      strongValue: 'Jaka vrednost',
+      bestValue: 'Najbolja Vrednost',
+
+      // Full Analysis
+      riskAssessment: 'Procena Rizika',
+      bankrollImpact: 'Uticaj na budžet',
+      upsetPotential: 'Potencijal Iznenađenja',
+      matchNarrative: 'Narativ Meča',
+
+      // Pro upsell
+      goProForMore: 'Pređi na Pro za Više',
+      proDescription: '30 analiza dnevno, profili timova, puna istorija i napredna detekcija vrednosti.',
+      upgradeToPro: 'Nadogradi na Pro',
+
+      // Disclaimer
+      defaultDisclaimer: 'Ova analiza je samo u edukativne svrhe. Prošli rezultati ne garantuju buduće rezultate. Molimo kladi se odgovorno. Samo 18+.',
+    },
   },
 } as const;
 
@@ -950,6 +1090,51 @@ export type TranslationsType = {
     creatingAccount: string;
     alreadyHaveAccount: string;
     errorOccurred: string;
+  };
+  analysis: {
+    analysisFailed: string;
+    home: string;
+    away: string;
+    vs: string;
+    aiVerdict: string;
+    probability: string;
+    strongFavorite: string;
+    moderateFavorite: string;
+    slightFavorite: string;
+    lowRisk: string;
+    mediumRisk: string;
+    highRisk: string;
+    valueOn: string;
+    upsetAlert: string;
+    whyThisCall: string;
+    deepDive: string;
+    formStats: string;
+    injuries: string;
+    valueAnalysis: string;
+    fullAnalysis: string;
+    rising: string;
+    falling: string;
+    stable: string;
+    noFormData: string;
+    keyFactors: string;
+    noInjuryData: string;
+    out: string;
+    unavailable: string;
+    noReportedInjuries: string;
+    more: string;
+    fairOdds: string;
+    smallEdge: string;
+    valueFound: string;
+    strongValue: string;
+    bestValue: string;
+    riskAssessment: string;
+    bankrollImpact: string;
+    upsetPotential: string;
+    matchNarrative: string;
+    goProForMore: string;
+    proDescription: string;
+    upgradeToPro: string;
+    defaultDisclaimer: string;
   };
 };
 

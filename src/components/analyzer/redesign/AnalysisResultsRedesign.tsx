@@ -40,15 +40,18 @@ import Link from 'next/link';
 import ListenToAnalysisButton from '../ListenToAnalysisButton';
 import ShareCard from '../ShareCard';
 import CopyInsightsButton from '../CopyInsightsButton';
+import { getTranslations, Locale } from '@/lib/i18n';
 
 interface AnalysisResultsRedesignProps {
   result: AnalyzeResponse;
+  locale?: Locale;
 }
 
-export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedesignProps) {
+export default function AnalysisResultsRedesign({ result, locale = 'en' }: AnalysisResultsRedesignProps) {
   const { data: session } = useSession();
   const isPro = session?.user?.plan && session.user.plan !== 'FREE';
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const t = getTranslations(locale).analysis;
 
   // Error state
   if (!result.success && result.error) {
@@ -61,7 +64,7 @@ export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedes
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Analysis Failed</h3>
+            <h3 className="text-xl font-semibold text-white mb-2">{t.analysisFailed}</h3>
             <p className="text-white/60">{result.error}</p>
           </div>
         </div>
@@ -76,23 +79,23 @@ export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedes
   const away = probabilities.awayWin ?? 0;
   const draw = probabilities.draw ?? 0;
   const maxProb = Math.max(home, away, draw);
-  
-  const verdict = home === maxProb 
+
+  const verdict = home === maxProb
     ? { team: matchInfo.homeTeam, prob: home, type: 'home' as const }
-    : away === maxProb 
-    ? { team: matchInfo.awayTeam, prob: away, type: 'away' as const }
-    : { team: 'Draw', prob: draw, type: 'draw' as const };
+    : away === maxProb
+      ? { team: matchInfo.awayTeam, prob: away, type: 'away' as const }
+      : { team: 'Draw', prob: draw, type: 'draw' as const };
 
   const confidence = Math.abs(home - away) > 25 ? 'Strong' : Math.abs(home - away) > 15 ? 'Moderate' : 'Slight';
-  
+
   // Value badge
   const hasValue = valueAnalysis.bestValueSide !== 'NONE';
   const valueSide = valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam :
-                    valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw';
+    valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw';
 
   // Build the story (3 key reasons)
   const keyReasons = buildKeyReasons(result);
-  
+
   // Check for data availability
   const hasInjuries = injuryContext?.homeTeam?.players.length || injuryContext?.awayTeam?.players.length;
   const hasForm = momentumAndForm?.homeForm?.length || momentumAndForm?.awayForm?.length;
@@ -105,7 +108,7 @@ export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedes
       <div className="relative">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent rounded-t-[2rem] pointer-events-none" />
-        
+
         <div className="relative px-4 sm:px-8 pt-8 pb-6">
           {/* Match Info - Compact */}
           <div className="text-center mb-2">
@@ -121,46 +124,46 @@ export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedes
             <div className="text-center flex-1 max-w-[140px]">
               <TeamLogo teamName={matchInfo.homeTeam} sport={matchInfo.sport} league={matchInfo.leagueName} size="lg" className="mx-auto mb-2" />
               <h2 className="text-sm sm:text-base font-semibold text-white truncate">{matchInfo.homeTeam}</h2>
-              <span className="text-[10px] text-white/30 uppercase tracking-wider">Home</span>
+              <span className="text-[10px] text-white/30 uppercase tracking-wider">{t.home}</span>
             </div>
-            
+
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold text-white/20">vs</span>
+              <span className="text-2xl font-bold text-white/20">{t.vs}</span>
             </div>
-            
+
             <div className="text-center flex-1 max-w-[140px]">
               <TeamLogo teamName={matchInfo.awayTeam} sport={matchInfo.sport} league={matchInfo.leagueName} size="lg" className="mx-auto mb-2" />
               <h2 className="text-sm sm:text-base font-semibold text-white truncate">{matchInfo.awayTeam}</h2>
-              <span className="text-[10px] text-white/30 uppercase tracking-wider">Away</span>
+              <span className="text-[10px] text-white/30 uppercase tracking-wider">{t.away}</span>
             </div>
           </div>
 
           {/* THE VERDICT - Big and Bold */}
           <div className="text-center mb-6">
-            <p className="text-xs text-white/40 uppercase tracking-widest mb-2">AI Verdict</p>
+            <p className="text-xs text-white/40 uppercase tracking-widest mb-2">{t.aiVerdict}</p>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-2">
               {verdict.team}
             </h1>
             <div className="flex items-center justify-center gap-2">
               <span className="text-3xl sm:text-4xl font-bold text-accent">{verdict.prob.toFixed(0)}%</span>
-              <span className="text-lg text-white/40">probability</span>
+              <span className="text-lg text-white/40">{t.probability}</span>
             </div>
           </div>
 
           {/* Probability Bar - Visual */}
           <div className="max-w-md mx-auto mb-6">
             <div className="flex h-3 rounded-full overflow-hidden bg-white/5">
-              <div 
+              <div
                 className="bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-700"
                 style={{ width: `${home}%` }}
               />
               {draw > 0 && (
-                <div 
+                <div
                   className="bg-white/30 transition-all duration-700"
                   style={{ width: `${draw}%` }}
                 />
               )}
-              <div 
+              <div
                 className="bg-gradient-to-r from-rose-500 to-rose-600 transition-all duration-700"
                 style={{ width: `${away}%` }}
               />
@@ -175,25 +178,24 @@ export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedes
           {/* Quick Badges */}
           <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
             <span className="px-3 py-1.5 rounded-full bg-white/5 text-xs text-white/70 border border-white/10">
-              {confidence} Favorite
+              {confidence === 'Strong' ? t.strongFavorite : confidence === 'Moderate' ? t.moderateFavorite : t.slightFavorite}
             </span>
-            <span className={`px-3 py-1.5 rounded-full text-xs border ${
-              riskAnalysis.overallRiskLevel === 'LOW' 
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                : riskAnalysis.overallRiskLevel === 'MEDIUM'
+            <span className={`px-3 py-1.5 rounded-full text-xs border ${riskAnalysis.overallRiskLevel === 'LOW'
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              : riskAnalysis.overallRiskLevel === 'MEDIUM'
                 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                 : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-            }`}>
-              {riskAnalysis.overallRiskLevel} Risk
+              }`}>
+              {riskAnalysis.overallRiskLevel === 'LOW' ? t.lowRisk : riskAnalysis.overallRiskLevel === 'MEDIUM' ? t.mediumRisk : t.highRisk}
             </span>
             {hasValue && (
               <span className="px-3 py-1.5 rounded-full bg-emerald-500/10 text-xs text-emerald-400 border border-emerald-500/20">
-                💰 Value on {valueSide}
+                💰 {t.valueOn} {valueSide}
               </span>
             )}
             {upsetPotential.upsetProbability > 25 && (
               <span className="px-3 py-1.5 rounded-full bg-orange-500/10 text-xs text-orange-400 border border-orange-500/20">
-                ⚡ Upset Alert
+                ⚡ {t.upsetAlert}
               </span>
             )}
           </div>
@@ -211,8 +213,8 @@ export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedes
       {/* THE STORY - Why this call?                                     */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       <div className="px-4 sm:px-8 py-8 border-t border-white/[0.06]">
-        <h3 className="text-xs font-medium text-white/40 uppercase tracking-widest mb-5">Why This Call?</h3>
-        
+        <h3 className="text-xs font-medium text-white/40 uppercase tracking-widest mb-5">{t.whyThisCall}</h3>
+
         <div className="space-y-4">
           {keyReasons.slice(0, 3).map((reason, i) => (
             <div key={i} className="flex items-start gap-4 group">
@@ -240,24 +242,23 @@ export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedes
       {/* DEEP DIVE - Collapsible Tabs                                   */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       <div className="px-4 sm:px-8 py-6 border-t border-white/[0.06]">
-        <h3 className="text-xs font-medium text-white/40 uppercase tracking-widest mb-4">Deep Dive</h3>
-        
+        <h3 className="text-xs font-medium text-white/40 uppercase tracking-widest mb-4">{t.deepDive}</h3>
+
         {/* Tab Buttons */}
         <div className="flex flex-wrap gap-2 mb-4">
           {[
-            { id: 'form', label: 'Form & Stats', icon: '📊', available: hasForm },
-            { id: 'injuries', label: 'Injuries', icon: '🏥', available: hasInjuries },
-            { id: 'value', label: 'Value Analysis', icon: '💰', available: true },
-            { id: 'full', label: 'Full Analysis', icon: '📝', available: true },
+            { id: 'form', label: t.formStats, icon: '📊', available: hasForm },
+            { id: 'injuries', label: t.injuries, icon: '🏥', available: hasInjuries },
+            { id: 'value', label: t.valueAnalysis, icon: '💰', available: true },
+            { id: 'full', label: t.fullAnalysis, icon: '📝', available: true },
           ].filter(tab => tab.available).map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(activeTab === tab.id ? null : tab.id)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? 'bg-primary text-white'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80'
-              }`}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id
+                ? 'bg-primary text-white'
+                : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80'
+                }`}
             >
               <span className="mr-1.5">{tab.icon}</span>
               {tab.label}
@@ -285,15 +286,15 @@ export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedes
             <div className="w-12 h-12 mx-auto rounded-xl bg-amber-500/20 flex items-center justify-center mb-4">
               <span className="text-2xl">⭐</span>
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">Go Pro for More</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">{t.goProForMore}</h3>
             <p className="text-sm text-white/60 mb-4 max-w-sm mx-auto">
-              30 analyses/day, team profiles, full history, and advanced value detection.
+              {t.proDescription}
             </p>
-            <Link 
+            <Link
               href="/pricing"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-medium rounded-xl transition-colors"
             >
-              Upgrade to Pro - €9.99/mo
+              {t.upgradeToPro} - €9.99/mo
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -307,8 +308,7 @@ export default function AnalysisResultsRedesign({ result }: AnalysisResultsRedes
       {/* ═══════════════════════════════════════════════════════════════ */}
       <div className="px-4 sm:px-8 py-6 border-t border-white/[0.06]">
         <p className="text-[11px] text-white/30 text-center leading-relaxed max-w-lg mx-auto">
-          {result.responsibleGambling?.coreNote || 
-            'This analysis is for educational purposes only. Past performance does not guarantee future results. Please gamble responsibly. 18+ only.'}
+          {result.responsibleGambling?.coreNote || t.defaultDisclaimer}
         </p>
       </div>
     </div>
@@ -353,8 +353,8 @@ function buildKeyReasons(result: AnalyzeResponse): KeyReason[] {
 
   // 2. Value reason
   if (valueAnalysis.bestValueSide !== 'NONE') {
-    const side = valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam : 
-                 valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw';
+    const side = valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam :
+      valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw';
     reasons.push({
       icon: '💰',
       text: valueAnalysis.valueCommentShort || `Odds suggest value on ${side}—market may be underrating them.`,
@@ -439,13 +439,12 @@ function FormContent({ result }: { result: AnalyzeResponse }) {
         <div className="flex items-center gap-2 mb-3">
           <TeamLogo teamName={matchInfo.homeTeam} sport={matchInfo.sport} league={matchInfo.leagueName} size="sm" />
           <span className="text-sm font-medium text-white">{matchInfo.homeTeam}</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            momentumAndForm.homeTrend === 'RISING' ? 'bg-emerald-500/20 text-emerald-400' :
+          <span className={`text-xs px-2 py-0.5 rounded-full ${momentumAndForm.homeTrend === 'RISING' ? 'bg-emerald-500/20 text-emerald-400' :
             momentumAndForm.homeTrend === 'FALLING' ? 'bg-rose-500/20 text-rose-400' :
-            'bg-white/10 text-white/50'
-          }`}>
-            {momentumAndForm.homeTrend === 'RISING' ? '↑ Rising' : 
-             momentumAndForm.homeTrend === 'FALLING' ? '↓ Falling' : '→ Stable'}
+              'bg-white/10 text-white/50'
+            }`}>
+            {momentumAndForm.homeTrend === 'RISING' ? '↑ Rising' :
+              momentumAndForm.homeTrend === 'FALLING' ? '↓ Falling' : '→ Stable'}
           </span>
         </div>
         <div className="flex gap-1.5">
@@ -463,13 +462,12 @@ function FormContent({ result }: { result: AnalyzeResponse }) {
         <div className="flex items-center gap-2 mb-3">
           <TeamLogo teamName={matchInfo.awayTeam} sport={matchInfo.sport} league={matchInfo.leagueName} size="sm" />
           <span className="text-sm font-medium text-white">{matchInfo.awayTeam}</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            momentumAndForm.awayTrend === 'RISING' ? 'bg-emerald-500/20 text-emerald-400' :
+          <span className={`text-xs px-2 py-0.5 rounded-full ${momentumAndForm.awayTrend === 'RISING' ? 'bg-emerald-500/20 text-emerald-400' :
             momentumAndForm.awayTrend === 'FALLING' ? 'bg-rose-500/20 text-rose-400' :
-            'bg-white/10 text-white/50'
-          }`}>
-            {momentumAndForm.awayTrend === 'RISING' ? '↑ Rising' : 
-             momentumAndForm.awayTrend === 'FALLING' ? '↓ Falling' : '→ Stable'}
+              'bg-white/10 text-white/50'
+            }`}>
+            {momentumAndForm.awayTrend === 'RISING' ? '↑ Rising' :
+              momentumAndForm.awayTrend === 'FALLING' ? '↓ Falling' : '→ Stable'}
           </span>
         </div>
         <div className="flex gap-1.5">
@@ -540,7 +538,7 @@ function InjuriesContent({ result }: { result: AnalyzeResponse }) {
     <div>
       {renderTeamInjuries(matchInfo.homeTeam, injuryContext.homeTeam?.players || [])}
       {renderTeamInjuries(matchInfo.awayTeam, injuryContext.awayTeam?.players || [])}
-      
+
       {injuryContext.impactSummary && (
         <div className="pt-4 border-t border-white/[0.06]">
           <p className="text-sm text-white/60">{injuryContext.impactSummary}</p>
@@ -596,8 +594,8 @@ function ValueContent({ result }: { result: AnalyzeResponse }) {
       {valueAnalysis.bestValueSide !== 'NONE' && (
         <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
           <p className="text-sm text-emerald-400">
-            <strong>Best Value:</strong> {valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam : 
-                                          valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw'}
+            <strong>Best Value:</strong> {valueAnalysis.bestValueSide === 'HOME' ? matchInfo.homeTeam :
+              valueAnalysis.bestValueSide === 'AWAY' ? matchInfo.awayTeam : 'Draw'}
           </p>
         </div>
       )}
