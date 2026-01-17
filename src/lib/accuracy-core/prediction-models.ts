@@ -538,7 +538,8 @@ export function predictMatch(input: ModelInput): RawProbabilities {
  */
 export function getExpectedScores(input: ModelInput): { home: number; away: number } {
   const config = SPORT_CONFIG[input.sport as SportType] || SPORT_CONFIG.soccer;
-  const isHighScoringSport = input.sport === 'basketball' || input.sport === 'football';
+  // FIX: Use includes() to handle 'basketball_nba' and 'americanfootball_nfl'
+  const isHighScoringSport = input.sport.includes('basketball') || input.sport.includes('football');
 
   // Get the appropriate league average based on sport type
   let leagueAvgPerTeam: number;
@@ -579,7 +580,7 @@ export function getExpectedScores(input: ModelInput): { home: number; away: numb
     homeExpected += homeAdv;
 
     // Clamp to reasonable ranges (NBA: 90-140, NFL: 10-45)
-    if (input.sport === 'basketball') {
+    if (input.sport.includes('basketball')) {
       homeExpected = Math.max(90, Math.min(140, homeExpected));
       awayExpected = Math.max(90, Math.min(140, awayExpected));
     } else {
