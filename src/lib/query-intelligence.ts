@@ -1050,7 +1050,7 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
     return understanding;
   }
 
-  // Try pattern-based classification first (fast)
+  // Try pattern-based classification first (fast) as a HINT
   const patternResult = classifyIntentByPatterns(query);
 
   let intent = patternResult.intent;
@@ -1060,41 +1060,44 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
   let patternMatched: string | undefined = patternResult.matchedPattern;
   let usedLLM = false;
 
-  // SMART FEATURE 2: If patterns didn't match well, try context inference
-  if (intent === 'UNCLEAR' || intentConfidence < LLM_CONFIDENCE_THRESHOLD) {
-    const inferredIntent = inferIntentFromContext(query, entities);
-    if (inferredIntent) {
-      console.log(`[QueryIntelligence] Inferred intent from context: ${inferredIntent}`);
-      intent = inferredIntent;
-      intentConfidence = 0.75; // Context inference is fairly reliable
-      patternMatched = 'CONTEXT_INFERENCE';
+  // ALWAYS USE LLM FOR ENTITY EXTRACTION
+  // This is the key change - regex alone can't handle player names like "jokic"
+  // LLM understands context and extracts entities properly
+  console.log(`[QueryIntelligence] Always calling LLM for intelligent entity extraction...`);
+  usedLLM = true;
 
-      // Adjust timeframe for match predictions
-      if (inferredIntent === 'MATCH_PREDICTION') {
-        timeFrame = 'UPCOMING';
-      }
-    }
-  }
-
-  // If still low confidence or UNCLEAR, use LLM
-  // A/B TEST: Variant B uses LLM more aggressively (threshold 0.7 vs 0.6)
-  if (intentConfidence < LLM_CONFIDENCE_THRESHOLD || intent === 'UNCLEAR') {
-    console.log(`[QueryIntelligence] Low confidence (${intentConfidence} < ${LLM_CONFIDENCE_THRESHOLD}), using LLM... (variant: ${abVariant || 'default'})`);
-    usedLLM = true;
+  try {
     const llmResult = await classifyWithLLM(query);
 
-    intent = llmResult.intent;
-    intentConfidence = llmResult.confidence;
-    patternMatched = undefined; // LLM classified, no pattern
-
-    // Merge LLM entities with pattern entities
+    // LLM entities REPLACE regex entities (more reliable)
+    // Clear the regex entities and use LLM's extraction
+    entities.length = 0;
     for (const llmEntity of llmResult.entities) {
-      if (!entities.some(e => e.name.toLowerCase() === llmEntity.name.toLowerCase())) {
-        entities.push(llmEntity);
-      }
+      entities.push(llmEntity);
+    }
+
+    // Use LLM intent if it's confident, otherwise keep regex intent as fallback
+    if (llmResult.confidence >= 0.7) {
+      intent = llmResult.intent;
+      intentConfidence = llmResult.confidence;
+      patternMatched = undefined; // LLM classified
+      console.log(`[QueryIntelligence] Using LLM intent: ${intent} (${(llmResult.confidence * 100).toFixed(0)}%)`);
+    } else if (intent === 'UNCLEAR' || intentConfidence < 0.5) {
+      // Regex was unclear, use LLM anyway
+      intent = llmResult.intent;
+      intentConfidence = llmResult.confidence;
+      patternMatched = undefined;
+      console.log(`[QueryIntelligence] Regex unclear, using LLM intent: ${intent}`);
+    } else {
+      // Keep regex intent but still use LLM entities
+      console.log(`[QueryIntelligence] Keeping regex intent ${intent}, but using LLM entities: ${entities.map(e => e.name).join(', ')}`);
     }
 
     isAmbiguous = intentConfidence < 0.6;
+  } catch (llmError) {
+    console.error(`[QueryIntelligence] LLM failed, falling back to regex-only:`, llmError);
+    usedLLM = false;
+    // Keep regex results as fallback if LLM fails
   }
 
   // Clean up entities - remove garbage like "Will Roma" which should just be "Roma"
