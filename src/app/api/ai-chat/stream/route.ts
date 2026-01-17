@@ -2598,9 +2598,24 @@ If their favorite team has a match today/tonight, lead with that information.`;
           }
 
           // NORMAL PATH: Use query intelligence for prediction intent
-          const isPredictionIntent = queryUnderstanding?.intent === 'MATCH_PREDICTION' ||
+          let isPredictionIntent = queryUnderstanding?.intent === 'MATCH_PREDICTION' ||
             queryUnderstanding?.intent === 'OUR_ANALYSIS' ||
             queryUnderstanding?.intent === 'BETTING_ANALYSIS';
+
+          // FALLBACK: If Query Intelligence failed/timed out, use regex patterns
+          // This ensures we still try prediction lookup for obvious match queries
+          if (!isPredictionIntent && !queryUnderstanding) {
+            const matchPredictionPatterns = [
+              /\b(?:analyze|analyse|preview|breakdown|prediction|predict)\b/i,
+              /\b(?:vs?\.?|versus|against|@)\b/i,
+              /\bwho\s+(?:will|would|gonna|is going to)\s+win\b/i,
+            ];
+            const hasMatchPattern = matchPredictionPatterns.some(p => p.test(searchMessage));
+            if (hasMatchPattern) {
+              console.log('[AI-Chat-Stream] ⚡ Fallback: Detected match prediction pattern via regex');
+              isPredictionIntent = true;
+            }
+          }
 
           console.log(`[AI-Chat-Stream] Match Prediction Check: isPredictionIntent=${isPredictionIntent}, intent=${queryUnderstanding?.intent}, entities=${queryUnderstanding?.entities?.length || 0}, searchMessage="${searchMessage.substring(0, 50)}"`);
 
