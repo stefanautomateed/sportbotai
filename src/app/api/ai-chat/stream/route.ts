@@ -2602,17 +2602,17 @@ If their favorite team has a match today/tonight, lead with that information.`;
             queryUnderstanding?.intent === 'OUR_ANALYSIS' ||
             queryUnderstanding?.intent === 'BETTING_ANALYSIS';
 
-          // FALLBACK: If Query Intelligence failed/timed out, use regex patterns
-          // This ensures we still try prediction lookup for obvious match queries
-          if (!isPredictionIntent && !queryUnderstanding) {
+          // FALLBACK: If Query Intelligence failed/timed out OR returned wrong intent,
+          // use regex patterns to detect match queries
+          if (!isPredictionIntent) {
             const matchPredictionPatterns = [
               /\b(?:analyze|analyse|preview|breakdown|prediction|predict)\b/i,
-              /\b(?:vs?\.?|versus|against|@)\b/i,
+              /\b(?:vs\.?|versus|against)\b/i,  // Note: removed @ to avoid false positives
               /\bwho\s+(?:will|would|gonna|is going to)\s+win\b/i,
             ];
             const hasMatchPattern = matchPredictionPatterns.some(p => p.test(searchMessage));
             if (hasMatchPattern) {
-              console.log('[AI-Chat-Stream] ⚡ Fallback: Detected match prediction pattern via regex');
+              console.log(`[AI-Chat-Stream] ⚡ Fallback: Detected match prediction pattern via regex (QI intent was: ${queryUnderstanding?.intent || 'null'})`);
               isPredictionIntent = true;
             }
           }
