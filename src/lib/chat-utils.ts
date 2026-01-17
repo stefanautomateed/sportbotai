@@ -545,9 +545,10 @@ export async function fetchMatchPreviewOrAnalysis(
     const awaySlug = slugify(awayTeam);
     const sportCode = getSportCode(sport);
 
-    // Try multiple dates since matches could be today, tomorrow, or day after
+    // Try multiple dates since matches could be yesterday, today, tomorrow, or day after
+    // Yesterday is included for analyses generated the day before
     const datesToTry: string[] = [];
-    for (let i = 0; i <= 2; i++) {
+    for (let i = -1; i <= 2; i++) {
         const date = new Date();
         date.setDate(date.getDate() + i);
         datesToTry.push(date.toISOString().split('T')[0]);
