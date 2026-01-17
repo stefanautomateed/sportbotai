@@ -305,8 +305,37 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         }
 
         // Add expectedScores for DB stored responses - use odds if available for better estimation
-        const dbExpectedScores = responseData.expectedScores || (() => {
-          // Try to use odds for more accurate prediction
+        // FIX: For high-scoring sports, check if cached expectedScores are unrealistic (>280 total for NBA)
+        const storedSportCheck = responseData.matchInfo?.sport || '';
+        const isHighScoringSport = storedSportCheck.includes('basketball') || storedSportCheck.includes('nba') ||
+          storedSportCheck.includes('football') || storedSportCheck.includes('nfl');
+
+        // Check if cached expectedScores are clearly wrong (total > 280 for NBA is impossible)
+        const cachedTotal = (responseData.expectedScores?.home || 0) + (responseData.expectedScores?.away || 0);
+        const cachedIsBroken = isHighScoringSport && cachedTotal > 280;
+
+        if (cachedIsBroken) {
+          console.log(`[Match-Preview] Cached expectedScores are broken (${cachedTotal} total) - using defaults`);
+        }
+
+        const dbExpectedScores = (!cachedIsBroken && responseData.expectedScores) ? responseData.expectedScores : (() => {
+          // For high-scoring sports with broken cache, use realistic defaults
+          if (isHighScoringSport) {
+            if (storedSportCheck.includes('basketball') || storedSportCheck.includes('nba')) {
+              // NBA typical: 108-118 per team
+              const favored = responseData.story?.favored || 'home';
+              if (favored === 'home') return { home: 115, away: 108 };
+              if (favored === 'away') return { home: 108, away: 115 };
+              return { home: 112, away: 112 };
+            }
+            // NFL typical: 20-28 per team
+            const favored = responseData.story?.favored || 'home';
+            if (favored === 'home') return { home: 26, away: 21 };
+            if (favored === 'away') return { home: 21, away: 26 };
+            return { home: 23, away: 23 };
+          }
+
+          // Soccer/Hockey: Try to use odds for more accurate prediction
           const odds = responseData.odds;
           if (odds?.homeOdds && odds?.awayOdds) {
             // Convert odds to implied probabilities
@@ -641,8 +670,37 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             }
           }
           // Add expectedScores for cached responses - use odds if available for better estimation
-          const cachedExpectedScores = responseData.expectedScores || (() => {
-            // Try to use odds for more accurate prediction
+          // FIX: For high-scoring sports, check if cached expectedScores are unrealistic (>280 total for NBA)
+          const cachedSportCheck = responseData.matchInfo?.sport || '';
+          const isHighScoringSportCached = cachedSportCheck.includes('basketball') || cachedSportCheck.includes('nba') ||
+            cachedSportCheck.includes('football') || cachedSportCheck.includes('nfl');
+
+          // Check if cached expectedScores are clearly wrong (total > 280 for NBA is impossible)
+          const cachedTotalCheck = (responseData.expectedScores?.home || 0) + (responseData.expectedScores?.away || 0);
+          const cachedIsBrokenCheck = isHighScoringSportCached && cachedTotalCheck > 280;
+
+          if (cachedIsBrokenCheck) {
+            console.log(`[Match-Preview] Cached expectedScores are broken (${cachedTotalCheck} total) - using defaults`);
+          }
+
+          const cachedExpectedScores = (!cachedIsBrokenCheck && responseData.expectedScores) ? responseData.expectedScores : (() => {
+            // For high-scoring sports with broken cache, use realistic defaults
+            if (isHighScoringSportCached) {
+              if (cachedSportCheck.includes('basketball') || cachedSportCheck.includes('nba')) {
+                // NBA typical: 108-118 per team
+                const favored = responseData.story?.favored || 'home';
+                if (favored === 'home') return { home: 115, away: 108 };
+                if (favored === 'away') return { home: 108, away: 115 };
+                return { home: 112, away: 112 };
+              }
+              // NFL typical: 20-28 per team
+              const favored = responseData.story?.favored || 'home';
+              if (favored === 'home') return { home: 26, away: 21 };
+              if (favored === 'away') return { home: 21, away: 26 };
+              return { home: 23, away: 23 };
+            }
+
+            // Soccer/Hockey: Try to use odds for more accurate prediction
             const odds = responseData.odds;
             if (odds?.homeOdds && odds?.awayOdds) {
               // Convert odds to implied probabilities
