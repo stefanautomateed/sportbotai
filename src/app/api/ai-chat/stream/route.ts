@@ -2081,9 +2081,26 @@ If their favorite team has a match today/tonight, lead with that information.`;
               } else if (isLastGameQuery) {
                 enhancedSearch = `${searchMessage} (as of ${dateStr}, get the most recent game data only)`;
               } else if (isInjuryQuery) {
-                // Extract player name if present for better search
-                const playerMatch = searchMessage.match(/(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:still\s+)?(?:injured|hurt|out|playing)/i);
-                const playerName = playerMatch ? playerMatch[1] : '';
+                // Extract player name from AI-extracted entities first (more reliable)
+                // Fallback to regex for cases where AI didn't run
+                let playerName = '';
+
+                // Use AI-extracted entities if available
+                const playerEntity = queryUnderstanding?.entities?.find(
+                  e => e.type === 'PLAYER' || e.type === 'UNKNOWN'
+                );
+                if (playerEntity) {
+                  playerName = playerEntity.name;
+                  console.log(`[AI-Chat-Stream] Using AI-extracted player: "${playerName}"`);
+                } else {
+                  // Fallback: Extract from message (case-insensitive)
+                  const playerMatch = searchMessage.match(/(?:is\s+)?([a-z]+(?:\s+[a-z]+)?)\s+(?:still\s+)?(?:injured|hurt|out|playing)/i);
+                  playerName = playerMatch ? playerMatch[1] : '';
+                  if (playerName) {
+                    console.log(`[AI-Chat-Stream] Using regex-extracted player: "${playerName}"`);
+                  }
+                }
+
                 enhancedSearch = `${playerName || searchMessage} current injury status ${dateStr} - is player injured, out, or available to play? Check official injury reports and team news.`;
               }
 
