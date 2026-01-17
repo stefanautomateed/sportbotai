@@ -2848,13 +2848,17 @@ If their favorite team has a match today/tonight, lead with that information.`;
           // 4. Injury queries should ALWAYS use Perplexity if available - it's the best source for real-time injury info
           const isInjuryQueryWithData = queryCategory.toUpperCase() === 'INJURY' && hasPerplexityFallback;
 
+          // 5. If we have our stored match prediction, definitely don't refuse!
+          const hasOurPrediction = !!verifiedMatchPredictionContext && verifiedMatchPredictionContext.length > 0;
+
           // Only refuse if: no data confidence AND is data-critical AND none of the exceptions apply
           const shouldRefuse = !dataConfidence.canAnswer &&
             isDataCriticalQuery &&
             !isBasicKnowledgeQuery &&
             !isGeneralTeamQuestion &&
             !hasPerplexityFallback &&
-            !isInjuryQueryWithData;
+            !isInjuryQueryWithData &&
+            !hasOurPrediction;  // NEW: Don't refuse if we have our stored prediction!
 
           if (shouldRefuse) {
             console.log(`[AI-Chat-Stream] 🛑 REFUSING to answer - data-critical query with insufficient data`);
