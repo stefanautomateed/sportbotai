@@ -111,6 +111,11 @@ export interface MatchPrediction {
   edgeValue?: number | null;
   valueBetOdds?: number | null;
   valueBetEdge?: number | null;
+  // AI Chat probability fields (added for chat display)
+  homeWin?: number | null;
+  awayWin?: number | null;
+  draw?: number | null;
+  predictedScore?: string | null;
 }
 
 export interface MatchPredictionResult {
@@ -561,6 +566,22 @@ export function formatMatchPredictionContext(result: MatchPredictionResult): str
   context += '\n';
 
   context += `📝 REASONING:\n${pred.reasoning}\n\n`;
+
+  // Win probabilities - CRITICAL: Use these exact values, don't make up different ones!
+  if (pred.homeWin || pred.awayWin) {
+    const homeTeam = pred.matchName.split(' vs ')[0] || 'Home';
+    const awayTeam = pred.matchName.split(' vs ')[1] || 'Away';
+    context += `🎯 WIN PROBABILITIES (MODEL OUTPUT - DO NOT CHANGE THESE!):\n`;
+    context += `- ${homeTeam}: ${pred.homeWin?.toFixed(1) || '?'}%\n`;
+    context += `- ${awayTeam}: ${pred.awayWin?.toFixed(1) || '?'}%\n`;
+    if (pred.draw) context += `- Draw: ${pred.draw.toFixed(1)}%\n`;
+    context += '\n';
+  }
+
+  // Predicted score
+  if (pred.predictedScore) {
+    context += `📊 PREDICTED SCORE: ${pred.predictedScore}\n\n`;
+  }
 
   // Model probability and edge if available
   if (pred.modelProbability) {
