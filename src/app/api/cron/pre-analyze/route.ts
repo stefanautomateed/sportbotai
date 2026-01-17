@@ -1856,6 +1856,9 @@ export async function GET(request: NextRequest) {
                 awayWin: pipelineProbabilitiesForUI.away,
                 draw: pipelineProbabilitiesForUI.draw || null,
                 predictedScore: `${expectedScores.home}-${expectedScores.away}`,
+                // ============ FULL RESPONSE FOR AI CHAT ============
+                // Store the complete analysis so AI chat can display same data as match page
+                fullResponse: JSON.parse(JSON.stringify(cacheResponse)),
                 // ============================================================
                 // Value bet IS the prediction now
                 valueBetSide,
@@ -1890,6 +1893,8 @@ export async function GET(request: NextRequest) {
                 awayWin: pipelineProbabilitiesForUI.away,
                 draw: pipelineProbabilitiesForUI.draw || null,
                 predictedScore: `${expectedScores.home}-${expectedScores.away}`,
+                // ============ FULL RESPONSE FOR AI CHAT ============
+                fullResponse: JSON.parse(JSON.stringify(cacheResponse)),
                 // ============================================================
                 // Also update v2 fields on re-run
                 selection: selectionText,

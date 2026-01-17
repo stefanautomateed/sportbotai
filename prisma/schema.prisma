@@ -449,6 +449,7 @@ model Prediction {
   predictedScore    String?          // Expected score like "110-105"
   headline          String?          // Match headline for display
   signals           String?          // JSON signals data for detailed analysis
+  fullResponse      Json?            // Full analysis response for AI chat (same data as match-preview page)
   
   // === NEW EDGE PERFORMANCE TRACKING FIELDS ===
   // Core probabilities (immutable snapshot at prediction time)

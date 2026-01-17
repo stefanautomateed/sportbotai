@@ -597,9 +597,52 @@ export async function fetchMatchPreviewOrAnalysis(
         }
     }
 
-    console.log(`[Chat-Utils] All date attempts failed, falling back to analyze API...`);
+    console.log(`[Chat-Utils] All date attempts failed, checking Prediction table for fullResponse...`);
 
-    // 2. FALLBACK TO ANALYZE API with real odds
+    // 2. CHECK PREDICTION TABLE FOR CACHED FULL RESPONSE (from pre-analyze)
+    try {
+        const { prisma } = await import('@/lib/prisma');
+
+        // Look for a prediction with fullResponse for this match
+        const prediction = await prisma.prediction.findFirst({
+            where: {
+                OR: [
+                    {
+                        AND: [
+                            { matchName: { contains: homeTeam.split(' ')[0], mode: 'insensitive' } },
+                            { matchName: { contains: awayTeam.split(' ')[0], mode: 'insensitive' } },
+                        ]
+                    },
+                    {
+                        AND: [
+                            { matchName: { contains: awayTeam.split(' ')[0], mode: 'insensitive' } },
+                            { matchName: { contains: homeTeam.split(' ')[0], mode: 'insensitive' } },
+                        ]
+                    }
+                ],
+                kickoff: { gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000) }, // Within last 24h or future
+            },
+            orderBy: { kickoff: 'asc' },
+        }) as any; // Cast to any to access fullResponse (Prisma types may be stale)
+
+        if (prediction?.fullResponse) {
+            console.log(`[Chat-Utils] ✅ Found Prediction.fullResponse for ${prediction.matchName}!`);
+            const fullData = prediction.fullResponse as any;
+            const context = formatMatchPreviewForChat(fullData, homeTeam, awayTeam);
+            return {
+                success: true,
+                context,
+                source: 'stored-prediction' as const,
+                odds: fullData.odds,
+            };
+        } else {
+            console.log(`[Chat-Utils] No Prediction.fullResponse found, falling back to analyze API...`);
+        }
+    } catch (predictionError) {
+        console.log(`[Chat-Utils] Prediction lookup error:`, predictionError);
+    }
+
+    // 3. FALLBACK TO ANALYZE API with real odds
     console.log(`[Chat-Utils] Falling back to analyze API for ${homeTeam} vs ${awayTeam}...`);
 
     // Fetch real odds
