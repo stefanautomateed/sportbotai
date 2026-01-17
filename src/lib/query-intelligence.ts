@@ -15,7 +15,7 @@ import crypto from 'crypto';
 // TYPES
 // ============================================
 
-export type QueryIntent = 
+export type QueryIntent =
   | 'PLAYER_STATS'      // Stats for a specific player
   | 'TEAM_STATS'        // Team-level statistics
   | 'MATCH_PREDICTION'  // Who will win / analysis of upcoming match
@@ -34,7 +34,7 @@ export type QueryIntent =
   | 'OFF_TOPIC'         // Non-sports queries (politics, general news, etc.)
   | 'UNCLEAR';          // Ambiguous - needs clarification
 
-export type TimeFrame = 
+export type TimeFrame =
   | 'LIVE'              // Right now / today
   | 'RECENT'            // Last few games / this week
   | 'SEASON'            // Current season
@@ -112,32 +112,32 @@ const MULTI_SPORT_CITIES: Record<string, { nba?: string; nfl?: string; nhl?: str
 function checkForAmbiguousCities(query: string): { isAmbiguous: boolean; cities: string[]; clarifyingQuestion?: string } {
   const lower = query.toLowerCase();
   const foundCities: string[] = [];
-  
+
   // Check for multi-sport cities
   for (const city of Object.keys(MULTI_SPORT_CITIES)) {
     if (lower.includes(city)) {
       foundCities.push(city);
     }
   }
-  
+
   if (foundCities.length === 0) {
     return { isAmbiguous: false, cities: [] };
   }
-  
+
   // Check if sport is already specified in query
   const hasSportContext = /\b(nba|nfl|nhl|mlb|basketball|football|hockey|baseball|premier league|soccer|la liga|serie a|bundesliga|ligue 1)\b/i.test(lower);
-  
+
   // Check if team name (not city) is used - that's unambiguous
   const hasTeamName = /\b(mavericks|mavs|cowboys|stars|bulls|bears|blackhawks|lakers|clippers|rams|chargers|kings|knicks|nets|giants|jets|rangers|islanders|celtics|patriots|bruins|heat|dolphins|panthers|nuggets|broncos|avalanche|suns|cardinals|coyotes|pistons|lions|red wings|76ers|sixers|eagles|flyers|wizards|commanders|capitals|timberwolves|wolves|vikings|wild|buccaneers|bucs|lightning|hawks|falcons|rockets|texans|cavaliers|cavs|browns|49ers|niners|warriors|steelers|penguins|pens|seahawks|kraken|raiders|golden knights|titans|predators|hurricanes|canes)\b/i.test(lower);
-  
+
   if (hasSportContext || hasTeamName) {
     return { isAmbiguous: false, cities: foundCities };
   }
-  
+
   // Build clarifying question
   if (foundCities.length >= 1) {
     const options: string[] = [];
-    
+
     for (const city of foundCities) {
       const teams = MULTI_SPORT_CITIES[city];
       if (teams) {
@@ -146,13 +146,13 @@ function checkForAmbiguousCities(query: string): { isAmbiguous: boolean; cities:
         if (teams.nhl) options.push(`${city.charAt(0).toUpperCase() + city.slice(1)} ${teams.nhl} (NHL)`);
       }
     }
-    
+
     const cityNames = foundCities.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(' and ');
     const clarifyingQuestion = `Which sport are you asking about? ${cityNames} ${foundCities.length > 1 ? 'have' : 'has'} teams in multiple leagues:\n\n${options.map(o => `• ${o}`).join('\n')}\n\nPlease specify the sport or use the team name (e.g., "Mavericks vs Bulls" for NBA).`;
-    
+
     return { isAmbiguous: true, cities: foundCities, clarifyingQuestion };
   }
-  
+
   return { isAmbiguous: false, cities: foundCities };
 }
 
@@ -235,7 +235,7 @@ const PLAYER_EXPANSIONS: Record<string, { fullName: string; team: string; sport:
   'maxey': { fullName: 'Tyrese Maxey', team: 'Philadelphia 76ers', sport: 'basketball', league: 'NBA' },
   'bam': { fullName: 'Bam Adebayo', team: 'Miami Heat', sport: 'basketball', league: 'NBA' },
   'westbrook': { fullName: 'Russell Westbrook', team: 'Denver Nuggets', sport: 'basketball', league: 'NBA' },
-  
+
   // =====================
   // SOCCER (40+ players)
   // =====================
@@ -289,7 +289,7 @@ const PLAYER_EXPANSIONS: Record<string, { fullName: string; team: string; sport:
   'neymar': { fullName: 'Neymar Jr', team: 'Santos', sport: 'soccer', league: 'Brasileirão' },
   'de bruyne': { fullName: 'Kevin De Bruyne', team: 'Manchester City', sport: 'soccer', league: 'Premier League' },
   'kdb': { fullName: 'Kevin De Bruyne', team: 'Manchester City', sport: 'soccer', league: 'Premier League' },
-  
+
   // =====================
   // NFL (20+ players)
   // =====================
@@ -313,7 +313,7 @@ const PLAYER_EXPANSIONS: Record<string, { fullName: string; team: string; sport:
   'parsons': { fullName: 'Micah Parsons', team: 'Dallas Cowboys', sport: 'american_football', league: 'NFL' },
   'stroud': { fullName: 'C.J. Stroud', team: 'Houston Texans', sport: 'american_football', league: 'NFL' },
   'purdy': { fullName: 'Brock Purdy', team: 'San Francisco 49ers', sport: 'american_football', league: 'NFL' },
-  
+
   // =====================
   // NHL (15+ players)
   // =====================
@@ -332,7 +332,7 @@ const PLAYER_EXPANSIONS: Record<string, { fullName: string; team: string; sport:
   'panarin': { fullName: 'Artemi Panarin', team: 'New York Rangers', sport: 'hockey', league: 'NHL' },
   'hughes': { fullName: 'Jack Hughes', team: 'New Jersey Devils', sport: 'hockey', league: 'NHL' },
   'bedard': { fullName: 'Connor Bedard', team: 'Chicago Blackhawks', sport: 'hockey', league: 'NHL' },
-  
+
   // =====================
   // EUROLEAGUE (10+ players)
   // =====================
@@ -352,12 +352,12 @@ const PLAYER_EXPANSIONS: Record<string, { fullName: string; team: string; sport:
  * Expand a short query with additional context
  * "LeBron stats" → "LeBron James Los Angeles Lakers NBA stats 2025-26 season"
  */
-export function expandQuery(query: string): { 
-  expandedQuery: string; 
+export function expandQuery(query: string): {
+  expandedQuery: string;
   playerContext?: { fullName: string; team: string; sport: string; league: string };
 } {
   const lower = query.toLowerCase();
-  
+
   // Look for player shortnames
   for (const [shortName, context] of Object.entries(PLAYER_EXPANSIONS)) {
     if (lower.includes(shortName)) {
@@ -365,28 +365,28 @@ export function expandQuery(query: string): {
       if (lower.includes(context.fullName.toLowerCase())) {
         continue;
       }
-      
+
       // Build expanded query
       let expanded = query.replace(
         new RegExp(`\\b${shortName}\\b`, 'gi'),
         context.fullName
       );
-      
+
       // Add team/league context if not present
       if (!lower.includes(context.team.toLowerCase()) && !lower.includes(context.league.toLowerCase())) {
         expanded += ` ${context.team} ${context.league}`;
       }
-      
+
       // Add season context if asking about stats
       if (/\b(stats|average|ppg|scoring|points|goals|assists)\b/i.test(lower)) {
         expanded += ' 2025-26 season';
       }
-      
+
       console.log(`[QueryIntelligence] Expanded: "${query}" → "${expanded}"`);
       return { expandedQuery: expanded.trim(), playerContext: context };
     }
   }
-  
+
   return { expandedQuery: query };
 }
 
@@ -396,7 +396,27 @@ export function expandQuery(query: string): {
 function extractEntities(query: string): ExtractedEntity[] {
   const entities: ExtractedEntity[] = [];
   const lowerQuery = query.toLowerCase();
-  
+
+  // FIRST: Check for known player shortnames from PLAYER_EXPANSIONS
+  // This catches single-word names like "jokic", "lebron", "messi"
+  for (const [shortName, context] of Object.entries(PLAYER_EXPANSIONS)) {
+    // Use word boundary to avoid partial matches
+    const pattern = new RegExp(`\\b${shortName}\\b`, 'i');
+    if (pattern.test(lowerQuery)) {
+      // Don't add if already found
+      if (!entities.some(e => e.name.toLowerCase() === context.fullName.toLowerCase())) {
+        entities.push({
+          type: 'PLAYER',
+          name: context.fullName,  // Use the full name
+          confidence: 0.95,  // High confidence - exact dictionary match
+          sport: context.sport,
+          league: context.league,
+        });
+        console.log(`[QueryIntelligence] Found player from expansion: "${shortName}" → "${context.fullName}"`);
+      }
+    }
+  }
+
   // Check for team matches by sport
   for (const [sport, pattern] of Object.entries(TEAM_PATTERNS)) {
     const match = lowerQuery.match(pattern);
@@ -409,7 +429,7 @@ function extractEntities(query: string): ExtractedEntity[] {
       });
     }
   }
-  
+
   // Check for "X vs Y" pattern (match)
   const vsMatch = query.match(/([A-Z][a-zA-Z\s]+?)\s+(?:vs?\.?|versus|@)\s+([A-Z][a-zA-Z\s]+)/i);
   if (vsMatch) {
@@ -419,7 +439,7 @@ function extractEntities(query: string): ExtractedEntity[] {
       confidence: 0.95,
     });
   }
-  
+
   // Check for player name patterns (Capitalized First Last)
   const namePattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/g;
   let nameMatch;
@@ -427,6 +447,7 @@ function extractEntities(query: string): ExtractedEntity[] {
     const name = nameMatch[1];
     // Skip if it's a known team name
     const isTeam = Object.values(TEAM_PATTERNS).some(p => p.test(name));
+    // Skip if already added from PLAYER_EXPANSIONS
     if (!isTeam && !entities.some(e => e.name.toLowerCase() === name.toLowerCase())) {
       // Check if context suggests it's a player
       const hasPlayerIndicator = PLAYER_INDICATORS.test(query);
@@ -437,7 +458,7 @@ function extractEntities(query: string): ExtractedEntity[] {
       });
     }
   }
-  
+
   return entities;
 }
 
@@ -446,14 +467,14 @@ function extractEntities(query: string): ExtractedEntity[] {
  */
 function detectSport(query: string): string | undefined {
   const lower = query.toLowerCase();
-  
+
   if (/\b(nba|basketball|lakers|celtics|warriors|lebron|curry|giannis|jokic|doncic)\b/i.test(lower)) return 'basketball';
   if (/\b(nfl|football|quarterback|touchdown|chiefs|eagles|superbowl|mahomes)\b/i.test(lower)) return 'american_football';
   if (/\b(nhl|hockey|stanley cup|maple leafs|bruins|oilers|mcdavid)\b/i.test(lower)) return 'hockey';
   if (/\b(premier league|la liga|serie a|bundesliga|champions league|soccer|football|goal|striker|midfielder)\b/i.test(lower)) return 'soccer';
   if (/\b(euroleague|eurobasket)\b/i.test(lower)) return 'euroleague';
   if (/\b(mlb|baseball|yankees|dodgers|home run)\b/i.test(lower)) return 'baseball';
-  
+
   return undefined;
 }
 
@@ -462,14 +483,14 @@ function detectSport(query: string): string | undefined {
  */
 function detectTimeFrame(query: string): TimeFrame {
   const lower = query.toLowerCase();
-  
+
   if (/\b(live|right now|currently|at the moment|today|tonight)\b/.test(lower)) return 'LIVE';
   if (/\b(last \d+|recent|lately|this week|past (few|couple))\b/.test(lower)) return 'RECENT';
   if (/\b(this season|season average|season stats|2025-26|2025|current season)\b/.test(lower)) return 'SEASON';
   if (/\b(career|all-?time|lifetime|ever)\b/.test(lower)) return 'CAREER';
   if (/\b(last (season|year)|20\d{2}|historical|back in)\b/.test(lower)) return 'HISTORICAL';
   if (/\b(next|upcoming|tomorrow|will|going to|prediction|who wins)\b/.test(lower)) return 'UPCOMING';
-  
+
   return 'SEASON'; // Default to current season
 }
 
@@ -483,38 +504,38 @@ function detectTimeFrame(query: string): TimeFrame {
  */
 function isShortMatchQuery(query: string): { isMatch: boolean; teams: string[] } {
   let lower = query.toLowerCase().trim();
-  
+
   // Strip command prefixes that indicate match prediction intent
   // "Analyze Sevilla vs Celta" -> "Sevilla vs Celta"
   lower = lower.replace(/^(analy[sz]e|preview|breakdown|assess|predict|prediction for)\s+/i, '');
-  
+
   // Pattern: "Team1 Team2" or "Team1 vs Team2" or "Team1 - Team2"
   // Very short queries (1-5 words) with 2 team-like words
   const words = lower.split(/\s+/);
-  
+
   // If it's short (1-6 words) and contains vs/versus/-, it's definitely a match query
   if (words.length <= 6 && /\b(vs\.?|versus|v\.?|at|@)\b|[-–—]/.test(lower)) {
     // Extract team names (everything before and after the separator)
     const parts = lower.split(/\s*(?:vs\.?|versus|v\.?|at|@|[-–—])\s*/i);
     if (parts.length === 2) {
-      return { 
-        isMatch: true, 
-        teams: parts.map(t => t.trim()).filter(t => t.length > 0) 
+      return {
+        isMatch: true,
+        teams: parts.map(t => t.trim()).filter(t => t.length > 0)
       };
     }
   }
-  
+
   // Very short query (2-4 words) with no other keywords - likely just team names
   if (words.length >= 2 && words.length <= 4) {
     // Check if most words look like team names (capitalized, known patterns)
     const noQuestionWords = !/(who|what|when|where|why|how|will|can|should|is|are|do|does)/i.test(lower);
     const noStatsWords = !/(stats|points|goals|assists|average|score|result|form)/i.test(lower);
-    
+
     if (noQuestionWords && noStatsWords) {
       // Try to find 2 team names
       const allTeamPatterns = Object.values(TEAM_PATTERNS);
       const foundTeams: string[] = [];
-      
+
       for (const pattern of allTeamPatterns) {
         // Use exec in a loop to find ALL occurrences, not just the first
         const globalPattern = new RegExp(pattern.source, 'gi');
@@ -525,7 +546,7 @@ function isShortMatchQuery(query: string): { isMatch: boolean; teams: string[] }
           }
         }
       }
-      
+
       // Also check Serie A teams (not in main patterns yet)
       const serieATeams = /\b(roma|as roma|lazio|napoli|juventus|juve|inter|ac milan|milan|atalanta|fiorentina|torino|bologna|sassuolo|udinese|cagliari|verona|monza|empoli|lecce|genoa|parma|como|venezia)\b/gi;
       let serieAMatch;
@@ -534,13 +555,13 @@ function isShortMatchQuery(query: string): { isMatch: boolean; teams: string[] }
           foundTeams.push(serieAMatch[0]);
         }
       }
-      
+
       if (foundTeams.length >= 2) {
         return { isMatch: true, teams: foundTeams.slice(0, 2) };
       }
     }
   }
-  
+
   return { isMatch: false, teams: [] };
 }
 
@@ -550,11 +571,11 @@ function isShortMatchQuery(query: string): { isMatch: boolean; teams: string[] }
  */
 function inferIntentFromContext(query: string, entities: ExtractedEntity[]): QueryIntent | null {
   const lower = query.toLowerCase();
-  
+
   // Count entity types
   const teamCount = entities.filter(e => e.type === 'TEAM').length;
   const playerCount = entities.filter(e => e.type === 'PLAYER').length;
-  
+
   // Two teams mentioned → likely asking about a match (prediction, h2h, or result)
   if (teamCount >= 2) {
     // Check for past tense → result
@@ -564,7 +585,7 @@ function inferIntentFromContext(query: string, entities: ExtractedEntity[]): Que
     // Default: upcoming match prediction
     return 'MATCH_PREDICTION';
   }
-  
+
   // One team + future indicators → prediction or schedule
   if (teamCount === 1) {
     if (/\b(next|when|schedule|plays?|playing)\b/.test(lower)) {
@@ -575,12 +596,12 @@ function inferIntentFromContext(query: string, entities: ExtractedEntity[]): Que
       return 'FORM_CHECK';
     }
   }
-  
+
   // Player mentioned → stats
   if (playerCount >= 1) {
     return 'PLAYER_STATS';
   }
-  
+
   return null;
 }
 
@@ -798,14 +819,14 @@ const INTENT_PATTERNS: IntentPattern[] = [
  * Classify intent using pattern matching
  * Returns intent, confidence, alternatives, and matched pattern (for learning)
  */
-function classifyIntentByPatterns(query: string): { 
-  intent: QueryIntent; 
-  confidence: number; 
+function classifyIntentByPatterns(query: string): {
+  intent: QueryIntent;
+  confidence: number;
   alternatives: QueryIntent[];
   matchedPattern?: string;
 } {
   const matches: { intent: QueryIntent; priority: number; pattern: string }[] = [];
-  
+
   for (const { intent, patterns, priority } of INTENT_PATTERNS) {
     for (const pattern of patterns) {
       if (pattern.test(query)) {
@@ -814,17 +835,17 @@ function classifyIntentByPatterns(query: string): {
       }
     }
   }
-  
+
   if (matches.length === 0) {
     return { intent: 'UNCLEAR', confidence: 0.3, alternatives: [] };
   }
-  
+
   // Sort by priority
   matches.sort((a, b) => b.priority - a.priority);
-  
+
   const topMatch = matches[0];
   const alternatives = matches.slice(1, 3).map(m => m.intent);
-  
+
   // Confidence based on priority gap
   let confidence = 0.7;
   if (matches.length > 1) {
@@ -833,10 +854,10 @@ function classifyIntentByPatterns(query: string): {
   } else {
     confidence = 0.85; // Single clear match
   }
-  
-  return { 
-    intent: topMatch.intent, 
-    confidence, 
+
+  return {
+    intent: topMatch.intent,
+    confidence,
     alternatives,
     matchedPattern: topMatch.pattern,
   };
@@ -898,9 +919,9 @@ async function classifyWithLLM(query: string): Promise<{
       temperature: 0,
       response_format: { type: 'json_object' },
     });
-    
+
     const result = JSON.parse(response.choices[0]?.message?.content || '{}');
-    
+
     return {
       intent: result.intent as QueryIntent || 'UNCLEAR',
       confidence: result.confidence || 0.5,
@@ -941,10 +962,10 @@ async function classifyWithLLM(query: string): Promise<{
  */
 export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Promise<QueryUnderstanding> {
   const startTime = Date.now();
-  
+
   // A/B test: confidence threshold for LLM fallback
   const LLM_CONFIDENCE_THRESHOLD = abVariant === 'B' ? 0.7 : 0.6;
-  
+
   // Check cache first (include variant in cache key for A/B test isolation)
   const variantSuffix = abVariant ? `:${abVariant}` : '';
   const cacheKey = `query-intel:${crypto.createHash('md5').update(query.toLowerCase()).digest('hex').slice(0, 16)}${variantSuffix}`;
@@ -953,17 +974,17 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
     console.log(`[QueryIntelligence] Cache hit (${Date.now() - startTime}ms)`);
     return cached;
   }
-  
+
   // Extract entities
   const entities = extractEntities(query);
   const sport = detectSport(query);
   let timeFrame = detectTimeFrame(query);
-  
+
   // SMART FEATURE 1: Check for short match query first
   const shortMatchCheck = isShortMatchQuery(query);
   if (shortMatchCheck.isMatch) {
     console.log(`[QueryIntelligence] Short match query detected: ${shortMatchCheck.teams.join(' vs ')}`);
-    
+
     // Create team entities if not already extracted
     const teamEntities: ExtractedEntity[] = shortMatchCheck.teams.map(team => ({
       type: 'TEAM' as EntityType,
@@ -971,19 +992,19 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
       confidence: 0.9,
       sport: sport,
     }));
-    
+
     // Merge with existing entities (avoid duplicates)
     for (const te of teamEntities) {
       if (!entities.some(e => e.name.toLowerCase() === te.name.toLowerCase())) {
         entities.push(te);
       }
     }
-    
+
     // CHECK FOR AMBIGUOUS CITIES (Dallas, Chicago, etc. have multiple teams)
     const ambiguityCheck = checkForAmbiguousCities(query);
     if (ambiguityCheck.isAmbiguous) {
       console.log(`[QueryIntelligence] ⚠️ Ambiguous cities detected: ${ambiguityCheck.cities.join(', ')}`);
-      
+
       const understanding: QueryUnderstanding = {
         originalQuery: query,
         intent: 'MATCH_PREDICTION',
@@ -1001,12 +1022,12 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
         patternMatched: 'SHORT_MATCH_QUERY_AMBIGUOUS',
         usedLLM: false,
       };
-      
+
       // Don't cache ambiguous queries
       console.log(`[QueryIntelligence] ✅ Needs clarification (ambiguous cities) in ${Date.now() - startTime}ms`);
       return understanding;
     }
-    
+
     // This is definitely a match prediction
     const understanding: QueryUnderstanding = {
       originalQuery: query,
@@ -1023,22 +1044,22 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
       patternMatched: 'SHORT_MATCH_QUERY',
       usedLLM: false,
     };
-    
+
     await cacheSet(cacheKey, understanding, 3600);
     console.log(`[QueryIntelligence] ✅ Classified as MATCH_PREDICTION (short query) in ${Date.now() - startTime}ms`);
     return understanding;
   }
-  
+
   // Try pattern-based classification first (fast)
   const patternResult = classifyIntentByPatterns(query);
-  
+
   let intent = patternResult.intent;
   let intentConfidence = patternResult.confidence;
   const alternativeIntents = patternResult.alternatives;
   let isAmbiguous = false;
   let patternMatched: string | undefined = patternResult.matchedPattern;
   let usedLLM = false;
-  
+
   // SMART FEATURE 2: If patterns didn't match well, try context inference
   if (intent === 'UNCLEAR' || intentConfidence < LLM_CONFIDENCE_THRESHOLD) {
     const inferredIntent = inferIntentFromContext(query, entities);
@@ -1047,35 +1068,35 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
       intent = inferredIntent;
       intentConfidence = 0.75; // Context inference is fairly reliable
       patternMatched = 'CONTEXT_INFERENCE';
-      
+
       // Adjust timeframe for match predictions
       if (inferredIntent === 'MATCH_PREDICTION') {
         timeFrame = 'UPCOMING';
       }
     }
   }
-  
+
   // If still low confidence or UNCLEAR, use LLM
   // A/B TEST: Variant B uses LLM more aggressively (threshold 0.7 vs 0.6)
   if (intentConfidence < LLM_CONFIDENCE_THRESHOLD || intent === 'UNCLEAR') {
     console.log(`[QueryIntelligence] Low confidence (${intentConfidence} < ${LLM_CONFIDENCE_THRESHOLD}), using LLM... (variant: ${abVariant || 'default'})`);
     usedLLM = true;
     const llmResult = await classifyWithLLM(query);
-    
+
     intent = llmResult.intent;
     intentConfidence = llmResult.confidence;
     patternMatched = undefined; // LLM classified, no pattern
-    
+
     // Merge LLM entities with pattern entities
     for (const llmEntity of llmResult.entities) {
       if (!entities.some(e => e.name.toLowerCase() === llmEntity.name.toLowerCase())) {
         entities.push(llmEntity);
       }
     }
-    
+
     isAmbiguous = intentConfidence < 0.6;
   }
-  
+
   // Clean up entities - remove garbage like "Will Roma" which should just be "Roma"
   const cleanedEntities = entities.map(e => {
     // Remove common question words from entity names
@@ -1085,7 +1106,7 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
       .trim();
     return { ...e, name: cleanName };
   }).filter(e => e.name.length >= 2); // Remove empty/tiny entities
-  
+
   // Deduplicate after cleanup
   const deduplicatedEntities: ExtractedEntity[] = [];
   for (const entity of cleanedEntities) {
@@ -1093,12 +1114,12 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
       deduplicatedEntities.push(entity);
     }
   }
-  
+
   // Determine data needs based on intent
   const needsRealTimeData = ['INJURY_NEWS', 'TRANSFER_NEWS', 'MATCH_RESULT', 'LINEUP'].includes(intent) || timeFrame === 'LIVE';
   const needsVerifiedStats = ['PLAYER_STATS', 'TEAM_STATS', 'STANDINGS', 'FORM_CHECK', 'HEAD_TO_HEAD'].includes(intent);
   const needsOurPrediction = intent === 'OUR_ANALYSIS' || intent === 'MATCH_PREDICTION';
-  
+
   // Suggest data sources
   const suggestedDataSources: string[] = [];
   if (needsVerifiedStats) suggestedDataSources.push('verified-stats', 'data-layer');
@@ -1106,11 +1127,11 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
   if (intent === 'STANDINGS') suggestedDataSources.push('standings-api');
   if (intent === 'LINEUP') suggestedDataSources.push('lineup-api');
   if (needsRealTimeData && !needsVerifiedStats) suggestedDataSources.push('perplexity');
-  
+
   // CHECK FOR AMBIGUOUS CITIES for match prediction queries without sport context
   let needsClarification = false;
   let cityAmbiguityQuestion: string | undefined;
-  
+
   if ((intent === 'MATCH_PREDICTION' || intent === 'BETTING_ANALYSIS') && !sport) {
     const ambiguityCheck = checkForAmbiguousCities(query);
     if (ambiguityCheck.isAmbiguous) {
@@ -1120,7 +1141,7 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
       isAmbiguous = true;
     }
   }
-  
+
   const understanding: QueryUnderstanding = {
     originalQuery: query,
     intent,
@@ -1140,10 +1161,10 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
     patternMatched,
     usedLLM,
   };
-  
+
   // Cache for 5 minutes
   await cacheSet(cacheKey, understanding, 300);
-  
+
   console.log(`[QueryIntelligence] Understood in ${Date.now() - startTime}ms:`, {
     intent,
     confidence: intentConfidence,
@@ -1152,7 +1173,7 @@ export async function understandQuery(query: string, abVariant?: 'A' | 'B'): Pro
     dataNeeds: suggestedDataSources,
     usedLLM,
   });
-  
+
   return understanding;
 }
 
@@ -1167,26 +1188,26 @@ function generateClarifyingQuestion(query: string, intent: QueryIntent, alternat
     'INJURY_NEWS': 'injury/availability status',
     'FORM_CHECK': 'recent form',
   };
-  
+
   if (alternatives.length > 0) {
     const options = [intent, ...alternatives]
       .map(i => intentQuestions[i])
       .filter(Boolean)
       .slice(0, 3);
-    
+
     if (options.length > 1) {
       return `Are you asking about ${options.slice(0, -1).join(', ')} or ${options[options.length - 1]}?`;
     }
   }
-  
+
   return 'Could you be more specific about what you\'d like to know?';
 }
 
 /**
  * Legacy QueryCategory type for backward compatibility
  */
-export type QueryCategory = 'PLAYER' | 'ROSTER' | 'FIXTURE' | 'RESULT' | 'STANDINGS' | 'STATS' | 
-  'INJURY' | 'TRANSFER' | 'MANAGER' | 'ODDS' | 'COMPARISON' | 'HISTORY' | 'BROADCAST' | 
+export type QueryCategory = 'PLAYER' | 'ROSTER' | 'FIXTURE' | 'RESULT' | 'STANDINGS' | 'STATS' |
+  'INJURY' | 'TRANSFER' | 'MANAGER' | 'ODDS' | 'COMPARISON' | 'HISTORY' | 'BROADCAST' |
   'VENUE' | 'PLAYER_PROP' | 'BETTING_ADVICE' | 'OUR_PREDICTION' | 'GENERAL';
 
 /**
@@ -1212,6 +1233,6 @@ export function mapIntentToCategory(intent: QueryIntent): QueryCategory {
     'OFF_TOPIC': 'GENERAL',  // Will be handled separately before reaching here
     'UNCLEAR': 'GENERAL',
   };
-  
+
   return mapping[intent] || 'GENERAL';
 }
