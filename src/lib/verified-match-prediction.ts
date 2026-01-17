@@ -436,6 +436,9 @@ export interface PastMatchResult {
 /**
  * Check if a match has already been played (kickoff is in the past)
  * Returns match info if found so chat can inform users appropriately
+ * 
+ * IMPORTANT: If there's an UPCOMING match between the same teams,
+ * we assume user is asking about that, not the past game.
  */
 export async function checkIfMatchIsInPast(message: string): Promise<PastMatchResult> {
   const teams = extractTeamNamesFromMessage(message);
@@ -447,14 +450,41 @@ export async function checkIfMatchIsInPast(message: string): Promise<PastMatchRe
   console.log(`[Match-Prediction] Checking for past match: ${teams.team1} ${teams.team2 ? 'vs ' + teams.team2 : ''}`);
 
   const now = new Date();
-  // Look for matches in the past 7 days
+  const next48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
   const past7days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   try {
     const searchTerms = [teams.team1];
     if (teams.team2) searchTerms.push(teams.team2);
 
-    // Search for predictions that have already kicked off
+    // FIRST: Check if there's an UPCOMING match between these teams
+    // If so, user is likely asking about that, not the past game
+    const upcomingPredictions = await prisma.prediction.findMany({
+      where: {
+        AND: [
+          // Match is upcoming (within 48h)
+          {
+            kickoff: {
+              gte: now,
+              lte: next48h,
+            },
+          },
+          // Match name must contain ALL specified teams
+          ...searchTerms.map(term => ({
+            matchName: { contains: term, mode: 'insensitive' as const }
+          })),
+        ],
+      },
+      take: 1,
+    });
+
+    if (upcomingPredictions.length > 0) {
+      // There's an upcoming match - user is asking about that, not past game
+      console.log(`[Match-Prediction] ✅ Found UPCOMING match, ignoring past matches`);
+      return { isPast: false };
+    }
+
+    // NO upcoming match - now check for past matches
     const pastPredictions = await prisma.prediction.findMany({
       where: {
         AND: [
