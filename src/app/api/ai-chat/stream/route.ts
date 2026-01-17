@@ -62,6 +62,9 @@ import {
   formatConversationHistory,
   extractEntitiesForMemory
 } from '@/lib/chat-memory';
+// Chat Tools - function calling for data retrieval
+import { CHAT_TOOLS, executeTool, formatToolResults, type ToolResult } from '@/lib/chat-tools';
+import * as toolDeps from '@/lib/chat-tool-deps';
 // Shared Chat Utilities (consolidated)
 import {
   withTimeout,
@@ -2920,7 +2923,87 @@ Rather than make something up, I'll be honest - I can't find reliable stats for 
 
           // Add user message with context
           let userContent = message;
-          const hasContext = perplexityContext || dataLayerContext || verifiedPlayerStatsContext || ourPredictionContext || verifiedStandingsContext || verifiedTeamMatchStatsContext || verifiedLeagueLeadersContext || verifiedLineupContext || verifiedCoachContext || verifiedMatchEventsContext || verifiedMatchPredictionContext;
+
+          // ============================================
+          // TOOL EXECUTION: Intelligent data retrieval
+          // Execute tools based on query intent and entities
+          // ============================================
+          const toolResults: ToolResult[] = [];
+          const toolDepsBundle = {
+            searchNews: toolDeps.searchNews,
+            getPlayerStats: toolDeps.getPlayerStats,
+            getMatchPrediction: toolDeps.getMatchPrediction,
+            getTeamForm: toolDeps.getTeamForm,
+            getStandings: toolDeps.getStandings,
+            getInjuryStatus: toolDeps.getInjuryStatus,
+          };
+
+          // Decide which tools to call based on intent
+          if (queryUnderstanding && !verifiedPlayerStatsContext && !verifiedMatchPredictionContext) {
+            const intent = queryUnderstanding.intent;
+            const entities = queryUnderstanding.entities || [];
+
+            // For injury queries without verified data
+            if (intent === 'INJURY_NEWS' && entities.length > 0) {
+              const playerEntity = entities.find(e => e.type === 'PLAYER');
+              if (playerEntity) {
+                console.log(`[AI-Chat-Stream] 🔧 Tool: get_player_injury_status for ${playerEntity.name}`);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `🔍 Checking injury status...` })}\n\n`));
+                const result = await executeTool('get_player_injury_status', {
+                  playerName: playerEntity.name,
+                  team: undefined,
+                  sport: playerEntity.sport || 'basketball',
+                }, toolDepsBundle);
+                toolResults.push(result);
+              }
+            }
+
+            // For player stats queries without verified data
+            if (intent === 'PLAYER_STATS' && entities.length > 0) {
+              const playerEntity = entities.find(e => e.type === 'PLAYER');
+              if (playerEntity) {
+                console.log(`[AI-Chat-Stream] 🔧 Tool: get_player_stats for ${playerEntity.name}`);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `📊 Fetching player stats...` })}\n\n`));
+                const result = await executeTool('get_player_stats', {
+                  playerName: playerEntity.name,
+                  sport: playerEntity.sport || queryUnderstanding.sport || 'basketball',
+                }, toolDepsBundle);
+                toolResults.push(result);
+              }
+            }
+
+            // For match prediction queries without stored prediction
+            if ((intent === 'MATCH_PREDICTION' || intent === 'BETTING_ANALYSIS') && !verifiedMatchPredictionContext) {
+              const teamEntities = entities.filter(e => e.type === 'TEAM');
+              if (teamEntities.length >= 2) {
+                console.log(`[AI-Chat-Stream] 🔧 Tool: get_match_prediction for ${teamEntities[0].name} vs ${teamEntities[1].name}`);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: `🎯 Fetching match prediction...` })}\n\n`));
+                const result = await executeTool('get_match_prediction', {
+                  team1: teamEntities[0].name,
+                  team2: teamEntities[1].name,
+                  sport: queryUnderstanding.sport || 'soccer',
+                }, toolDepsBundle);
+                toolResults.push(result);
+              }
+            }
+
+            // For standings queries without verified data
+            if (intent === 'STANDINGS' && !verifiedStandingsContext) {
+              const sport = queryUnderstanding.sport || 'basketball';
+              const league = sport === 'basketball' ? 'NBA' : sport === 'soccer' ? 'Premier League' : 'NFL';
+              console.log(`[AI-Chat-Stream] 🔧 Tool: get_standings for ${league}`);
+              const result = await executeTool('get_standings', { league }, toolDepsBundle);
+              toolResults.push(result);
+            }
+          }
+
+          // Format tool results for context
+          const toolResultsContext = formatToolResults(toolResults);
+          if (toolResultsContext) {
+            console.log(`[AI-Chat-Stream] 🔧 Executed ${toolResults.length} tool(s) successfully`);
+          }
+
+          const hasContext = perplexityContext || dataLayerContext || verifiedPlayerStatsContext || ourPredictionContext || verifiedStandingsContext || verifiedTeamMatchStatsContext || verifiedLeagueLeadersContext || verifiedLineupContext || verifiedCoachContext || verifiedMatchEventsContext || verifiedMatchPredictionContext || toolResultsContext;
 
           if (hasContext) {
             // For match prediction queries (who will win, prediction for match)
@@ -3110,6 +3193,10 @@ STRICT RULES - NEVER HALLUCINATE:
 The user deserves to know when we have verified analysis vs when we're just sharing general info.`;
               } else {
                 userContent = `USER QUESTION: ${message}`;
+
+                if (toolResultsContext) {
+                  userContent += `\n\n${toolResultsContext}`;
+                }
 
                 if (dataLayerContext) {
                   userContent += `\n\nSTRUCTURED STATS (verified data):\n${dataLayerContext}`;
