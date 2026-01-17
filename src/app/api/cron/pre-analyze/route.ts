@@ -165,6 +165,127 @@ function getLeagueHint(league: string): string {
   return LEAGUE_HINTS[league] || '';
 }
 
+// ============================================
+// MATCH IMPORTANCE SCORING FOR BLOG GENERATION
+// ============================================
+// Not all matches deserve a blog post. Score based on importance.
+// Generate blog only if score >= 3
+
+const TOP_LEAGUES = [
+  'Premier League',
+  'La Liga',
+  'Serie A',
+  'Bundesliga',
+  'Ligue 1',
+  'Champions League',
+  'Europa League',
+  'NBA',
+  'NFL',
+  'NHL',
+];
+
+const BIG_TEAMS = [
+  // England
+  'Manchester City', 'Man City', 'Arsenal', 'Liverpool', 'Manchester United', 'Man United',
+  'Chelsea', 'Tottenham', 'Newcastle',
+  // Spain
+  'Real Madrid', 'Barcelona', 'Atletico Madrid', 'Athletic Bilbao',
+  // Italy
+  'Juventus', 'Inter Milan', 'AC Milan', 'Napoli', 'Roma',
+  // Germany
+  'Bayern Munich', 'Borussia Dortmund', 'RB Leipzig', 'Bayer Leverkusen',
+  // France
+  'Paris Saint-Germain', 'PSG', 'Monaco', 'Marseille', 'Lyon',
+  // Portugal
+  'Porto', 'Benfica', 'Sporting CP',
+  // NBA - Top teams
+  'Lakers', 'Celtics', 'Warriors', 'Heat', 'Bucks', 'Nuggets', 'Suns', '76ers',
+  // NFL - Popular teams
+  'Chiefs', 'Cowboys', 'Eagles', 'Patriots', '49ers', 'Bills', 'Ravens',
+  // NHL - Big markets
+  'Rangers', 'Bruins', 'Maple Leafs', 'Canadiens', 'Oilers', 'Lightning',
+];
+
+// Known derbies/rivalries (partial team name matching)
+const DERBY_PAIRS = [
+  ['Manchester United', 'Manchester City'], // Manchester Derby
+  ['Liverpool', 'Manchester United'], // Historic rivalry
+  ['Arsenal', 'Tottenham'], // North London Derby
+  ['Real Madrid', 'Barcelona'], // El Clasico
+  ['Real Madrid', 'Atletico Madrid'], // Madrid Derby
+  ['Inter', 'AC Milan'], // Milan Derby
+  ['Juventus', 'Inter'], // Derby d'Italia
+  ['Bayern', 'Dortmund'], // Der Klassiker
+  ['PSG', 'Marseille'], // Le Classique
+  ['Celtic', 'Rangers'], // Old Firm
+  ['Porto', 'Benfica'], // O Clássico
+  ['Lakers', 'Celtics'], // NBA Classic
+  ['Cowboys', 'Eagles'], // NFC East Rivalry
+  ['Chiefs', 'Raiders'], // AFC West Rivalry
+];
+
+/**
+ * Calculate match importance score for blog generation
+ * Generate blog only if score >= 3
+ */
+function shouldGenerateBlog(
+  homeTeam: string,
+  awayTeam: string,
+  league: string,
+  valueEdge: number // as percentage, e.g. 5.0 for 5%
+): { generate: boolean; score: number; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+
+  // 1. Top League (+3 points)
+  if (TOP_LEAGUES.some(l => league.toLowerCase().includes(l.toLowerCase()))) {
+    score += 3;
+    reasons.push(`Top league: ${league}`);
+  }
+
+  // 2. Big Team Involved (+2 points per team, max +4)
+  const homeBig = BIG_TEAMS.some(t =>
+    homeTeam.toLowerCase().includes(t.toLowerCase()) ||
+    t.toLowerCase().includes(homeTeam.toLowerCase())
+  );
+  const awayBig = BIG_TEAMS.some(t =>
+    awayTeam.toLowerCase().includes(t.toLowerCase()) ||
+    t.toLowerCase().includes(awayTeam.toLowerCase())
+  );
+  if (homeBig) {
+    score += 2;
+    reasons.push(`Big team: ${homeTeam}`);
+  }
+  if (awayBig) {
+    score += 2;
+    reasons.push(`Big team: ${awayTeam}`);
+  }
+
+  // 3. Value Edge (+2 points if >= 5%)
+  if (valueEdge >= 5) {
+    score += 2;
+    reasons.push(`Value edge: ${valueEdge.toFixed(1)}%`);
+  }
+
+  // 4. Derby/Rivalry (+3 points)
+  const isDerby = DERBY_PAIRS.some(pair => {
+    const [team1, team2] = pair;
+    const homeMatch = homeTeam.toLowerCase().includes(team1.toLowerCase()) ||
+      homeTeam.toLowerCase().includes(team2.toLowerCase());
+    const awayMatch = awayTeam.toLowerCase().includes(team1.toLowerCase()) ||
+      awayTeam.toLowerCase().includes(team2.toLowerCase());
+    return homeMatch && awayMatch;
+  });
+  if (isDerby) {
+    score += 3;
+    reasons.push('Derby/Rivalry match');
+  }
+
+  const generate = score >= 3;
+
+  return { generate, score, reasons };
+}
+
 /**
  * Detect back-to-back games for NBA/NHL
  * Returns rest context for AI prompt
@@ -1558,29 +1679,51 @@ export async function GET(request: NextRequest) {
           }
 
           // ============================================
-          // GENERATE BLOG POST FOR ALL MATCHES (not just value bets)
+          // GENERATE BLOG POST BASED ON MATCH IMPORTANCE
           // ============================================
-          // Moved outside value bet condition to increase content coverage
-          // This is async/fire-and-forget to not slow down cron
-          generateMatchPreview({
-            matchId: event.id,
-            homeTeam: event.home_team,
-            awayTeam: event.away_team,
-            sport: sport.title,
-            sportKey: sport.key,
-            league: sport.league,
-            commenceTime: event.commence_time,
-            homeTeamLogo: undefined,
-            awayTeamLogo: undefined,
-            leagueLogo: undefined,
-            odds: consensus,
-          }).then(result => {
-            if (result.success) {
-              console.log(`[Pre-Analyze] Blog created: ${result.slug}`);
-            }
-          }).catch(err => {
-            console.log(`[Pre-Analyze] Blog skipped: ${err.message}`);
-          });
+          // Only generate blogs for important matches to avoid spam
+          // Uses scoring: Top league +3, Big team +2, Value edge +2, Derby +3
+          // Generate if score >= 3
+
+          // Calculate best edge for importance scoring (re-use pipeline data)
+          const blogBestEdge = Math.max(
+            pipelineEdge.home * 100,
+            pipelineEdge.away * 100,
+            (pipelineEdge.draw ?? 0) * 100
+          );
+
+          const blogImportance = shouldGenerateBlog(
+            event.home_team,
+            event.away_team,
+            sport.league,
+            blogBestEdge
+          );
+
+          if (blogImportance.generate) {
+            console.log(`[Pre-Analyze] Blog: ${matchRef} (score: ${blogImportance.score}, reasons: ${blogImportance.reasons.join(', ')})`);
+
+            generateMatchPreview({
+              matchId: event.id,
+              homeTeam: event.home_team,
+              awayTeam: event.away_team,
+              sport: sport.title,
+              sportKey: sport.key,
+              league: sport.league,
+              commenceTime: event.commence_time,
+              homeTeamLogo: undefined,
+              awayTeamLogo: undefined,
+              leagueLogo: undefined,
+              odds: consensus,
+            }).then(result => {
+              if (result.success) {
+                console.log(`[Pre-Analyze] Blog created: ${result.slug}`);
+              }
+            }).catch(err => {
+              console.log(`[Pre-Analyze] Blog skipped: ${err.message}`);
+            });
+          } else {
+            console.log(`[Pre-Analyze] Blog skipped (low importance): ${matchRef} (score: ${blogImportance.score})`);
+          }
 
           // Create Prediction record for accuracy tracking
           try {
