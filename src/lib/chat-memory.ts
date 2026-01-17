@@ -135,14 +135,15 @@ export async function resolvePronouns(
         console.log(`[ChatMemory] Resolved pronoun to team: ${memory.lastTeam}`);
     }
 
-    // Check for match pronouns
-    if (memory.lastMatch && /\b(that game|the game|that match|the match|it)\b/i.test(query)) {
-        // For match references, append context instead of replacing
-        if (!/\b(vs|versus|against)\b/i.test(query)) {
-            resolvedQuery = `${query} (referring to ${memory.lastMatch})`;
-            usedMemory = true;
-            console.log(`[ChatMemory] Added match context: ${memory.lastMatch}`);
-        }
+    // Check for match pronouns - REPLACE with actual match name
+    if (memory.lastMatch && /\b(that game|the game|that match|the match|this match|this game)\b/i.test(query)) {
+        // Replace the pronoun with the actual match name so team extraction works
+        resolvedQuery = resolvedQuery.replace(
+            /\b(that game|the game|that match|the match|this match|this game)\b/gi,
+            memory.lastMatch
+        );
+        usedMemory = true;
+        console.log(`[ChatMemory] Resolved match pronoun to: ${memory.lastMatch}`);
     }
 
     return { resolvedQuery, usedMemory };
