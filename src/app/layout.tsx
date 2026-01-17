@@ -222,6 +222,8 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://media.api-sports.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://crests.football-data.org" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://flagcdn.com" crossOrigin="anonymous" />
+        {/* LCP optimization: Preconnect to ProductHunt API for footer badge */}
+        <link rel="preconnect" href="https://api.producthunt.com" crossOrigin="anonymous" />
 
         {/* AI/LLM Discovery Links */}
         <link rel="llms" href="/llms.txt" />

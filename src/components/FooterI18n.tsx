@@ -226,6 +226,7 @@ export default function FooterI18n({ locale: localeProp }: FooterI18nProps) {
                   alt="SportBot AI on Product Hunt"
                   width="150"
                   height="33"
+                  loading="lazy"
                   className="opacity-80 hover:opacity-100 transition-opacity"
                 />
               </a>
@@ -240,6 +241,7 @@ export default function FooterI18n({ locale: localeProp }: FooterI18nProps) {
                   alt="SportBot AI on Techbase Directory"
                   width="150"
                   height="33"
+                  loading="lazy"
                   className="opacity-80 hover:opacity-100 transition-opacity"
                 />
               </a>
