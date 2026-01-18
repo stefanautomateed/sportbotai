@@ -232,8 +232,10 @@ function getSeasonForDate(dateStr: string, sport: 'nba' | 'nhl' | 'nfl' = 'nba')
   const month = date.getMonth() + 1; // 1-12
 
   if (sport === 'nfl') {
-    // NFL season is just the year (e.g., "2025" for 2025-2026 season)
-    return String(year);
+    // NFL season runs August to February
+    // Games in Jan/Feb are the PREVIOUS year's season
+    // e.g., Jan 2026 playoffs = 2025 season
+    return month <= 2 ? String(year - 1) : String(year);
   }
 
   if (sport === 'nhl') {
