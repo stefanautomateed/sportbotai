@@ -57,12 +57,8 @@ export default function PendingPredictionsManager({
       const { updatedOutcomes, stuckPredictions, errors } = data;
 
       if (updatedOutcomes > 0) {
-        // Refresh predictions list
-        onUpdate?.();
-        setMessage({
-          type: 'success',
-          text: `✅ Fetched results for ${updatedOutcomes} predictions!${stuckPredictions > 0 ? ` (${stuckPredictions} still stuck - API may not have data yet)` : ''}`
-        });
+        // Refresh the page to get updated predictions list
+        window.location.reload();
       } else if (stuckPredictions > 0) {
         setMessage({
           type: 'error',
@@ -85,6 +81,35 @@ export default function PendingPredictionsManager({
       });
     } finally {
       setBulkFetching(false);
+    }
+  };
+
+  // Handle delete prediction (for garbage/invalid data)
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this prediction? This cannot be undone.')) return;
+
+    setLoading(id);
+    try {
+      const response = await fetch(`/api/admin/predictions/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete');
+      }
+
+      // Remove from list
+      setPredictions(prev => prev.filter(p => p.id !== id));
+      setMessage({ type: 'success', text: '🗑️ Prediction deleted' });
+      onUpdate?.();
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to delete'
+      });
+    } finally {
+      setLoading(null);
     }
   };
 
@@ -319,16 +344,26 @@ export default function PendingPredictionsManager({
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => handleEdit(pred)}
-                        disabled={!isPast(pred.kickoff)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isPast(pred.kickoff)
-                          ? 'bg-accent hover:bg-accent/80 text-white'
-                          : 'bg-bg-tertiary text-text-muted cursor-not-allowed'
-                          }`}
-                      >
-                        {isPast(pred.kickoff) ? 'Enter Result' : 'Not Started'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEdit(pred)}
+                          disabled={!isPast(pred.kickoff) || loading === pred.id}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isPast(pred.kickoff)
+                            ? 'bg-accent hover:bg-accent/80 text-white'
+                            : 'bg-bg-tertiary text-text-muted cursor-not-allowed'
+                            }`}
+                        >
+                          {isPast(pred.kickoff) ? 'Enter Result' : 'Not Started'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(pred.id)}
+                          disabled={loading === pred.id}
+                          className="px-2 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/20 transition-colors"
+                          title="Delete this prediction"
+                        >
+                          {loading === pred.id ? '...' : '🗑️'}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
