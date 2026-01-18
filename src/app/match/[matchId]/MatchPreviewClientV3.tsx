@@ -1496,7 +1496,8 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
           />
         </div>
 
-        {/* Read Full Preview - Link to News Article */}
+        {/* Read Full Preview - Temporarily disabled due to slug mismatch
+            TODO: Re-enable once we have proper blog article lookup by match teams
         {(() => {
           const slug = `${data.matchInfo.homeTeam.toLowerCase().replace(/\s+/g, '-')}-vs-${data.matchInfo.awayTeam.toLowerCase().replace(/\s+/g, '-')}`;
           return (
@@ -1521,6 +1522,7 @@ export default function MatchPreviewClient({ matchId, locale = 'en' }: MatchPrev
             </Link>
           );
         })()}
+        */}
 
         {/* Footer */}
         <div className="mt-12 text-center">
