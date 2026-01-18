@@ -165,6 +165,7 @@ async function generateSVGFeaturedImage(
 
   const style = categoryStyles[category] || categoryStyles["Educational Guides"];
 
+  // Premium card-based SVG design (matching match preview quality)
   const svgContent = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -176,41 +177,69 @@ async function generateSVGFeaturedImage(
       <stop offset="0%" style="stop-color:${style.accent1}"/>
       <stop offset="100%" style="stop-color:${style.accent2}"/>
     </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b"/>
+      <stop offset="100%" style="stop-color:#0f172a"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glow">
       <feGaussianBlur stdDeviation="20" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
   </defs>
   
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bg)"/>
   
-  <!-- Decorative circles -->
-  <circle cx="100" cy="100" r="180" fill="${style.accent1}" opacity="0.1"/>
-  <circle cx="1100" cy="530" r="200" fill="${style.accent2}" opacity="0.1"/>
-  <circle cx="600" cy="315" r="300" fill="${style.accent1}" opacity="0.05"/>
+  <!-- Decorative glowing circles -->
+  <circle cx="100" cy="100" r="200" fill="${style.accent1}" opacity="0.08" filter="url(#glow)"/>
+  <circle cx="1100" cy="530" r="220" fill="${style.accent2}" opacity="0.08" filter="url(#glow)"/>
   
-  <!-- Accent line at bottom -->
-  <rect x="0" y="610" width="1200" height="20" fill="url(#accent)"/>
+  <!-- Main Card -->
+  <rect x="100" y="80" width="1000" height="450" rx="24" fill="url(#cardGrad)" filter="url(#shadow)"/>
   
-  <!-- Category badge -->
-  <rect x="450" y="80" width="300" height="50" rx="25" fill="#1e293b" stroke="${style.accent1}" stroke-width="2"/>
-  <text x="600" y="113" text-anchor="middle" fill="${style.accent1}" font-family="Arial, sans-serif" font-size="18" font-weight="600">${escapeXml(category)}</text>
+  <!-- Card Header with accent -->
+  <rect x="100" y="80" width="1000" height="70" rx="24" fill="url(#accent)"/>
+  <rect x="100" y="126" width="1000" height="24" fill="url(#cardGrad)"/>
   
-  <!-- Icon -->
-  <text x="600" y="250" text-anchor="middle" font-size="80">${style.icon}</text>
+  <!-- Category Badge -->
+  <text x="600" y="125" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="22" font-weight="700">${escapeXml(category.toUpperCase())}</text>
+  
+  <!-- Large Icon Circle -->
+  <circle cx="600" cy="260" r="70" fill="#1e293b" stroke="${style.accent1}" stroke-width="3"/>
+  <text x="600" y="285" text-anchor="middle" font-size="60">${style.icon}</text>
   
   <!-- Title text -->
-  <text x="600" y="340" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="36" font-weight="700">${escapeXml(displayTitle)}</text>
+  <text x="600" y="380" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="32" font-weight="700">${escapeXml(displayTitle)}</text>
   
-  <!-- Subtitle lines -->
-  <text x="600" y="400" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="22">${escapeXml(line1)}</text>
-  ${line2 ? `<text x="600" y="430" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="22">${escapeXml(line2)}</text>` : ''}
+  <!-- Subtitle -->
+  <text x="600" y="430" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="20">${escapeXml(line1)}</text>
+  ${line2 ? `<text x="600" y="460" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="20">${escapeXml(line2)}</text>` : ''}
   
-  <!-- SportBot AI Branding -->
-  <rect x="450" y="500" width="300" height="60" rx="30" fill="#1e293b"/>
-  <text x="600" y="538" text-anchor="middle" fill="${style.accent1}" font-family="Arial, sans-serif" font-size="24" font-weight="700">SportBot AI</text>
-  <text x="600" y="590" text-anchor="middle" fill="#64748b" font-family="Arial, sans-serif" font-size="14">AI-Powered Sports Intelligence</text>
+  <!-- Divider line -->
+  <rect x="400" y="490" width="400" height="2" rx="1" fill="${style.accent1}" opacity="0.5"/>
+  
+  <!-- Bottom Branding Bar -->
+  <rect x="0" y="550" width="1200" height="80" fill="#0f172a"/>
+  <rect x="0" y="550" width="1200" height="3" fill="url(#accent)"/>
+  
+  <!-- SportBot Logo area -->
+  <circle cx="160" cy="590" r="25" fill="${style.accent1}"/>
+  <text x="160" y="598" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="20" font-weight="700">S</text>
+  
+  <!-- Branding text -->
+  <text x="210" y="582" fill="#fff" font-family="Arial, sans-serif" font-size="20" font-weight="700">SportBot AI</text>
+  <text x="210" y="604" fill="#64748b" font-family="Arial, sans-serif" font-size="14">AI-Powered Sports Intelligence</text>
+  
+  <!-- Read time indicator -->
+  <rect x="980" y="565" width="120" height="50" rx="8" fill="#1e293b"/>
+  <text x="1040" y="585" text-anchor="middle" fill="${style.accent1}" font-family="Arial, sans-serif" font-size="12" font-weight="600">GUIDE</text>
+  <text x="1040" y="605" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="700">5 min read</text>
 </svg>`;
 
   try {
