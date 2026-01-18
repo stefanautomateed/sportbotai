@@ -86,14 +86,19 @@ export async function generateFeaturedImage(
 
   try {
     const output = await replicate.run(
-      "black-forest-labs/flux-schnell",
+      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
       {
         input: {
           prompt: prompt,
+          negative_prompt: "text, watermark, logo, blurry, low quality, distorted",
+          width: 1344,
+          height: 768,
           num_outputs: 1,
-          aspect_ratio: "16:9",
-          output_format: "webp",
-          output_quality: 90,
+          scheduler: "K_EULER",
+          num_inference_steps: 30,
+          guidance_scale: 7.5,
+          refine: "expert_ensemble_refiner",
+          high_noise_frac: 0.8,
         }
       }
     );
@@ -311,14 +316,17 @@ export async function generateContentImage(
 
   try {
     const output = await replicate.run(
-      "black-forest-labs/flux-schnell",
+      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
       {
         input: {
           prompt: prompt,
+          negative_prompt: "text, watermark, logo, blurry, low quality, distorted",
+          width: 1344,
+          height: 768,
           num_outputs: 1,
-          aspect_ratio: "16:9",
-          output_format: "webp",
-          output_quality: 85,
+          scheduler: "K_EULER",
+          num_inference_steps: 25,
+          guidance_scale: 7.5,
         }
       }
     );
