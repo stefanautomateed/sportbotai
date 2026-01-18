@@ -65,16 +65,19 @@ export const metadata: Metadata = {
   publisher: SITE_CONFIG.name,
 
   // Favicon & Icons - comprehensive for all platforms
+  // IMPORTANT: Google requires ICO/PNG (not SVG) for search result favicons
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
-      { url: '/icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [
-      { url: '/icons/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' },
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/favicon.svg',
+    shortcut: '/favicon.ico',
   },
 
   // PWA Manifest

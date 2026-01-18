@@ -4,7 +4,10 @@
   "description": "AI-powered sports analysis - find where the market is wrong",
   "start_url": "/?source=pwa",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#050607",
   "theme_color": "#050607",
   "orientation": "portrait-primary",
@@ -15,14 +18,26 @@
   },
   "icons": [
     {
-      "src": "/icons/icon-192.svg",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
       "src": "/icons/icon-512.svg",
-      "sizes": "512x512",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
@@ -39,12 +54,16 @@
       "purpose": "maskable"
     },
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
     }
   ],
-  "categories": ["sports", "entertainment", "utilities"],
+  "categories": [
+    "sports",
+    "entertainment",
+    "utilities"
+  ],
   "screenshots": [
     {
       "src": "/screenshots/mobile-home.png",
@@ -67,21 +86,39 @@
       "short_name": "AI Desk",
       "description": "Ask AI about any match",
       "url": "/ai-desk?source=shortcut",
-      "icons": [{ "src": "/icons/shortcut-ai.svg", "sizes": "96x96", "type": "image/svg+xml" }]
+      "icons": [
+        {
+          "src": "/icons/shortcut-ai.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
     },
     {
       "name": "Browse Matches",
       "short_name": "Matches",
       "description": "Browse upcoming matches",
       "url": "/matches?source=shortcut",
-      "icons": [{ "src": "/icons/shortcut-matches.svg", "sizes": "96x96", "type": "image/svg+xml" }]
+      "icons": [
+        {
+          "src": "/icons/shortcut-matches.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
     },
     {
       "name": "Analysis History",
       "short_name": "History",
       "description": "View your analysis history",
       "url": "/history?source=shortcut",
-      "icons": [{ "src": "/icons/shortcut-history.svg", "sizes": "96x96", "type": "image/svg+xml" }]
+      "icons": [
+        {
+          "src": "/icons/shortcut-history.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
     }
   ],
   "handle_links": "preferred",
