@@ -19,7 +19,7 @@
  */
 
 import { PipelineOutput, PipelineResult, PipelineInput, runAccuracyPipeline } from './index';
-import { 
+import {
   SIGNATURE_CATCHPHRASES,
   RECURRING_MOTIFS,
   computeNarrativeAngle,
@@ -34,17 +34,17 @@ import {
  * Derive narrative angle from pipeline output
  */
 function deriveNarrativeAngle(output: PipelineOutput): NarrativeAngle {
-  const volatilityScore = output.volatility === 'EXTREME' ? 80 : 
-                          output.volatility === 'HIGH' ? 60 : 
-                          output.volatility === 'MEDIUM' ? 40 : 20;
-  
+  const volatilityScore = output.volatility === 'EXTREME' ? 80 :
+    output.volatility === 'HIGH' ? 60 :
+      output.volatility === 'MEDIUM' ? 40 : 20;
+
   // Power gap based on probability difference
   const powerGap = Math.abs(output.probabilities.home - output.probabilities.away) * 100;
-  
+
   // Form weirdness based on edge suppression
-  const formWeirdness = output.suppressEdge ? 60 : 
-                        output.edge.quality === 'SUPPRESSED' ? 50 : 20;
-  
+  const formWeirdness = output.suppressEdge ? 60 :
+    output.edge.quality === 'SUPPRESSED' ? 50 : 20;
+
   return computeNarrativeAngle(volatilityScore, powerGap, formWeirdness);
 }
 
@@ -101,14 +101,14 @@ export function formatForLLM(
 ): string {
   const { output, details } = result;
   const { probabilities, edge, dataQuality, volatility, favored, confidence, suppressEdge } = output;
-  
+
   const lines: string[] = [];
-  
+
   // Header with computed verdict
   lines.push(`=== COMPUTED ANALYSIS (READ-ONLY) ===`);
   lines.push(`These values are FINAL. Do NOT recalculate or contradict them.`);
   lines.push('');
-  
+
   // Clear favored team
   if (favored === 'home') {
     lines.push(`VERDICT: ${homeTeam} (HOME) is favored`);
@@ -119,10 +119,10 @@ export function formatForLLM(
   } else {
     lines.push(`VERDICT: Match is evenly balanced`);
   }
-  
+
   lines.push(`CONFIDENCE: ${confidence.toUpperCase()}`);
   lines.push('');
-  
+
   // Probabilities (calibrated)
   lines.push(`MODEL PROBABILITIES:`);
   lines.push(`- ${homeTeam} (HOME): ${(probabilities.home * 100).toFixed(1)}%`);
@@ -131,7 +131,7 @@ export function formatForLLM(
     lines.push(`- Draw: ${(probabilities.draw * 100).toFixed(1)}%`);
   }
   lines.push('');
-  
+
   // Market comparison
   const marketHome = details.marketProbabilities.impliedProbabilitiesNoVig.home;
   const marketAway = details.marketProbabilities.impliedProbabilitiesNoVig.away;
@@ -140,7 +140,7 @@ export function formatForLLM(
   lines.push(`- ${awayTeam}: ${(marketAway * 100).toFixed(1)}%`);
   lines.push(`- Market margin: ${(details.marketProbabilities.marketMargin * 100).toFixed(1)}%`);
   lines.push('');
-  
+
   // Edge (if not suppressed)
   if (!suppressEdge && edge.value > 0.02) {
     const edgeTeam = edge.outcome === 'home' ? homeTeam : edge.outcome === 'away' ? awayTeam : 'Draw';
@@ -151,31 +151,68 @@ export function formatForLLM(
     lines.push(`EDGE: No significant edge detected`);
   }
   lines.push('');
-  
+
   // Quality flags
   lines.push(`DATA QUALITY: ${dataQuality}`);
   lines.push(`VOLATILITY: ${volatility}`);
-  
+
   // Expected scores (for soccer/hockey)
   if (details.expectedScores) {
     lines.push('');
     lines.push(`EXPECTED SCORES: ${homeTeam} ${details.expectedScores.home} - ${details.expectedScores.away} ${awayTeam}`);
   }
-  
+
   return lines.join('\n');
 }
 
-// ============================================
-// LLM PROMPT BUILDER (AIXBT PERSONALITY)
 // ============================================
 
 /**
  * Build the system prompt for LLM with AIXBT personality
  * Emphasizes that probabilities are computed, not to be recalculated
+ * Sport-aware: uses correct terminology (points vs goals)
  */
-export function buildLLMSystemPrompt(narrativeAngle?: NarrativeAngle): string {
+export function buildLLMSystemPrompt(narrativeAngle?: NarrativeAngle, sport?: string): string {
   const angleGuidance = narrativeAngle ? getAngleGuidance(narrativeAngle) : '';
-  
+
+  // Sport-specific terminology
+  const sportLower = (sport || 'soccer').toLowerCase();
+  const isBasketball = sportLower.includes('basketball') || sportLower.includes('nba');
+  const isNFL = sportLower.includes('football') || sportLower.includes('nfl');
+  const isNHL = sportLower.includes('hockey') || sportLower.includes('nhl');
+
+  let sportTerminology = '';
+  if (isBasketball) {
+    sportTerminology = `
+SPORT: BASKETBALL (NBA)
+- Use "POINTS" not "goals" (teams score 90-130 POINTS per game)
+- Discuss: points per game, shooting percentage, rebounding, assists
+- Key metrics: offensive rating, defensive rating, pace, turnover rate
+- Home court advantage is worth ~3.5 points
+- Never mention "goals" or "clean sheets" - these are soccer terms`;
+  } else if (isNFL) {
+    sportTerminology = `
+SPORT: AMERICAN FOOTBALL (NFL)
+- Use "POINTS" and "TOUCHDOWNS" not "goals"
+- Teams score 10-45 POINTS per game typically
+- Discuss: passing yards, rushing yards, turnovers, red zone efficiency
+- Home field advantage is worth ~2.5 points
+- Key metrics: yards per play, third-down conversion, time of possession`;
+  } else if (isNHL) {
+    sportTerminology = `
+SPORT: ICE HOCKEY (NHL)
+- Use "GOALS" (teams score 2-5 goals per game)
+- Discuss: shots on goal, power play %, penalty kill %, save percentage
+- Home ice advantage is smaller (~52% win rate)
+- Key metrics: Corsi, expected goals (xG), faceoff %`;
+  } else {
+    sportTerminology = `
+SPORT: SOCCER
+- Use "GOALS" (typical match: 2-3 total goals)
+- Discuss: shots, shots on target, possession, xG
+- Home advantage is worth ~0.3 goals`;
+  }
+
   return `You are SportBot, an AIXBT-style sports intelligence AI.
 
 CORE IDENTITY:
@@ -184,6 +221,7 @@ CORE IDENTITY:
 - Data-first but never boring
 - Slightly sarcastic edge - you've watched too many matches to be impressed easily
 - You spot what others miss and you're not shy about it
+${sportTerminology}
 
 CRITICAL RULES (NON-NEGOTIABLE):
 1. You are an INTERPRETER, not a PREDICTOR
@@ -191,6 +229,7 @@ CRITICAL RULES (NON-NEGOTIABLE):
 3. You MUST use the COMPUTED values provided - never contradict them
 4. Your job is to explain WHY the signals favor a team, not to pick winners
 5. Never say "I predict" or "I think X will win" - explain the computed analysis
+6. Use the correct terminology for the sport (NEVER say "goals" for basketball/NFL)
 
 VOICE & STYLE:
 - Sharp, like the smartest analyst in the room
@@ -237,7 +276,8 @@ NEVER:
 - Claim 100% confidence
 - Confuse HOME and AWAY teams
 - Say the away team has "home advantage"
-- Use markdown formatting (no ** or ##)`;
+- Use markdown formatting (no ** or ##)
+- Use wrong terminology (no "goals" for basketball/NFL, no "points" for soccer/hockey)`;
 }
 
 /**
@@ -296,7 +336,7 @@ export function buildLLMUserPrompt(
 ): string {
   const catchphrase = narrativeAngle ? getCatchphraseForAngle(narrativeAngle) : '';
   const motif = getRandomMotif();
-  
+
   return `${homeTeam} (HOME) vs ${awayTeam} (AWAY) | ${league}
 
 ${pipelineData}
@@ -368,15 +408,15 @@ export async function generateAnalysisWithPipeline(
 ): Promise<LLMAnalysisResult> {
   // Run the accuracy pipeline first
   const pipelineResult = await runAccuracyPipeline(input);
-  
+
   // Derive narrative angle from pipeline output
   const narrativeAngle = deriveNarrativeAngle(pipelineResult.output);
-  
+
   // Format for LLM
   const pipelineData = formatForLLM(pipelineResult, input.homeTeam, input.awayTeam);
-  
-  // Build prompts with AIXBT personality and narrative angle
-  const systemPrompt = buildLLMSystemPrompt(narrativeAngle);
+
+  // Build prompts with AIXBT personality, narrative angle, and sport-specific terminology
+  const systemPrompt = buildLLMSystemPrompt(narrativeAngle, input.sport);
   const userPrompt = buildLLMUserPrompt(
     input.homeTeam,
     input.awayTeam,
@@ -385,7 +425,7 @@ export async function generateAnalysisWithPipeline(
     additionalContext,
     narrativeAngle
   );
-  
+
   // Call LLM
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -397,14 +437,14 @@ export async function generateAnalysisWithPipeline(
     max_tokens: 700,
     temperature: 0.4, // Slightly higher for more personality
   });
-  
+
   const content = completion.choices[0].message.content;
   if (!content) {
     throw new Error('No content from LLM');
   }
-  
+
   const llmOutput = JSON.parse(content);
-  
+
   // Combine LLM narrative with computed values
   return {
     snapshot: llmOutput.snapshot || [],
@@ -444,22 +484,22 @@ export function generateFallbackAnalysis(
   awayTeam: string
 ): LLMAnalysisResult {
   const { output, details } = result;
-  
+
   // Derive narrative angle for fallback
   const narrativeAngle = deriveNarrativeAngle(output);
-  
+
   // Build snapshot from computed values
   const snapshot: string[] = [];
-  
+
   // THE EDGE
   if (output.edge.value > 0.02 && !output.suppressEdge) {
-    const edgeTeam = output.edge.outcome === 'home' ? homeTeam : 
-                     output.edge.outcome === 'away' ? awayTeam : 'Draw';
+    const edgeTeam = output.edge.outcome === 'home' ? homeTeam :
+      output.edge.outcome === 'away' ? awayTeam : 'Draw';
     snapshot.push(`THE EDGE: ${edgeTeam} shows a ${(output.edge.value * 100).toFixed(1)}% edge based on form and efficiency metrics.`);
   } else {
     snapshot.push(`THE EDGE: No clear edge detected. This match is balanced.`);
   }
-  
+
   // MARKET MISS
   if (output.edge.value > 0.03) {
     const marketHome = (details.marketProbabilities.impliedProbabilitiesNoVig.home * 100).toFixed(0);
@@ -468,23 +508,23 @@ export function generateFallbackAnalysis(
   } else {
     snapshot.push(`MARKET MISS: Odds appear fairly priced. No significant market inefficiency.`);
   }
-  
+
   // THE PATTERN
   snapshot.push(`THE PATTERN: Data quality is ${output.dataQuality}. ${output.volatility} volatility in recent form.`);
-  
+
   // THE RISK
   if (output.dataQuality === 'LOW' || output.volatility === 'HIGH') {
     snapshot.push(`THE RISK: Limited data and high volatility make this unpredictable.`);
   } else {
     snapshot.push(`THE RISK: Form can change quickly. Past performance doesn't guarantee future results.`);
   }
-  
+
   // Game flow
   const expectedHome = details.expectedScores?.home || 1.2;
   const expectedAway = details.expectedScores?.away || 1.0;
   const gameFlow = `Expected scoring suggests ${homeTeam} ${expectedHome.toFixed(1)} - ${expectedAway.toFixed(1)} ${awayTeam}. ` +
     `Model confidence is ${output.confidence} based on ${output.dataQuality} data quality.`;
-  
+
   return {
     snapshot,
     gameFlow,

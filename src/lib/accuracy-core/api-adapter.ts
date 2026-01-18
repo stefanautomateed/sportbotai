@@ -5,14 +5,14 @@
  * Converts new pipeline output to match existing response formats.
  */
 
-import { 
-  PipelineInput, 
-  runAccuracyPipeline, 
+import {
+  PipelineInput,
+  runAccuracyPipeline,
   PipelineResult,
 } from './index';
-import { 
-  formatForLLM, 
-  buildLLMSystemPrompt, 
+import {
+  formatForLLM,
+  buildLLMSystemPrompt,
   buildLLMUserPrompt,
   generateFallbackAnalysis,
 } from './llm-integration';
@@ -108,16 +108,16 @@ export function pipelineToLegacyFormat(
   awayTeam: string
 ): LegacyAnalysisResponse {
   const { output, details } = result;
-  
+
   // Map favored to legacy format
-  const legacyFavored: 'home' | 'away' | 'draw' = 
+  const legacyFavored: 'home' | 'away' | 'draw' =
     output.favored === 'even' ? 'draw' : output.favored as 'home' | 'away' | 'draw';
-  
+
   // Map confidence
-  const legacyConfidence: 'strong' | 'moderate' | 'slight' = 
+  const legacyConfidence: 'strong' | 'moderate' | 'slight' =
     output.confidence === 'high' ? 'strong' :
-    output.confidence === 'low' ? 'slight' : 'moderate';
-  
+      output.confidence === 'low' ? 'slight' : 'moderate';
+
   // Build story
   const story: LegacyStory = {
     favored: legacyFavored,
@@ -126,59 +126,59 @@ export function pipelineToLegacyFormat(
     snapshot: llmSnapshot,
     riskFactors: llmRiskFactors,
   };
-  
+
   // Build headlines
   const edgeTeam = output.edge.outcome === 'home' ? homeTeam :
-                   output.edge.outcome === 'away' ? awayTeam : null;
-  
+    output.edge.outcome === 'away' ? awayTeam : null;
+
   const headlineText = edgeTeam && output.edge.value > 0.03
     ? `${edgeTeam} shows +${(output.edge.value * 100).toFixed(1)}% edge`
     : `${homeTeam} vs ${awayTeam}: Evenly matched`;
-  
+
   const headlines: LegacyHeadline[] = [
-    { 
-      icon: '📊', 
-      text: headlineText, 
-      favors: output.favored === 'even' ? 'neutral' : output.favored, 
+    {
+      icon: '📊',
+      text: headlineText,
+      favors: output.favored === 'even' ? 'neutral' : output.favored,
       viral: output.edge.quality === 'HIGH'
     }
   ];
-  
+
   // Build universal signals (legacy format)
-  const edgeDirection: 'home' | 'away' | 'even' = 
+  const edgeDirection: 'home' | 'away' | 'even' =
     output.edge.outcome === 'none' ? 'even' : output.edge.outcome as 'home' | 'away' | 'even';
-  
+
   const edgePercentage = Math.round(
-    (output.edge.outcome === 'home' ? output.probabilities.home : 
-     output.edge.outcome === 'away' ? output.probabilities.away : 0.5) * 100
+    (output.edge.outcome === 'home' ? output.probabilities.home :
+      output.edge.outcome === 'away' ? output.probabilities.away : 0.5) * 100
   );
-  
+
   const universalSignals = {
-    form: output.dataQuality === 'HIGH' ? 'Strong form data' : 
-          output.dataQuality === 'LOW' ? 'Limited form data' : 'Moderate form data',
-    strength_edge: output.edge.value > 0.03 
+    form: output.dataQuality === 'HIGH' ? 'Strong form data' :
+      output.dataQuality === 'LOW' ? 'Limited form data' : 'Moderate form data',
+    strength_edge: output.edge.value > 0.03
       ? `${edgeDirection === 'home' ? 'Home' : edgeDirection === 'away' ? 'Away' : 'Even'} +${Math.round(output.edge.value * 100)}%`
       : 'Even',
-    tempo: output.volatility === 'LOW' ? 'Controlled' : 
-           output.volatility === 'HIGH' ? 'High' : 'Medium',
+    tempo: output.volatility === 'LOW' ? 'Controlled' :
+      output.volatility === 'HIGH' ? 'High' : 'Medium',
     efficiency_edge: output.edge.outcome === 'home' ? 'Home offense' :
-                     output.edge.outcome === 'away' ? 'Away offense' : 'Balanced',
+      output.edge.outcome === 'away' ? 'Away offense' : 'Balanced',
     availability_impact: 'Low Impact', // Would need injury data
     confidence: output.confidence,
     clarity_score: output.dataQuality === 'HIGH' ? 85 :
-                   output.dataQuality === 'MEDIUM' ? 65 :
-                   output.dataQuality === 'LOW' ? 45 : 25,
+      output.dataQuality === 'MEDIUM' ? 65 :
+        output.dataQuality === 'LOW' ? 45 : 25,
     display: {
       edge: {
         direction: edgeDirection,
         percentage: edgePercentage,
-        label: output.edge.value > 0.03 
+        label: output.edge.value > 0.03
           ? `${edgeDirection === 'home' ? homeTeam : awayTeam} +${Math.round(output.edge.value * 100)}%`
           : 'Even match',
       },
     },
   };
-  
+
   // Build signals (legacy format)
   const signals: LegacySignals = {
     formLabel: universalSignals.form,
@@ -188,14 +188,14 @@ export function pipelineToLegacyFormat(
     efficiencyLabel: universalSignals.efficiency_edge,
     availabilityLabel: universalSignals.availability_impact,
   };
-  
+
   // Build market intel
   const marketIntel: LegacyMarketIntel = {
     hasValue: output.edge.value > 0.03 && !output.suppressEdge,
     valueOutcome: output.edge.outcome === 'none' ? null : output.edge.outcome as 'home' | 'away' | 'draw',
     valuePercentage: output.edge.value * 100,
     marketVerdict: output.edge.value > 0.05 ? `${edgeTeam || 'N/A'} +${(output.edge.value * 100).toFixed(1)}% Value` :
-                   output.edge.value > 0.03 ? 'Slight Value' : 'Fair Price',
+      output.edge.value > 0.03 ? 'Slight Value' : 'Fair Price',
     marketMargin: details.marketProbabilities.marketMargin * 100,
     signalQuality: universalSignals.clarity_score,
     probabilities: {
@@ -206,8 +206,8 @@ export function pipelineToLegacyFormat(
     impliedProbabilities: {
       home: Math.round(details.marketProbabilities.impliedProbabilitiesNoVig.home * 1000) / 10,
       away: Math.round(details.marketProbabilities.impliedProbabilitiesNoVig.away * 1000) / 10,
-      draw: details.marketProbabilities.impliedProbabilitiesNoVig.draw 
-        ? Math.round(details.marketProbabilities.impliedProbabilitiesNoVig.draw * 1000) / 10 
+      draw: details.marketProbabilities.impliedProbabilitiesNoVig.draw
+        ? Math.round(details.marketProbabilities.impliedProbabilitiesNoVig.draw * 1000) / 10
         : undefined,
     },
     valueGaps: {
@@ -216,7 +216,7 @@ export function pipelineToLegacyFormat(
       draw: details.edge.draw ? Math.round(details.edge.draw * 1000) / 10 : undefined,
     },
   };
-  
+
   return {
     story,
     headlines,
@@ -257,12 +257,12 @@ export async function runAccuracyAnalysis(
 ): Promise<LegacyAnalysisResponse> {
   // Step 1: Run accuracy pipeline
   const pipelineResult = await runAccuracyPipeline(input);
-  
+
   // Step 2: Format for LLM
   const pipelineData = formatForLLM(pipelineResult, input.homeTeam, input.awayTeam);
-  
-  // Step 3: Build prompts
-  const systemPrompt = buildLLMSystemPrompt();
+
+  // Step 3: Build prompts with sport-specific terminology
+  const systemPrompt = buildLLMSystemPrompt(undefined, input.sport);
   const userPrompt = buildLLMUserPrompt(
     input.homeTeam,
     input.awayTeam,
@@ -270,11 +270,11 @@ export async function runAccuracyAnalysis(
     pipelineData,
     additionalContext
   );
-  
+
   let snapshot: string[] = [];
   let gameFlow = '';
   let riskFactors: string[] = [];
-  
+
   try {
     // Step 4: Call LLM for narrative
     const completion = await openai.chat.completions.create({
@@ -287,7 +287,7 @@ export async function runAccuracyAnalysis(
       max_tokens: 600,
       temperature: 0.3,
     });
-    
+
     const content = completion.choices[0].message.content;
     if (content) {
       const llmOutput = JSON.parse(content);
@@ -297,14 +297,14 @@ export async function runAccuracyAnalysis(
     }
   } catch (error) {
     console.error('LLM call failed, using fallback:', error);
-    
+
     // Use fallback analysis
     const fallback = generateFallbackAnalysis(pipelineResult, input.homeTeam, input.awayTeam);
     snapshot = fallback.snapshot;
     gameFlow = fallback.gameFlow;
     riskFactors = fallback.riskFactors;
   }
-  
+
   // Step 5: Convert to legacy format
   return pipelineToLegacyFormat(
     pipelineResult,
