@@ -165,81 +165,97 @@ async function generateSVGFeaturedImage(
 
   const style = categoryStyles[category] || categoryStyles["Educational Guides"];
 
-  // Premium card-based SVG design (matching match preview quality)
+  // Abstract futuristic data visualization SVG (matching AI-generated aesthetic)
   const svgContent = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <defs>
+    <!-- Gradient backgrounds -->
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0f172a"/>
-      <stop offset="50%" style="stop-color:#1e293b"/>
-      <stop offset="100%" style="stop-color:#0f172a"/>
+      <stop offset="0%" style="stop-color:#0a0a0f"/>
+      <stop offset="50%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#0a0a0f"/>
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:${style.accent1}"/>
       <stop offset="100%" style="stop-color:${style.accent2}"/>
     </linearGradient>
-    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#1e293b"/>
-      <stop offset="100%" style="stop-color:#0f172a"/>
+    <linearGradient id="orbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${style.accent1};stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:${style.accent2};stop-opacity:0.2"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.4"/>
+    <radialGradient id="glow1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:${style.accent1};stop-opacity:0.6"/>
+      <stop offset="100%" style="stop-color:${style.accent1};stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:${style.accent2};stop-opacity:0.5"/>
+      <stop offset="100%" style="stop-color:${style.accent2};stop-opacity:0"/>
+    </radialGradient>
+    <!-- Filters -->
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="30"/>
     </filter>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="20" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
   
-  <!-- Background -->
+  <!-- Deep space background -->
   <rect width="1200" height="630" fill="url(#bg)"/>
   
-  <!-- Decorative glowing circles -->
-  <circle cx="100" cy="100" r="200" fill="${style.accent1}" opacity="0.08" filter="url(#glow)"/>
-  <circle cx="1100" cy="530" r="220" fill="${style.accent2}" opacity="0.08" filter="url(#glow)"/>
+  <!-- Abstract flowing shapes -->
+  <ellipse cx="900" cy="200" rx="400" ry="300" fill="url(#glow1)" filter="url(#blur)"/>
+  <ellipse cx="200" cy="450" rx="350" ry="250" fill="url(#glow2)" filter="url(#blur)"/>
   
-  <!-- Main Card -->
-  <rect x="100" y="80" width="1000" height="450" rx="24" fill="url(#cardGrad)" filter="url(#shadow)"/>
+  <!-- Data visualization lines (circuit pattern) -->
+  <g stroke="${style.accent1}" stroke-width="1" opacity="0.3">
+    <path d="M0,315 Q300,280 600,315 T1200,315" fill="none"/>
+    <path d="M0,350 Q400,300 800,350 T1200,350" fill="none"/>
+    <path d="M0,280 Q500,320 1000,280" fill="none"/>
+  </g>
   
-  <!-- Card Header with accent -->
-  <rect x="100" y="80" width="1000" height="70" rx="24" fill="url(#accent)"/>
-  <rect x="100" y="126" width="1000" height="24" fill="url(#cardGrad)"/>
+  <!-- Glowing orbs (data points) -->
+  <circle cx="200" cy="300" r="8" fill="${style.accent1}" filter="url(#softGlow)"/>
+  <circle cx="350" cy="320" r="5" fill="${style.accent1}" opacity="0.7"/>
+  <circle cx="500" cy="290" r="10" fill="url(#orbGrad)" filter="url(#softGlow)"/>
+  <circle cx="700" cy="340" r="6" fill="${style.accent2}" filter="url(#softGlow)"/>
+  <circle cx="850" cy="300" r="12" fill="url(#orbGrad)" filter="url(#softGlow)"/>
+  <circle cx="1000" cy="330" r="7" fill="${style.accent1}" opacity="0.8"/>
   
-  <!-- Category Badge -->
-  <text x="600" y="125" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="22" font-weight="700">${escapeXml(category.toUpperCase())}</text>
+  <!-- Connecting lines between orbs -->
+  <g stroke="${style.accent1}" stroke-width="1" opacity="0.4">
+    <line x1="200" y1="300" x2="350" y2="320"/>
+    <line x1="350" y1="320" x2="500" y2="290"/>
+    <line x1="500" y1="290" x2="700" y2="340"/>
+    <line x1="700" y1="340" x2="850" y2="300"/>
+    <line x1="850" y1="300" x2="1000" y2="330"/>
+  </g>
   
-  <!-- Large Icon Circle -->
-  <circle cx="600" cy="260" r="70" fill="#1e293b" stroke="${style.accent1}" stroke-width="3"/>
-  <text x="600" y="285" text-anchor="middle" font-size="60">${style.icon}</text>
+  <!-- Large central icon with glow -->
+  <circle cx="600" cy="250" r="80" fill="${style.accent1}" opacity="0.15" filter="url(#blur)"/>
+  <circle cx="600" cy="250" r="50" fill="#0f172a" stroke="${style.accent1}" stroke-width="2"/>
+  <text x="600" y="270" text-anchor="middle" font-size="50">${style.icon}</text>
+  
+  <!-- Title area with glass effect -->
+  <rect x="100" y="360" width="1000" height="140" rx="20" fill="#0f172a" fill-opacity="0.6"/>
+  <rect x="100" y="360" width="1000" height="3" rx="1" fill="url(#accent)"/>
+  
+  <!-- Category badge -->
+  <rect x="100" y="370" width="200" height="30" rx="15" fill="${style.accent1}" opacity="0.2"/>
+  <text x="200" y="392" text-anchor="middle" fill="${style.accent1}" font-family="Arial, sans-serif" font-size="14" font-weight="600">${escapeXml(category.toUpperCase())}</text>
   
   <!-- Title text -->
-  <text x="600" y="380" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="32" font-weight="700">${escapeXml(displayTitle)}</text>
+  <text x="120" y="440" fill="#fff" font-family="Arial, sans-serif" font-size="28" font-weight="700">${escapeXml(displayTitle)}</text>
   
   <!-- Subtitle -->
-  <text x="600" y="430" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="20">${escapeXml(line1)}</text>
-  ${line2 ? `<text x="600" y="460" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="20">${escapeXml(line2)}</text>` : ''}
+  <text x="120" y="480" fill="#94a3b8" font-family="Arial, sans-serif" font-size="18">${escapeXml(line1)}${line2 ? ' ' + escapeXml(line2) : ''}</text>
   
-  <!-- Divider line -->
-  <rect x="400" y="490" width="400" height="2" rx="1" fill="${style.accent1}" opacity="0.5"/>
+  <!-- Bottom accent bar -->
+  <rect x="0" y="610" width="1200" height="20" fill="url(#accent)"/>
   
-  <!-- Bottom Branding Bar -->
-  <rect x="0" y="550" width="1200" height="80" fill="#0f172a"/>
-  <rect x="0" y="550" width="1200" height="3" fill="url(#accent)"/>
-  
-  <!-- SportBot Logo area -->
-  <circle cx="160" cy="590" r="25" fill="${style.accent1}"/>
-  <text x="160" y="598" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="20" font-weight="700">S</text>
-  
-  <!-- Branding text -->
-  <text x="210" y="582" fill="#fff" font-family="Arial, sans-serif" font-size="20" font-weight="700">SportBot AI</text>
-  <text x="210" y="604" fill="#64748b" font-family="Arial, sans-serif" font-size="14">AI-Powered Sports Intelligence</text>
-  
-  <!-- Read time indicator -->
-  <rect x="980" y="565" width="120" height="50" rx="8" fill="#1e293b"/>
-  <text x="1040" y="585" text-anchor="middle" fill="${style.accent1}" font-family="Arial, sans-serif" font-size="12" font-weight="600">GUIDE</text>
-  <text x="1040" y="605" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="700">5 min read</text>
+  <!-- Branding -->
+  <text x="120" y="580" fill="${style.accent1}" font-family="Arial, sans-serif" font-size="18" font-weight="700">SportBot AI</text>
+  <text x="280" y="580" fill="#64748b" font-family="Arial, sans-serif" font-size="14">AI-Powered Sports Intelligence</text>
 </svg>`;
 
   try {
