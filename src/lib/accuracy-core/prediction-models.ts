@@ -148,11 +148,28 @@ function calculateTeamStrength(
   const avgScored = stats.scored / stats.played;
   const avgConceded = stats.conceded / stats.played;
 
-  // Raw attack strength relative to league average
-  const rawAttack = leagueAvgScored > 0 ? avgScored / leagueAvgScored : 1.0;
+  // FIX: Guard against division by zero and zero stats
+  // If team has 0 goals scored/conceded, use league average as fallback
+  let rawAttack: number;
+  let rawDefense: number;
 
-  // Raw defense strength (inverted - lower conceded = higher strength)
-  const rawDefense = leagueAvgConceded > 0 ? leagueAvgConceded / avgConceded : 1.0;
+  if (avgScored <= 0) {
+    // No goals scored - use slightly below average attack (0.8)
+    rawAttack = 0.8;
+    console.log(`[calculateTeamStrength] Warning: Zero goals scored, using fallback attack=0.8`);
+  } else {
+    rawAttack = leagueAvgScored > 0 ? avgScored / leagueAvgScored : 1.0;
+  }
+
+  if (avgConceded <= 0) {
+    // No goals conceded - either great defense OR no data
+    // Be conservative: use league average defense (1.0) not super defense
+    rawDefense = 1.0;
+    console.log(`[calculateTeamStrength] Warning: Zero goals conceded, using fallback defense=1.0`);
+  } else {
+    // Raw defense strength (inverted - lower conceded = higher strength)
+    rawDefense = leagueAvgConceded > 0 ? leagueAvgConceded / avgConceded : 1.0;
+  }
 
   // Apply regression to mean based on games played
   // Mean attack/defense = 1.0 (league average)
