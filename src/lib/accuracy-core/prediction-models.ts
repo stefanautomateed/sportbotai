@@ -535,11 +535,64 @@ export function predictMatch(input: ModelInput): RawProbabilities {
 /**
  * Get expected scores for display
  * Sport-aware: uses leagueAvgPoints for basketball/NFL, leagueAvgGoals for soccer/hockey
+ * 
+ * FIX: Now accepts optional odds data for more accurate soccer predictions
+ * when team stats are missing (stats.played === 0).
  */
-export function getExpectedScores(input: ModelInput): { home: number; away: number } {
+export function getExpectedScores(
+  input: ModelInput,
+  odds?: { homeOdds?: number; awayOdds?: number; drawOdds?: number }
+): { home: number; away: number } {
   const config = SPORT_CONFIG[input.sport as SportType] || SPORT_CONFIG.soccer;
   // FIX: Use includes() to handle 'basketball_nba' and 'americanfootball_nfl'
   const isHighScoringSport = input.sport.includes('basketball') || input.sport.includes('football');
+  const isSoccer = !isHighScoringSport && !input.sport.includes('hockey');
+
+  // Check if we have meaningful stats
+  const hasHomeStats = input.homeStats.played > 0 && input.homeStats.scored > 0;
+  const hasAwayStats = input.awayStats.played > 0 && input.awayStats.scored > 0;
+  const hasStats = hasHomeStats && hasAwayStats;
+
+  // For soccer with missing stats: Use odds-based expected goals
+  if (isSoccer && !hasStats && odds?.homeOdds && odds?.awayOdds) {
+    console.log(`[getExpectedScores] Using odds-based calculation for soccer (no stats)`);
+
+    // Convert odds to implied probabilities
+    const homeProb = 1 / odds.homeOdds;
+    const awayProb = 1 / odds.awayOdds;
+    const drawProb = odds.drawOdds ? 1 / odds.drawOdds : 0.25;
+    const total = homeProb + awayProb + drawProb;
+
+    // Normalize probabilities
+    const normHomeProb = homeProb / total;
+    const normAwayProb = awayProb / total;
+    const normDrawProb = drawProb / total;
+
+    // Estimate expected goals based on probabilities
+    // Higher win probability = more goals for that team
+    // Average soccer match: ~2.5-2.8 total goals
+    const avgTotalGoals = 2.65;
+
+    // Strong favorites (>55%) typically score 1.5-2.5 goals
+    // Underdogs (<30%) typically score 0.5-1.2 goals
+    // Draw-heavy matches have lower totals
+
+    // Scale factor: how many goals for a team given their win probability
+    // If home has 60% win prob, they likely score ~1.8-2.0 goals
+    // If away has 20% win prob, they likely score ~0.8-1.0 goals
+    const homeGoals = avgTotalGoals * (0.3 + normHomeProb * 0.6) * (1 - normDrawProb * 0.3);
+    const awayGoals = avgTotalGoals * (0.25 + normAwayProb * 0.5) * (1 - normDrawProb * 0.3);
+
+    // Apply home advantage boost
+    const homeAdvantage = 0.15;
+    const adjustedHomeGoals = homeGoals * (1 + homeAdvantage);
+
+    // Clamp to realistic soccer ranges
+    return {
+      home: Math.round(Math.max(0.5, Math.min(3.5, adjustedHomeGoals)) * 10) / 10,
+      away: Math.round(Math.max(0.3, Math.min(2.5, awayGoals)) * 10) / 10,
+    };
+  }
 
   // Get the appropriate league average based on sport type
   let leagueAvgPerTeam: number;

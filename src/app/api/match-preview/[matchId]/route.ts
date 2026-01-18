@@ -1499,7 +1499,53 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       marketIntel: marketIntel,
       odds: odds,
       // Predicted scores from Poisson/Elo model
-      expectedScores: aiAnalysis.expectedScores,
+      // FIX: For soccer with missing stats, use odds-based expected scores instead of 1:1
+      expectedScores: (() => {
+        const base = aiAnalysis.expectedScores;
+        const isSoccer = !matchInfo.sport.includes('basketball') &&
+          !matchInfo.sport.includes('nba') &&
+          !matchInfo.sport.includes('football') &&
+          !matchInfo.sport.includes('nfl') &&
+          !matchInfo.sport.includes('hockey') &&
+          !matchInfo.sport.includes('nhl');
+
+        // Check if scores look like default 1:1 (within 0.4 of each other for soccer)
+        const isNearEqual = isSoccer && base && Math.abs(base.home - base.away) < 0.4 &&
+          base.home >= 1.0 && base.home <= 1.6 &&
+          base.away >= 1.0 && base.away <= 1.6;
+
+        if (isSoccer && isNearEqual && odds?.homeOdds && odds?.awayOdds) {
+          console.log(`[Match-Preview] Soccer expectedScores look like 1:1 default (${base?.home}:${base?.away}) - recalculating using odds`);
+
+          // Convert odds to implied probabilities
+          const homeProb = 1 / odds.homeOdds;
+          const awayProb = 1 / odds.awayOdds;
+          const drawProb = odds.drawOdds ? 1 / odds.drawOdds : 0.25;
+          const total = homeProb + awayProb + drawProb;
+
+          const normHomeProb = homeProb / total;
+          const normAwayProb = awayProb / total;
+          const normDrawProb = drawProb / total;
+
+          // Expected goals based on probabilities
+          const avgTotalGoals = 2.65;
+          const homeGoals = avgTotalGoals * (0.3 + normHomeProb * 0.6) * (1 - normDrawProb * 0.3);
+          const awayGoals = avgTotalGoals * (0.25 + normAwayProb * 0.5) * (1 - normDrawProb * 0.3);
+
+          // Home advantage boost
+          const adjustedHomeGoals = homeGoals * 1.15;
+
+          const result = {
+            home: Math.round(Math.max(0.5, Math.min(3.5, adjustedHomeGoals)) * 10) / 10,
+            away: Math.round(Math.max(0.3, Math.min(2.5, awayGoals)) * 10) / 10,
+          };
+
+          console.log(`[Match-Preview] Recalculated soccer expectedScores: ${result.home}:${result.away}`);
+          return result;
+        }
+
+        return base;
+      })(),
       // Over/Under market data
       overUnder: overUnder,
     };
@@ -2167,6 +2213,8 @@ async function generateAIAnalysis(data: {
     h2hMatches?: Array<{ homeTeam: string; awayTeam: string; homeScore: number; awayScore: number; date: string }> | null;
     injuryDetails?: { home: Array<{ player: string; reason?: string; details?: string; position?: string }>; away: Array<{ player: string; reason?: string; details?: string; position?: string }> };
   };
+  // FIX: Odds for accurate expected scores when stats are missing
+  odds?: { homeOdds?: number; awayOdds?: number; drawOdds?: number };
 }) {
   const sportConfig = getSportConfig(data.sport);
 
@@ -2401,7 +2449,7 @@ ${!sportConfig.hasDraw ? 'NO DRAWS in this sport. Pick a winner.' : 'Draw is val
       awayStats: modelInput.awayStats,
     }));
 
-    const expectedScores = getExpectedScores(modelInput);
+    const expectedScores = getExpectedScores(modelInput, data.odds);
 
     console.log(`[Match-Preview] Expected scores calculated:`, expectedScores);
 
@@ -2472,7 +2520,7 @@ ${!sportConfig.hasDraw ? 'NO DRAWS in this sport. Pick a winner.' : 'Draw is val
       awayForm: data.awayForm,
     };
 
-    const fallbackExpectedScores = getExpectedScores(fallbackModelInput);
+    const fallbackExpectedScores = getExpectedScores(fallbackModelInput, data.odds);
 
     return {
       story: {
