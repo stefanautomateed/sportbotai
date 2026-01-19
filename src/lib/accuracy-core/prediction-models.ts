@@ -20,7 +20,7 @@ export type { ModelInput }; // Re-export for use in other modules
 const SPORT_CONFIG = {
   soccer: {
     homeAdvantage: 0.25,      // Goals boost for home team
-    leagueAvgGoals: 2.5,      // Default league average goals per game
+    leagueAvgGoals: 2.5,      // TOTAL goals per game (divided by 2 for per-team)
     maxGoals: 10,             // Max goals to calculate in Poisson
     formWeight: 0.3,          // Weight of recent form vs season stats
     h2hWeight: 0.1,           // Weight of H2H history
@@ -39,7 +39,7 @@ const SPORT_CONFIG = {
   },
   hockey: {
     homeAdvantage: 0.15,      // Goals boost (smaller than soccer)
-    leagueAvgGoals: 2.8,      // Default average goals per team
+    leagueAvgGoals: 6.2,      // NHL TOTAL goals per game (2024: ~6.2), divided by 2 for per-team
     maxGoals: 10,
     formWeight: 0.35,
   },
