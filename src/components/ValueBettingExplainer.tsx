@@ -150,7 +150,7 @@ export default function ValueBettingExplainer({ locale = 'en' }: ValueBettingExp
                         {t.cta}
                     </Link>
                     <Link
-                        href={locale === 'sr' ? '/sr/blog/sports-betting-value-explained' : '/blog/sports-betting-value-explained'}
+                        href={locale === 'sr' ? '/sr/blog' : '/blog'}
                         className="btn-secondary text-center px-8 py-3.5"
                     >
                         {t.ctaSecondary}
