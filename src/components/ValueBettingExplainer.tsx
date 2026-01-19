@@ -8,6 +8,7 @@
 'use client';
 
 import Link from 'next/link';
+import PremiumIcon from '@/components/ui/PremiumIcon';
 
 interface ValueBettingExplainerProps {
     locale?: 'en' | 'sr';
@@ -22,17 +23,17 @@ const translations = {
 
         sources: [
             {
-                icon: '🎯',
+                icon: 'target' as const,
                 title: 'Market Inefficiency',
                 desc: 'Bookmakers react slowly to lineup changes, injuries, and form shifts—creating temporary mispricings.',
             },
             {
-                icon: '📊',
+                icon: 'chart' as const,
                 title: 'Data Blind Spots',
                 desc: 'Lower leagues and less popular sports receive less attention, leading to inaccurate odds.',
             },
             {
-                icon: '⚡',
+                icon: 'bolt' as const,
                 title: 'Line Movement Lag',
                 desc: 'When one bookmaker adjusts odds, others lag behind—opening value windows.',
             },
@@ -55,17 +56,17 @@ const translations = {
 
         sources: [
             {
-                icon: '🎯',
+                icon: 'target' as const,
                 title: 'Neefikasnost Tržišta',
                 desc: 'Kladionice sporo reaguju na promene postave, povrede i formu—stvarajući privremena pogrešna cenjenja.',
             },
             {
-                icon: '📊',
+                icon: 'chart' as const,
                 title: 'Slepe Tačke Podataka',
                 desc: 'Niže lige i manje popularni sportovi dobijaju manje pažnje, što dovodi do netačnih kvota.',
             },
             {
-                icon: '⚡',
+                icon: 'bolt' as const,
                 title: 'Kašnjenje Pomeranja Linija',
                 desc: 'Kada jedna kladionica prilagodi kvote, druge kasne—otvarajući prozore vrednosti.',
             },
@@ -110,7 +111,9 @@ export default function ValueBettingExplainer({ locale = 'en' }: ValueBettingExp
                             key={index}
                             className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-accent/30 transition-colors"
                         >
-                            <span className="text-3xl mb-3 block">{source.icon}</span>
+                            <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                                <PremiumIcon name={source.icon} size="lg" className="text-accent" />
+                            </div>
                             <h3 className="text-lg font-semibold text-white mb-2">{source.title}</h3>
                             <p className="text-sm text-gray-400 leading-relaxed">{source.desc}</p>
                         </div>
@@ -120,7 +123,9 @@ export default function ValueBettingExplainer({ locale = 'en' }: ValueBettingExp
                 {/* How We Work */}
                 <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-accent/5 to-transparent border border-accent/20">
                     <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                        <span className="text-2xl">🧠</span>
+                        <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                            <PremiumIcon name="brain" size="lg" className="text-accent" />
+                        </div>
                         {t.howWeWork}
                     </h3>
                     <p className="text-base text-gray-300 leading-relaxed mb-6">
