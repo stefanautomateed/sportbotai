@@ -790,6 +790,146 @@ function detectSportFromTeams(homeTeam: string, awayTeam: string, message: strin
   return 'soccer_epl';
 }
 
+// ============================================
+// TEAM NAME EXPANSION (Short -> Full for cache lookup)
+// ============================================
+
+/**
+ * Expand short team nicknames to full team names
+ * This ensures AI chat can find cached pre-analyzed matches
+ * e.g., "Lakers" -> "Los Angeles Lakers", "Nuggets" -> "Denver Nuggets"
+ */
+const TEAM_NAME_EXPANSION: Record<string, string> = {
+  // NBA Teams - Short to Full
+  'lakers': 'Los Angeles Lakers',
+  'clippers': 'Los Angeles Clippers',
+  'warriors': 'Golden State Warriors',
+  'celtics': 'Boston Celtics',
+  'nets': 'Brooklyn Nets',
+  'knicks': 'New York Knicks',
+  'heat': 'Miami Heat',
+  '76ers': 'Philadelphia 76ers',
+  'sixers': 'Philadelphia 76ers',
+  'bulls': 'Chicago Bulls',
+  'bucks': 'Milwaukee Bucks',
+  'cavaliers': 'Cleveland Cavaliers',
+  'cavs': 'Cleveland Cavaliers',
+  'pistons': 'Detroit Pistons',
+  'pacers': 'Indiana Pacers',
+  'hawks': 'Atlanta Hawks',
+  'hornets': 'Charlotte Hornets',
+  'magic': 'Orlando Magic',
+  'wizards': 'Washington Wizards',
+  'raptors': 'Toronto Raptors',
+  'nuggets': 'Denver Nuggets',
+  'timberwolves': 'Minnesota Timberwolves',
+  'wolves': 'Minnesota Timberwolves',
+  'thunder': 'Oklahoma City Thunder',
+  'blazers': 'Portland Trail Blazers',
+  'trail blazers': 'Portland Trail Blazers',
+  'jazz': 'Utah Jazz',
+  'suns': 'Phoenix Suns',
+  'kings': 'Sacramento Kings',
+  'spurs': 'San Antonio Spurs',
+  'mavericks': 'Dallas Mavericks',
+  'mavs': 'Dallas Mavericks',
+  'rockets': 'Houston Rockets',
+  'grizzlies': 'Memphis Grizzlies',
+  'pelicans': 'New Orleans Pelicans',
+
+  // NHL Teams
+  'bruins': 'Boston Bruins',
+  'rangers': 'New York Rangers',
+  'islanders': 'New York Islanders',
+  'devils': 'New Jersey Devils',
+  'flyers': 'Philadelphia Flyers',
+  'capitals': 'Washington Capitals',
+  'penguins': 'Pittsburgh Penguins',
+  'red wings': 'Detroit Red Wings',
+  'blackhawks': 'Chicago Blackhawks',
+  'blues': 'St. Louis Blues',
+  'wild': 'Minnesota Wild',
+  'avalanche': 'Colorado Avalanche',
+  'oilers': 'Edmonton Oilers',
+  'flames': 'Calgary Flames',
+  'canucks': 'Vancouver Canucks',
+  'kraken': 'Seattle Kraken',
+  'golden knights': 'Vegas Golden Knights',
+  'knights': 'Vegas Golden Knights',
+  'sharks': 'San Jose Sharks',
+  'ducks': 'Anaheim Ducks',
+  'maple leafs': 'Toronto Maple Leafs',
+  'leafs': 'Toronto Maple Leafs',
+  'canadiens': 'Montreal Canadiens',
+  'habs': 'Montreal Canadiens',
+  'lightning': 'Tampa Bay Lightning',
+  'panthers': 'Florida Panthers',
+  'hurricanes': 'Carolina Hurricanes',
+  'stars': 'Dallas Stars',
+  'predators': 'Nashville Predators',
+  'jets': 'Winnipeg Jets',
+  'senators': 'Ottawa Senators',
+  'sabres': 'Buffalo Sabres',
+
+  // NFL Teams
+  'chiefs': 'Kansas City Chiefs',
+  'eagles': 'Philadelphia Eagles',
+  'bills': 'Buffalo Bills',
+  '49ers': 'San Francisco 49ers',
+  'niners': 'San Francisco 49ers',
+  'cowboys': 'Dallas Cowboys',
+  'ravens': 'Baltimore Ravens',
+  'lions': 'Detroit Lions',
+  'dolphins': 'Miami Dolphins',
+  'bengals': 'Cincinnati Bengals',
+  'chargers': 'Los Angeles Chargers',
+  'broncos': 'Denver Broncos',
+  'patriots': 'New England Patriots',
+  'pats': 'New England Patriots',
+  'giants': 'New York Giants',
+  'raiders': 'Las Vegas Raiders',
+  'saints': 'New Orleans Saints',
+  'packers': 'Green Bay Packers',
+  'steelers': 'Pittsburgh Steelers',
+  'seahawks': 'Seattle Seahawks',
+  'commanders': 'Washington Commanders',
+  'falcons': 'Atlanta Falcons',
+  'buccaneers': 'Tampa Bay Buccaneers',
+  'bucs': 'Tampa Bay Buccaneers',
+  'cardinals': 'Arizona Cardinals',
+  'rams': 'Los Angeles Rams',
+  'bears': 'Chicago Bears',
+  'vikings': 'Minnesota Vikings',
+  'browns': 'Cleveland Browns',
+  'texans': 'Houston Texans',
+  'colts': 'Indianapolis Colts',
+  'jaguars': 'Jacksonville Jaguars',
+  'jags': 'Jacksonville Jaguars',
+  'titans': 'Tennessee Titans',
+};
+
+function expandTeamName(shortName: string, sport: string): string {
+  const lower = shortName.toLowerCase().trim();
+
+  // Check direct expansion
+  if (TEAM_NAME_EXPANSION[lower]) {
+    const expanded = TEAM_NAME_EXPANSION[lower];
+    console.log(`[AI-Chat] Team name expanded: "${shortName}" -> "${expanded}"`);
+    return expanded;
+  }
+
+  // Check if any expansion contains this name (partial match)
+  for (const [key, fullName] of Object.entries(TEAM_NAME_EXPANSION)) {
+    if (fullName.toLowerCase().includes(lower) || lower.includes(key)) {
+      console.log(`[AI-Chat] Team name expanded (partial): "${shortName}" -> "${fullName}"`);
+      return fullName;
+    }
+  }
+
+  // Return original if no expansion found
+  return shortName;
+}
+
 /**
  * Call the match-preview API and format response for chat
  * This uses real data from our data layer instead of hardcoded values
@@ -801,6 +941,14 @@ async function performMatchAnalysis(
   request: NextRequest
 ): Promise<{ success: boolean; response: string; error?: string }> {
   try {
+    // IMPORTANT: Expand short team names to full names for cache lookup
+    // e.g., "Lakers" -> "Los Angeles Lakers", "Nuggets" -> "Denver Nuggets"
+    const expandedHome = expandTeamName(homeTeam, sport);
+    const expandedAway = expandTeamName(awayTeam, sport);
+
+    console.log(`[AI-Chat] Original teams: "${homeTeam}" vs "${awayTeam}"`);
+    console.log(`[AI-Chat] Expanded teams: "${expandedHome}" vs "${expandedAway}"`);
+
     // Generate a match ID using proper slug format
     // Format: home-team-vs-away-team-sport-date
     const slugify = (text: string) => text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
@@ -809,12 +957,13 @@ async function performMatchAnalysis(
       return parts.length >= 2 ? parts.slice(1).join('-') : sportKey;
     };
 
-    const homeSlug = slugify(homeTeam);
-    const awaySlug = slugify(awayTeam);
+    // Use EXPANDED team names for slug generation
+    const homeSlug = slugify(expandedHome);
+    const awaySlug = slugify(expandedAway);
     const sportCode = getSportCode(sport);
     const today = new Date().toISOString().split('T')[0];
 
-    // Proper format: roma-vs-sassuolo-italy-serie-a-2026-01-10
+    // Proper format: los-angeles-lakers-vs-denver-nuggets-nba-2026-01-20
     const matchId = `${homeSlug}-vs-${awaySlug}-${sportCode}-${today}`;
 
     // Get the host from the request
