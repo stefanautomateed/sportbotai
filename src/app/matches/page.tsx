@@ -1,56 +1,58 @@
-/**
- * Matches Page (/matches)
- * 
- * Browse all upcoming matches by league.
- * The main match discovery page.
- */
-
 import { Metadata } from 'next';
 import MatchBrowser from '@/components/MatchBrowser';
 import { META, SITE_CONFIG, getMatchAnalyzerSchema, getMatchesBreadcrumb } from '@/lib/seo';
 import { prisma } from '@/lib/prisma';
 
-export const metadata: Metadata = {
-  title: META.matches.title,
-  description: META.matches.description,
-  keywords: META.matches.keywords,
-  openGraph: {
+// Dynamic metadata to handle query params for proper hreflang
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { league?: string };
+}): Promise<Metadata> {
+  const leagueParam = searchParams.league ? `?league=${searchParams.league}` : '';
+
+  return {
     title: META.matches.title,
     description: META.matches.description,
-    url: `${SITE_CONFIG.url}/matches`,
-    siteName: SITE_CONFIG.name,
-    type: 'website',
-    images: [
-      {
-        url: `${SITE_CONFIG.url}/og-matches.png`,
-        width: 1200,
-        height: 630,
-        alt: 'Browse Matches - AI Sports Analysis Tool',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: META.matches.title,
-    description: META.matches.description,
-    site: SITE_CONFIG.twitter,
-  },
-  alternates: {
-    canonical: `${SITE_CONFIG.url}/matches`,
-    languages: {
-      'en': '/matches',
-      'sr': '/sr/matches',
-      'x-default': '/matches',
+    keywords: META.matches.keywords,
+    openGraph: {
+      title: META.matches.title,
+      description: META.matches.description,
+      url: `${SITE_CONFIG.url}/matches${leagueParam}`,
+      siteName: SITE_CONFIG.name,
+      type: 'website',
+      images: [
+        {
+          url: `${SITE_CONFIG.url}/og-matches.png`,
+          width: 1200,
+          height: 630,
+          alt: 'Browse Matches - AI Sports Analysis Tool',
+        },
+      ],
     },
-  },
-};
+    twitter: {
+      card: 'summary_large_image',
+      title: META.matches.title,
+      description: META.matches.description,
+      site: SITE_CONFIG.twitter,
+    },
+    alternates: {
+      canonical: `${SITE_CONFIG.url}/matches${leagueParam}`,
+      languages: {
+        'en': `/matches${leagueParam}`,
+        'sr': `/sr/matches${leagueParam}`,
+        'x-default': `/matches${leagueParam}`,
+      },
+    },
+  };
+}
 
 // Fetch upcoming matches for SSR SEO content
 async function getUpcomingMatches() {
   try {
     const now = new Date();
     const tomorrow = new Date(now.getTime() + 48 * 60 * 60 * 1000);
-    
+
     const matches = await prisma.oddsSnapshot.findMany({
       where: {
         matchDate: {
@@ -69,7 +71,7 @@ async function getUpcomingMatches() {
       take: 20,
       distinct: ['homeTeam', 'awayTeam'],
     });
-    
+
     return matches;
   } catch {
     return [];
@@ -83,10 +85,10 @@ export default async function MatchesPage({
 }) {
   const jsonLd = getMatchAnalyzerSchema();
   const breadcrumbSchema = getMatchesBreadcrumb();
-  
+
   // Pre-fetch matches for SEO (server-rendered content for crawlers)
   const upcomingMatches = await getUpcomingMatches();
-  
+
   return (
     <>
       {/* Breadcrumb Schema */}
@@ -99,12 +101,12 @@ export default async function MatchesPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      
+
       <div className="min-h-screen bg-bg relative overflow-hidden">
         {/* Ambient Background Glows */}
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
-        
+
         {/* Header */}
         <section className="relative border-b border-white/5">
           <div className="absolute inset-0 bg-gradient-to-b from-violet/5 to-transparent" />
@@ -145,12 +147,12 @@ export default async function MatchesPage({
             </section>
           </noscript>
         )}
-        
+
         {/* Server-rendered SEO text (visible but minimal) */}
         <div className="sr-only">
           <h2>Upcoming Sports Matches for AI Analysis</h2>
-          <p>Browse upcoming matches from Premier League, La Liga, NBA, NFL, NHL and other major sports leagues. 
-          Get AI-powered pre-match analysis, form data, head-to-head records, and betting value detection.</p>
+          <p>Browse upcoming matches from Premier League, La Liga, NBA, NFL, NHL and other major sports leagues.
+            Get AI-powered pre-match analysis, form data, head-to-head records, and betting value detection.</p>
           {upcomingMatches.slice(0, 10).map((match, i) => (
             <p key={i}>{match.homeTeam} vs {match.awayTeam} - {match.league} match analysis</p>
           ))}

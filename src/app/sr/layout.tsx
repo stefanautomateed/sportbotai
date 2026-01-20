@@ -25,17 +25,8 @@ export const metadata: Metadata = {
     'head to head statistika',
     'ai sportski asistent',
   ],
-  
-  // Canonical for Serbian
-  alternates: {
-    canonical: '/sr',
-    languages: {
-      'en': '/',
-      'sr': '/sr',
-      'x-default': '/',
-    },
-  },
-  
+  // NOTE: Do NOT set alternates here - pages define their own to avoid conflicts
+
   // Open Graph for Serbian
   openGraph: {
     type: 'website',
@@ -46,7 +37,7 @@ export const metadata: Metadata = {
     description: 'Pred-utakmična inteligencija: naslovi, forma, H2H istorija i AI uvidi. Fudbal, NBA, NFL, NHL i UFC—sve za 60 sekundi.',
     images: OG_DEFAULTS.images,
   },
-  
+
   // Twitter for Serbian
   twitter: {
     card: 'summary_large_image',

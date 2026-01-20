@@ -26,11 +26,11 @@ export const metadata: Metadata = {
   title: 'SportBot AI - Pronađi Gde Tržište Greši',
   description: 'Pred-utakmična inteligencija sa AI analizom. Upoređujemo AI verovatnoće sa kvotama da otkrijemo edge. Fudbal, NBA, NFL, NHL i UFC.',
   alternates: {
-    canonical: '/sr',
+    canonical: 'https://www.sportbotai.com/sr',
     languages: {
-      'en': '/',
-      'sr': '/sr',
-      'x-default': '/',
+      'en': 'https://www.sportbotai.com/',
+      'sr': 'https://www.sportbotai.com/sr',
+      'x-default': 'https://www.sportbotai.com/',
     },
   },
   openGraph: {

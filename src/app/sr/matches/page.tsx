@@ -13,47 +13,56 @@ import { prisma } from '@/lib/prisma';
 
 const t = getTranslations('sr');
 
-export const metadata: Metadata = {
-  title: 'Pregledaj Mečeve | SportBot AI - Analiza Sportskih Mečeva',
-  description: 'Pregledaj sve predstojeće sportske mečeve sa AI analizom. Fudbal, NBA, NFL, NHL i UFC - sve na jednom mestu sa podacima uživo.',
-  keywords: ['sportski mečevi', 'fudbal uživo', 'kvote', 'analiza mečeva', 'AI predikcije', 'sportsko klađenje'],
-  openGraph: {
-    title: 'Pregledaj Mečeve | SportBot AI',
-    description: 'Pregledaj sve predstojeće sportske mečeve sa AI analizom.',
-    url: `${SITE_CONFIG.url}/sr/matches`,
-    siteName: SITE_CONFIG.name,
-    type: 'website',
-    images: [
-      {
-        url: `${SITE_CONFIG.url}/og-matches.png`,
-        width: 1200,
-        height: 630,
-        alt: 'Pregledaj Mečeve - AI Analiza Sportova',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Pregledaj Mečeve | SportBot AI',
-    description: 'Pregledaj sve predstojeće sportske mečeve sa AI analizom.',
-    site: SITE_CONFIG.twitter,
-  },
-  alternates: {
-    canonical: `${SITE_CONFIG.url}/sr/matches`,
-    languages: {
-      'en': '/matches',
-      'sr': '/sr/matches',
-      'x-default': '/matches',
+// Dynamic metadata to handle query params for proper hreflang
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { league?: string };
+}): Promise<Metadata> {
+  const leagueParam = searchParams.league ? `?league=${searchParams.league}` : '';
+
+  return {
+    title: 'Pregledaj Mečeve | SportBot AI - Analiza Sportskih Mečeva',
+    description: 'Pregledaj sve predstojeće sportske mečeve sa AI analizom. Fudbal, NBA, NFL, NHL i UFC - sve na jednom mestu sa podacima uživo.',
+    keywords: ['sportski mečevi', 'fudbal uživo', 'kvote', 'analiza mečeva', 'AI predikcije', 'sportsko klađenje'],
+    openGraph: {
+      title: 'Pregledaj Mečeve | SportBot AI',
+      description: 'Pregledaj sve predstojeće sportske mečeve sa AI analizom.',
+      url: `${SITE_CONFIG.url}/sr/matches${leagueParam}`,
+      siteName: SITE_CONFIG.name,
+      type: 'website',
+      images: [
+        {
+          url: `${SITE_CONFIG.url}/og-matches.png`,
+          width: 1200,
+          height: 630,
+          alt: 'Pregledaj Mečeve - AI Analiza Sportova',
+        },
+      ],
     },
-  },
-};
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Pregledaj Mečeve | SportBot AI',
+      description: 'Pregledaj sve predstojeće sportske mečeve sa AI analizom.',
+      site: SITE_CONFIG.twitter,
+    },
+    alternates: {
+      canonical: `${SITE_CONFIG.url}/sr/matches${leagueParam}`,
+      languages: {
+        'en': `/matches${leagueParam}`,
+        'sr': `/sr/matches${leagueParam}`,
+        'x-default': `/matches${leagueParam}`,
+      },
+    },
+  };
+}
 
 // Fetch upcoming matches for SSR SEO content
 async function getUpcomingMatches() {
   try {
     const now = new Date();
     const tomorrow = new Date(now.getTime() + 48 * 60 * 60 * 1000);
-    
+
     const matches = await prisma.oddsSnapshot.findMany({
       where: {
         matchDate: {
@@ -72,7 +81,7 @@ async function getUpcomingMatches() {
       take: 20,
       distinct: ['homeTeam', 'awayTeam'],
     });
-    
+
     return matches;
   } catch {
     return [];
@@ -86,10 +95,10 @@ export default async function MatchesPageSr({
 }) {
   const jsonLd = getMatchAnalyzerSchema();
   const breadcrumbSchema = getMatchesBreadcrumb();
-  
+
   // Pre-fetch matches for SEO
   const upcomingMatches = await getUpcomingMatches();
-  
+
   return (
     <>
       {/* Breadcrumb Schema */}
@@ -102,12 +111,12 @@ export default async function MatchesPageSr({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      
+
       <div className="min-h-screen bg-bg relative overflow-hidden">
         {/* Ambient Background Glows */}
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet/5 rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
-        
+
         {/* Header */}
         <section className="relative border-b border-white/5">
           <div className="absolute inset-0 bg-gradient-to-b from-violet/5 to-transparent" />
@@ -148,12 +157,12 @@ export default async function MatchesPageSr({
             </section>
           </noscript>
         )}
-        
+
         {/* Server-rendered SEO text (visible but minimal) */}
         <div className="sr-only">
           <h2>Predstojeći Sportski Mečevi za AI Analizu</h2>
-          <p>Pregledajte predstojeće mečeve iz Premier Lige, La Lige, NBA, NFL, NHL i drugih velikih sportskih liga. 
-          Dobijte AI-analizu pre meča, podatke o formi, međusobne rezultate i detekciju vrednosnih kvota.</p>
+          <p>Pregledajte predstojeće mečeve iz Premier Lige, La Lige, NBA, NFL, NHL i drugih velikih sportskih liga.
+            Dobijte AI-analizu pre meča, podatke o formi, međusobne rezultate i detekciju vrednosnih kvota.</p>
           {upcomingMatches.slice(0, 10).map((match, i) => (
             <p key={i}>{match.homeTeam} vs {match.awayTeam} - {match.league} analiza meča</p>
           ))}
