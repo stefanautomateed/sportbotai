@@ -11,6 +11,7 @@ import { Metadata } from 'next';
 import HeroABTest from '@/components/HeroABTest';
 import TrendingSectionServer from '@/components/TrendingSectionServer';
 import ValueBettingExplainer from '@/components/ValueBettingExplainer';
+import HowItWorksVideo from '@/components/HowItWorksVideo';
 import PricingTeaser from '@/components/PricingTeaser';
 import FAQ from '@/components/FAQ';
 import ResponsibleGamblingBlock from '@/components/ResponsibleGamblingBlock';
@@ -79,6 +80,9 @@ export default function HomePage() {
 
       {/* Testimonials - video social proof */}
       <VideoTestimonialsCarousel />
+
+      {/* How It Works - Demo video */}
+      <HowItWorksVideo />
 
       {/* Pricing - conversion CTA */}
       <PricingTeaser />

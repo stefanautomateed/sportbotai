@@ -11,6 +11,7 @@ import { Metadata } from 'next';
 import HeroI18n from '@/components/HeroI18n';
 import TrendingSectionServer from '@/components/TrendingSectionServer';
 import ValueBettingExplainer from '@/components/ValueBettingExplainer';
+import HowItWorksVideo from '@/components/HowItWorksVideo';
 import PricingTeaserI18n from '@/components/PricingTeaserI18n';
 import ResponsibleGamblingBlockI18n from '@/components/ResponsibleGamblingBlockI18n';
 import FAQI18n from '@/components/FAQI18n';
@@ -88,6 +89,9 @@ export default function SerbianHomePage() {
 
       {/* Moments carousel - marketing situations */}
       <VideoTestimonialsCarousel locale="sr" />
+
+      {/* How It Works - Demo video */}
+      <HowItWorksVideo locale="sr" />
 
       {/* Pricing teaser - CTA */}
       <PricingTeaserI18n t={t} locale="sr" />
