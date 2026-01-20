@@ -2257,8 +2257,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate data confidence for the response
+    // Pass ALL data sources, not just Perplexity - this fixes recurring "Limited data" issue
     const dataConfidence: DataConfidence = calculateDataConfidence({
       hasPerplexityData: !!perplexityContext,
+      hasDataLayerStats: !!dataLayerContext,
+      hasVerifiedPrediction: !!dataLayerContext || !!perplexityContext, // If we have any enrichment, consider prediction available
       queryCategory: brainMode,
     });
 
