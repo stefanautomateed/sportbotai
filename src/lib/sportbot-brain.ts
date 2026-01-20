@@ -95,9 +95,15 @@ export function calculateDataConfidence(params: {
     }
   }
 
-  // Determine level
+  // Our own prediction/analysis = FULL confidence, no disclaimers needed
+  // External data queries may need additional sources
   let level: DataCoverageLevel;
-  if (score >= 70 && missingCritical.length === 0) {
+
+  // If we have our own app's prediction/analysis, that's 100% confidence
+  if (params.hasVerifiedPrediction || params.hasDataLayerStats) {
+    level = 'FULL';
+    score = 100; // Our own data = full confidence
+  } else if (score >= 70 && missingCritical.length === 0) {
     level = 'FULL';
   } else if (score >= 40) {
     level = 'PARTIAL';
@@ -110,9 +116,12 @@ export function calculateDataConfidence(params: {
   // Can we answer?
   const canAnswer = level !== 'NONE' && !(missingCritical.length > 0 && score < 30);
 
-  // Build disclaimer
+  // Build disclaimer - NEVER show disclaimer for our own prediction data
   let disclaimer: string | undefined;
-  if (level === 'PARTIAL') {
+  if (params.hasVerifiedPrediction || params.hasDataLayerStats) {
+    // No disclaimer for our own data
+    disclaimer = undefined;
+  } else if (level === 'PARTIAL') {
     disclaimer = `Note: Analysis based on ${sources.join(', ')}. Some data may be limited.`;
   } else if (level === 'MINIMAL') {
     disclaimer = `⚠️ Limited data available. This response is based only on: ${sources.join(', ')}.`;
