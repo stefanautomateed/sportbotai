@@ -32,7 +32,7 @@ export default function HowItWorksVideo({ locale = 'en' }: HowItWorksVideoProps)
     const [isLoaded, setIsLoaded] = useState(false);
     const t = translations[locale];
 
-    const thumbnailUrl = `https://img.youtube.com/vi/${YOUTUBE_VIDEO_ID}/maxresdefault.jpg`;
+    const thumbnailUrl = `https://img.youtube.com/vi/${YOUTUBE_VIDEO_ID}/hqdefault.jpg`;
 
     return (
         <section className="py-16 sm:py-20 bg-bg-primary">
