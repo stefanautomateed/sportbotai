@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.sportbotai.com';
-  
+
   return {
     rules: [
       // Googlebot-News - for Google News indexing
@@ -105,21 +105,89 @@ export default function robots(): MetadataRoute.Robots {
         allow: ['/', '/api/og'],
         disallow: ['/api/analyze', '/api/ai-chat', '/api/stripe', '/admin/', '/account/'],
       },
-      // Block AI training crawlers
+      // =============================================
+      // AI CRAWLER POLICY
+      // =============================================
+      // ALLOW: AI Search bots (appear in AI search results)
+      // BLOCK: AI Training bots (protect content from training)
+
+      // ChatGPT browsing mode - ALLOW (AI search visibility)
+      {
+        userAgent: 'ChatGPT-User',
+        allow: [
+          '/',
+          '/news',
+          '/news/*',
+          '/blog',
+          '/blog/*',
+          '/matches',
+          '/ai-desk',
+          '/pricing',
+        ],
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/account/',
+          '/login',
+          '/register',
+        ],
+      },
+      // OpenAI SearchBot - ALLOW (AI search visibility)
+      {
+        userAgent: 'OAI-SearchBot',
+        allow: [
+          '/',
+          '/news',
+          '/news/*',
+          '/blog',
+          '/blog/*',
+          '/matches',
+          '/ai-desk',
+          '/pricing',
+        ],
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/account/',
+        ],
+      },
+      // Perplexity AI - ALLOW (AI search visibility)
+      {
+        userAgent: 'PerplexityBot',
+        allow: [
+          '/',
+          '/news',
+          '/news/*',
+          '/blog',
+          '/blog/*',
+          '/matches',
+          '/ai-desk',
+          '/pricing',
+        ],
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/account/',
+        ],
+      },
+      // GPTBot - BLOCK (AI training, not search)
       {
         userAgent: 'GPTBot',
         disallow: '/',
       },
-      {
-        userAgent: 'ChatGPT-User',
-        disallow: '/',
-      },
+      // CCBot (Common Crawl) - BLOCK (used for AI training)
       {
         userAgent: 'CCBot',
         disallow: '/',
       },
+      // Anthropic Claude - BLOCK (AI training)
       {
         userAgent: 'anthropic-ai',
+        disallow: '/',
+      },
+      // Google-Extended (Gemini training) - BLOCK
+      {
+        userAgent: 'Google-Extended',
         disallow: '/',
       },
     ],
