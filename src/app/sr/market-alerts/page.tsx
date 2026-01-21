@@ -39,9 +39,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${SITE_CONFIG.url}/sr/market-alerts`,
     languages: {
-      'en': '/market-alerts',
-      'sr': '/sr/market-alerts',
-      'x-default': '/market-alerts',
+      'en': `${SITE_CONFIG.url}/market-alerts`,
+      'sr': `${SITE_CONFIG.url}/sr/market-alerts`,
+      'x-default': `${SITE_CONFIG.url}/market-alerts`,
     },
   },
 };

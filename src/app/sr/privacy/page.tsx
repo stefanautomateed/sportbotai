@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   title: 'Politika Privatnosti | SportBot AI',
   description: 'Politika privatnosti za SportBot AI platformu. Saznajte kako prikupljamo, koristimo i štitimo vaše podatke.',
   alternates: {
-    canonical: '/sr/privacy',
+    canonical: `${SITE_CONFIG.url}/sr/privacy`,
     languages: {
-      'en': '/privacy',
-      'sr': '/sr/privacy',
-      'x-default': '/privacy',
+      'en': `${SITE_CONFIG.url}/privacy`,
+      'sr': `${SITE_CONFIG.url}/sr/privacy`,
+      'x-default': `${SITE_CONFIG.url}/privacy`,
     },
   },
   robots: {

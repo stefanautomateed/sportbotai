@@ -12,11 +12,11 @@ export const metadata: Metadata = {
   title: 'Kontaktirajte Nas | SportBot AI',
   description: 'Stupite u kontakt sa SportBot AI timom. Pitanja, povratne informacije ili poslovni upiti - rado ćemo vas čuti.',
   alternates: {
-    canonical: '/sr/contact',
+    canonical: `${SITE_CONFIG.url}/sr/contact`,
     languages: {
-      'en': '/contact',
-      'sr': '/sr/contact',
-      'x-default': '/contact',
+      'en': `${SITE_CONFIG.url}/contact`,
+      'sr': `${SITE_CONFIG.url}/sr/contact`,
+      'x-default': `${SITE_CONFIG.url}/contact`,
     },
   },
 };
@@ -45,7 +45,7 @@ export default function ContactPageSr() {
               </svg>
             </div>
             <h3 className="text-text-primary font-semibold mb-2">Pišite nam</h3>
-            <a 
+            <a
               href={`mailto:${SITE_CONFIG.email}`}
               className="text-accent hover:text-accent-hover transition-colors"
             >

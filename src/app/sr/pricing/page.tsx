@@ -31,9 +31,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${SITE_CONFIG.url}/sr/pricing`,
     languages: {
-      'en': '/pricing',
-      'sr': '/sr/pricing',
-      'x-default': '/pricing',
+      'en': `${SITE_CONFIG.url}/pricing`,
+      'sr': `${SITE_CONFIG.url}/sr/pricing`,
+      'x-default': `${SITE_CONFIG.url}/pricing`,
     },
   },
 };
@@ -68,7 +68,7 @@ export default function PricingPageSR() {
       {/* Ambient background glows */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-1/3 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
-      
+
       {/* Breadcrumb Schema */}
       <script
         type="application/ld+json"
@@ -107,7 +107,7 @@ export default function PricingPageSR() {
         <h2 className="text-2xl font-bold text-white text-center mb-8">
           {t.pricingPage.faqTitle}
         </h2>
-        
+
         <div className="max-w-3xl mx-auto space-y-6">
           <div className="card">
             <h3 className="font-bold text-white mb-2">{t.pricingPage.faq.cancel.question}</h3>
@@ -143,7 +143,7 @@ export default function PricingPageSR() {
       <section className="bg-warning/5 border-t border-warning/20 py-8 relative">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <p className="text-warning/80 text-sm leading-relaxed">
-            <strong>⚠️ Napomena:</strong> Plaćanje za SportBot AI ne garantuje dobitke. 
+            <strong>⚠️ Napomena:</strong> Plaćanje za SportBot AI ne garantuje dobitke.
             Naš alat je čisto analitički i edukativni. Kladite se odgovorno i samo sa novcem koji možete priuštiti da izgubite.
           </p>
         </div>

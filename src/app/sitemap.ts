@@ -34,10 +34,7 @@ const STATIC_PAGES = [
   { path: '/responsible-gambling', priority: 0.5, changeFreq: 'monthly' as const },
   { path: '/terms', priority: 0.3, changeFreq: 'yearly' as const },
   { path: '/privacy', priority: 0.3, changeFreq: 'yearly' as const },
-
-  // AI/LLM Discovery Files
-  { path: '/llms.txt', priority: 0.4, changeFreq: 'monthly' as const },
-  { path: '/llms-full.txt', priority: 0.4, changeFreq: 'monthly' as const },
+  // NOTE: /llms.txt and /llms-full.txt removed from sitemap - they are text files, not HTML pages
 ];
 
 // Serbian static pages

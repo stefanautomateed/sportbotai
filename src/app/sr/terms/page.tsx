@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   title: 'Uslovi Korišćenja | SportBot AI',
   description: 'Uslovi korišćenja za SportBot AI platformu. Pročitajte naše uslove pre korišćenja servisa.',
   alternates: {
-    canonical: '/sr/terms',
+    canonical: `${SITE_CONFIG.url}/sr/terms`,
     languages: {
-      'en': '/terms',
-      'sr': '/sr/terms',
-      'x-default': '/terms',
+      'en': `${SITE_CONFIG.url}/terms`,
+      'sr': `${SITE_CONFIG.url}/sr/terms`,
+      'x-default': `${SITE_CONFIG.url}/terms`,
     },
   },
   robots: {

@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/sr/responsible-gambling',
     languages: {
-      'en': '/responsible-gambling',
-      'sr': '/sr/responsible-gambling',
-      'x-default': '/responsible-gambling',
+      'en': `${SITE_CONFIG.url}/responsible-gambling`,
+      'sr': `${SITE_CONFIG.url}/sr/responsible-gambling`,
+      'x-default': `${SITE_CONFIG.url}/responsible-gambling`,
     },
   },
   robots: {
