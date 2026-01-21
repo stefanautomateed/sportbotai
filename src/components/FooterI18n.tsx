@@ -255,6 +255,21 @@ export default function FooterI18n({ locale: localeProp }: FooterI18nProps) {
                 <span className="text-accent font-bold text-sm">🚀</span>
                 <span className="text-text-secondary text-xs font-medium">NextGen Tools</span>
               </a>
+              {/* There's An AI For That Badge */}
+              <a
+                href="https://theresanaiforthat.com/ai/sportbot-ai/?ref=featured&v=1092536"
+                target="_blank"
+                rel="nofollow noopener noreferrer"
+              >
+                <img
+                  src="https://media.theresanaiforthat.com/featured-on-taaft.png?width=600"
+                  alt="Featured on There's An AI For That"
+                  width="150"
+                  height="33"
+                  loading="lazy"
+                  className="opacity-80 hover:opacity-100 transition-opacity"
+                />
+              </a>
               <span className="text-divider hidden sm:inline">|</span>
               <a
                 href="https://www.begambleaware.org/"
