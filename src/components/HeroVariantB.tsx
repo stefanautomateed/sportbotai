@@ -14,7 +14,7 @@ import VideoBackground from './VideoBackground';
 
 export default function HeroVariantB() {
   return (
-    <section className="relative bg-bg-primary overflow-hidden">
+    <section className="relative bg-bg-primary overflow-hidden min-h-[600px] lg:min-h-[700px]">
       {/* Video Background (desktop) / Static fallback (mobile) */}
       <VideoBackground
         videoSrc="/videos/hero-bg.mp4"
